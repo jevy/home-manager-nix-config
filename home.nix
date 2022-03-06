@@ -107,7 +107,7 @@
       };
       Service = {
         Type = "oneshot";
-        script = "duplicity_backup";
+        ExecStart = "duplicity_backup";
       };
     };
   };
@@ -122,7 +122,7 @@
         };
       Timer = {
         OnUnitActiveSec = "24h"; # 24 hours since it was run last
-        Unit = "duplicity_backup.service";
+        Unit = "jevin_backup.service";
       };
     };
   };
