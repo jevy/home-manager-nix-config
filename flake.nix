@@ -18,6 +18,10 @@
         # Specify the path to your home configuration here
         configuration = import ./home.nix;
 
+        extraSpecialArgs = {
+          inherit duplicity_script;
+        };
+
         inherit system username;
         homeDirectory = "/home/${username}";
         # Update the state version as needed.
