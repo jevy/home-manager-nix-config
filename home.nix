@@ -6,11 +6,15 @@
   # home.username = "jevin";
   # home.homeDirectory = "/home/jevin";
 
+  # imports =
+  #   [
+  #     ./vim.nix
+  #   ];
   programs.neovim = {
     enable = true;
     viAlias = true;
     vimAlias = true;
-    plugins = with pkgs.vimPlugins; [ vim-airline vim-surround vim-commentary vim-json vim-markdown goyo-vim ranger-vim base16-vim];
+    plugins = with pkgs.vimPlugins; [ vim-airline vim-surround vim-commentary vim-json vim-markdown goyo-vim ranger-vim base16-vim vim-nix];
     # settings = { 
     #   ignorecase = true;
     # };
@@ -83,8 +87,13 @@
     '';
   };
 
+  home.file."./.config/ranger".source = ./ranger;
+  # home.file.".config/ranger/".recursive = true;
+
   home.packages = [
     pkgs.fortune
+    pkgs.neovide
+    pkgs.ranger
   ];
 
   # This value determines the Home Manager release that your

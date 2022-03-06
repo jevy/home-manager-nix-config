@@ -9,7 +9,7 @@
     duplicity_script.url = "/home/jevin/code/personal/duplicity_script";
   };
 
-  outputs = { home-manager, ... }:
+  outputs = { home-manager, duplicity_script, ... }:
     let
       system = "x86_64-linux";
       username = "jevin";

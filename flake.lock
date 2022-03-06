@@ -5,13 +5,14 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "narHash": "sha256-XnPHhagianMuB32cVxbPEE6RIO/Hopygf3aQzEVTURo=",
-        "path": "/home/jevin/code/personal/duplicity_script",
-        "type": "path"
+        "lastModified": 1646393470,
+        "narHash": "sha256-h9SgzQemWRD6wRaH617lwMR1rZACtCXwgzTJN02sRts=",
+        "type": "git",
+        "url": "file:///home/jevin/code/personal/duplicity_script"
       },
       "original": {
-        "path": "/home/jevin/code/personal/duplicity_script",
-        "type": "path"
+        "type": "git",
+        "url": "file:///home/jevin/code/personal/duplicity_script"
       }
     },
     "home-manager": {
