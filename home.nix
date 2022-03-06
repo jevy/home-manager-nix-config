@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, duplicity_script, ... }:
 
 {
   # Home Manager needs a bit of information about you and the
