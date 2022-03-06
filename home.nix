@@ -88,8 +88,9 @@
   };
 
   home.file."./.config/ranger".source = ./ranger;
-  home.file."./.config/ranger".executable = true;
-  # home.file.".config/ranger/".recursive = true;
+  home.shellAliases = {
+    ranger = "ranger --data-dir=/tmp/ranger"
+  }
 
   home.packages = [
     pkgs.fortune
