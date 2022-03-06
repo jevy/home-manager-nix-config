@@ -87,11 +87,7 @@
     '';
   };
 
-  home.file."./.config/ranger".source = ./ranger;
-  home.shellAliases = {
-    ranger = "ranger --data-dir=/tmp/ranger";
-  };
-
+  home.file."./.config/ranger".source = config.lib.file.mkOutOfStoreSymlink ./ranger;
   home.packages = [
     pkgs.fortune
     pkgs.neovide
