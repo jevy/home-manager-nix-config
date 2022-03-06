@@ -87,7 +87,7 @@
     '';
   };
 
-  home.file."./.config/ranger".source = config.lib.file.mkOutOfStoreSymlink ./ranger;
+  home.file."./.config/ranger".source = config.lib.file.mkOutOfStoreSymlink /home/jevin/.config/nixpkgs/ranger;
   home.packages = [
     pkgs.fortune
     pkgs.neovide
