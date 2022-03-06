@@ -94,7 +94,7 @@
     '';
   };
 
-  home.packages ++= pkgs.ranger;
+  home.packages = home.packages ++ [pkgs.ranger];
   home.file."./.config/ranger".source = config.lib.file.mkOutOfStoreSymlink /home/jevin/.config/nixpkgs/ranger;
 
 
