@@ -107,7 +107,7 @@
       };
       Service = {
         Type = "oneshot";
-        ExecStart = "duplicity_backup";
+        ExecStart = "/usr/bin/env duplicity_backup";
       };
     };
   };
