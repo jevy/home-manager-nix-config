@@ -10,6 +10,13 @@
   #   [
   #     ./vim.nix
   #   ];
+
+  home.packages = [
+    pkgs.fortune
+    pkgs.neovide
+    pkgs.ranger
+  ];
+
   programs.neovim = {
     enable = true;
     viAlias = true;
@@ -87,12 +94,9 @@
     '';
   };
 
+  home.packages ++= pkgs.ranger;
   home.file."./.config/ranger".source = config.lib.file.mkOutOfStoreSymlink /home/jevin/.config/nixpkgs/ranger;
-  home.packages = [
-    pkgs.fortune
-    pkgs.neovide
-    pkgs.ranger
-  ];
+
 
   # This value determines the Home Manager release that your
   # configuration is compatible with. This helps avoid breakage
