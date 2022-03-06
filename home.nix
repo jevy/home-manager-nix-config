@@ -97,6 +97,36 @@
 
   home.file."./.config/ranger".source = config.lib.file.mkOutOfStoreSymlink /home/jevin/.config/nixpkgs/ranger;
 
+  systemd.user.services = {
+    jevin_backup = {
+      Unit = {
+        Description = "Backup Jevin's Directory with Duplicity";
+      };
+      Install = {
+        WantedBy = [ "default.target" ];
+      };
+      Service = {
+        Type = "oneshot";
+        script = "duplicity_backup";
+      };
+    };
+  };
+
+  systemd.user.timers = {
+    jevin_backup_timer = {
+      Unit = {
+        Description = "Run Jevin's Duplicity Backup";
+      };
+        Install = {
+          WantedBy = [ "timers.target" ];
+        };
+      Timer = {
+        OnUnitActiveSec = "24h"; # 24 hours since it was run last
+        Unit = "duplicity_backup.service";
+      };
+    };
+  };
+
 
   # This value determines the Home Manager release that your
   # configuration is compatible with. This helps avoid breakage
