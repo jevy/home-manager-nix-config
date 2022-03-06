@@ -15,7 +15,7 @@
     pkgs.fortune
     pkgs.neovide
     pkgs.ranger
-    (import duplicity_script { inherit pkgs; }).backup_script
+    duplicity_script.defaultPackage.x86_64-linux
   ];
 
   programs.neovim = {
