@@ -89,8 +89,8 @@
 
   home.file."./.config/ranger".source = ./ranger;
   home.shellAliases = {
-    ranger = "ranger --data-dir=/tmp/ranger"
-  }
+    ranger = "ranger --data-dir=/tmp/ranger";
+  };
 
   home.packages = [
     pkgs.fortune
