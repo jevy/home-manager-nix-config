@@ -16,6 +16,7 @@
     pkgs.neovide
     pkgs.ranger
     duplicity_script.defaultPackage.x86_64-linux
+    pkgs.gimp
   ];
 
   programs.neovim = {
@@ -74,13 +75,14 @@
       autocmd BufWinLeave * call clearmatches()
       autocmd Syntax * syn match ExtraWhitespace /\s\+$\| \+\ze\t/
 
-      " TODO ADD THE REST
       set smartindent
       set autoindent
       filetype indent on
       set expandtab
       set shiftwidth=2
       set softtabstop=2
+
+      autocmd FileType mail setl tw=76|setl fo+=aw
 
       augroup HiglightTODO
           autocmd!
