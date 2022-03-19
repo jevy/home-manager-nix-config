@@ -1,0 +1,3 @@
+[submodule "ranger/plugins/ranger-archives"]
+	path = ranger/plugins/ranger-archives
+	url = https://github.com/maximtrp/ranger-archives
