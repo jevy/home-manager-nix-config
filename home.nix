@@ -17,7 +17,6 @@
     pkgs.ranger
     duplicity_script.defaultPackage.x86_64-linux
     pkgs.gimp
-    pkgs.esphome
   ];
 
   programs.neovim = {
