@@ -17,6 +17,8 @@
     pkgs.ranger
     duplicity_script.defaultPackage.x86_64-linux
     pkgs.gimp
+    pkgs.visidata
+    pkgs.ripgrep-all
   ];
 
   programs.neovim = {
@@ -127,6 +129,10 @@
         Unit = "jevin_backup.service";
       };
     };
+  };
+
+  home.shellAliases = {
+    pomodoro = "termdown 25m -s -b";
   };
 
 
