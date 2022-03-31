@@ -21,6 +21,36 @@
     pkgs.ripgrep-all
   ];
 
+  programs.zsh = {
+    enable = true;
+    enableCompletion = true;
+    oh-my-zsh = {
+      enable = true;
+      theme = "robbyrussell";
+      # theme = "powerlevel10k/powerlevel10k";
+      plugins = [ "git" "ruby" "rails" "sudo" "kubectl" ];
+    };
+
+    # TODO: Need to source my p10k Properly
+    # plugins = with pkgs; [
+    #   {
+    #     file = "powerlevel10k.zsh-theme";
+    #     name = "powerlevel10k";
+    #     src = pkgs.fetchFromGitHub {
+    #       owner = "romkatv";
+    #       repo = "powerlevel10k";
+    #       rev = "v1.16.1";
+    #       sha256 = "DLiKH12oqaaVChRqY0Q5oxVjziZdW/PfnRW1fCSCbjo=";
+    #     };
+    #   }
+    #   {
+    #     file = "p10k.zsh";
+    #     name = "powerlevel10k-config";
+    #     src = ./config/zsh/p10k;
+    #   }
+    # ];
+  };
+
   programs.neovim = {
     enable = true;
     viAlias = true;
