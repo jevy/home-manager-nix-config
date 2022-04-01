@@ -11,15 +11,144 @@
   #     ./vim.nix
   #   ];
 
-  home.packages = [
-    pkgs.fortune
-    pkgs.neovide
-    pkgs.ranger
-    duplicity_script.defaultPackage.x86_64-linux
-    pkgs.gimp
-    pkgs.visidata
-    pkgs.ripgrep-all
+  nixpkgs.config.allowUnfree = true;
+
+  home.packages = with pkgs; [
+    fortune
+    neovide
+    ranger
+    gimp
+    visidata
+    ripgrep-all
+    discord
+    wget
+    firefox
+    neofetch
+    ranger
+    spotify
+    obsidian
+    git
+    zoom-us
+    speedtest-cli
+    pavucontrol
+    synology-drive-client
+    kitty
+    slack
+    k9s
+    kubectl
+    docker
+    docker-compose
+    ripgrep
+    file
+    ffmpeg
+    imagemagickBig
+    google-chrome
+    killall
+    ruby
+    gnumake
+    gcc
+    bundix
+    python-qt
+    dig
+    ldns # drill
+    kubernetes-helm
+    zathura
+    xournalpp
+    dropbox
+    libreoffice
+    unzip
+    todoist-electron
+    # findutils # For ranger
+    mlocate # For ranger
+    fzf # For ranger
+    yt-dlp
+    arduino
+    kicad
+    tmux
+    mutt-wizard
+    neomutt # mutt-wizard
+    curl # mutt-wizard
+    isync # mutt-wizard
+    msmtp # mutt-wizard
+    pass # mutt-wizard
+    gnupg # mutt-wizard
+    pinentry # mutt-wizard
+    notmuch # mutt-wizard
+    lieer # mutt-wizard
+    w3m # mutt-wizard
+    abook # mutt-wizard
+    urlscan # mutt-wizard
+    poppler_utils # mutt-wizard
+    mailcap
+    python38Packages.goobook # mutt
+    awscli2
+    python38Full
+    python38Packages.wxPython_4_0
+    hugo
+    nodejs-16_x
+    networkmanager-l2tp
+    # qbittorrent
+    # pywal
+    steam
+    wally-cli
+    vlc
+    # cubicsdr
+    # sdrangel
+    # gqrx
+    # sdrpp-with-sdrplay
+    # hamlib_4
+    # wsjtx
+    # unstable.element-desktop-wayland
+    # blueberry
+    # helvum
+    duplicity
+    signal-desktop
+    ansible_2_10
+    gcalcli
+    # unstable.nix-template
+    termdown
+    httpie
+    kubectx
+    todoist
+    peco # For todoist
+    qalculate-gtk
+    apprise
+    pandoc
+    nasc
+    doctl
+    qcad
+    zip
+
+    # For Sway
+    # ---
+    #sway
+    #swaylock
+    #swayidle
+    #waybar
+    #wl-clipboard
+    #mako # notification daemon
+    #rofi
+    #rofi-calc
+    ##wofi
+    #wlsunset
+    #pamixer
+    #grim
+    #swappy
+    #slurp
+    #clipman
+    #brightnessctl
+    #autotiling
+    #wdisplays
+    #copyq
+    #kooha
+    #wf-recorder
+    #jq # For waybar weather
   ];
+
+  # wayland.windowManager.sway = {
+  #   enable = true;
+  #   wrapperFeatures.gtk = true ;
+  # };
 
   programs.zsh = {
     enable = true;
@@ -113,6 +242,7 @@
       set expandtab
       set shiftwidth=2
       set softtabstop=2
+      set nowrap
 
       autocmd FileType mail setl tw=76|setl fo+=aw
 
@@ -129,7 +259,11 @@
     '';
   };
 
-  home.file."./.config/ranger".source = config.lib.file.mkOutOfStoreSymlink /home/jevin/.config/nixpkgs/ranger;
+  home.file = {
+    "./.config/ranger".source = config.lib.file.mkOutOfStoreSymlink /home/jevin/.config/nixpkgs/ranger;
+
+    ".config/sway/config".source = sway/config;
+  };
 
   systemd.user.services = {
     jevin_backup = {
