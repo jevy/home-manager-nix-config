@@ -263,6 +263,9 @@
     "./.config/ranger".source = config.lib.file.mkOutOfStoreSymlink /home/jevin/.config/nixpkgs/ranger;
 
     ".config/sway/config".source = sway/config;
+    ".config/kitty/kitty.conf".source = kitty/kitty.conf;
+    ".config/mutt/muttrc".source = mutt/muttrc;
+    # ".config/polybar".source = polybar;
   };
 
   systemd.user.services = {
