@@ -1,0 +1,286 @@
+# Default config for sway
+#
+# Copy this to ~/.config/sway/config and edit it to your liking.
+#
+# Read `man 5 sway` for a complete reference.
+#
+
+### Variables
+#
+# Logo key. Use Mod1 for Alt.
+set $mod Mod4
+# Home row direction keys, like vim
+set $left h
+set $down j
+set $up k
+set $right l
+# Your preferred terminal emulator
+set $term /run/current-system/sw/bin/kitty
+# Your preferred application launcher
+# Note: it's recommended that you pass the final command to sway
+# set $menu dmenu_path | dmenu -i | xargs swaymsg exec --
+# set $menu j4-dmenu-desktop --dmenu='bemenu -i --fn "pango:DejaVu Sans Mono 12"' --term='kitty'
+
+### Output configuration
+#
+# Default wallpaper (more resolutions are available in /usr/share/backgrounds/sway/)
+output * bg ~/Pictures/background/firewatch.jpg fill
+#
+# Example configuration:
+#
+#   output HDMI-A-1 resolution 1920x1080 position 1920,0
+#
+# You can get the names of your outputs by running: swaymsg -t get_outputs
+
+# Display ports aren't consistent
+# Use the string ref: https://man.archlinux.org/man/sway-output.5.en
+output "Goldstar Company Ltd LG ULTRAGEAR 106NTLE12344" pos 2570 1440 resolution 3440x1440 scale 1
+output "Unknown 0x5A2D 0x00000000" pos 3710 2880 resolution 1920x1080 scale 1
+output "Unknown HP Z27 CN49020L9R" pos 6010 1440 resolution 1920x1200 scale 1 transform 270
+
+# Where the monitors are 'man sway-output'
+# output DP-3 pos 0 400
+# output eDP-1 pos 1420 1840
+# output DP-5 pos 3400 0
+
+### Idle configuration
+#
+# Example configuration:
+#
+exec swayidle -w \
+         timeout 1000 'swaylock -f -c 000000' \
+         timeout 2000 'swaymsg "output * dpms off"' \
+              resume 'swaymsg "output * dpms on"' \
+         before-sleep 'swaylock -f -c 000000'
+
+input "1:1:AT_Translated_Set_2_keyboard" {
+  xkb_options ctrl:nocaps
+}
+
+### Key bindings
+#
+# Basics:
+#
+    # Start a terminal
+    bindsym $mod+Return exec $term
+
+    # Kill focused window
+    bindsym $mod+Shift+q kill
+
+    # Start your launcher
+    bindsym $mod+d exec rofi -show run
+    # bindsym $mod+d exec wofi --show=drun
+
+    # bindsym $mod+c exec rofi -show calc -modi calc -no-show-match -no-sort
+    # bindsym $mod+c exec rofi -show calc
+
+    # bindsym $mod+p exec clipman pick -t rofi
+
+    # Drag floating windows by holding down $mod and left mouse button.
+    # Resize them with right mouse button + $mod.
+    # Despite the name, also works for non-floating windows.
+    # Change normal to inverse to use left mouse button for resizing and right
+    # mouse button for dragging.
+    floating_modifier $mod normal
+
+    # Reload the configuration file
+    bindsym $mod+Shift+r reload
+
+    # Exit sway (logs you out of your Wayland session)
+    bindsym $mod+Shift+e exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -b 'Yes, exit sway' 'swaymsg exit'
+#
+# Moving around:
+#
+    bindsym $mod+h focus left
+    bindsym $mod+j focus down
+    bindsym $mod+k focus up
+    bindsym $mod+l focus right
+
+    # Move the focused window with the same, but add Shift
+    bindsym $mod+Shift+h move left
+    bindsym $mod+Shift+j move down
+    bindsym $mod+Shift+k move up
+    bindsym $mod+Shift+l move right
+
+#
+# Workspaces:
+#
+    # Switch to workspace
+    bindsym $mod+1 workspace 1
+    bindsym $mod+2 workspace 2
+    bindsym $mod+3 workspace 3
+    bindsym $mod+4 workspace 4
+    bindsym $mod+5 workspace 5
+    bindsym $mod+6 workspace 6
+    bindsym $mod+7 workspace 7
+    bindsym $mod+8 workspace 8
+    bindsym $mod+9 workspace 9
+    bindsym $mod+0 workspace 10
+    # Move focused container to workspace
+    bindsym $mod+Shift+1 move container to workspace 1
+    bindsym $mod+Shift+2 move container to workspace 2
+    bindsym $mod+Shift+3 move container to workspace 3
+    bindsym $mod+Shift+4 move container to workspace 4
+    bindsym $mod+Shift+5 move container to workspace 5
+    bindsym $mod+Shift+6 move container to workspace 6
+    bindsym $mod+Shift+7 move container to workspace 7
+    bindsym $mod+Shift+8 move container to workspace 8
+    bindsym $mod+Shift+9 move container to workspace 9
+    bindsym $mod+Shift+0 move container to workspace 10
+    # We just use 1-10 as the default.
+    bindsym $mod+Control+Shift+l move workspace to output right
+    bindsym $mod+Control+Shift+h move workspace to output left
+    bindsym $mod+Control+Shift+j move workspace to output down
+    bindsym $mod+Control+Shift+k move workspace to output up
+
+
+#
+# Assign workspaces to displays
+# See: https://github.com/swaywm/sway/issues/4771
+# to see outputs: `swaymsg -t get_outputs`
+
+# Define outputs
+set $output-primary "Goldstar Company Ltd LG ULTRAGEAR 106NTLE12344"
+set $output-secondary "Unknown 0x5A2D 0x00000000"
+set $output-side "Unknown HP Z27 CN49020L9R"
+
+# workspace to displays
+workspace 1 output $output-primary $output-secondary
+workspace 2 output $output-primary $output-secondary
+workspace 3 output $output-primary $output-secondary
+workspace 4 output $output-primary $output-secondary
+workspace 5 output $output-primary $output-secondary
+workspace 6 output $output-side $output-primary
+
+workspace 7 output $output-secondary $output-primary
+workspace 8 output $output-secondary $output-primary
+workspace 9 output $output-secondary $output-primary
+workspace 10 output $output-secondary $output-primary
+
+#
+# Layout stuff:
+#
+
+    bindsym $mod+b splith
+    bindsym $mod+v splitv
+
+    #bindsym $mod+c splith
+    #bindsym $mod+v splitv
+
+    # Switch the current container between different layout styles
+    bindsym $mod+s layout stacking
+    bindsym $mod+w layout tabbed
+    bindsym $mod+e layout toggle split
+
+    # Make the current focus fullscreen
+    bindsym $mod+f fullscreen
+
+    # Toggle the current focus between tiling and floating mode
+    bindsym $mod+Shift+space floating toggle
+
+    # Swap focus between the tiling area and the floating area
+    bindsym $mod+space focus mode_toggle
+
+    # Move focus to the parent container
+    bindsym $mod+a focus parent
+#
+# Scratchpad:
+#
+    # Sway has a "scratchpad", which is a bag of holding for windows.
+    # You can send windows there and get them back later.
+
+    # Move the currently focused window to the scratchpad
+    bindsym $mod+Shift+minus move scratchpad
+
+    # Show the next scratchpad window or hide the focused scratchpad window.
+    # If there are multiple scratchpad windows, this command cycles through them.
+    bindsym $mod+minus scratchpad show
+
+    # Start GVim in the scratchpad
+    # for_window [instance="__scratchpad"] move scratchpad, resize set 1400 800
+    exec /usr/bin/env neovide ~/.notes #-name __scratchpad
+
+# Resizing containers:
+#
+mode "resize" {
+    # left will shrink the containers width
+    # right will grow the containers width
+    # up will shrink the containers height
+    # down will grow the containers height
+    bindsym $left resize shrink width 100px
+    bindsym $right resize grow width 100px
+    bindsym $down resize grow height 100px
+    bindsym $up resize shrink height 100px
+
+    # Return to default mode
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+bindsym $mod+r mode "resize"
+
+bindsym $mod+u exec MOZ_ENABLE_WAYLAND=1 firefox
+bindsym $mod+t exec $term -- ranger ~/Downloads
+bindsym $mod+y exec clipman pick --tool rofi
+bindsym $mod+i exec /usr/bin/env blueberry
+
+bindsym XF86AudioMute exec pamixer -t
+bindsym XF86AudioMicMute exec pamixer --default-source -t
+bindsym XF86AudioLowerVolume exec pamixer -d 10 
+bindsym XF86AudioRaiseVolume exec pamixer -i 10
+
+bindsym --release Print exec /usr/bin/env bash | grim -g "$(slurp)" - | swappy -f -  
+
+# Screen recording:
+# wf-recorder -g "$(slurp)" -f ~/Pictures/recording.mp4
+
+bindcode 232 exec brightnessctl set 5%-
+bindcode 233 exec brightnessctl set 5%+
+
+# Notifications
+
+bindsym $mod+n exec makoctl dismiss
+
+# Zoom yuck
+#
+# Default for all windows is non-floating.
+#
+# For pop up notification windows that don't use notifications api
+for_window [app_id="zoom" title="^zoom$"] border none, floating enable
+# For specific Zoom windows
+for_window [app_id="zoom" title="^(Zoom|About)$"] border pixel, floating enable
+for_window [app_id="zoom" title="Settings"] floating enable, floating_minimum_size 960 x 700
+# Open Zoom Meeting windows on a new workspace (a bit hacky)
+for_window [app_id="zoom" title="Zoom Meeting(.*)?"] workspace next_on_output --create, move container to workspace current, floating disable, inhibit_idle open
+
+# Status Bar:
+#
+# Read `man 5 sway-bar` for more information about this section.
+bar {
+    position top
+    swaybar_command waybar
+}
+
+default_border pixel 5
+focus_wrapping no
+mouse_warping container
+
+gaps outer 5
+gaps inner 10
+
+#exec --no-startup-id /usr/bin/blueman-applet
+exec /usr/bin/env slack
+exec /usr/bin/env synology-drive
+exec /usr/bin/env spotify
+exec /usr/bin/env todoist
+# exec /usr/bin/env autotiling
+exec /usr/bin/env flashfocus -l never
+exec /usr/bin/env wlsunset -l 45.4 -L -75.7
+exec /usr/bin/env copyq
+#exec wl-paste -t text --watch clipman store
+exec wl-paste -p -t text --watch clipman store --histpath="~/.local/share/clipman-primary.json"
+
+assign [class="Slack"] 8
+for_window [class="Spotify"] move to workspace 10
+assign [class="Todoist"] 9
+
+include /etc/sway/config.d/*
