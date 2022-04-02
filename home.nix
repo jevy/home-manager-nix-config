@@ -118,6 +118,7 @@
     doctl
     qcad
     zip
+    etcher
 
     # For Sway
     # ---
@@ -153,11 +154,34 @@
   programs.zsh = {
     enable = true;
     enableCompletion = true;
+    plugins = [
+        {
+          file = "powerlevel10k.zsh-theme";
+          name = "powerlevel10k";
+          src = pkgs.fetchFromGitHub {
+            owner = "romkatv";
+            repo = "powerlevel10k";
+            rev = "v1.16.1";
+            sha256 = "DLiKH12oqaaVChRqY0Q5oxVjziZdW/PfnRW1fCSCbjo=";
+          };
+        }
+        {
+          file = "p10k.zsh";
+          name = "powerlevel10k-config";
+          src = p10k/p10k.zsh;
+        }
+    ];
     oh-my-zsh = {
       enable = true;
       theme = "robbyrussell";
       # theme = "powerlevel10k/powerlevel10k";
-      plugins = [ "git" "ruby" "rails" "sudo" "kubectl" ];
+      plugins = [ 
+        "git"
+        "ruby"
+        "rails"
+        "sudo"
+        "kubectl"
+      ];
     };
 
     # TODO: Need to source my p10k Properly
@@ -265,6 +289,8 @@
     ".config/sway/config".source = sway/config;
     ".config/kitty/kitty.conf".source = kitty/kitty.conf;
     ".config/mutt/muttrc".source = mutt/muttrc;
+    ".p10k.zsh".source = p10k/p10k.zsh;
+
     # ".config/polybar".source = polybar;
   };
 
@@ -300,8 +326,9 @@
 
   home.shellAliases = {
     pomodoro = "termdown 25m -s -b";
+    ts = "todoist s"; #Sync
+    tl ="todoist list --filter '(overdue | today)'"; # Today
   };
-
 
   # This value determines the Home Manager release that your
   # configuration is compatible with. This helps avoid breakage
