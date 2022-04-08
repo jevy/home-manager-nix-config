@@ -24,6 +24,7 @@
             ./zsh.nix
             ./cli.nix
             ./desktop-linux.nix
+            ./mutt.nix
           ];
         };
 
