@@ -16,7 +16,15 @@
     in {
       homeConfigurations.${username} = home-manager.lib.homeManagerConfiguration {
         # Specify the path to your home configuration here
-        configuration = import ./home.nix;
+        configuration =  { pkgs, ... }:
+        {
+          imports = [
+            ./home.nix
+            ./vim.nix
+            ./zsh.nix
+          ];
+        };
+
 
         inherit system username;
         homeDirectory = "/home/${username}";

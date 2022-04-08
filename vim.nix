@@ -1,3 +1,5 @@
+{ config, pkgs, libs, ... }:
+{ 
   programs.neovim = {
     enable = true;
     viAlias = true;
@@ -76,3 +78,4 @@
       autocmd CursorHold .notes :write
     '';
   };
+}
