@@ -23,6 +23,7 @@
             ./vim.nix
             ./zsh.nix
             ./cli.nix
+            ./desktop-linux.nix
           ];
         };
 
