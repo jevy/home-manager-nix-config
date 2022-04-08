@@ -1,4 +1,4 @@
-{ config, pkgs, duplicity_script, ... }:
+{ config, pkgs, ... }:
 
 {
   # Home Manager needs a bit of information about you and the
@@ -101,7 +101,6 @@
     # unstable.element-desktop-wayland
     # blueberry
     # helvum
-    duplicity
     signal-desktop
     ansible_2_10
     gcalcli
@@ -144,6 +143,8 @@
     #kooha
     #wf-recorder
     #jq # For waybar weather
+
+    _1password-gui
   ];
 
   # wayland.windowManager.sway = {
@@ -156,20 +157,31 @@
     enableCompletion = true;
     plugins = [
         {
-          file = "powerlevel10k.zsh-theme";
-          name = "powerlevel10k";
+          name = "todoist-functions";
           src = pkgs.fetchFromGitHub {
-            owner = "romkatv";
-            repo = "powerlevel10k";
-            rev = "v1.16.1";
-            sha256 = "DLiKH12oqaaVChRqY0Q5oxVjziZdW/PfnRW1fCSCbjo=";
+            owner = "sachaos";
+            repo = "todoist";
+            rev = "v0.16.0";
+            sha256 = "cfhwbL7RaeD5LWxlfqnHfPPPkC5AA3Z034p+hlFBWtg=";
           };
+          file = "todoist_functions.sh";
         }
-        {
-          file = "p10k.zsh";
-          name = "powerlevel10k-config";
-          src = p10k/p10k.zsh;
-        }
+    # plugins = [
+    #     {
+    #       file = "powerlevel10k.zsh-theme";
+    #       name = "powerlevel10k";
+    #       src = pkgs.fetchFromGitHub {
+    #         owner = "romkatv";
+    #         repo = "powerlevel10k";
+    #         rev = "v1.16.1";
+    #         sha256 = "DLiKH12oqaaVChRqY0Q5oxVjziZdW/PfnRW1fCSCbjo=";
+    #       };
+    #     }
+    #     # {
+    #     #   file = "p10k.zsh";
+    #     #   name = "powerlevel10k-config";
+    #     #   src = p10k/p10k.zsh;
+    #     # }
     ];
     oh-my-zsh = {
       enable = true;
@@ -292,36 +304,6 @@
     ".p10k.zsh".source = p10k/p10k.zsh;
 
     # ".config/polybar".source = polybar;
-  };
-
-  systemd.user.services = {
-    jevin_backup = {
-      Unit = {
-        Description = "Backup Jevin's Directory with Duplicity";
-      };
-      Install = {
-        WantedBy = [ "default.target" ];
-      };
-      Service = {
-        Type = "oneshot";
-        ExecStart = "/usr/bin/env duplicity_backup";
-      };
-    };
-  };
-
-  systemd.user.timers = {
-    jevin_backup_timer = {
-      Unit = {
-        Description = "Run Jevin's Duplicity Backup";
-      };
-        Install = {
-          WantedBy = [ "timers.target" ];
-        };
-      Timer = {
-        OnUnitActiveSec = "24h"; # 24 hours since it was run last
-        Unit = "jevin_backup.service";
-      };
-    };
   };
 
   home.shellAliases = {

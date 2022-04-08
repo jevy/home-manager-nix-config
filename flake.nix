@@ -7,10 +7,9 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-21.11";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    duplicity_script.url = "/home/jevin/code/personal/duplicity_script";
   };
 
-  outputs = { home-manager, duplicity_script, ... }:
+  outputs = { home-manager, ... }:
     let
       system = "x86_64-linux";
       username = "jevin";
@@ -18,10 +17,6 @@
       homeConfigurations.${username} = home-manager.lib.homeManagerConfiguration {
         # Specify the path to your home configuration here
         configuration = import ./home.nix;
-
-        extraSpecialArgs = {
-          inherit duplicity_script;
-        };
 
         inherit system username;
         homeDirectory = "/home/${username}";
