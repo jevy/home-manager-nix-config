@@ -22,6 +22,7 @@
             ./home.nix
             ./vim.nix
             ./zsh.nix
+            ./cli.nix
           ];
         };
 
