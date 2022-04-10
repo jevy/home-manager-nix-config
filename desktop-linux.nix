@@ -95,6 +95,7 @@
     #jq # For waybar weather
 
     _1password-gui
+    obs-studio
   ];
 
   home.file = {

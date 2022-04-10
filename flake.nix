@@ -25,6 +25,7 @@
             ./cli.nix
             ./desktop-linux.nix
             ./mutt.nix
+            ./amateur_radio.nix
           ];
         };
 

@@ -41,6 +41,7 @@
         "rails"
         "sudo"
         "kubectl"
+        "vi-mode"
       ];
     };
 

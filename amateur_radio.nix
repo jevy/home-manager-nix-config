@@ -2,11 +2,13 @@
 {
   home.packages = with pkgs; [
     soapysdrplay
+    soapysdr-with-plugins
     gqrx
-    cubicsdr
+    # cubicsdr #segfaults
     sdrangel
     hamlib_4
     wsjtx
+    sdrpp
   ];
 
 }
