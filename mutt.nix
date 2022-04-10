@@ -21,34 +21,27 @@
     python38Packages.wxPython_4_0
   ];
 
-  accounts.email.accounts.mail_quickjack = 
-  {
-    primary = true;
-    realName = "Jevin Maltais";
-    address = "jevin@quickjack.ca";
-    aliases = [ "jevin@buildingremoteteams.com" "jevin@galasathome.com" "jevyjevjevs@gmail.com" ];
-    maildir.path = "mail";
-    notmuch.enable = true;
-    lieer = 
-      {
-        enable = true;
-        notmuchSetupWarning = false;
-        sync.enable = true;
-        settings = ''
-          {
-              "replace_slash_with_dot": false,
-              "account": "jevin@quickjack.ca",
-              "timeout": 600,
-              "drop_non_existing_label": true,
-              "ignore_empty_history": false,
-              "ignore_tags": [],
-              "ignore_remote_labels": [
-                  "important"
-              ],
-              "remove_local_messages": true,
-              "file_extension": ""
-          }
-        '';
+  accounts.email = 
+  { 
+    maildirBasePath = "mail_quickjack";
+
+    accounts.mail_quickjack = {
+      primary = true;
+      flavor = "gmail.com";
+      realName = "Jevin Maltais";
+      address = "jevin@quickjack.ca";
+      aliases = [ "jevin@buildingremoteteams.com" "jevin@galasathome.com" "jevyjevjevs@gmail.com" ];
+
+      maildir.path = "mail";
+      notmuch.enable = true;
+      lieer = 
+        {
+          enable = true;
+          notmuchSetupWarning = false;
+          sync.enable = true;
+          settings.drop_non_existing_labels = true;
+          settings.ignore_remote_labels = ["important"];
+        };
       };
     };
 
@@ -57,6 +50,11 @@
     # new.ignore = [ "/.*[.](json|lock|bak)$/" ];
     new.tags = [];
     search.excludeTags = [ "deleted" "spam" ];
+    maildir.synchronizeFlags = false;
+  };
+
+  programs.lieer = {
+    enable = true;
   };
 
 
