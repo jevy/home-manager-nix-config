@@ -53,10 +53,8 @@
     maildir.synchronizeFlags = false;
   };
 
-  programs.lieer = {
-    enable = true;
-  };
-
+  services.lieer.enable = true;
+  programs.lieer.enable = true;
 
   home.file = {
     ".config/mutt/muttrc".source = mutt/muttrc;
