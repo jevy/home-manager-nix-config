@@ -3,6 +3,9 @@
   programs.zsh = {
     enable = true;
     enableCompletion = true;
+    initExtra = ''
+      source ${pkgs.zsh-vi-mode}/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh
+    '';
     plugins = [
         {
           name = "todoist-functions";
@@ -41,7 +44,6 @@
         "rails"
         "sudo"
         "kubectl"
-        "vi-mode"
       ];
     };
 
