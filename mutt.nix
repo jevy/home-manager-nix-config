@@ -23,23 +23,23 @@
 
   accounts.email = 
   { 
-    maildirBasePath = "mail_quickjack";
+    # maildirBasePath = "mail_quickjack";
 
-    accounts.mail_quickjack = {
+    accounts.quickjack = {
+      # maildir.path = "/";
       primary = true;
       flavor = "gmail.com";
       realName = "Jevin Maltais";
       address = "jevin@quickjack.ca";
       aliases = [ "jevin@buildingremoteteams.com" "jevin@galasathome.com" "jevyjevjevs@gmail.com" ];
 
-      maildir.path = "mail";
+      # maildir.path = "mail";
       notmuch.enable = true;
       lieer = 
         {
           enable = true;
-          notmuchSetupWarning = false;
           sync.enable = true;
-          settings.drop_non_existing_labels = true;
+          settings.drop_non_existing_label = true;
           settings.ignore_remote_labels = ["important"];
         };
       };

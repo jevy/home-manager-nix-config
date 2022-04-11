@@ -5,9 +5,9 @@ set realname = "Jevin Maltais"
 set from = "jevin@quickjack.ca"
 set sendmail = "gmi send -t -C ~/mail_quickjack"
 alias me jevin <jevin@quickjack.ca>
-set folder = "~/mail_quickjack/mail"
-set header_cache = /home/jevin/.cache/mutt/jevin@quickjack.ca/headers
-set message_cachedir = /home/jevin/.cache/mutt/jevin@quickjack.ca/bodies
+set folder = "~/Maildir/quickjack/mail"
+# set header_cache = /home/jevin/.cache/mutt/jevin@quickjack.ca/headers
+# set message_cachedir = /home/jevin/.cache/mutt/jevin@quickjack.ca/bodies
 set mbox_type = Maildir
 
 bind index,pager gg noop
@@ -19,7 +19,7 @@ unmailboxes *
 unalternates *
 unset signature
 unmacro index o
-macro index o "<shell-escape>cd ~/mail_quickjack; gmi sync<enter>" "run lieer to sync jevin@quickjack.ca"
+macro index o "<shell-escape>cd ~/Maildir/quickjack; gmi sync<enter>" "run lieer to sync jevin@quickjack.ca"
 
 unmacro index s
 
@@ -38,7 +38,7 @@ macro index,pager e "<modify-tags-then-hide>-inbox -unread<enter><sync-mailbox><
 macro index,pager b "<resend-message>"
 set nm_unread_tag = "unread"
 set nm_db_limit = 5000
-set nm_default_url = "notmuch:///home/jevin/mail_quickjack"
+set nm_default_url = "notmuch:///home/jevin/Maildir"
 # virtual-mailboxes "Inbox" "notmuch://?query=tag:inbox -tag:promotions -tag:social"
 virtual-mailboxes "Inbox" "notmuch://?query=(tag:inbox -tag:promotions -tag:social) OR (tag:inbox and tag:flagged)"
 virtual-mailboxes "Archive" "notmuch://?query=not tag:inbox and not tag:spam"
