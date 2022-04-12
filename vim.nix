@@ -4,7 +4,18 @@
     enable = true;
     viAlias = true;
     vimAlias = true;
-    plugins = with pkgs.vimPlugins; [ vim-airline vim-surround vim-commentary vim-json vim-markdown goyo-vim ranger-vim base16-vim vim-nix];
+    plugins = with pkgs.vimPlugins; [ 
+      vim-airline
+      vim-surround
+      vim-commentary
+      vim-json
+      vim-markdown
+      goyo-vim
+      ranger-vim
+      base16-vim
+      vim-nix
+      gruvbox
+    ];
     # settings = { 
     #   ignorecase = true;
     # };
@@ -28,7 +39,8 @@
       set relativenumber
 
       " colorscheme Tomorrow-Night
-      colorscheme base16-default-dark
+      " colorscheme base16-default-dark
+      colorscheme gruvbox
 
 
 
