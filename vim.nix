@@ -15,6 +15,7 @@
       base16-vim
       vim-nix
       gruvbox
+      vim-indent-guides
     ];
     # settings = { 
     #   ignorecase = true;
@@ -42,7 +43,7 @@
       " colorscheme base16-default-dark
       colorscheme gruvbox
 
-
+      let g:indent_guides_enable_on_vim_startup = 1
 
       " Freedom
       nnoremap <Leader><Space> :Goyo<CR>
