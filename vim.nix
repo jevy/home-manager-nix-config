@@ -16,10 +16,8 @@
       vim-nix
       gruvbox
       vim-indent-guides
+      vim-gitgutter
     ];
-    # settings = { 
-    #   ignorecase = true;
-    # };
     extraConfig = ''
       set mouse=a
 
@@ -44,6 +42,8 @@
       colorscheme gruvbox
 
       let g:indent_guides_enable_on_vim_startup = 1
+
+      set updatetime=100 "For Git marker updating to be faster
 
       " Freedom
       nnoremap <Leader><Space> :Goyo<CR>
