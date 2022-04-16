@@ -32,6 +32,7 @@
     kubectx
     pandoc
     zip
+    lsd
   ];
 
   home.file = {
@@ -44,6 +45,10 @@
     pomodoro = "termdown 25m -s -b";
     ts = "todoist s"; #Sync
     tl ="todoist list --filter '(overdue | today)'"; # Today
+    ls = "lsd";
+    l = "ls -l";
+    lt = "ls --tree";
+    la = "ls -a";
   };
 
 }
