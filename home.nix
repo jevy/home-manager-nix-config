@@ -29,6 +29,7 @@
     aliases = {
       st = "status";
     };
+    delta.enable = true;
   };
 
   home.keyboard = {
