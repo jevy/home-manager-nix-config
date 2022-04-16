@@ -17,6 +17,16 @@
           };
           file = "todoist_functions.sh";
         }
+        {
+          name = "zsh-z";
+          src = pkgs.fetchFromGitHub {
+            owner = "agkozak";
+            repo = "zsh-z";
+            rev = "b5e61d03a42a84e9690de12915a006b6745c2a5f";
+            sha256 = "1A6WZ+fJSf2WKZD7CYJB/pbgwV2mX+X8qInqQLeuT78=";
+          };
+          file = "zsh-z.plugin.zsh";
+        }
     # plugins = [
     #     {
     #       file = "powerlevel10k.zsh-theme";
