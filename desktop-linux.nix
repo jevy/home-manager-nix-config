@@ -96,6 +96,7 @@
 
     _1password-gui
     obs-studio
+    blueberry
   ];
 
   home.file = {
