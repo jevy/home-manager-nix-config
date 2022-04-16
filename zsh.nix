@@ -8,16 +8,6 @@
     '';
     plugins = [
         {
-          name = "todoist-functions";
-          src = pkgs.fetchFromGitHub {
-            owner = "sachaos";
-            repo = "todoist";
-            rev = "v0.16.0";
-            sha256 = "cfhwbL7RaeD5LWxlfqnHfPPPkC5AA3Z034p+hlFBWtg=";
-          };
-          file = "todoist_functions.sh";
-        }
-        {
           name = "zsh-z";
           src = pkgs.fetchFromGitHub {
             owner = "agkozak";

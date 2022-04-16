@@ -60,8 +60,6 @@
     signal-desktop
     ansible_2_10
     gcalcli
-    todoist
-    peco # For todoist
     qalculate-gtk
     apprise
     nasc
