@@ -33,6 +33,7 @@
     pandoc
     zip
     lsd
+    fd
   ];
 
   home.file = {
