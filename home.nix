@@ -3,8 +3,8 @@
 {
   # Home Manager needs a bit of information about you and the
   # paths it should manage.
-  # home.username = "jevin";
-  # home.homeDirectory = "/home/jevin";
+  home.username = "jevinhumi";
+  home.homeDirectory = "/home/jevinhumi";
 
   nixpkgs.config.allowUnfree = true;
 

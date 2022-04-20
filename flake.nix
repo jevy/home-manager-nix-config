@@ -12,7 +12,7 @@
   outputs = { home-manager, ... }:
     let
       system = "x86_64-linux";
-      username = "jevin";
+      username = "jevinhumi";
     in {
       homeConfigurations.${username} = home-manager.lib.homeManagerConfiguration {
         # Specify the path to your home configuration here
@@ -23,9 +23,9 @@
             ./vim.nix
             ./zsh.nix
             ./cli.nix
-            ./desktop-linux.nix
-            ./mutt.nix
-            ./amateur_radio.nix
+            ./desktop-linux-work.nix
+            #./mutt.nix
+            #./amateur_radio.nix
           ];
         };
 
