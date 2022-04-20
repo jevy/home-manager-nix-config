@@ -24,6 +24,7 @@
 
   home.file = {
     ".config/sway/config".source = sway/config;
+    ".config/mako/config".source = mako/config;
   };
 
   home.shellAliases = {
