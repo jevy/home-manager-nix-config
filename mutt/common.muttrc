@@ -1,15 +1,3 @@
-# vim: filetype=neomuttrc
-#source /nix/store/vk998q3v096rsy51pqdf4dplpzxiaa26-mutt-wizard-3.2.1/share/mutt-wizard/mutt-wizard.muttrc
-
-set realname = "Jevin Maltais"
-set from = "jevin@quickjack.ca"
-set sendmail = "gmi send -t -C ~/Maildir/quickjack"
-alias me jevin <jevin@quickjack.ca>
-set folder = "~/Maildir/quickjack/mail"
-# set header_cache = /home/jevin/.cache/mutt/jevin@quickjack.ca/headers
-# set message_cachedir = /home/jevin/.cache/mutt/jevin@quickjack.ca/bodies
-set mbox_type = Maildir
-
 bind index,pager gg noop
 bind index,pager g noop
 bind index,pager M noop
@@ -19,7 +7,6 @@ unmailboxes *
 unalternates *
 unset signature
 unmacro index o
-macro index o "<shell-escape>cd ~/Maildir/quickjack; gmi sync<enter>" "run lieer to sync jevin@quickjack.ca"
 
 unmacro index s
 
@@ -38,7 +25,6 @@ macro index,pager e "<modify-tags-then-hide>-inbox -unread<enter><sync-mailbox><
 macro index,pager b "<resend-message>"
 set nm_unread_tag = "unread"
 set nm_db_limit = 5000
-set nm_default_url = "notmuch:///home/jevin/Maildir"
 # virtual-mailboxes "Inbox" "notmuch://?query=tag:inbox -tag:promotions -tag:social"
 virtual-mailboxes "Inbox" "notmuch://?query=(tag:inbox -tag:promotions -tag:social) OR (tag:inbox and tag:flagged)"
 virtual-mailboxes "Archive" "notmuch://?query=not tag:inbox and not tag:spam"
@@ -46,7 +32,6 @@ virtual-mailboxes "Personal" "notmuch://?query=tag:personal"
 virtual-mailboxes "Flagged" "notmuch://?query=tag:flagged"
 virtual-mailboxes "Promotions" "notmuch://?query=tag:promotions"
 virtual-mailboxes "Social" "notmuch://?query=tag:social"
-virtual-mailboxes "Ashley" "notmuch://?query=(from:ashley.maltais@gmail.com and to:jevin@quickjack.ca) or (from:jevin@quickjack.ca and to:ashley.maltais@gmail.com)"
 virtual-mailboxes "Sent" "notmuch://?query=tag:sent"
 
 set spoolfile = "Inbox"

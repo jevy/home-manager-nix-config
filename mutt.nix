@@ -57,7 +57,8 @@
   programs.lieer.enable = true;
 
   home.file = {
-    ".config/mutt/muttrc".source = mutt/muttrc;
+    ".config/mutt/muttrc".source = mutt/quickjack.muttrc;
+    ".config/mutt/muttrc-common".source = mutt/common.muttrc;
   };
 
 }

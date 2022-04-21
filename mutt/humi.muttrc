@@ -1,0 +1,12 @@
+source muttrc
+
+set realname = "Jevin Maltais"
+set from = "jevin.maltais@humi.ca"
+set sendmail = "gmi send -t -C ~/Maildir/humi"
+alias me jevin <jevin.maltais@humi.ca>
+set folder = "~/Maildir/humi/mail"
+set mbox_type = Maildir
+
+macro index o "<shell-escape>cd ~/Maildir/humi; gmi sync<enter>" "run lieer to sync jevin@quickjack.ca"
+
+set nm_default_url = "notmuch:///home/jevinhumi/Maildir"
