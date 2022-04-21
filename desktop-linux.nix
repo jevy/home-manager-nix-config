@@ -99,7 +99,8 @@
 
   home.file = {
     ".config/sway/config".source = sway/config;
-    ".config/waybar".source = waybar/;
+    ".config/waybar/config".source = waybar/config;
+    ".config/waybar/style.css".source = waybar/style.css;
   };
 
   home.shellAliases = {

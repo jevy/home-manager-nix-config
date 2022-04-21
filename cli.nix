@@ -34,6 +34,7 @@
     zip
     lsd
     fd
+    feh
   ];
 
   home.file = {
