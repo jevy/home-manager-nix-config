@@ -58,7 +58,7 @@
 
   home.file = {
     ".config/mutt/muttrc".source = mutt/quickjack.muttrc;
-    ".config/mutt/muttrc-common".source = mutt/common.muttrc;
+    ".config/mutt/common.muttrc".source = mutt/common.muttrc;
   };
 
 }

@@ -1,5 +1,5 @@
 # vim: filetype=neomuttrc
-source muttrc
+source common.muttrc
 
 set realname = "Jevin Maltais"
 set from = "jevin@quickjack.ca"

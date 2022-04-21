@@ -1,4 +1,4 @@
-source muttrc
+source common.muttrc
 
 set realname = "Jevin Maltais"
 set from = "jevin.maltais@humi.ca"
