@@ -101,7 +101,7 @@
     enable = true;
     latitude = "45.42";
     longitude = "-75.69";
-  }
+  };
 
   home.file = {
     ".config/sway/config".source = sway/config;

@@ -10,11 +10,11 @@
   };
 
   outputs = { home-manager, ... }:
-    let
-      system = "x86_64-linux";
-      username = "jevinhumi";
-    in {
-      homeConfigurations.${username} = home-manager.lib.homeManagerConfiguration {
+  let
+    system = "x86_64-linux";
+  in {
+    homeConfigurations = {
+      jevin = home-manager.lib.homeManagerConfiguration {
         # Specify the path to your home configuration here
         configuration =  { pkgs, ... }:
         {
@@ -23,22 +23,36 @@
             ./vim.nix
             ./zsh.nix
             ./cli.nix
-            ./desktop-linux-work.nix
-            #./mutt.nix
-            #./amateur_radio.nix
+            ./desktop-linux.nix
+            ./mutt.nix
+            ./amateur_radio.nix
           ];
         };
 
-
-        inherit system username;
-        homeDirectory = "/home/${username}";
-        # Update the state version as needed.
-        # See the changelog here:
-        # https://nix-community.github.io/home-manager/release-notes.html#sec-release-21.05
+        inherit system;
+        username = "jevin";
+        homeDirectory = "/home/jevin";
         stateVersion = "21.11";
+      };
 
-        # Optionally use extraSpecialArgs
-        # to pass through arguments to home.nix
+      jevinhumi = home-manager.lib.homeManagerConfiguration {
+        # Specify the path to your home configuration here
+        configuration =  { pkgs, ... }:
+        {
+          imports = [
+         ./home.nix
+         ./vim.nix
+         ./zsh.nix
+         ./cli.nix
+         ./desktop-linux-work.nix
+          ];
+        };
+
+        inherit system;
+        username = "jevinhumi";
+        homeDirectory = "/home/jevinhumi";
+        stateVersion = "21.11";
       };
     };
+  };
 }
