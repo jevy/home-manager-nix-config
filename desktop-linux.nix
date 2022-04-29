@@ -105,6 +105,7 @@
 
   home.file = {
     ".config/sway/config".source = sway/config;
+    ".config/mako/config".source = mako/config;
     ".config/waybar/config".source = waybar/config;
     ".config/waybar/style.css".source = waybar/style.css;
   };

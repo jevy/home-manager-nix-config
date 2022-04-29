@@ -26,6 +26,9 @@
             ./desktop-linux.nix
             ./mutt.nix
             ./amateur_radio.nix
+            ./desktop-linux-work.nix
+            #./mutt.nix
+            #./amateur_radio.nix
           ];
         };
 
@@ -40,11 +43,12 @@
         configuration =  { pkgs, ... }:
         {
           imports = [
-         ./home.nix
-         ./vim.nix
-         ./zsh.nix
-         ./cli.nix
-         ./desktop-linux-work.nix
+           ./home.nix
+           ./vim.nix
+           ./zsh.nix
+           ./cli.nix
+           ./desktop-linux-work.nix
+           ./mutt-humi.nix
           ];
         };
 

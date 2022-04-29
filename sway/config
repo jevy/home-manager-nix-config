@@ -24,7 +24,7 @@ set $term kitty
 ### Output configuration
 #
 # Default wallpaper (more resolutions are available in /usr/share/backgrounds/sway/)
-output * bg ~/Pictures/background/firewatch.jpg fill
+# output * bg ~/Pictures/background/firewatch.jpg fill
 #
 # Example configuration:
 #
@@ -218,7 +218,7 @@ mode "resize" {
 }
 bindsym $mod+r mode "resize"
 
-bindsym $mod+u exec MOZ_ENABLE_WAYLAND=1 firefox
+bindsym $mod+u exec google-chrome-stable
 bindsym $mod+t exec $term -- ranger ~/Downloads
 bindsym $mod+y exec clipman pick --tool rofi
 bindsym $mod+i exec /usr/bin/env blueberry

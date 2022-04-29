@@ -35,6 +35,7 @@
     lsd
     fd
     feh
+    usbutils
   ];
 
   home.file = {

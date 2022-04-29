@@ -22,15 +22,15 @@
   programs.home-manager.enable = true;
   # programs.home-manager.useGlobalPkgs = true;
 
-  programs.git = {
-    enable = true;
-    userName = "jevin";
-    userEmail = "jevin@quickjack.ca";
-    aliases = {
-      st = "status";
-    };
-    delta.enable = true;
-  };
+  # programs.git = {
+  #   enable = true;
+  #   userName = "jevin";
+  #   userEmail = "jevin@quickjack.ca";
+  #   aliases = {
+  #     st = "status";
+  #   };
+  #   delta.enable = true;
+  # };
 
   home.keyboard = {
     layout = "us";

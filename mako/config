@@ -1,2 +1,5 @@
 [app-name="Spotify"]
 invisible=1
+
+[app-name="Slack"]
+invisible=1
