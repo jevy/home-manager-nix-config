@@ -28,7 +28,7 @@
     enable = true;
     latitude = "45.42";
     longitude = "-75.69";
-  }
+  };
 
   xdg.enable = true;
 
