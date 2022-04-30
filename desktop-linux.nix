@@ -39,7 +39,6 @@
     abook # mutt-wizard
     urlscan # mutt-wizard
     poppler_utils # mutt-wizard
-    mailcap
     python38Packages.goobook # mutt
     python38Full
     python38Packages.wxPython_4_0

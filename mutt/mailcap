@@ -1,34 +1,31 @@
+text/plain; cat %s
+text/plain; $EDITOR %s ; copiousoutput
+application/pdf; zathura %s; test=true
+application/pdf; pdftotext -layout %s -; copiousoutput
+text/html; openfile %s ; nametemplate=%s.html
+text/html; w3m -dump -T text/html -I %{charset} -O utf-8 %s; description=HTML Text; nametemplate=%s.html; copiousoutput
+application/msword; libreoffice %s
+application/msword; pandoc --from docx --to markdown %s; copiousoutput
+application/vnd.openxmlformats-officedocument.wordprocessingml.document; libreoffice %s; test=true 
+application/vnd.openxmlformats-officedocument.wordprocessingml.document; pandoc --from docx --to markdown %s; copiousoutput
+application/pdf; zathura %s
+application/pdf; pdftotext.hs text %s; copiousoutput
+application/vnd.oasis.opendocument.text; libreoffice %s; test=true
+application/vnd.oasis.opendocument.text; pandoc --from odt --to markdown %s; copiousoutput
+
 text/plain; $EDITOR %s ;
 text/html; openfile %s ; nametemplate=%s.html
 text/html; lynx -assume_charset=%{charset} -display_charset=utf-8 -dump %s; nametemplate=%s.html; copiousoutput;
-# image/*; feh %s ; copiousoutput
-video/*; setsid mpv --quiet %s &; copiousoutput
-# application/pdf; zathura %s ;
+
+image/*; feh %s ; copiousoutput
 
 # images
-image/bmp;feh %s
-image/gif;feh %s
-image/ilbm;feh %s
-image/jpg;feh %s
-image/jpeg;feh %s
-image/png;feh %s
-image/tiff;feh %s
-image/x-png;feh %s
-image/x-ilbm;feh %s
-
-# pdf
-application/pdf;zathura %s
-image/pdf;zathura %s
-
-# text, html, xml
-text/plain;vim %s
-text/xml;vim %s
-text/x-diff;vim %s
-text/x-csrc;vim %s
-text/x-markdown;vim %s
-
-# docs application
-application/msword;libreoffice %s
-
-# miscellaneous file types can end up as this (md/markdown is one)
-application/octet-stream;vim %s
+# image/bmp;feh %s
+# image/gif;feh %s
+# image/ilbm;feh %s
+# image/jpg;feh %s
+# image/jpeg;feh %s
+# image/png;feh %s
+# image/tiff;feh %s
+# image/x-png;feh %s
+# image/x-ilbm;feh %s
