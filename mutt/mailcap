@@ -1,7 +1,34 @@
 text/plain; $EDITOR %s ;
 text/html; openfile %s ; nametemplate=%s.html
 text/html; lynx -assume_charset=%{charset} -display_charset=utf-8 -dump %s; nametemplate=%s.html; copiousoutput;
-image/*; muttimage %s ; copiousoutput
+# image/*; feh %s ; copiousoutput
 video/*; setsid mpv --quiet %s &; copiousoutput
-application/pdf; openfile %s ;
-application/pgp-encrypted; gpg -d '%s'; copiousoutput;
+# application/pdf; zathura %s ;
+
+# images
+image/bmp;feh %s
+image/gif;feh %s
+image/ilbm;feh %s
+image/jpg;feh %s
+image/jpeg;feh %s
+image/png;feh %s
+image/tiff;feh %s
+image/x-png;feh %s
+image/x-ilbm;feh %s
+
+# pdf
+application/pdf;zathura %s
+image/pdf;zathura %s
+
+# text, html, xml
+text/plain;vim %s
+text/xml;vim %s
+text/x-diff;vim %s
+text/x-csrc;vim %s
+text/x-markdown;vim %s
+
+# docs application
+application/msword;libreoffice %s
+
+# miscellaneous file types can end up as this (md/markdown is one)
+application/octet-stream;vim %s
