@@ -11,10 +11,11 @@
 
   outputs = { home-manager, ... }:
   let
-    system = "x86_64-linux";
+    # system = "aarch64-darwin";
+    # system = "x86_64-linux";
   in {
     homeConfigurations = {
-      jevin = home-manager.lib.homeManagerConfiguration {
+      personallinux = home-manager.lib.homeManagerConfiguration {
         # Specify the path to your home configuration here
         configuration =  { pkgs, ... }:
         {
@@ -22,7 +23,8 @@
             ./home.nix
             ./vim.nix
             ./zsh.nix
-            ./cli.nix
+            ./cli-common.nix
+            ./cli-linux.nix
             ./desktop-linux.nix
             ./mutt.nix
             ./amateur_radio.nix
@@ -32,13 +34,13 @@
           ];
         };
 
-        inherit system;
+        system = "x86_64-linux";
         username = "jevin";
         homeDirectory = "/home/jevin";
         stateVersion = "21.11";
       };
 
-      jevinhumi = home-manager.lib.homeManagerConfiguration {
+      worklinux = home-manager.lib.homeManagerConfiguration {
         # Specify the path to your home configuration here
         configuration =  { pkgs, ... }:
         {
@@ -46,15 +48,36 @@
            ./home.nix
            ./vim.nix
            ./zsh.nix
-           ./cli.nix
+           ./cli-common.nix
+           ./cli-linux.nix
            ./desktop-linux-work.nix
            ./mutt-humi.nix
           ];
         };
 
-        inherit system;
+        system = "x86_64-linux";
         username = "jevinhumi";
         homeDirectory = "/home/jevinhumi";
+        stateVersion = "21.11";
+      };
+
+      jevin = home-manager.lib.homeManagerConfiguration {
+        # Specify the path to your home configuration here
+        configuration =  { pkgs, ... }:
+        {
+          imports = [
+           ./home.nix
+           ./vim.nix
+           ./zsh.nix
+           ./cli-common.nix
+           # ./desktop-linux-work.nix
+           # ./mutt-humi.nix # No darwin for lieer
+          ];
+        };
+
+        system = "aarch64-darwin";
+        username = "jevin";
+        homeDirectory = "/Users/jevin";
         stateVersion = "21.11";
       };
     };
