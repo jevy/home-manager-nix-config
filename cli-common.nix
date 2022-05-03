@@ -1,7 +1,6 @@
 { config, pkgs, libs, ... }:
 {
   home.packages = with pkgs; [
-    ranger
     visidata
     ripgrep-all
     wget
@@ -12,21 +11,21 @@
     kitty
     k9s
     kubectl
-    docker
-    docker-compose
+    # docker
+    # docker-compose  # No darwin
     ripgrep
     file
     ffmpeg
-    imagemagickBig
+    # imagemagickBig # No darwin
     killall
     dig
     ldns # drill
     unzip
-    mlocate # For ranger
+    # mlocate # For ranger # No Darwin
     fzf # For ranger
     yt-dlp
     tmux
-    awscli2
+    # awscli2 # No AWS
     termdown
     httpie
     kubectx
@@ -35,7 +34,7 @@
     lsd
     fd
     feh
-    usbutils
+    # usbutils # No Darwin
   ];
 
   home.file = {
