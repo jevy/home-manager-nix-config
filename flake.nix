@@ -61,7 +61,7 @@
         stateVersion = "21.11";
       };
 
-      jevin = home-manager.lib.homeManagerConfiguration {
+      workmac= home-manager.lib.homeManagerConfiguration {
         # Specify the path to your home configuration here
         configuration =  { pkgs, ... }:
         {
