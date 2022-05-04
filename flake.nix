@@ -63,7 +63,7 @@
            ./vim.nix
            ./zsh.nix
            ./cli-common.nix
-           # ./desktop-linux-work.nix
+           ./desktop-mac.nix
            # ./mutt-humi.nix # No darwin for lieer
           ];
         };
