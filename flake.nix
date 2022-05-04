@@ -9,13 +9,9 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { home-manager, ... }:
-  let
-    # system = "aarch64-darwin";
-    # system = "x86_64-linux";
-  in {
-    homeConfigurations = {
-      personallinux = home-manager.lib.homeManagerConfiguration {
+  outputs = { home-manager, ... }: {
+
+      packages.x86_64-linux.homeConfigurations.jevin = home-manager.lib.homeManagerConfiguration {
         # Specify the path to your home configuration here
         configuration =  { pkgs, ... }:
         {
@@ -28,9 +24,6 @@
             ./desktop-linux.nix
             ./mutt.nix
             ./amateur_radio.nix
-            ./desktop-linux-work.nix
-            #./mutt.nix
-            #./amateur_radio.nix
           ];
         };
 
@@ -40,7 +33,7 @@
         stateVersion = "21.11";
       };
 
-      worklinux = home-manager.lib.homeManagerConfiguration {
+      packages.x86_64-linux.homeConfigurations.jevinhumi = home-manager.lib.homeManagerConfiguration {
         # Specify the path to your home configuration here
         configuration =  { pkgs, ... }:
         {
@@ -61,7 +54,7 @@
         stateVersion = "21.11";
       };
 
-      workmac= home-manager.lib.homeManagerConfiguration {
+      packages.aarch64-darwin.homeConfigurations.jevin = home-manager.lib.homeManagerConfiguration {
         # Specify the path to your home configuration here
         configuration =  { pkgs, ... }:
         {
@@ -81,5 +74,4 @@
         stateVersion = "21.11";
       };
     };
-  };
 }
