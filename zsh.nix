@@ -44,6 +44,7 @@
         "rails"
         "sudo"
         "kubectl"
+        "taskwarrior"
       ];
     };
 

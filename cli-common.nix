@@ -27,6 +27,9 @@
     lsd
     fd
     feh
+    taskwarrior
+    taskwarrior-tui
+    tasksh
   ];
 
   home.file = {
