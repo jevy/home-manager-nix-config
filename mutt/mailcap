@@ -1,15 +1,13 @@
 text/plain; cat %s
 text/plain; $EDITOR %s ; copiousoutput
 application/pdf; zathura %s; test=true
-application/pdf; pdftotext -layout %s -; copiousoutput
+# application/pdf; pdftotext -layout %s -; copiousoutput # Insecure package, can't install insecure
 text/html; openfile %s ; nametemplate=%s.html
 text/html; w3m -dump -T text/html -I %{charset} -O utf-8 %s; description=HTML Text; nametemplate=%s.html; copiousoutput
 application/msword; libreoffice %s
 application/msword; pandoc --from docx --to markdown %s; copiousoutput
 application/vnd.openxmlformats-officedocument.wordprocessingml.document; libreoffice %s; test=true 
 application/vnd.openxmlformats-officedocument.wordprocessingml.document; pandoc --from docx --to markdown %s; copiousoutput
-application/pdf; zathura %s
-application/pdf; pdftotext.hs text %s; copiousoutput
 application/vnd.oasis.opendocument.text; libreoffice %s; test=true
 application/vnd.oasis.opendocument.text; pandoc --from odt --to markdown %s; copiousoutput
 
@@ -17,7 +15,7 @@ text/plain; $EDITOR %s ;
 text/html; openfile %s ; nametemplate=%s.html
 text/html; lynx -assume_charset=%{charset} -display_charset=utf-8 -dump %s; nametemplate=%s.html; copiousoutput;
 
-image/*; feh %s ; copiousoutput
+image/*; feh --scale-down %s ; copiousoutput
 
 # images
 # image/bmp;feh %s
