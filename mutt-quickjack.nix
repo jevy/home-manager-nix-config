@@ -9,6 +9,8 @@
 
   accounts.email = 
   { 
+    # maildirBasePath = "mail_quickjack";
+
     accounts.quickjack = {
       # maildir.path = "/";
       primary = true;
