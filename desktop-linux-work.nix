@@ -33,6 +33,12 @@
   xdg.enable = true;
 
   xdg.mimeApps.enable = true;
+  xdg.mimeApps.defaultApplications =
+  {
+    "x-scheme-handler/http"  = [ "google-chrome.desktop"];
+    "x-scheme-handler/https" = [ "google-chrome.desktop"];
+    "text/html"              = [ "google-chrome.desktop"];
+  };
 
   # Manually install gnome meeting applet
   # flatpak install flathub com.chmouel.gnomeNextMeetingApplet

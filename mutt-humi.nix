@@ -56,6 +56,7 @@
   home.file = {
     ".config/mutt/muttrc".source = mutt/humi.muttrc;
     ".config/mutt/common.muttrc".source = mutt/common.muttrc;
+    ".config/mailcap".source = mutt/mailcap;
   };
 
 }
