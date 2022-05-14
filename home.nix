@@ -21,15 +21,15 @@
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
-  # programs.git = {
-  #   enable = true;
-  #   userName = "jevin";
-  #   userEmail = "jevin@quickjack.ca";
-  #   aliases = {
-  #     st = "status";
-  #   };
-  #   delta.enable = true;
-  # };
+  programs.git = {
+    enable = true;
+    userName = "jevin";
+    userEmail = "jevin@quickjack.ca";
+    aliases = {
+      st = "status";
+    };
+    delta.enable = true;
+  };
 
   home.keyboard = {
     layout = "us";

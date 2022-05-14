@@ -24,7 +24,6 @@
     libreoffice
     todoist-electron
     arduino
-    kicad
     mutt-wizard
     neomutt # mutt-wizard
     curl # mutt-wizard
@@ -94,6 +93,9 @@
     _1password-gui
     obs-studio
     blueberry
+    prusa-slicer
+    rpi-imager
+    pdfarranger
   ];
 
   services.wlsunset = {

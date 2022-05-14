@@ -6,8 +6,8 @@ set from = "jevin@quickjack.ca"
 set sendmail = "gmi send -t -C ~/Maildir/quickjack"
 alias me jevin <jevin@quickjack.ca>
 set folder = "~/Maildir/quickjack/mail"
-# set header_cache = /home/jevin/.cache/mutt/jevin@quickjack.ca/headers
-# set message_cachedir = /home/jevin/.cache/mutt/jevin@quickjack.ca/bodies
+set header_cache = /home/jevin/.cache/mutt/jevin@quickjack.ca/headers
+set message_cachedir = /home/jevin/.cache/mutt/jevin@quickjack.ca/bodies
 set mbox_type = Maildir
 
 macro index o "<shell-escape>cd ~/Maildir/quickjack; gmi sync<enter>" "run lieer to sync jevin@quickjack.ca"
