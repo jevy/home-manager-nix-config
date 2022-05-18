@@ -22,6 +22,8 @@
     calendar-cli
     vdirsyncer
     khal
+    evince
+    xournalpp
   ];
 
   services.wlsunset = {

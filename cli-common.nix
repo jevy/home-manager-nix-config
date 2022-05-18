@@ -42,6 +42,9 @@
     l = "ls -l";
     lt = "ls --tree";
     la = "ls -a";
+    tr = "clear && task ready";
+    t = "clear && task";
+    tt = "taskwarrior-tui";
   };
 
 }

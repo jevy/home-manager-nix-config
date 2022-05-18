@@ -9,6 +9,7 @@
     usbutils
     kitty
     ripgrep-all
+    btop
   ];
 
   home.file = {
