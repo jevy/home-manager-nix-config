@@ -96,6 +96,8 @@
     prusa-slicer
     rpi-imager
     pdfarranger
+    element-desktop-wayland
+    sxiv
   ];
 
   services.wlsunset = {
