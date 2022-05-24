@@ -217,6 +217,8 @@ bindsym XF86AudioMicMute exec pamixer --default-source -t
 bindsym XF86AudioLowerVolume exec pamixer -d 10 
 bindsym XF86AudioRaiseVolume exec pamixer -i 10
 
+bindcode 164 exec playerctl play-pause
+
 bindsym --release Print exec /usr/bin/env bash | grim -g "$(slurp)" - | swappy -f -  
 
 # Screen recording:
