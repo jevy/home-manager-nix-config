@@ -98,6 +98,7 @@
     pdfarranger
     element-desktop-wayland
     sxiv
+    playerctl
   ];
 
   services.wlsunset = {

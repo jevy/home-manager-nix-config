@@ -24,6 +24,8 @@
     khal
     evince
     xournalpp
+    sxiv
+    playerctl
   ];
 
   services.wlsunset = {

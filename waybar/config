@@ -20,7 +20,8 @@
 
     "modules-left": [
         "sway/workspaces",
-        "sway/mode"
+        "sway/mode",
+        "custom/music"
     ],
     "modules-center": [
         "custom/meetings"
@@ -54,7 +55,8 @@
         // Connected to AC
         "format": "  {icon}  {capacity}%", // Icon: bolt
         // Not connected to AC
-        "format-discharging": "{icon}  {capacity}%",
+        "format-discharging": "{icon}  {capacity}% Empty in: {time}",
+        "format-time": "{H}:{M}",
         "format-icons": [
             "", // Icon: battery-full
             "", // Icon: battery-three-quarters
@@ -117,12 +119,12 @@
     },
 
     "bluetooth": {
-          "format": "{icon}: {status}",
-          "format-icons": {
-                  "enabled": "",
-                  "disabled": ""
-          },
-          "on-click": "blueberry"
+      "format": "{icon}: {status}",
+      "format-icons": {
+              "enabled": "",
+              "disabled": ""
+      },
+      "on-click": "blueberry"
     },
 
     "pulseaudio": {
@@ -150,7 +152,12 @@
         "format": "{}",
         "interval": 600,
         "on-click": "wget -O - http://wttr.in/.png?format=v2 | feh - -Z",
-        "exec": "~/.config/polybar/polybar-scripts/polybar-scripts/openweathermap-forecast/openweathermap-forecast.sh" // Script in resources folder
+        "exec": "~/.config/polybar/polybar-scripts/polybar-scripts/openweathermap-forecast/openweathermap-forecast.sh"
+    },
+
+    "custom/music": {
+        "interval": 3,
+        "exec": "~/.config/polybar/polybar-scripts/polybar-scripts/player-mpris-simple/player-mpris-simple.sh" 
     },
 
     "custom/meetings": {
