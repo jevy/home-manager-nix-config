@@ -188,22 +188,6 @@ workspace 10 output $output-secondary $output-primary
 
     # Move focus to the parent container
     bindsym $mod+a focus parent
-#
-# Scratchpad:
-#
-    # Sway has a "scratchpad", which is a bag of holding for windows.
-    # You can send windows there and get them back later.
-
-    # Move the currently focused window to the scratchpad
-    bindsym $mod+Shift+minus move scratchpad
-
-    # Show the next scratchpad window or hide the focused scratchpad window.
-    # If there are multiple scratchpad windows, this command cycles through them.
-    bindsym $mod+minus scratchpad show
-
-    # Start GVim in the scratchpad
-    # for_window [instance="__scratchpad"] move scratchpad, resize set 1400 800
-    exec /usr/bin/env neovide ~/.notes #-name __scratchpad
 
 # Resizing containers:
 #
