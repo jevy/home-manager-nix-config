@@ -35,8 +35,6 @@
     ];
     oh-my-zsh = {
       enable = true;
-      theme = "robbyrussell";
-      # theme = "powerlevel10k/powerlevel10k";
       plugins = [ 
         "git"
         "ruby"
@@ -47,7 +45,4 @@
       ];
     };
   };
-  # home.file = {
-  #   ".p10k.zsh".source = p10k/p10k.zsh;
-  # };
 }
