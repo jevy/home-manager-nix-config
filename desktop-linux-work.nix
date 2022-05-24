@@ -55,6 +55,7 @@
 
   home.shellAliases = {
     pomodoro = "termdown 25m -s -b";
+    v = "neovide";
   };
 
   # For Flakpak

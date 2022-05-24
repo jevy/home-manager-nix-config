@@ -117,6 +117,7 @@
     pomodoro = "termdown 25m -s -b";
     ts = "todoist s"; #Sync
     tl ="todoist list --filter '(overdue | today)'"; # Today
+    v = "neovide";
   };
 
 }
