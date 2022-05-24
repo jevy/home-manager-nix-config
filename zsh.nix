@@ -9,30 +9,29 @@
     plugins = [
         {
           name = "zsh-z";
+          file = "zsh-z.plugin.zsh";
           src = pkgs.fetchFromGitHub {
             owner = "agkozak";
             repo = "zsh-z";
             rev = "b5e61d03a42a84e9690de12915a006b6745c2a5f";
             sha256 = "1A6WZ+fJSf2WKZD7CYJB/pbgwV2mX+X8qInqQLeuT78=";
           };
-          file = "zsh-z.plugin.zsh";
         }
-    # plugins = [
-    #     {
-    #       file = "powerlevel10k.zsh-theme";
-    #       name = "powerlevel10k";
-    #       src = pkgs.fetchFromGitHub {
-    #         owner = "romkatv";
-    #         repo = "powerlevel10k";
-    #         rev = "v1.16.1";
-    #         sha256 = "DLiKH12oqaaVChRqY0Q5oxVjziZdW/PfnRW1fCSCbjo=";
-    #       };
-    #     }
-    #     # {
-    #     #   file = "p10k.zsh";
-    #     #   name = "powerlevel10k-config";
-    #     #   src = p10k/p10k.zsh;
-    #     # }
+        {
+          name = "powerlevel10k";
+          file = "powerlevel10k.zsh-theme";
+          src = pkgs.fetchFromGitHub {
+            owner = "romkatv";
+            repo = "powerlevel10k";
+            rev = "v1.16.1";
+            sha256 = "DLiKH12oqaaVChRqY0Q5oxVjziZdW/PfnRW1fCSCbjo=";
+          };
+        }
+        {
+          name = "powerlevel10k-config";
+          file = "p10k.zsh";
+          src = pkgs.lib.cleanSource ./p10k;
+        }
     ];
     oh-my-zsh = {
       enable = true;
@@ -47,27 +46,8 @@
         "taskwarrior"
       ];
     };
-
-    # TODO: Need to source my p10k Properly
-    # plugins = with pkgs; [
-    #   {
-    #     file = "powerlevel10k.zsh-theme";
-    #     name = "powerlevel10k";
-    #     src = pkgs.fetchFromGitHub {
-    #       owner = "romkatv";
-    #       repo = "powerlevel10k";
-    #       rev = "v1.16.1";
-    #       sha256 = "DLiKH12oqaaVChRqY0Q5oxVjziZdW/PfnRW1fCSCbjo=";
-    #     };
-    #   }
-    #   {
-    #     file = "p10k.zsh";
-    #     name = "powerlevel10k-config";
-    #     src = ./config/zsh/p10k;
-    #   }
-    # ];
   };
-  home.file = {
-    ".p10k.zsh".source = p10k/p10k.zsh;
-  };
+  # home.file = {
+  #   ".p10k.zsh".source = p10k/p10k.zsh;
+  # };
 }
