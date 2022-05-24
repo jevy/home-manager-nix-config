@@ -50,11 +50,15 @@
 #waybar {
     background: #323232;
     color: white;
-    font-family: "Weather Icons", "MesloLGS NF", "Roboto", sans-serif;
+    font-family: "Font Awesome 5 Free", "MesloLGS NF", "Roboto", sans-serif;
     font-size: 13px;
 }
 
 /* Each module */
+#custom-weather {
+    font-family: "Weather Icons", sans-serif;
+}
+
 #battery,
 #clock,
 #cpu,

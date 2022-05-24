@@ -269,9 +269,6 @@ default_border pixel 5
 focus_wrapping no
 mouse_warping container
 
-gaps outer 5
-gaps inner 10
-
 #exec --no-startup-id /usr/bin/blueman-applet
 exec /usr/bin/env slack
 exec /usr/bin/env synology-drive
