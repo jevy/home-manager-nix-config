@@ -112,6 +112,8 @@
     ".config/mako/config".source = mako/config;
     ".config/waybar/config".source = waybar/config;
     ".config/waybar/style.css".source = waybar/style.css;
+    # ".config/polybar-scripts/task_polybar.sh".source = waybar/polybar/task_polybar.sh;
+    ".config/polybar-scripts/player-mpris-simple.sh".source = waybar/polybar/player-mpris-simple.sh;
   };
 
   home.shellAliases = {
