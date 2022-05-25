@@ -21,7 +21,7 @@
             ./zsh.nix
             ./cli-common.nix
             ./cli-linux.nix
-            ./desktop-linux.nix
+            ./desktop-linux-personal.nix
             ./mutt-quickjack.nix
             ./amateur_radio.nix
           ];
