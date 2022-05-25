@@ -21,7 +21,8 @@
     "modules-left": [
         "sway/workspaces",
         "sway/mode",
-        "custom/music"
+        "custom/music",
+        "custom/taskwarrior"
     ],
     "modules-center": [
         "custom/meetings"
@@ -153,6 +154,12 @@
         "interval": 600,
         "on-click": "wget -O - http://wttr.in/.png?format=v2 | feh - -Z",
         "exec": "~/.config/polybar/polybar-scripts/polybar-scripts/openweathermap-forecast/openweathermap-forecast.sh"
+    },
+
+    "custom/taskwarrior": {
+        "format": "{}",
+        "interval": 1,
+        "exec": "~/.config/polybar-scripts/task_polybar.sh"
     },
 
     "custom/music": {
