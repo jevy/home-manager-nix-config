@@ -3,7 +3,7 @@
     nix-colors.homeManagerModule
   ];
 
-  colorscheme = nix-colors.colorSchemes.dracula;
+  colorscheme = nix-colors.colorSchemes.gruvbox-dark-medium;
 
   programs = {
     kitty = {
