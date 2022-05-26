@@ -1,5 +1,6 @@
 # vim: filetype=neomuttrc
 source common.muttrc
+source colors-gruvbox-shuber.muttrc
 
 set realname = "Jevin Maltais"
 set from = "jevin@quickjack.ca"

@@ -35,6 +35,5 @@
   home.file = {
     ".config/mutt/common.muttrc".source = mutt/common.muttrc;
     ".config/mailcap".source = mutt/mailcap;
-    ".config/mutt/colors-gruvbox-shuber.muttrc".source = mutt/colors-gruvbox-shuber.muttrc;
   };
 }

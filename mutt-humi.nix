@@ -28,6 +28,7 @@
 
   home.file = {
     ".config/mutt/muttrc".source = mutt/humi.muttrc;
+    ".config/mutt/colors-gruvbox-shuber.muttrc".source = mutt/colors-gruvbox-shuber.muttrc;
   };
 
 }

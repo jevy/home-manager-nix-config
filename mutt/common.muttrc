@@ -1,8 +1,6 @@
-bind index,pager gg noop
-bind index,pager g noop
 bind index,pager M noop
 bind index,pager C noop
-bind index gg first-entry
+# bind index,pager gg first-entry
 unmailboxes *
 unalternates *
 unset signature
@@ -10,7 +8,8 @@ unmacro index o
 
 unmacro index s
 
-macro index,pager gi "<change-vfolder>Inbox<enter>" "go to inbox"
+# macro index,pager gi "<change-vfolder>Inbox<enter>" "go to inbox"
+
 # macro index,pager Mi ";<save-message>=INBOX<enter>" "move mail to inbox"
 # macro index,pager Ci ";<copy-message>=INBOX<enter>" "copy mail to inbox"
 # set spoolfile = "+INBOX"
@@ -87,7 +86,7 @@ auto_view text/html application/pdf application/vnd.openxmlformats-officedocumen
 set display_filter = "tac | sed '/\\\[-- Autoview/,+1d' | tac" # Suppress autoview messages.
 alternative_order text/enriched text/html text/plain 
 bind index,pager i noop
-bind index,pager g noop
+# bind index,pager g noop
 bind index \Cf noop
 
 # General rebindings
@@ -97,7 +96,7 @@ bind attach <return> view-mailcap
 bind attach l view-mailcap
 bind editor <space> noop
 bind index G last-entry
-bind index gg first-entry
+# bind index gg first-entry
 bind pager,attach h exit
 bind pager j next-line
 bind pager k previous-line
@@ -152,8 +151,6 @@ bind index,pager \Co sidebar-open
 bind index,pager \Cp sidebar-prev-new
 bind index,pager \Cn sidebar-next-new
 bind index,pager B sidebar-toggle-visible
-
-source colors-gruvbox-shuber.muttrc
 
 # Default index colors:
 # color index yellow default '.*'
