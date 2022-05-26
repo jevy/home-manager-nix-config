@@ -12,7 +12,11 @@
     btop
   ];
 
-  home.file = {
-    ".config/kitty/kitty.conf".source = kitty/kitty.conf;
+  programs.kitty = {
+    enable = true;
+    keybindings = {
+      "shift+page_up" = "scroll_page_up";
+      "shift+page_down" = "scroll_page_down";
+    };
   };
 }

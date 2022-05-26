@@ -7,9 +7,10 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-21.11";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    nix-colors.url = "github:misterio77/nix-colors";
   };
 
-  outputs = { home-manager, ... }: {
+  outputs = { home-manager, nix-colors, ... }: {
 
       packages.x86_64-linux.homeConfigurations.jevin = home-manager.lib.homeManagerConfiguration {
         # Specify the path to your home configuration here
@@ -24,9 +25,11 @@
             ./desktop-linux-personal.nix
             ./mutt-quickjack.nix
             ./amateur_radio.nix
+            ./theme-personal.nix
           ];
         };
 
+        extraSpecialArgs = { inherit nix-colors; };
         system = "x86_64-linux";
         username = "jevin";
         homeDirectory = "/home/jevin";
