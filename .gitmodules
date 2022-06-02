@@ -1,3 +1,6 @@
 [submodule "ranger/plugins/ranger-archives"]
 	path = ranger/plugins/ranger-archives
 	url = https://github.com/maximtrp/ranger-archives
+[submodule "ranger-colorschemes"]
+	path = ranger/colorschemes
+	url = https://github.com/alfunx/ranger-colorschemes.git
