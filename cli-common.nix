@@ -33,7 +33,7 @@
   ];
 
   home.file = {
-    "./.config/ranger".source = config.lib.file.mkOutOfStoreSymlink /home/jevin/.config/nixpkgs/ranger;
+    ".config/ranger".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.config/nixpkgs/ranger";
   };
 
   home.shellAliases = {
