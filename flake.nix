@@ -54,7 +54,7 @@
         system = "x86_64-linux";
         username = "jevinhumi";
         homeDirectory = "/home/jevinhumi";
-        stateVersion = "21.11";
+        stateVersion = "22.05";
       };
 
       packages.aarch64-darwin.homeConfigurations.jevin = home-manager.lib.homeManagerConfiguration {
