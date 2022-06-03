@@ -28,7 +28,6 @@
     xournalpp
     sxiv
     playerctl
-    gcalcli
     doctl
     pdfarranger
   ];

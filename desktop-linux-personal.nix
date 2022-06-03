@@ -18,6 +18,7 @@
     hugo
     steam
     ansible
+    gcalcli
     # etcher
 
     prusa-slicer
