@@ -3,8 +3,8 @@
 
   inputs = {
     # Specify the source of Home Manager and Nixpkgs
-    home-manager.url = "github:nix-community/home-manager/release-21.11";
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-21.11";
+    home-manager.url = "github:nix-community/home-manager/release-22.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-22.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     nix-colors.url = "github:misterio77/nix-colors";
@@ -24,7 +24,7 @@
             ./cli-linux.nix
             ./desktop-linux-personal.nix
             ./mutt-quickjack.nix
-            ./amateur_radio.nix
+            # ./amateur_radio.nix
             ./theme-personal.nix
           ];
         };
@@ -33,7 +33,7 @@
         system = "x86_64-linux";
         username = "jevin";
         homeDirectory = "/home/jevin";
-        stateVersion = "21.11";
+        stateVersion = "22.05";
       };
 
       packages.x86_64-linux.homeConfigurations.jevinhumi = home-manager.lib.homeManagerConfiguration {

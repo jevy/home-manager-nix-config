@@ -11,25 +11,18 @@
     gnumake
     gcc
     bundix
-    python-qt
+    # python-qt
     kubernetes-helm
     dropbox
     arduino
     hugo
     steam
-    # cubicsdr
-    # sdrangel
-    # gqrx
-    # sdrpp-with-sdrplay
-    # hamlib_4
-    # wsjtx
-    # unstable.element-desktop-wayland
-    # helvum
-    ansible_2_10
-    etcher
+    ansible
+    # etcher
 
     prusa-slicer
     rpi-imager
+    # element-desktop-wayland
   ];
 
 }

@@ -1,5 +1,6 @@
 { config, pkgs, libs, ... }:
 {
+
   home.packages = with pkgs; [
     libreoffice
     neovide
@@ -15,7 +16,7 @@
     wally-cli
     vlc
     signal-desktop
-    qalculate-gtk
+    # qalculate-gtk
     nasc
     _1password-gui
     obs-studio
