@@ -10,6 +10,7 @@
     k9s
     kubectl
     ripgrep
+    ripgrep-all
     file
     ffmpeg
     killall
@@ -30,6 +31,8 @@
     taskwarrior
     taskwarrior-tui
     tasksh
+    ncdu
+    bat
   ];
 
   home.file = {
