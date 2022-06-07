@@ -4,6 +4,7 @@
   home.packages = with pkgs; [
     libreoffice
     neovide
+    neovim-remote
     gimp
     discord
     firefox
