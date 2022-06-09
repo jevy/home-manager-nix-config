@@ -54,6 +54,8 @@
     # Todoist
     ts = "todoist s"; #Sync
     tl ="todoist list --filter '(overdue | today)'"; # Today
+
+    fdt = "f() fd $1 -t file -X ls -tr -l);f" # Search files sort by date
   };
 
 }
