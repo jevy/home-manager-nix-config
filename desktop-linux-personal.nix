@@ -24,6 +24,7 @@
     prusa-slicer
     rpi-imager
     # element-desktop-wayland
+    # unstable.sunpaper
   ];
 
 }

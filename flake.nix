@@ -10,24 +10,31 @@
     nix-colors.url = "github:misterio77/nix-colors";
   };
 
-  outputs = { home-manager, nix-colors, ... }: {
+  outputs = inputs@{ home-manager, nix-colors, nixpkgs-unstable,... }: {
 
       packages.x86_64-linux.homeConfigurations.jevin = home-manager.lib.homeManagerConfiguration {
         # Specify the path to your home configuration here
         configuration =  { pkgs, ... }:
-        {
-          imports = [
-            ./home.nix
-            ./vim.nix
-            ./zsh.nix
-            ./cli-common.nix
-            ./cli-linux.nix
-            ./desktop-linux-personal.nix
-            ./mutt-quickjack.nix
-            # ./amateur_radio.nix
-            ./theme-personal.nix
-          ];
-        };
+          let
+            overlay-unstable = final: prev: {
+              unstable = inputs.nixpkgs-unstable.legacyPackages.x86_64-linux;
+            };
+          in
+          {
+            nixpkgs.overlays = [ overlay-unstable ];
+            nixpkgs.config.allowUnfree = true;
+            imports = [
+              ./home.nix
+              ./vim.nix
+              ./zsh.nix
+              ./cli-common.nix
+              ./cli-linux.nix
+              ./desktop-linux-personal.nix
+              ./mutt-quickjack.nix
+              # ./amateur_radio.nix
+              ./theme-personal.nix
+            ];
+          };
 
         extraSpecialArgs = { inherit nix-colors; };
         system = "x86_64-linux";
