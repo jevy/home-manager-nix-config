@@ -33,7 +33,12 @@
     tasksh
     ncdu
     bat
+    vagrant
   ];
+
+  home.sessionVariables = {
+    VAGRANT_DEFAULT_PROVIDER = "libvirt";
+  };
 
   home.file = {
     ".config/ranger".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.config/nixpkgs/ranger";
