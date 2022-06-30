@@ -31,6 +31,7 @@
     playerctl
     doctl
     pdfarranger
+    zoom-us
   ];
 
   services.wlsunset = {

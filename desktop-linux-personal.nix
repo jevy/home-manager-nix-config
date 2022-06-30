@@ -23,7 +23,7 @@
 
     prusa-slicer
     rpi-imager
-    # element-desktop-wayland
+    element-desktop-wayland
     # unstable.sunpaper
   ];
 
