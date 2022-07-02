@@ -32,6 +32,8 @@
     doctl
     pdfarranger
     zoom-us
+    cht-sh
+    cheat
   ];
 
   services.wlsunset = {
