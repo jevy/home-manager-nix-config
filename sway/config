@@ -36,7 +36,7 @@ set $term kitty
 # Use the string ref: https://man.archlinux.org/man/sway-output.5.en
 output "Goldstar Company Ltd LG ULTRAGEAR 106NTLE12344" pos 2570 1440 resolution 3440x1440 scale 1
 output "Unknown 0x5A2D 0x00000000" pos 3710 2880 resolution 1920x1080 scale 1
-output "Unknown HP Z27 CN49020L9R" pos 6010 1440 resolution 1920x1200 scale 1 transform 270
+output "Unknown HP Z27 CN49020L9R" pos 6010 1440 resolution 1920x1080 scale 1 transform 270
 
 # Where the monitors are 'man sway-output'
 # output DP-3 pos 0 400
