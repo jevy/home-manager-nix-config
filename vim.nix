@@ -1,10 +1,10 @@
 { config, pkgs, libs, ... }:
-{ 
+{
   programs.neovim = {
     enable = true;
     viAlias = true;
     vimAlias = true;
-    plugins = with pkgs.vimPlugins; [ 
+    plugins = with pkgs.vimPlugins; [
       vim-airline
       vim-surround
       vim-commentary
@@ -17,6 +17,7 @@
       gruvbox
       vim-indent-guides
       vim-gitgutter
+      vim-easy-align
     ];
     extraConfig = ''
       set mouse=a
@@ -47,6 +48,12 @@
 
       " Freedom
       nnoremap <Leader><Space> :Goyo<CR>
+
+      " Start interactive EasyAlign in visual mode (e.g. vipga)
+      xmap ga <Plug>(EasyAlign)
+
+      " Start interactive EasyAlign for a motion/text object (e.g. gaip)
+      nmap ga <Plug>(EasyAlign)
 
       " easy way to get out insert
       " noremap jj <ESC>
