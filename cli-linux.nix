@@ -10,6 +10,7 @@
     kitty
     ripgrep-all
     btop
+    xsv
   ];
 
   programs.kitty = {
