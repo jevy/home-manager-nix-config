@@ -27,4 +27,10 @@
     # unstable.sunpaper
   ];
 
+  programs.sunpaper = {
+    enable = true;
+    latitude = 45.42;
+    longitude = -75.70;
+  };
+
 }
