@@ -25,7 +25,7 @@ let g:indent_guides_enable_on_vim_startup = 1
 set updatetime=100 "For Git marker updating to be faster
 
 " Freedom
-nnoremap <Leader><Space> :Goyo<CR>
+" nnoremap <Leader><Space> :Goyo<CR>
 
 " easy way to get out insert
 " noremap jj <ESC>
@@ -68,3 +68,11 @@ augroup END
 " nnoremap "*p :let @"=substitute(system("wl-paste --no-newline --primary"), '<C-v><C-m>', ''', 'g')<cr>p  
 " For sway scratchpad
 autocmd CursorHold .notes :write
+
+let g:sneak#label = 1
+
+" Resize splits when window size is changed
+augroup AutoAdjustResize
+  autocmd!
+  autocmd VimResized * execute "normal! \<C-w>="
+augroup end

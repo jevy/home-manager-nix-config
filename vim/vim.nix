@@ -1,4 +1,4 @@
-{ config, pkgs, libs, ... }:
+{ config, pkgs, lib, ... }:
 {
   programs.neovim = {
     enable = true;
@@ -36,14 +36,28 @@
       # nvim-treesitter-textobjects
       # nvim-treesitter-context
 
+      plenary-nvim
+      telescope-nvim
+      telescope-fzy-native-nvim
+
+    ];
+    extraPackages = with pkgs; [
+      # Ruby LSP - https://blog.backtick.consulting/neovims-built-in-lsp-with-ruby-and-rails/
+      solargraph
+      rubocop
+
     ];
     extraConfig = builtins.concatStringsSep "\n" [
         (lib.strings.fileContents ./base.vim)
+      ''
+        lua << EOF
+        require("nvim-tree").setup()
+        vim.api.nvim_set_keymap('n', '<C-n>', ':NvimTreeToggle<CR>', { noremap = true, silent = true })
+        vim.api.nvim_set_keymap('n', '<C-f>', ':Telescope find_files<CR>', { noremap = true, silent = true })
+        vim.api.nvim_set_keymap('n', '<C-g>', ':Telescope live_grep<CR>', { noremap = true, silent = true })
+
+        EOF
+      ''
       ];
   };
-  home.packages = with pkgs; [
-    # Ruby LSP - https://blog.backtick.consulting/neovims-built-in-lsp-with-ruby-and-rails/
-    solargraph
-    rubocop
-  ];
 }
