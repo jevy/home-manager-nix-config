@@ -152,7 +152,7 @@
     "custom/weather": {
         "format": "{}",
         "interval": 600,
-        "on-click": "wget -O - http://wttr.in/.png?format=v2 | feh - -Z",
+        "on-click": "wget -O - http://wttr.in/.png?m&format=v2 | feh - -Z",
         "exec": "~/.config/polybar/polybar-scripts/polybar-scripts/openweathermap-forecast/openweathermap-forecast.sh"
     },
 
