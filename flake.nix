@@ -25,7 +25,7 @@
             nixpkgs.config.allowUnfree = true;
             imports = [
               ./home.nix
-              ./vim.nix
+              ./vim/vim.nix
               ./zsh.nix
               ./cli-common.nix
               ./cli-linux.nix
