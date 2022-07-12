@@ -22,6 +22,7 @@
       fzf-vim
       vim-sneak
       vim-rooter
+      vim-easy-align
 
       # Tree Sitter stuff
       (nvim-treesitter.withPlugins (
