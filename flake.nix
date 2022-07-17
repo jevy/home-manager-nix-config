@@ -55,6 +55,7 @@
            ./cli-linux.nix
            ./desktop-linux-work.nix
            ./mutt-humi.nix
+           ./theme-work.nix
           ];
         };
 
