@@ -5,6 +5,7 @@
   [
     ./desktop-linux-common.nix
   ];
+
   home.packages = with pkgs; [
     synology-drive-client
     ruby
@@ -27,4 +28,19 @@
     # unstable.sunpaper
   ];
 
+  xdg.mimeApps.defaultApplications =
+  {
+    "x-scheme-handler/http"  = [ "firefox.desktop"];
+    "x-scheme-handler/https" = [ "firefox.desktop"];
+    "text/html"              = [ "firefox.desktop"];
+  };
+
+  wayland.windowManager.sway = {
+    config = {
+      startup = [
+        { command = "${pkgs.synology-drive-client}/bin/synology-drive"; }
+      ];
+    };
+
+  };
 }

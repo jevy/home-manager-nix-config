@@ -18,13 +18,13 @@
   wayland.windowManager.sway.config = 
   { 
     fonts = [ "MesloLGS NF" ];
-    colors = {
-      background = "#${config.colorscheme.colors.base00}";
-      focused = "#${config.colorscheme.colors.base05}";
-      focusedInactive = "#${config.colorscheme.colors.base04}";
-      unfocused = "#${config.colorscheme.colors.base01}";
-      urgent = "#${config.colorscheme.colors.base02}";
-    };
+    # colors = {
+    #   background = "#${config.colorscheme.colors.base00}";
+    #   focused = "#${config.colorscheme.colors.base05}";
+    #   focusedInactive = "#${config.colorscheme.colors.base04}";
+    #   unfocused = "#${config.colorscheme.colors.base01}";
+    #   urgent = "#${config.colorscheme.colors.base02}";
+    # };
   };
 
 }
