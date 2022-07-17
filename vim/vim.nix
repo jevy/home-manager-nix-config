@@ -46,6 +46,7 @@
       # Ruby LSP - https://blog.backtick.consulting/neovims-built-in-lsp-with-ruby-and-rails/
       solargraph
       rubocop
+      tree-sitter
 
     ];
     extraConfig = builtins.concatStringsSep "\n" [
@@ -57,6 +58,7 @@
         vim.api.nvim_set_keymap('n', '<C-f>', ':Telescope find_files<CR>', { noremap = true, silent = true })
         vim.api.nvim_set_keymap('n', '<C-g>', ':Telescope live_grep<CR>', { noremap = true, silent = true })
 
+        require("nvim-treesitter").setup()
         EOF
       ''
       ];
