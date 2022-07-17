@@ -2,7 +2,7 @@ text/plain; cat %s
 text/plain; $EDITOR %s ; copiousoutput
 application/pdf; zathura %s; test=true
 # application/pdf; pdftotext -layout %s -; copiousoutput # Insecure package, can't install insecure
-text/html; google-chrome-stable %s ; nametemplate=%s.html
+text/html; firefox %s ; nametemplate=%s.html
 text/html; w3m -dump -T text/html -I %{charset} -O utf-8 %s; description=HTML Text; nametemplate=%s.html; copiousoutput
 application/msword; libreoffice %s
 application/msword; pandoc --from docx --to markdown %s; copiousoutput

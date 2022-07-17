@@ -44,6 +44,7 @@
 
   home.file = {
     ".config/mutt/muttrc".source = mutt/quickjack.muttrc;
+    ".config/mutt/colors-gruvbox-shuber.muttrc".source = mutt/colors-gruvbox-shuber.muttrc;
   };
 
 }

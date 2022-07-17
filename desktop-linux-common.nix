@@ -1,8 +1,10 @@
 { config, pkgs, libs, ... }:
 {
+
   home.packages = with pkgs; [
     libreoffice
     neovide
+    neovim-remote
     gimp
     discord
     firefox
@@ -15,7 +17,7 @@
     wally-cli
     vlc
     signal-desktop
-    qalculate-gtk
+    # qalculate-gtk
     nasc
     _1password-gui
     obs-studio
@@ -27,9 +29,11 @@
     xournalpp
     sxiv
     playerctl
-    gcalcli
     doctl
     pdfarranger
+    zoom-us
+    cht-sh
+    cheat
   ];
 
   services.wlsunset = {

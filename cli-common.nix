@@ -10,6 +10,7 @@
     k9s
     kubectl
     ripgrep
+    ripgrep-all
     file
     ffmpeg
     killall
@@ -30,10 +31,18 @@
     taskwarrior
     taskwarrior-tui
     tasksh
+    ncdu
+    bat
+    vagrant
   ];
 
+  home.sessionVariables = {
+    VAGRANT_DEFAULT_PROVIDER = "libvirt";
+  };
+
   home.file = {
-    "./.config/ranger".source = config.lib.file.mkOutOfStoreSymlink /home/jevin/.config/nixpkgs/ranger;
+    ".config/ranger".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.config/nixpkgs/ranger";
+    ".config/bat/config".source = bat/config;
   };
 
   home.shellAliases = {
@@ -51,6 +60,8 @@
     # Todoist
     ts = "todoist s"; #Sync
     tl ="todoist list --filter '(overdue | today)'"; # Today
+
+    fdt = "f() fd $1 -t file -X ls -tr -l);f"; # Search files sort by date
   };
 
 }
