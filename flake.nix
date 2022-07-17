@@ -59,6 +59,7 @@
           ];
         };
 
+        extraSpecialArgs = { inherit nix-colors; };
         system = "x86_64-linux";
         username = "jevinhumi";
         homeDirectory = "/home/jevinhumi";
