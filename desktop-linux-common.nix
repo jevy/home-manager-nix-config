@@ -155,6 +155,7 @@
     ".config/waybar/config".source = waybar/config;
     ".config/waybar/style.css".source = waybar/style.css;
     ".config/polybar-scripts/player-mpris-simple.sh".source = waybar/polybar/player-mpris-simple.sh;
+    ".config/backgrounds/".source = backgrounds/;
   };
 
   home.shellAliases = {
