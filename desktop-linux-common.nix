@@ -52,6 +52,8 @@
     "text/html"              = [ "google-chrome.desktop"];
   };
 
+  services.mpris-proxy.enable = true;
+
   # Manually install gnome meeting applet
   # flatpak install flathub com.chmouel.gnomeNextMeetingApplet
   # run: flatpak run com.chmouel.gnomeNextMeetingApplet
