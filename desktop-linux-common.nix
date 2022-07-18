@@ -82,7 +82,7 @@
       ];
 
       terminal = "kitty";
-      # window.border = 5;
+      window.border = 5;
 
       # TODO: Finish outputs
       output = {
@@ -104,12 +104,36 @@
           };
       };
 
+      workspaceOutputAssign =
+        let
+          primary-output   = "Goldstar Company Ltd LG ULTRAGEAR 106NTLE12344";
+          secondary-output = "Unknown 0x5A2D 0x00000000";
+          side-output      = "Unknown HP Z27 CN49020L9R";
+        in
+        [
+          { workspace = "1"; output = "${primary-output} ${secondary-output}"; }
+          { workspace = "2"; output = "${primary-output} ${secondary-output}"; }
+          { workspace = "3"; output = "${primary-output} ${secondary-output}"; }
+          { workspace = "4"; output = "${primary-output} ${secondary-output}"; }
+          { workspace = "5"; output = "${primary-output} ${secondary-output}"; }
+          { workspace = "6"; output = "${side-output} ${secondary-output}";    }
+          { workspace = "7"; output = "${secondary-output} ${primary-output}"; }
+          { workspace = "8"; output = "${secondary-output} ${primary-output}"; }
+          { workspace = "9"; output = "${secondary-output} ${primary-output}"; }
+          { workspace = "0"; output = "${secondary-output} ${primary-output}"; }
+        ];
+
       keybindings =
         let
           modifier = config.wayland.windowManager.sway.config.modifier;
         in lib.mkOptionDefault {
           "${modifier}+Shift+q" = "kill";
           "${modifier}+Shift+r" = "reload";
+
+          "${modifier}+Control+Shift+l" = "move workspace to output right";
+          "${modifier}+Control+Shift+h" = "move workspace to output left";
+          "${modifier}+Control+Shift+j" = "move workspace to output down";
+          "${modifier}+Control+Shift+k" = "move workspace to output up";
 
           # There isn't a 10th workspace by default
           "${modifier}+0" = "workspace 10";
@@ -119,8 +143,7 @@
           # TODO: Pull over working rofi config
           "${modifier}+c" = "exec ${pkgs.rofi}/bin/rofi -show calc";
           "${modifier}+u" = "exec ${pkgs.firefox}/bin/firefox";
-          # TODO: Fix Ranger
-          # "${modifier}+t" = "exec ${pkgs.ranger}/bin/ranger ~/Downloads";
+          "${modifier}+t" = "exec kitty -- ${pkgs.ranger}/bin/ranger ~/Downloads";
           "${modifier}+i" = "exec ${pkgs.blueberry}/bin/blueberry";
 
           # Controls
