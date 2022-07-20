@@ -23,6 +23,7 @@
     # etcher
 
     prusa-slicer
+    cura
     rpi-imager
     element-desktop-wayland
     # unstable.sunpaper

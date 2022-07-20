@@ -82,7 +82,11 @@
       ];
 
       terminal = "kitty";
-      window.border = 5;
+
+      window = {
+        border = 5;
+        titlebar = true;
+      };
 
       # TODO: Finish outputs
       output = {
@@ -143,7 +147,12 @@
           # TODO: Pull over working rofi config
           "${modifier}+c" = "exec ${pkgs.rofi}/bin/rofi -show calc";
           "${modifier}+u" = "exec ${pkgs.firefox}/bin/firefox";
+<<<<<<< HEAD
           "${modifier}+t" = "exec kitty -- ${pkgs.ranger}/bin/ranger ~/Downloads";
+=======
+          # TODO: Fix Ranger
+          "${modifier}+t" = "exec ranger";
+>>>>>>> f6eb20f (color changes)
           "${modifier}+i" = "exec ${pkgs.blueberry}/bin/blueberry";
 
           # Controls
