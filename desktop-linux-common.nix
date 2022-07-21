@@ -46,6 +46,15 @@
 
   xdg.enable = true;
 
+  services.swayidle.enable = true;
+  services.swayidle.events = [
+    { event = "before-sleep"; command = "${pkgs.swaylock-effects}/bin/swaylock"; }
+    { event = "lock"; command = "lock"; }
+  ];
+  services.swayidle.timeouts = [
+    { timeout = 60; command = "${pkgs.swaylock-effects}/bin/swaylock"; }
+  ];
+
   xdg.mimeApps.enable = true;
   xdg.mimeApps.defaultApplications =
   {
@@ -147,12 +156,7 @@
           # TODO: Pull over working rofi config
           "${modifier}+c" = "exec ${pkgs.rofi}/bin/rofi -show calc";
           "${modifier}+u" = "exec ${pkgs.firefox}/bin/firefox";
-<<<<<<< HEAD
           "${modifier}+t" = "exec kitty -- ${pkgs.ranger}/bin/ranger ~/Downloads";
-=======
-          # TODO: Fix Ranger
-          "${modifier}+t" = "exec ranger";
->>>>>>> f6eb20f (color changes)
           "${modifier}+i" = "exec ${pkgs.blueberry}/bin/blueberry";
 
           # Controls
