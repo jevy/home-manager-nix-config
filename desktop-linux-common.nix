@@ -52,7 +52,7 @@
     { event = "lock"; command = "lock"; }
   ];
   services.swayidle.timeouts = [
-    { timeout = 60; command = "${pkgs.swaylock-effects}/bin/swaylock"; }
+    { timeout = 400; command = "${pkgs.swaylock-effects}/bin/swaylock"; }
   ];
 
   xdg.mimeApps.enable = true;
