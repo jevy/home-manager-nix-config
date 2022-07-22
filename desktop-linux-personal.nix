@@ -24,13 +24,15 @@
     prusa-slicer
     rpi-imager
     element-desktop-wayland
-    # unstable.sunpaper
+    # sunpaper
   ];
 
+  # Home Manager doesn't reference unstable packages
   programs.sunpaper = {
     enable = true;
-    latitude = 45.42;
-    longitude = -75.70;
+    latitude = "45.42N";
+    longitude = "75.70W";
+    wallpaper_collection = "Lakeside";
   };
 
 }
