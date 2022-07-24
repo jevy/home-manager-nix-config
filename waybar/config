@@ -21,8 +21,8 @@
     "modules-left": [
         "sway/workspaces",
         "sway/mode",
-        "custom/music",
-        "custom/taskwarrior"
+        "custom/music"
+        // "custom/taskwarrior"
     ],
     "modules-center": [
         "custom/meetings"
@@ -118,16 +118,12 @@
             "default": ""
         }
     },
-
     "bluetooth": {
-      "format": "{icon}: {status}",
-      "format-icons": {
-              "enabled": "",
-              "disabled": ""
-      },
-      "on-click": "blueberry"
+	"format": "",
+	"format-disabled": "",
+        "on-click": "blueberry",
+	"tooltip-format": "{}"
     },
-
     "pulseaudio": {
         "format": "{icon}  {volume}%",
         "format-bluetooth": "{icon}  {volume}%",
