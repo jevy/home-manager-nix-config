@@ -36,6 +36,7 @@
     cheat
     jdk11 # For kafka cp-demo
     openssl # For kafka cp-demo
+    xdg-desktop-portal-wlr
   ];
 
   services.wlsunset = {
@@ -45,6 +46,12 @@
   };
 
   xdg.enable = true;
+
+  programs.rofi = {
+    enable = true;
+    package = pkgs.rofi.override { plugins = [ pkgs.rofi-emoji pkgs.rofi-calc pkgs.rofi-power-menu]; };
+    plugins = [ pkgs.rofi-emoji pkgs.rofi-calc pkgs.rofi-power-menu ];
+  };
 
   services.swayidle.enable = true;
   services.swayidle.events = [
@@ -81,7 +88,7 @@
       };
 
       modifier = "Mod4";
-      menu = "${pkgs.rofi}/bin/rofi -show run";
+      menu = "rofi -show run";
 
       startup = [
         { command = "${pkgs.slack}/bin/slack"; }
@@ -154,7 +161,7 @@
 
           # Launch programs
           # TODO: Pull over working rofi config
-          "${modifier}+c" = "exec ${pkgs.rofi}/bin/rofi -show calc";
+          "${modifier}+c" = "exec rofi -show calc";
           "${modifier}+u" = "exec ${pkgs.firefox}/bin/firefox";
           "${modifier}+t" = "exec kitty -- ${pkgs.ranger}/bin/ranger ~/Downloads";
           "${modifier}+i" = "exec ${pkgs.blueberry}/bin/blueberry";

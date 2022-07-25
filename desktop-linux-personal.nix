@@ -27,6 +27,7 @@
     rpi-imager
     element-desktop-wayland
     # unstable.sunpaper
+    bottles
   ];
 
   xdg.mimeApps.defaultApplications =
