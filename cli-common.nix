@@ -56,6 +56,7 @@
     tr = "clear && task ready";
     t = "clear && task";
     tt = "taskwarrior-tui";
+    tt = "task waiting";
 
     # Todoist
     ts = "todoist s"; #Sync
