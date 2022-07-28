@@ -28,9 +28,6 @@
     lsd
     fd
     feh
-    taskwarrior
-    taskwarrior-tui
-    tasksh
     ncdu
     bat
     vagrant
@@ -51,12 +48,6 @@
     l = "ls -l";
     lt = "ls --tree";
     la = "ls -a";
-
-    # Taskwarrior
-    tr = "clear && task ready";
-    t = "clear && task";
-    tt = "taskwarrior-tui";
-    tt = "task waiting";
 
     # Todoist
     ts = "todoist s"; #Sync
