@@ -36,7 +36,6 @@
     cheat
     jdk11 # For kafka cp-demo
     openssl # For kafka cp-demo
-    xdg-desktop-portal-wlr
   ];
 
   services.wlsunset = {
