@@ -149,7 +149,7 @@
         "format": "{}",
         "interval": 600,
         "on-click": "wget -O - http://wttr.in/.png?m&format=v2 | feh - -Z",
-        "exec": "~/.config/polybar/polybar-scripts/polybar-scripts/openweathermap-forecast.sh"
+        "exec": "~/.config/polybar-scripts/openweathermap-forecast.sh"
     },
 
     "custom/taskwarrior": {
@@ -160,7 +160,7 @@
 
     "custom/music": {
         "interval": 3,
-        "exec": "~/.config/polybar/polybar-scripts/polybar-scripts/player-mpris-simple.sh"
+        "exec": "~/.config/polybar-scripts/player-mpris-simple.sh"
     },
 
     "custom/meetings": {
