@@ -56,7 +56,7 @@
            ./desktop-linux-work.nix
            ./mutt-humi.nix
            ./theme-work.nix
-           ./taskwarrior.nix
+           ./taskwarrior-work.nix
           ];
         };
 

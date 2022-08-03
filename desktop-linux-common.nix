@@ -34,8 +34,10 @@
     zoom-us
     cht-sh
     cheat
-    jdk11 # For kafka cp-demo
-    openssl # For kafka cp-demo
+    jdk11    # For kafka cp-demo
+    openssl  # For kafka cp-demo
+    helvum   # Pipewire
+    qpwgraph # Pipewire
   ];
 
   services.wlsunset = {

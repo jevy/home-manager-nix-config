@@ -15,8 +15,9 @@
   };
 
   home.file = {
-    ".taskrc".source = taskwarrior/taskrc
+    ".taskrc".source = taskwarrior/taskrc;
   };
 
-  # Add sync every five minutes
+  services.taskwarrior-sync.enable = true;
+
 }
