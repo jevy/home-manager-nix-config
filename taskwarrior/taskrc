@@ -47,6 +47,8 @@ taskd.trust=strict
 #include solarized-light-256.theme
 #include no-color.theme
 
+urgency.user.tag.reading.coefficient=-1
+
 news.version=2.6.0
 
 confirmation=no
