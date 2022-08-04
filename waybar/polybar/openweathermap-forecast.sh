@@ -42,7 +42,7 @@ get_icon() {
 }
 
 source ~/secrets/weather_api_for_polybar
-CITY="6094817"
+# CITY="6094817"
 UNITS="metric"
 SYMBOL="°"
 
@@ -73,6 +73,8 @@ if [ -n "$current" ] && [ -n "$forecast" ]; then
     current_temp=$(echo "$current" | jq ".main.feels_like" | cut -d "." -f 1)
     current_icon=$(echo "$current" | jq -r ".weather[0].icon")
 
+    current_location=$(echo "$current" | jq -r ".name" )
+
     forecast_temp=$(echo "$forecast" | jq ".list[].main.feels_like" | cut -d "." -f 1)
     forecast_icon=$(echo "$forecast" | jq -r ".list[].weather[0].icon")
 
@@ -84,5 +86,5 @@ if [ -n "$current" ] && [ -n "$forecast" ]; then
         trend=""
     fi
 
-    echo "$(get_icon "$current_icon") $current_temp$SYMBOL  $trend  $(get_icon "$forecast_icon") $forecast_temp$SYMBOL"
+    echo "$current_location $(get_icon "$current_icon") $current_temp$SYMBOL  $trend  $(get_icon "$forecast_icon") $forecast_temp$SYMBOL"
 fi
