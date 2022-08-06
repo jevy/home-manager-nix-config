@@ -21,11 +21,11 @@
     "modules-left": [
         "sway/workspaces",
         "sway/mode",
-        "custom/music",
-        "custom/taskwarrior"
+        "custom/music"
     ],
     "modules-center": [
-        "custom/meetings"
+        "custom/taskwarrior"
+        //"custom/meetings"
     ],
     "modules-right": [
         "custom/weather",
