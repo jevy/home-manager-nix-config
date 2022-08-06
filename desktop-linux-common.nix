@@ -34,8 +34,13 @@
     zoom-us
     cht-sh
     cheat
-    jdk11    # For kafka cp-demo
-    openssl  # For kafka cp-demo
+    mako
+    grim
+    swappy
+    slurp
+    brightnessctl
+    wdisplays
+    kooha
     helvum   # Pipewire
     qpwgraph # Pipewire
   ];
@@ -54,14 +59,17 @@
     plugins = [ pkgs.rofi-emoji pkgs.rofi-calc pkgs.rofi-power-menu ];
   };
 
-  services.swayidle.enable = true;
-  services.swayidle.events = [
-    { event = "before-sleep"; command = "${pkgs.swaylock-effects}/bin/swaylock"; }
-    { event = "lock"; command = "lock"; }
-  ];
-  services.swayidle.timeouts = [
-    { timeout = 400; command = "${pkgs.swaylock-effects}/bin/swaylock"; }
-  ];
+  services.swayidle = {
+    enable = true;
+    package = pkgs.swaylock-effects;
+    events = [
+      { event = "before-sleep"; command = "swaylock"; }
+      { event = "lock"; command = "lock"; }
+    ];
+    timeouts = [
+      { timeout = 60; command = "swaylock"; }
+    ];
+  };
 
   xdg.mimeApps.enable = true;
   xdg.mimeApps.defaultApplications =
@@ -157,7 +165,7 @@
           "${modifier}+Control+Shift+k" = "move workspace to output up";
 
           # There isn't a 10th workspace by default
-          "${modifier}+0" = "workspace 10";
+          "${modifier}+0"       = "workspace 10";
           "${modifier}+Shift+0" = "move container to workspace 10";
 
           # Launch programs
@@ -172,8 +180,9 @@
           "XF86AudioMicMute"     = "exec ${pkgs.pamixer}/bin/pamixer --default-source -t";
           "XF86AudioLowerVolume" = "exec ${pkgs.pamixer}/bin/pamixer -d 10";
           "XF86AudioRaiseVolume" = "exec ${pkgs.pamixer}/bin/pamixer -i 10";
-          "Print" = "exec /usr/bin/env bash | grim -g \"$(slurp)\" - | swappy -f -";
-          "${modifier}+n" = "exec ${pkgs.mako}/bin/makoctl dismiss";
+          "Pause"                = "exec ${pkgs.playerctl}/bin/playerctl play-pause";
+          "Print"                = "exec /usr/bin/env bash | grim -g \"$(slurp)\" - | swappy -f -";
+          "${modifier}+n"        = "exec ${pkgs.mako}/bin/makoctl dismiss";
         };
 
       keycodebindings = {
