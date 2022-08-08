@@ -5,13 +5,6 @@
 { config, pkgs, ... }:
 
 {
-  imports =
-    [
-      <nixos-hardware/lenovo/thinkpad/x1/7th-gen>
-      <home-manager/nixos>
-      ./hardware-configuration.nix
-    ];
-
   hardware.opengl = {
     enable = true;
   };
@@ -72,6 +65,7 @@
   # networking.useDHCP = true;
   networking.interfaces.enp0s31f6.useDHCP = true;
   networking.interfaces.wlp0s20f3.useDHCP = true;
+  networking.networkmanager.enable = true;
 
   programs._1password = {
     enable = true;
@@ -85,20 +79,15 @@
     polkitPolicyOwners = ["jevin" "jevinhumi"];
   };
 
-  # Enable the X11 windowing system.
-  services.xserver.enable = true;
-  # services.xserver = {
-  #   layout = "us";
-  #   xkbVariant = "colemak";
+  # services.xserver.enable = true;
+  # services.xserver.displayManager = {
+  #   gdm.enable = true;
+  #   defaultSession = "sway";
   # };
+  # programs.sway.enable = true;
+  security.pam.services.swaylock = {};
 
-  # Enable the GNOME Desktop Environment.
-  services.xserver.displayManager = {
-    gdm.enable = true;
-    defaultSession = "sway";
-  };
-
-  services.xserver.displayManager.startx.enable = true;
+  # services.xserver.displayManager.startx.enable = true;
   # services.xserver.desktopManager = {
   #   gnome.enable = true;
   # };
@@ -232,35 +221,35 @@
     package = pkgs.vimHugeX;
   };
 
- 
-  programs.sway = {
-    enable = true;
-    wrapperFeatures.gtk = true; # so that gtk works properly
-    extraPackages = with pkgs; [
-      swaylock
-      swayidle
-      waybar
-      wl-clipboard
-      mako # notification daemon
-      rofi-with-plugins
-      #wofi
-      wlsunset
-      pamixer
-      grim
-      swappy
-      slurp
-      clipman
-      brightnessctl
-      autotiling
-      wdisplays
-      copyq
-      kooha
-      wf-recorder
-      jq # For waybar weather
 
-      gst_all_1.gst-plugins-good # For kooha
-    ];
-  };
+  #programs.sway = {
+  #  enable = true;
+  #  wrapperFeatures.gtk = true; # so that gtk works properly
+  #  extraPackages = with pkgs; [
+  #    swaylock
+  #    swayidle
+  #    waybar
+  #    wl-clipboard
+  #    mako # notification daemon
+  #    rofi-with-plugins
+  #    #wofi
+  #    wlsunset
+  #    pamixer
+  #    grim
+  #    swappy
+  #    slurp
+  #    clipman
+  #    brightnessctl
+  #    autotiling
+  #    wdisplays
+  #    copyq
+  #    kooha
+  #    wf-recorder
+  #    jq # For waybar weather
+
+  #    gst_all_1.gst-plugins-good # For kooha
+  #  ];
+  #};
 
   environment.sessionVariables = {
     _JAVA_AWT_WM_NONREPARENTING = "1"; # For Arduino & Wayland
@@ -312,6 +301,10 @@
   #
   fonts = {
     fonts = [
+              pkgs.dejavu_fonts
+              pkgs.freefont_ttf
+              pkgs.gyre-fonts
+              pkgs.unifont
               pkgs.meslo-lgs-nf
               pkgs.weather-icons
               pkgs.font-awesome
@@ -320,6 +313,12 @@
               "MesloLGS NF"
               "Weather Icons"
               "Font Awesome 5 Free"
+            ];
+            fontconfig.defaultFonts.serif = [
+              "DejaVu Serif"
+            ];
+            fontconfig.defaultFonts.monospace = [
+              "DejaVu Sans Mono"
             ];
   };
 

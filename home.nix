@@ -6,7 +6,7 @@
   # home.username = "jevinhumi";
   # home.homeDirectory = "/home/jevinhumi";
 
-  nixpkgs.config.allowUnfreePredicate = (pkg: true);
+  # nixpkgs.config.allowUnfreePredicate = (pkg: true);
 
   # This value determines the Home Manager release that your
   # configuration is compatible with. This helps avoid breakage
