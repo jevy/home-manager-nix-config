@@ -12,6 +12,7 @@
     t = "clear && task";
     tt = "taskwarrior-tui";
     tw = "task waiting";
+    tin = "task add +in";
   };
 
   home.file = {
