@@ -184,7 +184,7 @@
           "XF86AudioLowerVolume" = "exec ${pkgs.pamixer}/bin/pamixer -d 10";
           "XF86AudioRaiseVolume" = "exec ${pkgs.pamixer}/bin/pamixer -i 10";
           "Pause"                = "exec ${pkgs.playerctl}/bin/playerctl play-pause";
-          "Print"                = "exec /usr/bin/env bash | grim -g \"$(slurp)\" - | swappy -f -";
+          "Print"                = "exec ${pkgs.grim}/bin/grim -g \"$(${pkgs.slurp}/bin/slurp)\" - | ${pkgs.swappy}/bin/swappy -f -";
           "${modifier}+n"        = "exec ${pkgs.mako}/bin/makoctl dismiss";
         };
 
@@ -215,6 +215,15 @@
     ".config/polybar-scripts/player-mpris-simple.sh".source     = waybar/polybar/player-mpris-simple.sh;
     ".config/polybar-scripts/openweathermap-forecast.sh".source = waybar/polybar/openweathermap-forecast.sh;
     ".config/backgrounds/".source                               = ./backgrounds;
+  };
+
+  xdg.configFile."swappy/config" = {
+    text = ''
+      [Default]
+      save_dir=~/Screenshots
+      save_filename_format=swappy-%Y%m%d-%H%M%S.png
+      early_exit=true
+    '';
   };
 
   home.shellAliases = {

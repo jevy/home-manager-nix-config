@@ -49,6 +49,12 @@ taskd.trust=strict
 
 urgency.user.tag.reading.coefficient=-1
 
+# Inbox https://cs-syd.eu/posts/2015-06-21-gtd-with-taskwarrior-part-2-collection.html
+report.in.columns           = id,description
+report.in.description       = Inbox
+report.in.filter            = status:pending limit:page (+in)
+report.in.labels            = ID,Description
+
 news.version=2.6.0
 
 confirmation=no
