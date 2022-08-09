@@ -65,12 +65,12 @@
   in { enable = true;
        events = [
          { event = "before-sleep"; command = lock_command; }
-         { event = "after-resume"; command = "swaymsg 'output * dpms off'"; }
+         # { event = "after-resume"; command = "swaymsg 'output * dpms off'"; }
          { event = "lock"; command = "lock"; }
        ];
     timeouts = [
       { timeout = 120; command = lock_command; }
-      { timeout = 240; command = "swaymsg 'output * dpms on'"; }
+      # { timeout = 240; command = "swaymsg 'output * dpms on'"; }
     ];
   };
 
