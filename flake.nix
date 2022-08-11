@@ -37,6 +37,32 @@
             }
           ];
         };
+        jevinhumi = lib.nixosSystem {
+          inherit system;
+          modules = [
+            ./configuration.nix
+            ./hardware-configuration.nix
+            nixos-hardware.nixosModules.lenovo-thinkpad-x1-7th-gen
+            home-manager.nixosModules.home-manager {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.jevin = {
+                imports = [
+                  ./home.nix
+                  ./vim/vim.nix
+                  ./zsh.nix
+                  ./cli-common.nix
+                  ./cli-linux.nix
+                  ./desktop-linux-work.nix
+                  ./mutt-humi.nix
+                  ./theme-work.nix
+                  ./taskwarrior-work.nix
+                ];
+              };
+              home-manager.extraSpecialArgs = { inherit nix-colors; };
+            }
+          ];
+        };
       };
   };
 }
