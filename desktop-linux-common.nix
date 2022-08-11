@@ -45,6 +45,8 @@
     qpwgraph # Pipewire
     swaylock-effects
     wl-clipboard
+    jq
+    autotiling
   ];
 
   services.wlsunset = {
