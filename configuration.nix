@@ -139,30 +139,7 @@
       }
     )
   ];
-  # services.sdrplayApi.enable = true;
-  # nixpkgs.overlays = [
-  #   (
-  #     self: super:
-  #     {
-  #       soapysdr-with-plugins = self.soapysdr.override { extraPackages = [ self.soapysdrplay ]; };
-  #       sdrpp-with-sdrplay = self.sdrpp.override { sdrplay_source= true; };
-  #     }
-  #   )
-  #   # Zoom screen sharing
-  #   (
-  #     self: super:
-  #     {
-  #      zoomUsFixed = pkgs.zoom-us.overrideAttrs (old: {
-  #       postFixup = old.postFixup + ''
-  #       wrapProgram $out/bin/zoom-us --unset XDG_SESSION_TYPE
-  #     '';});
-  #        zoom = pkgs.zoom-us.overrideAttrs (old: {
-  #     postFixup = old.postFixup + ''
-  #       wrapProgram $out/bin/zoom --unset XDG_SESSION_TYPE
-  #     '';});
-  #     }
-  #     )
-  # ];
+
 
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
@@ -220,36 +197,6 @@
     defaultEditor = true ;
     package = pkgs.vimHugeX;
   };
-
-
-  #programs.sway = {
-  #  enable = true;
-  #  wrapperFeatures.gtk = true; # so that gtk works properly
-  #  extraPackages = with pkgs; [
-  #    swaylock
-  #    swayidle
-  #    waybar
-  #    wl-clipboard
-  #    mako # notification daemon
-  #    rofi-with-plugins
-  #    #wofi
-  #    wlsunset
-  #    pamixer
-  #    grim
-  #    swappy
-  #    slurp
-  #    clipman
-  #    brightnessctl
-  #    autotiling
-  #    wdisplays
-  #    copyq
-  #    kooha
-  #    wf-recorder
-  #    jq # For waybar weather
-
-  #    gst_all_1.gst-plugins-good # For kooha
-  #  ];
-  #};
 
   environment.sessionVariables = {
     _JAVA_AWT_WM_NONREPARENTING = "1"; # For Arduino & Wayland
