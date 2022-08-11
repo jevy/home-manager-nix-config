@@ -43,6 +43,8 @@
     kooha
     helvum   # Pipewire
     qpwgraph # Pipewire
+    wl-clipboard
+
   ];
 
   services.wlsunset = {
@@ -53,6 +55,7 @@
 
   xdg.enable = true;
 
+  programs.java.enable = true;
   programs.rofi = {
     enable = true;
     package = pkgs.rofi.override { plugins = [ pkgs.rofi-emoji pkgs.rofi-calc pkgs.rofi-power-menu]; };
