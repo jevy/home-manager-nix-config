@@ -99,6 +99,13 @@
 
   services.chrony.enable = true;
   services.timesyncd.enable = false;
+  services.syncthing = {
+    enable = true;
+    systemService = true;
+    dataDir = "/home/jevin/syncthing";
+    user = "jevin";
+    group = "users";
+  };
 
   # https://nixos.wiki/wiki/PipeWire
   hardware.bluetooth = {
@@ -149,7 +156,7 @@
   users.users.jevin = {
     shell = pkgs.zsh;
     isNormalUser = true;
-    extraGroups = [ "qemu-libvirtd" "libvirtd" "plugdev" "wheel" "networkmanager" "docker" "dialout" "audio" "video"]; # Dialout if for usb/serial access for arduino
+    extraGroups = [ "qemu-libvirtd" "libvirtd" "plugdev" "wheel" "networkmanager" "docker" "dialout" "audio" "video" "syncthing"]; # Dialout if for usb/serial access for arduino
 
     # `nix-shell -p mkpasswd --run 'mkpasswd -m sha-512'`
     hashedPassword = "$6$RQ3xn2S3O1RFFqiA$e725RMH8eJgw4JJ4UnSjuzJ1Pw5lNNaFRW.9M2XCrcCJsAbWPg5qs5hzRZARiK9uastNZN9XnUGBs8yM6kdMZ0";
