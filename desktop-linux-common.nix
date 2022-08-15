@@ -19,7 +19,6 @@
     signal-desktop
     # qalculate-gtk
     nasc
-    _1password-gui
     obs-studio
     blueberry
     calendar-cli
@@ -109,7 +108,7 @@
         { command = "${pkgs.slack}/bin/slack"; }
         { command = "${pkgs.spotify}/bin/spotify"; }
         { command = "${pkgs.flashfocus}/bin/flashfocus"; }
-        { command = "${pkgs._1password-gui}/bin/1password"; }
+        { command = "${pkgs.unstable._1password-gui}/bin/1password"; }
       ];
 
       terminal = "kitty";
