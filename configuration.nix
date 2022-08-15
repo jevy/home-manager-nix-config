@@ -56,6 +56,10 @@
   boot.loader.grub.configurationLimit = 20;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  # https://github.com/NixOS/nixpkgs/pull/126777/files
+  # Running into issues with Obisidan and syncthing. Not enough inotify available
+  boot.kernel.sysctl."fs.inotify.max_user_instances" = 2147483647;
+
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
@@ -77,6 +81,7 @@
     enable = true;
     gid = 5000;
     polkitPolicyOwners = ["jevin" "jevinhumi"];
+    package = pkgs.unstable._1password-gui;
   };
 
   # services.xserver.enable = true;
@@ -185,11 +190,11 @@
   # Be sure to change the added channel to match the actually channel below
   nixpkgs.config = {
     allowUnfree = true;
-    packageOverrides = pkgs: {
-      unstable = import <nixos-unstable> {
-        config = config.nixpkgs.config;
-      };
-    };
+    # packageOverrides = pkgs: {
+    #   unstable = import <nixos-unstable> {
+    #     config = config.nixpkgs.config;
+    #   };
+    # };
 
 
     permittedInsecurePackages = [

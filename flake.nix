@@ -8,22 +8,24 @@
     nixos-hardware.url                  = "github:NixOS/nixos-hardware";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     nix-colors.url                      = "github:misterio77/nix-colors";
-    # nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-unstable.url                = "github:nixos/nixpkgs/nixos-unstable";
   };
 
-  outputs = inputs@{ home-manager, nix-colors, nixpkgs, nixos-hardware, ... }:
+  outputs = { home-manager, nix-colors, nixpkgs, nixpkgs-unstable, nixos-hardware, ... }:
     let
       system = "x86_64-linux";
-      pkgs = import nixpkgs {
-        inherit system;
-        config.allowUnfree = true;
+      overlay-unstable = final: prev: {
+        unstable = import nixpkgs-unstable {
+          inherit system;
+          config.allowUnfree = true;
+        };
       };
-      lib = nixpkgs.lib;
     in {
       nixosConfigurations = {
-        jevin = lib.nixosSystem {
+        jevin = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
+            ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable ]; })
             ./configuration.nix
             ./hardware-configuration.nix
             nixos-hardware.nixosModules.lenovo-thinkpad-x1-7th-gen
@@ -37,9 +39,11 @@
             }
           ];
         };
-        jevinhumi = lib.nixosSystem {
+        jevinhumi = nixpkgs.lib.nixosSystem {
+          # nixpkgs.overlays = [ overlay-unstable ];
           inherit system;
           modules = [
+            ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable ]; })
             ./configuration.nix
             ./hardware-configuration.nix
             nixos-hardware.nixosModules.lenovo-thinkpad-x1-7th-gen
