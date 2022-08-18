@@ -46,6 +46,7 @@
     wl-clipboard
     jq
     autotiling
+    gnome.simple-scan
   ];
 
   services.wlsunset = {
