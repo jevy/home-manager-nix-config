@@ -143,16 +143,6 @@
   hardware.enableAllFirmware = true;
   hardware.enableRedistributableFirmware = true;
 
-  nixpkgs.overlays = [
-    (
-      self: super:
-      {
-        rofi-with-plugins = self.rofi.override { plugins = [ pkgs.rofi-calc ]; };
-      }
-    )
-  ];
-
-
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
 
