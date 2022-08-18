@@ -40,7 +40,6 @@
           ];
         };
         jevinhumi = nixpkgs.lib.nixosSystem {
-          # nixpkgs.overlays = [ overlay-unstable ];
           inherit system;
           modules = [
             ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable ]; })
@@ -50,18 +49,8 @@
             home-manager.nixosModules.home-manager {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
-              home-manager.users.jevin = {
-                imports = [
-                  ./home.nix
-                  ./vim/vim.nix
-                  ./zsh.nix
-                  ./cli-common.nix
-                  ./cli-linux.nix
-                  ./desktop-linux-work.nix
-                  ./mutt-humi.nix
-                  ./theme-work.nix
-                  ./taskwarrior-work.nix
-                ];
+              home-manager.users.jevinhumi = {
+                imports = [ ./work-linux.nix ];
               };
               home-manager.extraSpecialArgs = { inherit nix-colors; };
             }
