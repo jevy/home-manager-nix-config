@@ -19,7 +19,6 @@
     signal-desktop
     # qalculate-gtk
     nasc
-    _1password-gui
     obs-studio
     blueberry
     calendar-cli
@@ -44,7 +43,10 @@
     helvum   # Pipewire
     qpwgraph # Pipewire
     wl-clipboard
-
+    swaylock-effects
+    jq
+    autotiling
+    gnome.simple-scan
   ];
 
   services.wlsunset = {
@@ -62,15 +64,16 @@
     plugins = [ pkgs.rofi-emoji pkgs.rofi-calc pkgs.rofi-power-menu ];
   };
 
-  services.swayidle = {
-    enable = true;
-    package = pkgs.swaylock-effects;
-    events = [
-      { event = "before-sleep"; command = "swaylock"; }
-      { event = "lock"; command = "lock"; }
-    ];
+  services.swayidle = let
+    lock_command = "${pkgs.swaylock-effects}/bin/swaylock -f --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --line-color 00000000 --inside-color 00000088 --separator-color 00000000 --grace 2 --fade-in 0.2" ;
+  in { enable = true;
+       events = [
+         { event = "before-sleep"; command = lock_command; }
+         # { event = "lock"; command = "lock"; }
+       ];
     timeouts = [
-      { timeout = 60; command = "swaylock"; }
+      { timeout = 300; command = lock_command; }
+      { timeout = 400; command = "swaymsg 'output * dpms off'"; resumeCommand = "swaymsg 'output * dpms on'"; }
     ];
   };
 
@@ -106,7 +109,7 @@
         { command = "${pkgs.slack}/bin/slack"; }
         { command = "${pkgs.spotify}/bin/spotify"; }
         { command = "${pkgs.flashfocus}/bin/flashfocus"; }
-        { command = "${pkgs._1password-gui}/bin/1password"; }
+        { command = "${pkgs.unstable._1password-gui}/bin/1password"; }
       ];
 
       terminal = "kitty";
