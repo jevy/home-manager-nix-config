@@ -72,8 +72,8 @@
          # { event = "lock"; command = "lock"; }
        ];
     timeouts = [
-      { timeout = 60; command = lock_command; }
-      { timeout = 90; command = "swaymsg 'output * dpms off'"; resumeCommand = "swaymsg 'output * dpms on'"; }
+      { timeout = 300; command = lock_command; }
+      { timeout = 400; command = "swaymsg 'output * dpms off'"; resumeCommand = "swaymsg 'output * dpms on'"; }
     ];
   };
 
