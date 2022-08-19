@@ -35,20 +35,6 @@
               home-manager.users.jevin = {
                 imports = [ ./jevin-linux.nix ];
               };
-              home-manager.extraSpecialArgs = { inherit nix-colors; };
-            }
-          ];
-        };
-        jevinhumi = nixpkgs.lib.nixosSystem {
-          inherit system;
-          modules = [
-            ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable ]; })
-            ./configuration.nix
-            ./hardware-configuration.nix
-            nixos-hardware.nixosModules.lenovo-thinkpad-x1-7th-gen
-            home-manager.nixosModules.home-manager {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
               home-manager.users.jevinhumi = {
                 imports = [ ./work-linux.nix ];
               };
