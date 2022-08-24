@@ -117,6 +117,11 @@
       window = {
         border = 5;
         titlebar = true;
+        commands = [
+          # From: https://www.reddit.com/r/swaywm/comments/conhod/inhibit_idle_while_a_fullscreen_app_is_running/
+          { command = "inhibit_idle fullscreen"; criteria = { class  = "^.*"; } ; }
+          { command = "inhibit_idle fullscreen"; criteria = { app_id = "^.*"; } ; }
+        ];
       };
 
       # TODO: Finish outputs

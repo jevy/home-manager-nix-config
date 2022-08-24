@@ -28,6 +28,7 @@
     element-desktop-wayland
     # unstable.sunpaper
     bottles
+    transmission-gtk
   ];
 
   xdg.mimeApps.defaultApplications =
