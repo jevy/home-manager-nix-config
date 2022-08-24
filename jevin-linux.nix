@@ -4,7 +4,6 @@
     ./home.nix
     ./vim/vim.nix
     ./zsh.nix
-    ./cli-common.nix
     ./cli-linux.nix
     ./desktop-linux-personal.nix
     ./mutt-quickjack.nix

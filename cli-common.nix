@@ -31,6 +31,7 @@
     ncdu
     bat
     vagrant
+    curl
   ];
 
   home.sessionVariables = {
@@ -49,11 +50,9 @@
     lt = "ls --tree";
     la = "ls -a";
 
-    # Todoist
-    ts = "todoist s"; #Sync
-    tl ="todoist list --filter '(overdue | today)'"; # Today
-
     fdt = "f() fd $1 -t file -X ls -tr -l);f"; # Search files sort by date
+
+    geoip = "curl ifconfig.co/json";
   };
 
 }

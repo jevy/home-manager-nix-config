@@ -1,5 +1,11 @@
 { config, pkgs, libs, ... }:
+
 {
+  imports =
+  [
+    ./cli-common.nix
+  ];
+
   home.packages = with pkgs; [
     docker
     docker-compose
