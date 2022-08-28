@@ -26,16 +26,24 @@
 
       # Tree Sitter stuff
       (nvim-treesitter.withPlugins (
-        plugins: with plugins; [
+        plugins: with pkgs.tree-sitter-grammars; [
           tree-sitter-ruby
           tree-sitter-nix
           tree-sitter-regex
           tree-sitter-yaml
+          tree-sitter-vim
+          tree-sitter-json
+          tree-sitter-markdown
+          tree-sitter-dockerfile
+          tree-sitter-lua
+
         ]
       ))
       # completion-treesitter
-      # nvim-treesitter-textobjects
-      # nvim-treesitter-context
+      nvim-treesitter-textobjects
+      nvim-treesitter-context
+      vim-lsp
+
 
       plenary-nvim
       telescope-nvim
@@ -44,10 +52,9 @@
     ];
     extraPackages = with pkgs; [
       # Ruby LSP - https://blog.backtick.consulting/neovims-built-in-lsp-with-ruby-and-rails/
-      solargraph
-      rubocop
-      tree-sitter
-
+      rubyPackages.solargraph
+      # rubocop
+      # tree-sitter
     ];
     extraConfig = builtins.concatStringsSep "\n" [
         (lib.strings.fileContents ./base.vim)
@@ -58,7 +65,14 @@
         vim.api.nvim_set_keymap('n', '<C-f>', ':Telescope find_files<CR>', { noremap = true, silent = true })
         vim.api.nvim_set_keymap('n', '<C-g>', ':Telescope live_grep<CR>', { noremap = true, silent = true })
 
-        require("nvim-treesitter").setup()
+        require("nvim-treesitter.configs").setup {
+          highlight = {
+            enable = true,
+          },
+          indent = {
+            enable = true,
+          }
+        }
         EOF
       ''
       ];
