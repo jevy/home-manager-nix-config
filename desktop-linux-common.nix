@@ -46,7 +46,6 @@
     swaylock-effects
     wf-recorder
     jq
-    autotiling
     gnome.simple-scan
     xdragon
   ];
@@ -118,7 +117,6 @@
         { command = "${pkgs.spotify}/bin/spotify"; }
         { command = "${pkgs.flashfocus}/bin/flashfocus"; }
         { command = "${pkgs.unstable._1password-gui}/bin/1password"; }
-        { command = "${pkgs.autotiling}/bin/autotiling"; always = true; }
       ];
 
       terminal = "kitty";
