@@ -44,6 +44,7 @@
     qpwgraph # Pipewire
     wl-clipboard
     swaylock-effects
+    wf-recorder
     jq
     autotiling
     gnome.simple-scan
@@ -65,7 +66,7 @@
   };
 
   services.swayidle = let
-    lock_command = "${pkgs.swaylock-effects}/bin/swaylock -f --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --line-color 00000000 --inside-color 00000088 --separator-color 00000000 --grace 2 --fade-in 0.2" ;
+    lock_command = "${pkgs.swaylock-effects}/bin/swaylock -f --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --line-color 00000000 --inside-color 00000088 --separator-color 00000000 --grace 8 --fade-in 0.2" ;
   in { enable = true;
        events = [
          { event = "before-sleep"; command = lock_command; }
@@ -236,6 +237,7 @@
 
   home.shellAliases = {
     v = "${pkgs.neovide}/bin/neovide";
+    screen-record = "${pkgs.wf-recorder}/bin/wf-recorder -g \"$(${pkgs.slurp}/bin/slurp)\" --file=$HOME/Screenshots/latest-recording.mp4";
   };
 
   # For Flakpak
