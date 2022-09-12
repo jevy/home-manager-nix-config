@@ -48,6 +48,7 @@
     jq
     autotiling
     gnome.simple-scan
+    xdragon
   ];
 
   services.wlsunset = {
@@ -88,6 +89,12 @@
 
   # TODO: Add all the packages from configuration.nix
   programs.firefox.enable = true;
+
+  home.pointerCursor = {
+    package = pkgs.nordzy-cursor-theme;
+    gtk.enable = true;
+    name = "Nordzy-cursors";
+  };
 
   wayland.windowManager.sway = {
     enable = true;
