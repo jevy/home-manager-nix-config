@@ -64,8 +64,7 @@
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Set your time zone.
-  # time.timeZone = "America/Toronto";
-  time.timeZone = "Europe/Amsterdam";
+  time.timeZone = "America/Toronto";
 
   # networking.useDHCP = true;
   networking.interfaces.enp0s31f6.useDHCP = true;
