@@ -53,6 +53,8 @@
     fdt = "f() fd $1 -t file -X ls -tr -l);f"; # Search files sort by date
 
     geoip = "curl ifconfig.co/json";
+
+    rebuildhm = "cd ~/.config/nixpkgs && sudo nixos-rebuild switch --flake .#jevin";
   };
 
 }
