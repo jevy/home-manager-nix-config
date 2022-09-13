@@ -7,7 +7,6 @@
     neovim-remote
     gimp
     discord
-    firefox
     spotify
     obsidian
     pavucontrol
@@ -48,6 +47,7 @@
     jq
     gnome.simple-scan
     xdragon
+    etcher
   ];
 
   services.wlsunset = {
@@ -86,7 +86,6 @@
     "text/html"              = [ "google-chrome.desktop"];
   };
 
-  # TODO: Add all the packages from configuration.nix
   programs.firefox.enable = true;
 
   home.pointerCursor = {

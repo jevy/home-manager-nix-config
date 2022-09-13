@@ -84,19 +84,37 @@
     package = pkgs.unstable._1password-gui;
   };
 
-  # services.xserver.enable = true;
-  # services.xserver.displayManager = {
-  #   gdm.enable = true;
-  #   defaultSession = "sway";
-  # };
-  # programs.sway.enable = true;
   security.pam.services.swaylock = {};
   security.sudo.wheelNeedsPassword = false;
 
-  # services.xserver.displayManager.startx.enable = true;
-  # services.xserver.desktopManager = {
-  #   gnome.enable = true;
-  # };
+  services.greetd = {
+    enable = true;
+    settings = {
+      default_session = {
+        command = "${pkgs.greetd.tuigreet}/bin/tuigreet --time --cmd sway";
+        user = "greeter";
+      };
+    };
+  };
+
+  services.xserver.desktopManager.gnome.enable = true;
+  environment.gnome.excludePackages = (with pkgs; [
+    gnome-photos
+    gnome-tour
+  ]) ++ (with pkgs.gnome; [
+    cheese # webcam tool
+    gnome-music
+    gnome-terminal
+    gedit # text editor
+    epiphany # web browser
+    geary # email reader
+    gnome-characters
+    totem # video player
+    tali # poker game
+    iagno # go game
+    hitori # sudoku game
+    atomix # puzzle game
+  ]);
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
@@ -190,6 +208,7 @@
 
     permittedInsecurePackages = [
       "electron-13.6.9"
+      "electron-12.2.3"
     ];
   };
 
