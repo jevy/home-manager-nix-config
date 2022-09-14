@@ -42,7 +42,7 @@ get_icon() {
 }
 
 source ~/secrets/weather_api_for_polybar
-# CITY="6094817"
+CITY="6094817"
 UNITS="metric"
 SYMBOL="°"
 
