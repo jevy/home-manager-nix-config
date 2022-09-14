@@ -22,13 +22,14 @@
     gcalcli
     # etcher
 
-    prusa-slicer
+    unstable.prusa-slicer
     cura
     rpi-imager
     element-desktop-wayland
     # unstable.sunpaper
     bottles
     transmission-gtk
+    openscad
   ];
 
   wayland.windowManager.sway = {
