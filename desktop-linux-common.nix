@@ -9,7 +9,7 @@
     discord
     firefox
     spotify
-    obsidian
+    unstable.obsidian
     pavucontrol
     slack
     google-chrome
