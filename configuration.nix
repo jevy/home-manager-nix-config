@@ -203,11 +203,12 @@
 
   environment.sessionVariables = {
     _JAVA_AWT_WM_NONREPARENTING = "1"; # For Arduino & Wayland
-    WLR_DRM_NO_MODIFIERS = "1"; # For external monitor issues in sway
+    WLR_DRM_NO_MODIFIERS        = "1"; # For external monitor issues in sway
+    XDG_CURRENT_DESKTOP         = "sway";
+    MOZ_ENABLE_WAYLAND          = "1";
   };
 
-
-  # virtualisation.libvirtd.enable = true; 
+  # virtualisation.libvirtd.enable = true;
   # virtualisation.virtualbox.host.enable = true;
   # users.extraGroups.vboxusers.members = [ "jevin" "jevinhumi" ];
   # virtualisation.virtualbox.host.enableExtensionPack = true;

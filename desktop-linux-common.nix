@@ -7,7 +7,7 @@
     neovim-remote
     gimp
     discord
-    firefox
+    firefox-wayland
     spotify
     unstable.obsidian
     pavucontrol
@@ -85,8 +85,6 @@
     "x-scheme-handler/https" = [ "firefox.desktop"];
     "text/html"              = [ "firefox.desktop"];
   };
-
-  programs.firefox.enable = true;
 
   home.pointerCursor = {
     package = pkgs.nordzy-cursor-theme;
