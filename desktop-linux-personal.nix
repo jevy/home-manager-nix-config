@@ -22,14 +22,13 @@
     gcalcli
     # etcher
 
-    unstable.prusa-slicer
+    prusa-slicer
     cura
     rpi-imager
     element-desktop-wayland
     # unstable.sunpaper
     bottles
     transmission-gtk
-    openscad
   ];
 
   xdg.mimeApps.defaultApplications =
