@@ -47,7 +47,8 @@
     wf-recorder
     jq
     gnome.simple-scan
-    xdragon
+    xdragon # Ranger drag drop
+    xdg-utils
   ];
 
   services.wlsunset = {
@@ -55,8 +56,6 @@
     latitude = "45.42";
     longitude = "-75.69";
   };
-
-  xdg.enable = true;
 
   programs.java.enable = true;
   programs.rofi = {
@@ -78,15 +77,15 @@
     ];
   };
 
+  xdg.enable = true;
   xdg.mimeApps.enable = true;
   xdg.mimeApps.defaultApplications =
   {
-    "x-scheme-handler/http"  = [ "google-chrome.desktop"];
-    "x-scheme-handler/https" = [ "google-chrome.desktop"];
-    "text/html"              = [ "google-chrome.desktop"];
+    "x-scheme-handler/http"  = [ "firefox.desktop"];
+    "x-scheme-handler/https" = [ "firefox.desktop"];
+    "text/html"              = [ "firefox.desktop"];
   };
 
-  # TODO: Add all the packages from configuration.nix
   programs.firefox.enable = true;
 
   home.pointerCursor = {

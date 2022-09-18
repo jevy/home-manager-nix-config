@@ -58,3 +58,8 @@ report.in.labels            = ID,Description
 news.version=2.6.0
 
 confirmation=no
+
+uda.relativeRecurDue.type=duration
+uda.relativeRecurDue.label=Rel. Rec. Due
+uda.relativeRecurWait.type=duration
+uda.relativeRecurWait.label=Rel. Rec. Wait
