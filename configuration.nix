@@ -204,8 +204,6 @@
   environment.sessionVariables = {
     _JAVA_AWT_WM_NONREPARENTING = "1"; # For Arduino & Wayland
     WLR_DRM_NO_MODIFIERS        = "1"; # For external monitor issues in sway
-    XDG_CURRENT_DESKTOP         = "sway";
-    MOZ_ENABLE_WAYLAND          = "1";
   };
 
   # virtualisation.libvirtd.enable = true;
@@ -239,13 +237,13 @@
   # $ nix-shell -p sysfsutils
   # $ systool -vm v4l2loopback
   # For webcam background rewriting
-  boot.extraModulePackages = with config.boot.kernelPackages; [ v4l2loopback ];
-  boot.extraModprobeConfig = ''
-    options v4l2loopback devices=1 exclusive_caps=1 video_nr=2 card_label="fake-cam"
-  '';
+  # boot.extraModulePackages = with config.boot.kernelPackages; [ v4l2loopback ];
+  # boot.extraModprobeConfig = ''
+  #   options v4l2loopback devices=1 exclusive_caps=1 video_nr=2 card_label="fake-cam"
+  # '';
 
 
-  boot.kernelModules = [ "v4l2loopback" ];
+  # boot.kernelModules = [ "v4l2loopback" ];
 
   # ----- USER STUFF ------
   #

@@ -79,12 +79,12 @@
 
   xdg.enable = true;
   xdg.mimeApps.enable = true;
-  xdg.mimeApps.defaultApplications =
-  {
-    "x-scheme-handler/http"  = [ "firefox.desktop"];
-    "x-scheme-handler/https" = [ "firefox.desktop"];
-    "text/html"              = [ "firefox.desktop"];
-  };
+  # xdg.mimeApps.defaultApplications =
+  # {
+  #   "x-scheme-handler/http"  = [ "firefox.desktop"];
+  #   "x-scheme-handler/https" = [ "firefox.desktop"];
+  #   "text/html"              = [ "firefox.desktop"];
+  # };
 
   home.pointerCursor = {
     package = pkgs.nordzy-cursor-theme;
@@ -186,7 +186,7 @@
           # Launch programs
           # TODO: Pull over working rofi config
           "${modifier}+c" = "exec rofi -show calc";
-          "${modifier}+u" = "exec ${pkgs.firefox}/bin/firefox";
+          "${modifier}+u" = "exec firefox";
           "${modifier}+t" = "exec kitty -- ${pkgs.ranger}/bin/ranger ~/Downloads";
           "${modifier}+i" = "exec ${pkgs.blueberry}/bin/blueberry";
 
