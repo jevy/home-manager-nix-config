@@ -195,6 +195,11 @@
 
   programs.gnupg.agent.enable = true;
 
+  services.dictd = {
+    enable = true;
+    DBs = with pkgs.dictdDBs; [ wiktionary wordnet ];
+  };
+
   # programs.zsh.enable = true;
   programs.vim = {
     defaultEditor = true ;
