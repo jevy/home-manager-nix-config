@@ -43,7 +43,6 @@
     helvum   # Pipewire
     qpwgraph # Pipewire
     wl-clipboard
-    swaylock-effects
     wf-recorder
     jq
     gnome.simple-scan
@@ -69,7 +68,7 @@
   in { enable = true;
        events = [
          { event = "before-sleep"; command = lock_command; }
-         # { event = "lock"; command = "lock"; }
+         { event = "lock"; command = "lock"; }
        ];
     timeouts = [
       { timeout = 300; command = lock_command; }
@@ -79,12 +78,13 @@
 
   xdg.enable = true;
   xdg.mimeApps.enable = true;
-  # xdg.mimeApps.defaultApplications =
-  # {
-  #   "x-scheme-handler/http"  = [ "firefox.desktop"];
-  #   "x-scheme-handler/https" = [ "firefox.desktop"];
-  #   "text/html"              = [ "firefox.desktop"];
-  # };
+  xdg.mimeApps.defaultApplications =
+  {
+    "application/pdf" = [ "zathura.desktop"];
+    # "x-scheme-handler/http"  = [ "firefox.desktop"];
+    # "x-scheme-handler/https" = [ "firefox.desktop"];
+    # "text/html"              = [ "firefox.desktop"];
+  };
 
   home.pointerCursor = {
     package = pkgs.nordzy-cursor-theme;
