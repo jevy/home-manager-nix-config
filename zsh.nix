@@ -1,5 +1,9 @@
 { config, pkgs, libs, ... }:
 {
+  home.packages = with pkgs; [
+    zoxide
+  ];
+
   programs.zsh = {
     enable = true;
     enableCompletion = true;
@@ -8,16 +12,6 @@
     '';
     plugins = [
         {
-          name = "zsh-z";
-          file = "zsh-z.plugin.zsh";
-          src = pkgs.fetchFromGitHub {
-            owner = "agkozak";
-            repo = "zsh-z";
-            rev = "b5e61d03a42a84e9690de12915a006b6745c2a5f";
-            sha256 = "1A6WZ+fJSf2WKZD7CYJB/pbgwV2mX+X8qInqQLeuT78=";
-          };
-        }
-        {
           name = "zsh-nix-shell";
           file = "nix-shell.plugin.zsh";
           src = pkgs.fetchFromGitHub {
@@ -25,6 +19,16 @@
             repo = "zsh-nix-shell";
             rev = "v0.5.0";
             sha256 = "0za4aiwwrlawnia4f29msk822rj9bgcygw6a8a6iikiwzjjz0g91";
+          };
+        }
+        {
+          name = "fzf-tab";
+          file = "fzf-tab.plugin.zsh";
+          src = pkgs.fetchFromGitHub {
+            owner = "Aloxaf";
+            repo = "fzf-tab";
+            rev = "938eef72e93ddb0609205a663bf0783f4e1b5fae";
+            sha256 = "xP0IoCeyZyYU+iKUkIoIAMn75r6R3TJYhAKoQgC1dWg=";
           };
         }
         {
@@ -52,6 +56,7 @@
         "sudo"
         "kubectl"
         "taskwarrior"
+        "zoxide"
       ];
     };
   };
