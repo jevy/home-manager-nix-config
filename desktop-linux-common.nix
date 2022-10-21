@@ -19,7 +19,6 @@
     signal-desktop
     # qalculate-gtk
     nasc
-    obs-studio
     blueberry
     calendar-cli
     vdirsyncer
@@ -90,6 +89,11 @@
     package = pkgs.nordzy-cursor-theme;
     gtk.enable = true;
     name = "Nordzy-cursors";
+  };
+
+  programs.obs-studio = {
+    enable = true;
+    plugins = [ pkgs.obs-studio-plugins.wlrobs ];
   };
 
   wayland.windowManager.sway = {
