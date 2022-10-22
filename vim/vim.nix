@@ -20,7 +20,6 @@
       nvim-tree-lua
       nvim-web-devicons # for nvim-tree
       fzf-vim
-      vim-sneak
       vim-rooter
       vim-easy-align
 
@@ -49,7 +48,9 @@
       telescope-nvim
       telescope-fzy-native-nvim
 
-    ];
+    ]
+    ++ [pkgs.unstable.vimPlugins.leap-nvim];
+
     extraPackages = with pkgs; [
       # Ruby LSP - https://blog.backtick.consulting/neovims-built-in-lsp-with-ruby-and-rails/
       rubyPackages.solargraph
@@ -73,6 +74,8 @@
             enable = true,
           }
         }
+
+        require('leap').add_default_mappings()
         EOF
       ''
       ];

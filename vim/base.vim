@@ -69,8 +69,6 @@ augroup END
 " For sway scratchpad
 autocmd CursorHold .notes :write
 
-let g:sneak#label = 1
-
 " Resize splits when window size is changed
 augroup AutoAdjustResize
   autocmd!
