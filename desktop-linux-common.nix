@@ -55,6 +55,8 @@
     longitude = "-75.69";
   };
 
+  services.mpris-proxy.enable = true;
+
   programs.java.enable = true;
   programs.rofi = {
     enable = true;
