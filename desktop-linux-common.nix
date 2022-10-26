@@ -6,7 +6,7 @@
     neovide
     neovim-remote
     gimp
-    discord
+    unstable.discord
     firefox-wayland
     spotify
     unstable.obsidian
