@@ -189,7 +189,8 @@
       };
     };
   };
-  ## services.dbus.enable = true;
+
+  services.dbus.enable = true;
 
   hardware.sane.enable = true;
   hardware.sane.drivers.scanSnap.enable = true;

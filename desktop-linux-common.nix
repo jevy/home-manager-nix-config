@@ -8,7 +8,7 @@
     gimp
     unstable.discord
     firefox-wayland
-    spotify
+    unstable.spotify
     unstable.obsidian
     pavucontrol
     slack
@@ -55,7 +55,7 @@
     longitude = "-75.69";
   };
 
-  services.mpris-proxy.enable = true;
+  # services.mpris-proxy.enable = true;
 
   programs.java.enable = true;
   programs.rofi = {
@@ -117,7 +117,7 @@
 
       startup = [
         { command = "${pkgs.slack}/bin/slack"; }
-        { command = "${pkgs.spotify}/bin/spotify"; }
+        { command = "spotify"; }
         { command = "${pkgs.flashfocus}/bin/flashfocus"; }
         { command = "${pkgs.unstable._1password-gui}/bin/1password"; }
       ];
