@@ -32,6 +32,7 @@
   hardware.keyboard.zsa.enable = true;
 
   services.hardware.bolt.enable = true;
+  services.fwupd.enable = true;
   # services.ratbagd.enable = true;
 
   nix = {
@@ -105,13 +106,13 @@
 
   services.chrony.enable = true;
   services.timesyncd.enable = false;
-  services.syncthing = {
-    enable = true;
-    systemService = true;
-    dataDir = "/home/jevin/syncthing";
-    user = "jevin";
-    group = "users";
-  };
+  # services.syncthing = {
+  #   enable = true;
+  #   systemService = true;
+  #   dataDir = "/home/jevin/syncthing";
+  #   user = "jevin";
+  #   group = "users";
+  # };
 
   # https://nixos.wiki/wiki/PipeWire
   hardware.bluetooth = {
