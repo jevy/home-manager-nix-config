@@ -11,37 +11,46 @@
     nixpkgs-unstable.url                = "github:nixos/nixpkgs/nixos-unstable";
   };
 
-  outputs = { home-manager, nix-colors, nixpkgs, nixpkgs-unstable, nixos-hardware, ... }:
+  outputs = { home-manager, nix-colors, nixpkgs, nixpkgs-unstable, nixos-hardware, ... }@inputs:
     let
-      system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.x86_64-linux;
       overlay-unstable = final: prev: {
         unstable = import nixpkgs-unstable {
-          inherit system;
           config.allowUnfree = true;
         };
       };
     in {
       nixosConfigurations = {
-        jevin = nixpkgs.lib.nixosSystem {
-          inherit system;
-          modules = [
-            ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable ]; })
-            ./configuration.nix
-            ./hardware-configuration.nix
-            nixos-hardware.nixosModules.lenovo-thinkpad-x1-7th-gen
-            home-manager.nixosModules.home-manager {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.users.jevin = {
-                imports = [ ./jevin-linux.nix ];
-              };
-              home-manager.users.jevinhumi = {
-                imports = [ ./work-linux.nix ];
-              };
-              home-manager.extraSpecialArgs = { inherit nix-colors; };
-            }
-          ];
+        # Lenovo has hostname `nixos`
+          nixos = nixpkgs.lib.nixosSystem {
+            pkgs = nixpkgs.legacyPackages.x86_64-linux;
+            specialArgs = { inherit inputs; }; # Pass flake inputs to our config
+            modules = [
+              ./configuration.nix
+              ./hardware-configuration.nix
+              nixos-hardware.nixosModules.lenovo-thinkpad-x1-7th-gen
+            ];
+          };
         };
+
+        homeConfigurations = {
+          "jevin@nixos" = home-manager.lib.homeManagerConfiguration {
+            pkgs = nixpkgs.legacyPackages.x86_64-linux;
+            extraSpecialArgs = { inherit inputs; inherit nix-colors; }; # Pass flake inputs to our config
+            modules = [ ./jevin-linux.nix ];
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+          };
+
+          "jevinhumi@nixos" = home-manager.lib.homeManagerConfiguration {
+            pkgs = nixpkgs.legacyPackages.x86_64-linux;
+            extraSpecialArgs = { inherit inputs; inherit nix-colors; }; # Pass flake inputs to our config
+            modules = [ ./work-linux.nix ];
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+          };
+        };
+
+
       };
-  };
 }
