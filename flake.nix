@@ -6,9 +6,9 @@
     home-manager.url                    = "github:nix-community/home-manager/release-22.05";
     nixpkgs.url                         = "github:NixOS/nixpkgs/nixos-22.05";
     nixos-hardware.url                  = "github:NixOS/nixos-hardware";
+    nixpkgs-unstable.url                = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     nix-colors.url                      = "github:misterio77/nix-colors";
-    nixpkgs-unstable.url                = "github:nixos/nixpkgs/nixos-unstable";
   };
 
   outputs = { home-manager, nix-colors, nixpkgs, nixpkgs-unstable, nixos-hardware, ... }@inputs:
