@@ -24,7 +24,7 @@
     vdirsyncer
     khal
     evince
-    xournalpp
+    unstable.xournalpp
     sxiv
     playerctl
     doctl
@@ -47,6 +47,7 @@
     gnome.simple-scan
     xdragon # Ranger drag drop
     xdg-utils
+    ocrmypdf
   ];
 
   services.wlsunset = {
@@ -235,6 +236,7 @@
     ".config/polybar-scripts/player-mpris-simple.sh".source     = waybar/polybar/player-mpris-simple.sh;
     ".config/polybar-scripts/openweathermap-forecast.sh".source = waybar/polybar/openweathermap-forecast.sh;
     ".config/backgrounds/".source                               = ./backgrounds;
+    ".config/zathura/zathurarc".text                            = "set selection-clipboard clipboard";
   };
 
   xdg.configFile."swappy/config" = {

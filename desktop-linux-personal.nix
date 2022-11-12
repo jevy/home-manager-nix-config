@@ -29,6 +29,7 @@
     # unstable.sunpaper
     bottles
     transmission-gtk
+    unstable.newsflash
   ];
 
   wayland.windowManager.sway = {
