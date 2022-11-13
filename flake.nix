@@ -10,10 +10,18 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     nix-colors.url                      = "github:misterio77/nix-colors";
   };
-  outputs = { home-manager, nix-colors, nixpkgs, nixpkgs-unstable, nixos-hardware, ... }@inputs: {
-    home-manager.useGlobalPkgs = true;
-    home-manager.useUserPackages = true;
+  outputs = { home-manager, nix-colors, nixpkgs, nixpkgs-unstable, nixos-hardware, ... }@inputs:
+
     # Modeling it after: https://rycee.gitlab.io/home-manager/index.html#sec-flakes-nixos-module
+    let
+      system = "x86_64-linux";
+      overlay-unstable = final: prev: {
+        unstable = import nixpkgs-unstable {
+          inherit system;
+          config.allowUnfree = true;
+        };
+      };
+    in {
     nixosConfigurations = {
 
       # Lenovo has hostname `nixos`
@@ -21,22 +29,23 @@
         system = "x86_64-linux";
         specialArgs = { inherit inputs; }; # Pass flake inputs to our config
         modules = [
+          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable ]; })
           ./configuration.nix
           ./hardware-configuration.nix
           nixos-hardware.nixosModules.lenovo-thinkpad-x1-7th-gen
           home-manager.nixosModules.home-manager
           {
-            home-manager.users.jevin = {
-              imports = [ ./jevin-linux.nix ];
-            };
-          }
-          {
-            home-manager.users.jevinhumi = {
-              imports = [ ./work-linux.nix ];
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              extraSpecialArgs = { inherit nix-colors; };
+              users = {
+                jevin     = import ./jevin-linux.nix;
+                jevinhumi = import ./work-linux.nix;
+              };
             };
           }
         ];
-        home-manager.extraSpecialArgs = { inherit nix-colors; };
       };
 
       # Other laptop goes here. Either Linux or Mac
@@ -44,4 +53,5 @@
     };
 
   };
+
 }
