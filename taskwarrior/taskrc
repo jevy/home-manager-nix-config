@@ -49,6 +49,20 @@ taskd.trust=strict
 
 urgency.user.tag.reading.coefficient=-1
 
+uda.effort.type=string
+uda.effort.type=string
+uda.effort.values=H,M,L
+urgency.uda.effort.L.coefficient=3
+urgency.uda.effort.M.coefficient=2
+urgency.uda.effort.H.coefficient=1
+
+uda.impact.type=string
+uda.impact.type=string
+uda.impact.values=H,M,L
+urgency.uda.impact.H.coefficient=5
+urgency.uda.impact.M.coefficient=2
+urgency.uda.impact.L.coefficient=1
+
 # Inbox https://cs-syd.eu/posts/2015-06-21-gtd-with-taskwarrior-part-2-collection.html
 report.in.columns           = id,description
 report.in.description       = Inbox
