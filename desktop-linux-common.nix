@@ -48,6 +48,8 @@
     xdragon # Ranger drag drop
     xdg-utils
     ocrmypdf
+    unstable.vial
+    unstable.via
   ];
 
   services.wlsunset = {

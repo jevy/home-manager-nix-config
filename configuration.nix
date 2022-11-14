@@ -18,6 +18,11 @@
     longitude = -75.70;
   };
 
+  services.udev.packages = with pkgs; [
+    unstable.vial
+    unstable.via
+  ];
+
   services.tlp = {
     enable = true;
     settings = {
