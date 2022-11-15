@@ -21,6 +21,7 @@
   services.udev.packages = with pkgs; [
     unstable.vial
     unstable.via
+    qmk-udev-rules
   ];
 
   services.tlp = {

@@ -50,6 +50,7 @@
     ocrmypdf
     unstable.vial
     unstable.via
+    qmk
   ];
 
   services.wlsunset = {
@@ -204,7 +205,7 @@
           "XF86AudioMicMute"     = "exec ${pkgs.pamixer}/bin/pamixer --default-source -t";
           "XF86AudioLowerVolume" = "exec ${pkgs.pamixer}/bin/pamixer -d 10";
           "XF86AudioRaiseVolume" = "exec ${pkgs.pamixer}/bin/pamixer -i 10";
-          "Pause"                = "exec ${pkgs.playerctl}/bin/playerctl play-pause";
+          "XF86AudioPlay"        = "exec ${pkgs.playerctl}/bin/playerctl play-pause";
           "XF86AudioNext"        = "exec ${pkgs.playerctl}/bin/playerctl next";
           "XF86AudioPrev"        = "exec ${pkgs.playerctl}/bin/playerctl previous";
           "Print"                = "exec ${pkgs.grim}/bin/grim -g \"$(${pkgs.slurp}/bin/slurp)\" - | ${pkgs.swappy}/bin/swappy -f -";
