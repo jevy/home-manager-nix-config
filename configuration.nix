@@ -78,6 +78,14 @@
   networking.interfaces.wlp0s20f3.useDHCP = true;
   networking.networkmanager.enable = true;
 
+  # For Humility
+  networking.extraHosts =
+    ''
+      127.0.0.1 local.api.humi.ca
+      127.0.0.1 hr.localhost
+      127.0.0.1 payroll
+    '';
+
   programs._1password = {
     enable = true;
     gid = 5001;
