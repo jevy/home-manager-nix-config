@@ -30,8 +30,8 @@
         specialArgs = { inherit inputs; }; # Pass flake inputs to our config
         modules = [
           ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable ]; })
-          ./configuration.nix
-          ./hardware-configuration.nix
+          ./nixos/lenovo/configuration.nix
+          ./nixos/lenovo/hardware-configuration.nix
           nixos-hardware.nixosModules.lenovo-thinkpad-x1-7th-gen
           home-manager.nixosModules.home-manager
           {
@@ -48,7 +48,28 @@
         ];
       };
 
-      # Other laptop goes here. Either Linux or Mac
+      framework = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; }; # Pass flake inputs to our config
+        modules = [
+          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable ]; })
+          ./nixos/framework/configuration.nix
+          ./nixos/framework/hardware-configuration.nix
+          nixos-hardware.nixosModules.framework-12th-gen-intel
+          home-manager.nixosModules.home-manager
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              extraSpecialArgs = { inherit nix-colors; };
+              users = {
+                jevin     = import ./jevin-linux.nix;
+                jevinhumi = import ./work-linux.nix;
+              };
+            };
+          }
+        ];
+      };
 
     };
 
