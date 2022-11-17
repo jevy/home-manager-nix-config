@@ -18,6 +18,8 @@
     longitude = -75.70;
   };
 
+  nixpkgs.config.allowBroken = true;
+
   services.udev.packages = with pkgs; [
     unstable.vial
     unstable.via
@@ -74,6 +76,8 @@
   # Set your time zone.
   time.timeZone = "America/Toronto";
 
+  hardware.video.hidpi.enable = true;
+
   # networking.useDHCP = true;
   # networking.interfaces.enp0s31f6.useDHCP = true;
   # networking.interfaces.wlp0s20f3.useDHCP = true;
@@ -105,8 +109,8 @@
   #   gdm.enable = true;
   #   defaultSession = "sway";
   # };
-  # programs.sway.enable = true;
-  # security.pam.services.swaylock = {};
+  programs.sway.enable = true;
+  security.pam.services.swaylock = {};
   # security.sudo.wheelNeedsPassword = false;
 
   services.xserver.enable = true;

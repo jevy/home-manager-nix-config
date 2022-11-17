@@ -145,10 +145,17 @@
             resolution = "3440x1440";
             scale = "1";
           };
+        # Lenovo
         "Unknown 0x5A2D 0x00000000" =
           { pos = "3710 2880";
             resolution = "1920x1080";
             scale = "1";
+          };
+        # Framework
+        "Unknown 0x095F 0x00000000" =
+          { pos = "3710 2880";
+            resolution = "2256x1504";
+            scale = "1.5";
           };
         "Unknown HP Z27 CN49020L9R" =
           { pos = "6010 1440";
