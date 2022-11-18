@@ -17,6 +17,7 @@
     ripgrep-all
     btop
     xsv
+    bashmount
   ];
 
   programs.kitty = {
