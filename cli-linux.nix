@@ -20,6 +20,8 @@
     bashmount
   ];
 
+  security.sudo.wheelNeedsPassword = false
+
   programs.kitty = {
     enable = true;
     keybindings = {
