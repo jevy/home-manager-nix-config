@@ -24,6 +24,7 @@
     unstable.vial
     unstable.via
     qmk-udev-rules
+    fprintd
   ];
 
   services.tlp = {
@@ -111,7 +112,7 @@
   # };
   programs.sway.enable = true;
   security.pam.services.swaylock = {};
-  # security.sudo.wheelNeedsPassword = false;
+  security.sudo.wheelNeedsPassword = false;
 
   services.xserver.enable = true;
 

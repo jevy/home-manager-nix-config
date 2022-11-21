@@ -69,7 +69,7 @@
   };
 
   services.swayidle = let
-    lock_command = "${pkgs.swaylock-effects}/bin/swaylock -f --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --line-color 00000000 --inside-color 00000088 --separator-color 00000000 --grace 8 --fade-in 0.2" ;
+    lock_command = "${pkgs.swaylock}/bin/swaylock -f -c 000088";
   in { enable = true;
        events = [
          { event = "before-sleep"; command = lock_command; }
@@ -206,6 +206,7 @@
           "${modifier}+u" = "exec firefox";
           "${modifier}+t" = "exec kitty -- ${pkgs.ranger}/bin/ranger ~/Downloads";
           "${modifier}+i" = "exec ${pkgs.blueberry}/bin/blueberry";
+          "${modifier}+p" = "exec ${pkgs.swaylock}/bin/swaylock -f -c 000088";
 
           # Controls
           "XF86AudioMute"        = "exec ${pkgs.pamixer}/bin/pamixer -t";
