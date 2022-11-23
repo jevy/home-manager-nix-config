@@ -36,7 +36,7 @@
         // "temperature",
         // "custom/keyboard-layout",
         "battery",
-        "bluetooth",
+        // "bluetooth",
         //"tray",
         "clock#date",
         "clock#time"
@@ -153,13 +153,14 @@
     },
 
     "custom/taskwarrior": {
-        "format": "{}",
+        "format": "{:.40}",
         "interval": 1,
         "exec": "~/.config/polybar-scripts/task_polybar.sh"
     },
 
     "custom/music": {
         "interval": 3,
+        "format": "{:.40}",
         "exec": "~/.config/polybar-scripts/player-mpris-simple.sh"
     },
 
