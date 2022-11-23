@@ -145,10 +145,21 @@
     enable = true;
   };
   hardware.pulseaudio = {
-    enable = true;
-    package = pkgs.pulseaudioFull;
+    enable = false;
+    # package = pkgs.pulseaudioFull;
   };
 
+security.rtkit.enable = true;
+services.pipewire = {
+  enable = true;
+  alsa.enable = true;
+  alsa.support32Bit = true;
+  pulse.enable = true;
+  # If you want to use JACK applications, uncomment this
+  #jack.enable = true;
+};
+
+  # TODO: Try enabling extra portals: https://nixos.wiki/wiki/Sway
   # For Chrome sharing and stuff
   xdg.portal.wlr = {
     enable = true;

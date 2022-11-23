@@ -51,6 +51,7 @@
     unstable.vial
     unstable.via
     qmk
+    audacity
   ];
 
   services.wlsunset = {
