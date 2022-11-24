@@ -9,8 +9,9 @@
     nixpkgs-unstable.url                = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     nix-colors.url                      = "github:misterio77/nix-colors";
+    sarc.url                            = "github:tom-on-the-internet/sarc";
   };
-  outputs = { home-manager, nix-colors, nixpkgs, nixpkgs-unstable, nixos-hardware, ... }@inputs:
+  outputs = { home-manager, nix-colors, nixpkgs, nixpkgs-unstable, nixos-hardware, sarc, ... }@inputs:
 
     # Modeling it after: https://rycee.gitlab.io/home-manager/index.html#sec-flakes-nixos-module
     let
@@ -19,6 +20,11 @@
         unstable = import nixpkgs-unstable {
           inherit system;
           config.allowUnfree = true;
+        };
+      };
+      overlay-sarc = final: prev: {
+        unstable = import sarc {
+          inherit system;
         };
       };
     in {
@@ -52,7 +58,7 @@
         system = "x86_64-linux";
         specialArgs = { inherit inputs; }; # Pass flake inputs to our config
         modules = [
-          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable ]; })
+          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable overlay-sarc ]; })
           ./nixos/framework/configuration.nix
           ./nixos/framework/hardware-configuration.nix
           nixos-hardware.nixosModules.framework-12th-gen-intel

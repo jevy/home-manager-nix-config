@@ -1,4 +1,4 @@
-{ config, pkgs, libs, lib, ... }:
+{ config, pkgs, libs, lib, sarc, ... }:
 {
 
   home.packages = with pkgs; [
@@ -52,6 +52,7 @@
     unstable.via
     qmk
     audacity
+    sarc
   ];
 
   services.wlsunset = {
