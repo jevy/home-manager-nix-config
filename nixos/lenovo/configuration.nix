@@ -88,13 +88,11 @@
 
   programs._1password = {
     enable = true;
-    gid = 5001;
     # polkitPolicyOwners = ["jevin" "jevinhumi"];
   };
 
   programs._1password-gui = {
     enable = true;
-    gid = 5000;
     polkitPolicyOwners = ["jevin" "jevinhumi"];
     package = pkgs.unstable._1password-gui;
   };

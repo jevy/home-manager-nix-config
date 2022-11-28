@@ -18,7 +18,7 @@
     vlc
     signal-desktop
     # qalculate-gtk
-    nasc
+    # nasc # Broken?
     blueberry
     calendar-cli
     vdirsyncer
