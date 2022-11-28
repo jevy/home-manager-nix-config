@@ -52,6 +52,7 @@
     unstable.via
     qmk
     audacity
+    spotify-tui
   ];
 
   services.wlsunset = {
