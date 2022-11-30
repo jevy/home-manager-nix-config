@@ -1,7 +1,15 @@
 { config, lib, pkgs, modulesPath, ... }:
 
 {
-  home.packages = with pkgs; [
+  home.packages = let
+    my-python-packages = python-packages: with python-packages; [
+      wxPython_4_0
+      markdown
+      markdown-include
+    ];
+    python-with-my-packages = pkgs.python3.withPackages my-python-packages;
+  in
+  with pkgs; [
     # mutt-wizard
     neomutt # mutt-wizard
     curl # mutt-wizard
@@ -16,9 +24,8 @@
     abook # mutt-wizard
     urlscan # mutt-wizard
     poppler_utils # mutt-wizard
-    python38Packages.goobook # mutt
-    python38Full
-    python38Packages.wxPython_4_0
+    python310Packages.goobook # mutt
+    python-with-my-packages
   ];
 
   programs.notmuch = {
@@ -36,8 +43,10 @@
     ".config/mutt/common.muttrc".source = mutt/common.muttrc;
     ".config/mailcap".source = mutt/mailcap;
     ".config/mutt/add-html-to-email".source = mutt/add-html-to-email.py;
+    ".config/mutt/add-html-to-email".executable = true;
     ".config/mutt/send-with-html-email".text = ''
       ~/.config/mutt/add-html-to-email | gmi send -t -C ~/Maildir/quickjack
     '';
+    ".config/mutt/send-with-html-email".executable = true;
   };
 }

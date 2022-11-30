@@ -56,7 +56,7 @@ set shiftwidth=2
 set softtabstop=2
 set nowrap
 
-autocmd FileType mail setl tw=76|setl fo+=aw
+autocmd BufNewFile,BufRead neomutt-* setl tw=72 fo=awq comments+=nb:>
 
 augroup HiglightTODO
     autocmd!
