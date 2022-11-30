@@ -56,8 +56,6 @@ set shiftwidth=2
 set softtabstop=2
 set nowrap
 
-autocmd BufNewFile,BufRead neomutt-* setl tw=72 fo=awq comments+=nb:>
-
 augroup HiglightTODO
     autocmd!
     autocmd WinEnter,VimEnter * :silent! call matchadd('Todo', 'TODO', -1)

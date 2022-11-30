@@ -47,7 +47,7 @@ set sidebar_format = "%D%?F? %6n(%6N) %f"
 # set sidebar_format = '%D%?F? [%F]?%* %?N?%N/? %?S?%S?'
 
 # https://joeclark.org/ffaq.html
-set text_flowed = yes
+# set text_flowed = yes
 
 ## From Mutt-wizard
 
