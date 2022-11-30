@@ -1,12 +1,12 @@
 { config, pkgs, libs, ... }:
 {
-  imports = 
+  imports =
   [
-    ./mutt-common.nix 
-  ]; 
+    ./mutt-common.nix
+  ];
 
-  accounts.email = 
-  { 
+  accounts.email =
+  {
 
     accounts.humi = {
       primary = true;
@@ -16,7 +16,7 @@
 
       # maildir.path = "mail";
       notmuch.enable = true;
-      lieer = 
+      lieer =
         {
           enable = true;
           sync.enable = true;
@@ -29,6 +29,10 @@
   home.file = {
     ".config/mutt/muttrc".source = mutt/humi.muttrc;
     ".config/mutt/colors-gruvbox-shuber.muttrc".source = mutt/colors-gruvbox-shuber.muttrc;
+    ".config/mutt/send-with-html-email".text = ''
+      ~/.config/mutt/add-html-to-email | gmi send -t -C ~/Maildir/humi
+    '';
+    ".config/mutt/send-with-html-email".executable = true;
   };
 
 }
