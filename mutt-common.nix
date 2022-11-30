@@ -35,5 +35,9 @@
   home.file = {
     ".config/mutt/common.muttrc".source = mutt/common.muttrc;
     ".config/mailcap".source = mutt/mailcap;
+    ".config/mutt/add-html-to-email".source = mutt/add-html-to-email.py;
+    ".config/mutt/send-with-html-email".text = ''
+      ~/.config/mutt/add-html-to-email | gmi send -t -C ~/Maildir/quickjack
+    '';
   };
 }
