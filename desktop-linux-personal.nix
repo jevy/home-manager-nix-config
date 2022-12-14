@@ -22,7 +22,7 @@
     gcalcli
     # etcher
 
-    unstable.prusa-slicer
+    prusa-slicer
     cura
     rpi-imager
     element-desktop-wayland

@@ -53,6 +53,7 @@
     qmk
     audacity
     spotify-tui
+    gnome3.gnome-tweaks
   ];
 
   services.wlsunset = {
@@ -266,6 +267,8 @@
   home.shellAliases = {
     v = "${pkgs.neovide}/bin/neovide";
     screen-record = "${pkgs.wf-recorder}/bin/wf-recorder -g \"$(${pkgs.slurp}/bin/slurp)\" --file=$HOME/Screenshots/latest-recording.mp4";
+    tailscale-us = "sudo tailscale up --accept-routes --exit-node \"us-tailscale\" --accept-dns";
+    tailscale-home = "sudo tailscale up --accept-routes --exit-node \"octoprint\" --accept-dns";
   };
 
   # For Flakpak
