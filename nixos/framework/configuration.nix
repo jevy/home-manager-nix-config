@@ -144,7 +144,9 @@
   };
   hardware.pulseaudio = {
     enable = false;
-    # package = pkgs.pulseaudioFull;
+    daemon.config = {
+      flat-volumes = "no";
+    };
   };
 
 security.rtkit.enable = true;

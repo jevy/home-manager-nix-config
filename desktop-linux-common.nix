@@ -54,6 +54,8 @@
     audacity
     spotify-tui
     gnome3.gnome-tweaks
+    nvd
+    pulseaudio
   ];
 
   services.wlsunset = {
