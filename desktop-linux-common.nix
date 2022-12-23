@@ -78,11 +78,11 @@
   in { enable = true;
        events = [
          { event = "before-sleep"; command = lock_command; }
-         { event = "lock"; command = "lock"; }
+         # { event = "lock"; command = "lock"; }
        ];
     timeouts = [
       { timeout = 300; command = lock_command; }
-      { timeout = 400; command = "swaymsg 'output * dpms off'"; resumeCommand = "swaymsg 'output * dpms on'"; }
+      { timeout = 400; command = "${pkgs.sway}/bin/swaymsg 'output * dpms off'"; resumeCommand = "${pkgs.sway}/bin/swaymsg 'output * dpms on'"; }
     ];
   };
 
