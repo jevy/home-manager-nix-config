@@ -4,6 +4,17 @@
     enable = true;
     viAlias = true;
     vimAlias = true;
+    coc = {
+      enable = true;
+      settings = {
+        languageserver = {
+            nix = {
+              command = "rnix-lsp";
+              filetypes = [ "nix" ];
+            };
+        };
+      };
+    };
     plugins = with pkgs.vimPlugins; [
       vim-airline
       vim-surround
@@ -22,6 +33,7 @@
       fzf-vim
       vim-rooter
       vim-easy-align
+      coc-solargraph
 
       # Tree Sitter stuff
       (nvim-treesitter.withPlugins (
@@ -42,7 +54,7 @@
       nvim-treesitter-textobjects
       nvim-treesitter-context
       vim-lsp
-
+      nvim-lspconfig
 
       plenary-nvim
       telescope-nvim
@@ -54,6 +66,8 @@
     extraPackages = with pkgs; [
       # Ruby LSP - https://blog.backtick.consulting/neovims-built-in-lsp-with-ruby-and-rails/
       rubyPackages.solargraph
+      rnix-lsp
+
       # rubocop
       # tree-sitter
     ];
