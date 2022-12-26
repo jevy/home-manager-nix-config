@@ -12,6 +12,10 @@
               command = "rnix-lsp";
               filetypes = [ "nix" ];
             };
+            ltex = {
+              command = "ltex-ls";
+              filetypes = [ "markdown" "text" ];
+            };
         };
       };
     };
@@ -67,6 +71,7 @@
       # Ruby LSP - https://blog.backtick.consulting/neovims-built-in-lsp-with-ruby-and-rails/
       rubyPackages.solargraph
       rnix-lsp
+      ltex-ls
 
       # rubocop
       # tree-sitter
