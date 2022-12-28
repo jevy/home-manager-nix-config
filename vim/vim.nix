@@ -15,6 +15,9 @@
             ltex = {
               command = "ltex-ls";
               filetypes = [ "markdown" "text" ];
+              settings = {
+                language = "en-CA";
+              };
             };
         };
       };
