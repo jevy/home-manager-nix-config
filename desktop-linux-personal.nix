@@ -30,6 +30,8 @@
     bottles
     transmission-gtk
     unstable.newsflash
+    qflipper
+    jellyfin-media-player
   ];
 
   wayland.windowManager.sway = {

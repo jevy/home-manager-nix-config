@@ -25,6 +25,7 @@
     unstable.via
     qmk-udev-rules
     fprintd
+    qflipper
   ];
 
   services.tlp = {
