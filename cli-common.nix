@@ -24,6 +24,7 @@
     httpie
     kubectx
     pandoc
+    texlive.combined.scheme-full
     zip
     lsd
     fd
