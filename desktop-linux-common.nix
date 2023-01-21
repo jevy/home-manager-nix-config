@@ -58,6 +58,7 @@
     pulseaudio
     swayidle
     swaylock
+    alsa-utils
   ];
 
   services.wlsunset = {

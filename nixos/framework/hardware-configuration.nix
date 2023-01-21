@@ -38,7 +38,8 @@
   # networking.interfaces.wlp166s0.useDHCP = lib.mkDefault true;
 
   services.fprintd.enable = true;
+  services.auto-cpufreq.enable = true;
 
-  powerManagement.cpuFreqGovernor = lib.mkDefault "powersave";
+  powerManagement.cpuFreqGovernor = "performance";
   hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 }
