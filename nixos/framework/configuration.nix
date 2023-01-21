@@ -7,6 +7,8 @@
 {
   hardware.opengl = {
     enable = true;
+    package = pkgs.unstable.mesa.drivers;
+    package32 = pkgs.unstable.pkgsi686Linux.mesa.drivers;
   };
 
   # services.xserver.videoDrivers =  [
@@ -266,24 +268,8 @@ services.pipewire = {
   # programs.dconf.enable = true;
   # environment.systemPackages = with pkgs; [ virt-manager ];
   environment.systemPackages = with pkgs; [ cntr ];
-  # boot.kernelParams = [ "intel_iommu=on" "iommu=pt" ];
-  # boot.kernelModules = [ "kvm-intel" "vfio-pci" ];
 
-  # If I want to have this loaded properly at autoload
-  # https://github.com/NixOS/nixpkgs/commit/1c58cdbeed880e99d816c234a954d4cdfc073b6c
-  # sudo modprobe v4l2loopback
-  # See it the right options were called: 
-  # From https://serverfault.com/a/521751
-  # $ nix-shell -p sysfsutils
-  # $ systool -vm v4l2loopback
-  # For webcam background rewriting
-  # boot.extraModulePackages = with config.boot.kernelPackages; [ v4l2loopback ];
-  # boot.extraModprobeConfig = ''
-  #   options v4l2loopback devices=1 exclusive_caps=1 video_nr=2 card_label="fake-cam"
-  # '';
-
-
-  # boot.kernelModules = [ "v4l2loopback" ];
+  boot.kernelModules = [ "v4l2loopback" ];
 
   # ----- USER STUFF ------
   #
