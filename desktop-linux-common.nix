@@ -251,6 +251,24 @@
     ".config/zathura/zathurarc".text                            = "set selection-clipboard clipboard";
   };
 
+  # From https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/audio/alsa.nix#L101
+  systemd.user.services = {
+    alsa-store = {
+      Unit = {
+        Description = "Store Sound Card State";
+      };
+
+      Service = {
+        WantedBy = [ "multi-user.target" ];
+        Type = "oneshot";
+        RemainAfterExit = true;
+        ExecStart = "${pkgs.coreutils}/bin/mkdir -p ~/.config/alsa/";
+        ExecStop = "${pkgs.alsa-utils}/sbin/alsactl store --ignore -f ~/.config/alsa/asound.state";
+      };
+    };
+
+  };
+
   xdg.configFile."swappy/config" = {
     text = ''
       [Default]
