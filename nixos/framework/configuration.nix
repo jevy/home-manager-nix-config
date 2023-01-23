@@ -30,17 +30,6 @@
     qflipper
   ];
 
-  services.tlp = {
-    enable = true;
-    settings = {
-      START_CHARGE_THRESH_BAT0 = 80;
-      STOP_CHARGE_THRESH_BAT0 = 90;
-      WIFI_PWR_ON_AC = "on";
-      USB_AUTOSUSPEND = 0;
-    };
-  };
-  services.power-profiles-daemon.enable = false;
-
   hardware.keyboard.zsa.enable = true;
 
   services.hardware.bolt.enable = true;
