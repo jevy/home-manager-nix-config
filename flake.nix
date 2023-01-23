@@ -9,8 +9,9 @@
     nixpkgs-unstable.url                = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     nix-colors.url                      = "github:misterio77/nix-colors";
+    muttdown.url                        = "path:./custom_packages/muttdown/";
   };
-  outputs = { home-manager, nix-colors, nixpkgs, nixpkgs-unstable, nixos-hardware, ... }@inputs:
+  outputs = { home-manager, nix-colors, muttdown, nixpkgs, nixpkgs-unstable, nixos-hardware, ... }@inputs:
 
     # Modeling it after: https://rycee.gitlab.io/home-manager/index.html#sec-flakes-nixos-module
     let
