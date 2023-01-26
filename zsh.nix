@@ -57,6 +57,7 @@
         "kubectl"
         "taskwarrior"
         "zoxide"
+        "systemd"
       ];
     };
   };
