@@ -65,6 +65,7 @@
     enable = true;
     latitude = "45.42";
     longitude = "-75.69";
+    systemdTarget = "sway-session.target";
   };
 
   # services.mpris-proxy.enable = true;
