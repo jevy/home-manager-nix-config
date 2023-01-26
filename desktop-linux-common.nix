@@ -205,6 +205,7 @@
           "${modifier}+u" = "exec firefox";
           "${modifier}+t" = "exec kitty -- ${pkgs.ranger}/bin/ranger ~/Downloads";
           "${modifier}+i" = "exec ${pkgs.blueberry}/bin/blueberry";
+          "${modifier}+o" = "exec ${pkgs.rofi-bluetooth}/bin/rofi-bluetooth";
           "${modifier}+p" = "exec ${pkgs.swaylock}/bin/swaylock -f -c 000088";
 
           # Controls
