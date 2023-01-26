@@ -134,6 +134,16 @@
           # From: https://www.reddit.com/r/swaywm/comments/conhod/inhibit_idle_while_a_fullscreen_app_is_running/
           { command = "inhibit_idle fullscreen"; criteria = { class  = "^.*"; } ; }
           { command = "inhibit_idle fullscreen"; criteria = { app_id = "^.*"; } ; }
+
+          # Zoom floating
+          { command = "floating enable";  criteria = { app_id = "zoom"; } ; }
+          { command = "floating enable";  criteria = { app_id = "zoom"; title = "Choose ONE of the audio conference options";} ; }
+          { command = "floating enable";  criteria = { app_id = "zoom"; title = "zoom";} ; }
+          { command = "floating enable";  criteria = { title = "Zoom Cloud Meetings";} ; }
+          { command = "floating disable"; criteria = { app_id = "zoom"; title = "Zoom Meeting";} ; }
+          { command = "floating disable"; criteria = { app_id = "zoom"; title = "Zoom - Free Account";} ; }
+
+          { command = "floating enable";  criteria = { app_id = "firefox"; title = "Firefox — Sharing Indicator";} ; }
         ];
       };
 
@@ -257,14 +267,18 @@
     alsa-store = {
       Unit = {
         Description = "Store Sound Card State";
+        RequiresMountsFor = "${config.xdg.configHome}/.config/alsa";
       };
 
       Service = {
-        WantedBy = [ "multi-user.target" ];
         Type = "oneshot";
         RemainAfterExit = true;
-        ExecStart = "${pkgs.coreutils}/bin/mkdir -p ~/.config/alsa/";
-        ExecStop = "${pkgs.alsa-utils}/sbin/alsactl store --ignore -f ~/.config/alsa/asound.state";
+        ExecStart = "${pkgs.alsa-utils}/sbin/alsactl restore -f ${config.xdg.configHome}/alsa/asound.state";
+        ExecStop = "${pkgs.alsa-utils}/sbin/alsactl store --ignore -f ${config.xdg.configHome}/alsa/asound.state";
+      };
+
+      Install = {
+        WantedBy = [ "multi-user.target" ];
       };
     };
 
