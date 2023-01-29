@@ -33,6 +33,7 @@
           ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable ]; })
           ./nixos/lenovo/configuration.nix
           ./nixos/lenovo/hardware-configuration.nix
+          ./printers.nix
           nixos-hardware.nixosModules.lenovo-thinkpad-x1-7th-gen
           home-manager.nixosModules.home-manager
           {
@@ -56,6 +57,7 @@
           ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable ]; })
           ./nixos/framework/configuration.nix
           ./nixos/framework/hardware-configuration.nix
+          ./printers.nix
           nixos-hardware.nixosModules.framework-12th-gen-intel
           home-manager.nixosModules.home-manager
           {

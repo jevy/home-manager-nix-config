@@ -115,10 +115,6 @@
   #   gnome.enable = true;
   # };
 
-  # Enable CUPS to print documents.
-  services.printing.enable = true;
-  services.printing.drivers = [ pkgs.hplip ];
-  # Jevin - To add the printer; 1. `nix-shell -p hplip` 2. hp-makeuri <IP> 3. Add that URL to cups
 
   services.chrony.enable = true;
   services.timesyncd.enable = false;
