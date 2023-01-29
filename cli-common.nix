@@ -45,7 +45,6 @@
   };
 
   home.shellAliases = {
-    pomodoro = "termdown 25m -s -b";
     ls = "lsd";
     l = "ls -l";
     lt = "ls --tree";

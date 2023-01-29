@@ -299,6 +299,7 @@
     screen-record = "${pkgs.wf-recorder}/bin/wf-recorder -g \"$(${pkgs.slurp}/bin/slurp)\" --file=$HOME/Screenshots/latest-recording.mp4";
     tailscale-us = "sudo tailscale up --accept-routes --exit-node \"us-tailscale\" --accept-dns";
     tailscale-home = "sudo tailscale up --accept-routes --exit-node \"octoprint\" --accept-dns";
+    pomodoro = "termdown 25m -s -b && ${pkgs.libnotify}/bin/notify-send 'Pomodoro complete. Take a break!'";
   };
 
   # For Flakpak
