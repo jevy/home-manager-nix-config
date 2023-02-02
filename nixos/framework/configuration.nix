@@ -65,6 +65,8 @@
   networking.hostName = "framework"; # Define your hostname.
   networking.hostId = "6a7f48db";
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
+  networking.enableIPv6 = false;
+  boot.kernelParams = ["ipv6.disable=1"];
 
   # Set your time zone.
   time.timeZone = "America/Toronto";
