@@ -15,6 +15,9 @@
   #   "intel-media-driver"
   # ];
 
+  stylix.image = ../../backgrounds/rocket.png;
+  stylix.polarity = "dark";
+
   location = {
     latitude = 45.42;
     longitude = -75.70;

@@ -8,10 +8,10 @@
     nixos-hardware.url                  = "github:NixOS/nixos-hardware";
     nixpkgs-unstable.url                = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    nix-colors.url                      = "github:misterio77/nix-colors";
     muttdown.url                        = "path:./custom_packages/muttdown/";
+    stylix.url                          = "github:danth/stylix";
   };
-  outputs = { home-manager, nix-colors, muttdown, nixpkgs, nixpkgs-unstable, nixos-hardware, ... }@inputs:
+  outputs = { home-manager, stylix, muttdown, nixpkgs, nixpkgs-unstable, nixos-hardware, ... }@inputs:
 
     # Modeling it after: https://rycee.gitlab.io/home-manager/index.html#sec-flakes-nixos-module
     let
@@ -40,7 +40,6 @@
             home-manager = {
               useGlobalPkgs = true;
               useUserPackages = true;
-              extraSpecialArgs = { inherit nix-colors; };
               users = {
                 jevin     = import ./jevin-linux.nix;
                 jevinhumi = import ./work-linux.nix;
@@ -58,13 +57,14 @@
           ./nixos/framework/configuration.nix
           ./nixos/framework/hardware-configuration.nix
           ./printers.nix
+          stylix.nixosModules.stylix
           nixos-hardware.nixosModules.framework-12th-gen-intel
           home-manager.nixosModules.home-manager
           {
             home-manager = {
               useGlobalPkgs = true;
               useUserPackages = true;
-              extraSpecialArgs = { inherit nix-colors; };
+              extraSpecialArgs = { inherit stylix; };
               users = {
                 jevin     = import ./jevin-linux.nix;
                 jevinhumi = import ./work-linux.nix;
