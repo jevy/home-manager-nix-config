@@ -57,7 +57,7 @@
           ./nixos/framework/configuration.nix
           ./nixos/framework/hardware-configuration.nix
           ./printers.nix
-          stylix.nixosModules.stylix
+          stylix.nixosModules.stylix ./theme-personal.nix
           nixos-hardware.nixosModules.framework-12th-gen-intel
           home-manager.nixosModules.home-manager
           {

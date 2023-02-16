@@ -101,11 +101,16 @@
   wayland.windowManager.sway = {
     enable = true;
     swaynag.enable = true;
+
     config = {
 
       bars = [
         { command = "${config.programs.waybar.package}/bin/waybar"; }
       ];
+
+      gaps = {
+        smartBorders = "on";
+      };
 
       assigns = {
         "8" =  [ { class = "Slack";   }];
@@ -114,6 +119,7 @@
 
       modifier = "Mod4";
       menu = "rofi -show run";
+      workspaceAutoBackAndForth = true;
 
       startup =
         [

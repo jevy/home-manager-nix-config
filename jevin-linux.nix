@@ -8,6 +8,6 @@
     ./desktop-linux-personal.nix
     ./mutt-quickjack.nix
     # ./amateur_radio.nix
-    ./theme-personal.nix
+    # ./theme-personal.nix
   ];
 }
