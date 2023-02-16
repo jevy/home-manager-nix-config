@@ -39,8 +39,6 @@
     brightnessctl
     wdisplays
     kooha
-    helvum   # Pipewire
-    qpwgraph # Pipewire
     wl-clipboard
     wf-recorder
     jq
