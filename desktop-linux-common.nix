@@ -57,6 +57,7 @@
     swayidle
     swaylock
     alsa-utils
+    eww-wayland
   ];
 
   services.wlsunset = {
@@ -265,6 +266,7 @@
     ".config/polybar-scripts/openweathermap-forecast.sh".source = waybar/polybar/openweathermap-forecast.sh;
     ".config/backgrounds/".source                               = ./backgrounds;
     ".config/zathura/zathurarc".text                            = "set selection-clipboard clipboard";
+    ".config/eww/".source                                       = ./eww ;
   };
 
   # From https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/audio/alsa.nix#L101

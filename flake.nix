@@ -10,8 +10,9 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     muttdown.url                        = "path:./custom_packages/muttdown/";
     stylix.url                          = "github:danth/stylix";
+    hyprland.url                        = "github:hyprwm/Hyprland";
   };
-  outputs = { home-manager, stylix, muttdown, nixpkgs, nixpkgs-unstable, nixos-hardware, ... }@inputs:
+  outputs = { home-manager, stylix, muttdown, hyprland, nixpkgs, nixpkgs-unstable, nixos-hardware, ... }@inputs:
 
     # Modeling it after: https://rycee.gitlab.io/home-manager/index.html#sec-flakes-nixos-module
     let
@@ -57,6 +58,8 @@
           ./nixos/framework/configuration.nix
           ./nixos/framework/hardware-configuration.nix
           ./printers.nix
+          hyprland.nixosModules.default
+          {programs.hyprland.enable = true;}
           stylix.nixosModules.stylix ./theme-personal.nix
           nixos-hardware.nixosModules.framework-12th-gen-intel
           home-manager.nixosModules.home-manager
