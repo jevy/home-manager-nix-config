@@ -93,6 +93,21 @@
     name = "Nordzy-cursors";
   };
 
+  programs.vscode = {
+    enable = true;
+    package = pkgs.vscode.fhsWithPackages (ps: with ps; [
+      rustup
+      zlib
+      openssl.dev
+      pkg-config
+      vscode-extensions.vscodevim.vim
+      vscode-extensions.vadimcn.vscode-lldb
+    ]);
+
+  };
+  # Wayland + VScode
+  # environment.sessionVariables.NIXOS_OZONE_WL = "1";
+
   programs.obs-studio = {
     enable = true;
     plugins = [ pkgs.obs-studio-plugins.wlrobs ];
