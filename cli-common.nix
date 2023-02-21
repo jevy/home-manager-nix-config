@@ -18,7 +18,7 @@
     ldns # drill
     unzip
     fzf # For ranger
-    yt-dlp
+    unstable.yt-dlp
     tmux
     termdown
     httpie
