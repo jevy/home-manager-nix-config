@@ -3,6 +3,7 @@
   stylix.image = ./backgrounds/9.png;
   stylix.polarity = "dark";
   stylix.targets.vim.enable = false;
+  stylix.targets.gtk.enable = false;
 
   # wayland.windowManager.sway.config =
   # {
