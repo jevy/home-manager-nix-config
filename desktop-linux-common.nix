@@ -95,14 +95,16 @@
 
   programs.vscode = {
     enable = true;
-    package = pkgs.vscode.fhsWithPackages (ps: with ps; [
-      rustup
-      zlib
-      openssl.dev
-      pkg-config
-      vscode-extensions.vscodevim.vim
-      vscode-extensions.vadimcn.vscode-lldb
-    ]);
+    package = pkgs.vscode-fhs;
+    # package = pkgs.vscode.fhsWithPackages (ps: with ps; [ rustup zlib openssl.dev pkg-config ]);
+    extensions = with pkgs.vscode-extensions; [
+      vscodevim.vim
+      vadimcn.vscode-lldb
+      matklad.rust-analyzer
+      jdinhlife.gruvbox
+      jnoortheen.nix-ide
+      arrterian.nix-env-selector
+    ];
 
   };
   # Wayland + VScode
