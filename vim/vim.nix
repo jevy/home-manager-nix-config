@@ -42,6 +42,7 @@
       vim-easy-align
       coc-solargraph
       vim-dirdiff
+      vim-fugitive
 
       # Tree Sitter stuff
       (nvim-treesitter.withPlugins (
