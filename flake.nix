@@ -8,10 +8,10 @@
     nixos-hardware.url                  = "github:NixOS/nixos-hardware";
     nixpkgs-unstable.url                = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    jevy-custom.url                     = "path:/home/jevin/code/personal/jevy-nixpkgs-overlays";
+    muttdown.url                        = "path:./custom_packages/muttdown/";
     stylix.url                          = "github:danth/stylix";
   };
-  outputs = { home-manager, stylix, nixpkgs, nixpkgs-unstable, nixos-hardware, jevy-custom, ... }@inputs:
+  outputs = { home-manager, stylix, nixpkgs, nixpkgs-unstable, nixos-hardware, muttdown, ... }@inputs:
 
     # Modeling it after: https://rycee.gitlab.io/home-manager/index.html#sec-flakes-nixos-module
     let
@@ -22,7 +22,6 @@
           config.allowUnfree = true;
         };
       };
-      custom-packages = jevy-custom.overlay;
     in {
     nixosConfigurations = {
 
@@ -31,7 +30,7 @@
         system = "x86_64-linux";
         specialArgs = { inherit inputs; }; # Pass flake inputs to our config
         modules = [
-          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable custom-packages ]; })
+          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable muttdown.overlay]; })
           ./nixos/lenovo/configuration.nix
           ./nixos/lenovo/hardware-configuration.nix
           ./printers.nix
@@ -54,7 +53,7 @@
         system = "x86_64-linux";
         specialArgs = { inherit inputs; }; # Pass flake inputs to our config
         modules = [
-          ({ config, pkgs, ... }: {})
+          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable muttdown.overlay]; })
           ./nixos/framework/configuration.nix
           ./nixos/framework/hardware-configuration.nix
           ./printers.nix
@@ -63,7 +62,6 @@
           home-manager.nixosModules.home-manager
           {
             home-manager = {
-              nixpkgs.overlays = [ overlay-unstable custom-packages ];
               useGlobalPkgs = true;
               useUserPackages = true;
               extraSpecialArgs = { inherit stylix; };

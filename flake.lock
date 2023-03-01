@@ -93,7 +93,7 @@
       },
       "locked": {
         "lastModified": 1,
-        "narHash": "sha256-FNro31aiGIMF95+IkBgX8kiQn/I02z8D7syX719/3Do=",
+        "narHash": "sha256-NizcIyx4eMT6JT0gvPasdXFT6DEzSIM5l7bbAa9vvPg=",
         "path": "./custom_packages/muttdown/",
         "type": "path"
       },
