@@ -39,6 +39,7 @@
 
   services.fprintd.enable = true;
   services.auto-cpufreq.enable = true;
+  systemd.services.auto-cpufreq.wantedBy = [ "default.target" ];
 
   powerManagement.cpuFreqGovernor = "performance";
   hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
