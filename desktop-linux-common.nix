@@ -104,6 +104,7 @@
       jdinhlife.gruvbox
       jnoortheen.nix-ide
       arrterian.nix-env-selector
+      bungcip.better-toml
     ];
 
   };
@@ -284,6 +285,16 @@
     ".config/zathura/zathurarc".text                            = "set selection-clipboard clipboard";
   };
 
+
+  xdg.configFile."swappy/config" = {
+    text = ''
+      [Default]
+      save_dir=~/Screenshots
+      save_filename_format=swappy-%Y%m%d-%H%M%S.png
+      early_exit=true
+    '';
+  };
+
   # From https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/audio/alsa.nix#L101
   systemd.user.services = {
     alsa-store = {
@@ -300,24 +311,16 @@
       };
 
       Install = {
-        WantedBy = [ "multi-user.target" ];
+        WantedBy = [ "default.target" ];
       };
     };
 
   };
 
-  xdg.configFile."swappy/config" = {
-    text = ''
-      [Default]
-      save_dir=~/Screenshots
-      save_filename_format=swappy-%Y%m%d-%H%M%S.png
-      early_exit=true
-    '';
-  };
-
   home.shellAliases = {
     v = "${pkgs.neovide}/bin/neovide";
     screen-record = "${pkgs.wf-recorder}/bin/wf-recorder -g \"$(${pkgs.slurp}/bin/slurp)\" --file=$HOME/Screenshots/latest-recording.mp4";
+    screen-record-with-audio = "${pkgs.wf-recorder}/bin/wf-recorder -a -g \"$(${pkgs.slurp}/bin/slurp)\" --file=$HOME/Screenshots/latest-recording.mp4";
     tailscale-us = "sudo tailscale up --accept-routes --exit-node \"us-tailscale\" --accept-dns";
     tailscale-home = "sudo tailscale up --accept-routes --exit-node \"octoprint\" --accept-dns";
     pomodoro = "termdown 25m -s -b && ${pkgs.libnotify}/bin/notify-send 'Pomodoro complete. Take a break!'";
