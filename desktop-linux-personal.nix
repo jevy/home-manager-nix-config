@@ -32,6 +32,8 @@
     unstable.newsflash
     qflipper
     jellyfin-media-player
+    zotero
+    unstable.openscad
   ];
 
   wayland.windowManager.sway = {
@@ -42,5 +44,4 @@
     };
 
   };
-
 }
