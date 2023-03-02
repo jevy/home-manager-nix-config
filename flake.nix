@@ -28,9 +28,9 @@
       # Lenovo has hostname `nixos`
       nixos = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        specialArgs = { inherit inputs; }; # Pass flake inputs to our config
-        overlays = [ overlay-unstable muttdown.overlay];
+        specialArgs = { inherit inputs muttdown; }; # Pass flake inputs to our config
         modules = [
+          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable ]; })
           ./nixos/lenovo/configuration.nix
           ./nixos/lenovo/hardware-configuration.nix
           ./printers.nix
@@ -51,9 +51,9 @@
 
       framework = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        specialArgs = { inherit inputs; }; # Pass flake inputs to our config
-        overlays = [ overlay-unstable muttdown.overlay];
+        specialArgs = { inherit inputs muttdown; }; # Pass flake inputs to our config
         modules = [
+          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable ]; })
           ./nixos/framework/configuration.nix
           ./nixos/framework/hardware-configuration.nix
           ./printers.nix
