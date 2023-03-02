@@ -29,8 +29,8 @@
       nixos = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; }; # Pass flake inputs to our config
+        overlays = [ overlay-unstable muttdown.overlay];
         modules = [
-          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable muttdown.overlay]; })
           ./nixos/lenovo/configuration.nix
           ./nixos/lenovo/hardware-configuration.nix
           ./printers.nix
@@ -52,8 +52,8 @@
       framework = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; }; # Pass flake inputs to our config
+        overlays = [ overlay-unstable muttdown.overlay];
         modules = [
-          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable muttdown.overlay]; })
           ./nixos/framework/configuration.nix
           ./nixos/framework/hardware-configuration.nix
           ./printers.nix
