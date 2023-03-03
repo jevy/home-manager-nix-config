@@ -4,7 +4,7 @@ source colors-gruvbox-shuber.muttrc
 
 set realname = "Jevin Maltais"
 set from = "jevin@quickjack.ca"
-set sendmail = "~/.config/mutt/send-with-html-email"
+set sendmail = "muttdown --sendmail-passthru"
 alias me jevin <jevin@quickjack.ca>
 set folder = "~/Maildir/quickjack/mail"
 set header_cache = /home/jevin/.cache/mutt/jevin@quickjack.ca/headers

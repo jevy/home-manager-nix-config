@@ -4,7 +4,7 @@ source colors-gruvbox-shuber.muttrc
 
 set realname = "Jevin Maltais"
 set from = "jevin.maltais@humi.ca"
-set sendmail = "gmi send -t -C ~/Maildir/humi"
+set sendmail = "muttdown --sendmail-passthru"
 alias me jevin <jevin.maltais@humi.ca>
 set folder = "~/Maildir/humi/mail"
 set mbox_type = Maildir

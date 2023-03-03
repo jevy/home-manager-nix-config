@@ -43,7 +43,5 @@
   home.file = {
     ".config/mutt/common.muttrc".source = mutt/common.muttrc;
     ".config/mailcap".source = mutt/mailcap;
-    ".config/mutt/add-html-to-email".source = mutt/add-html-to-email.py;
-    ".config/mutt/add-html-to-email".executable = true;
   };
 }
