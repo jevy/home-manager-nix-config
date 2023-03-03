@@ -16,10 +16,14 @@
     # Modeling it after: https://rycee.gitlab.io/home-manager/index.html#sec-flakes-nixos-module
     let
       system = "x86_64-linux";
-      overlay-unstable = final: prev: {
+      custom-overlays = final: prev: {
         unstable = import nixpkgs-unstable {
           inherit system;
           config.allowUnfree = true;
+        };
+        pkgs-with-custom-pkgs = import nixpkgs {
+          inherit system;
+          overlays = [ muttdown.overlay ];
         };
       };
     in {
@@ -30,7 +34,7 @@
         system = "x86_64-linux";
         specialArgs = { inherit inputs muttdown; }; # Pass flake inputs to our config
         modules = [
-          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable ]; })
+          ({ config, pkgs, ... }: { nixpkgs.overlays = [ custom-overlays ]; })
           ./nixos/lenovo/configuration.nix
           ./nixos/lenovo/hardware-configuration.nix
           ./printers.nix
@@ -53,7 +57,7 @@
         system = "x86_64-linux";
         specialArgs = { inherit inputs muttdown; }; # Pass flake inputs to our config
         modules = [
-          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable ]; })
+          ({ config, pkgs, ... }: { nixpkgs.overlays = [ custom-overlays ]; })
           ./nixos/framework/configuration.nix
           ./nixos/framework/hardware-configuration.nix
           ./printers.nix

@@ -26,6 +26,7 @@
     poppler_utils # mutt-wizard
     python310Packages.goobook # mutt
     python-with-my-packages
+    muttdown
   ];
 
   programs.notmuch = {
