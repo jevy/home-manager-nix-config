@@ -45,7 +45,7 @@
   home.file = {
     ".config/mutt/muttrc".source = mutt/quickjack.muttrc;
     ".config/mutt/colors-gruvbox-shuber.muttrc".source = mutt/colors-gruvbox-shuber.muttrc;
-    "~/.muttdown.yaml".text = "sendmail: gmi send -t -C ~/Maildir/quickjack";
+    ".muttdown.yaml".text = "sendmail: gmi send -t -C ~/Maildir/quickjack";
   };
 
 }
