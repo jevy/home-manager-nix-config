@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, ... }:
+{ config, pkgs, muttdown, ... }:
 
 {
   hardware.opengl = {
@@ -19,8 +19,6 @@
     latitude = 45.42;
     longitude = -75.70;
   };
-
-  nixpkgs.config.allowBroken = true;
 
   services.udev.packages = with pkgs; [
     unstable.vial
@@ -203,14 +201,10 @@ services.pipewire = {
 
   # Add unstable packages: https://nixos.wiki/wiki/FAQ/Pinning_Nixpkgs
   # Be sure to change the added channel to match the actually channel below
+  nixpkgs.overlays = [ muttdown.overlay ];
   nixpkgs.config = {
+    allowBroken = true;
     allowUnfree = true;
-    # packageOverrides = pkgs: {
-    #   unstable = import <nixos-unstable> {
-    #     config = config.nixpkgs.config;
-    #   };
-    # };
-
 
     permittedInsecurePackages = [
       "electron-13.6.9"
