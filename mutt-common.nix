@@ -26,6 +26,7 @@
     poppler_utils # mutt-wizard
     python310Packages.goobook # mutt
     python-with-my-packages
+    muttdown
   ];
 
   programs.notmuch = {
@@ -42,7 +43,5 @@
   home.file = {
     ".config/mutt/common.muttrc".source = mutt/common.muttrc;
     ".config/mailcap".source = mutt/mailcap;
-    ".config/mutt/add-html-to-email".source = mutt/add-html-to-email.py;
-    ".config/mutt/add-html-to-email".executable = true;
   };
 }
