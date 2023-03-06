@@ -20,12 +20,12 @@
 
     "modules-left": [
         "sway/workspaces",
-        "sway/mode",
-        "custom/music"
+        "sway/mode"
+        //"custom/music"
     ],
     "modules-center": [
-        "custom/taskwarrior"
-        //"custom/meetings"
+        //"custom/taskwarrior"
+        "custom/meetings"
     ],
     "modules-right": [
         "custom/weather",
@@ -168,7 +168,6 @@
         "format": "{}",
         "interval": 60,
         "on-click": "xdg-open https://calendar.google.com",
-        "exec": "gcalcli agenda --nostarted `date +%H:%M` `date -d '+1 hour' +%H:%M` | head -2 | tail -1 | cut -c -80"
-        /* "exec": "gcalcli agenda tomorrow | head -2 | tail -1 | expand" */
+        "exec": "gcalcli agenda --nostarted `date +%H:%M` `date -d '+1 hour' +%H:%M` | sed '/No title/d' | head -2 | tail -1 | cut -c -80"
     }
 }
