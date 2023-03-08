@@ -275,6 +275,7 @@
 
   };
 
+  home.sessionPath = [ "$HOME/bin" ];
   home.file = {
     ".config/mako/config".source                                = mako/config;
     ".config/waybar/config".source                              = waybar/config;
@@ -283,6 +284,8 @@
     ".config/polybar-scripts/openweathermap-forecast.sh".source = waybar/polybar/openweathermap-forecast.sh;
     ".config/backgrounds/".source                               = ./backgrounds;
     ".config/zathura/zathurarc".text                            = "set selection-clipboard clipboard";
+    "bin/ascii2text".text                                 = "sed 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' < /dev/stdin";
+    "bin/ascii2text".executable = true;
   };
 
 
