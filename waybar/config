@@ -168,6 +168,6 @@
         "format": "{}",
         "interval": 60,
         "on-click": "xdg-open https://calendar.google.com",
-        "exec": "gcalcli agenda --nostarted `date +%H:%M` `date -d '+1 hour' +%H:%M` | sed '/No title/d' | head -2 | tail -1 | cut -c -80"
+        "exec": "gcalcli agenda --nocolor --nostarted `date +%H:%M` `date -d '+1 hour' +%H:%M` | sed '/No title/d' | sed 's/  */ /g' | head -2 | tail -1 | cut -c -80"
     }
 }
