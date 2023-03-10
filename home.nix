@@ -1,11 +1,6 @@
 { config, pkgs, ... }:
 
 {
-  # Home Manager needs a bit of information about you and the
-  # paths it should manage.
-  # home.username = "jevinhumi";
-  # home.homeDirectory = "/home/jevinhumi";
-
   # nixpkgs.config.allowUnfreePredicate = (pkg: true);
 
   # This value determines the Home Manager release that your

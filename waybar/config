@@ -169,6 +169,6 @@
         "interval": 60,
         "on-click": "xdg-open https://calendar.google.com",
         // sed 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' |
-        "exec": "gcalcli agenda --nocolor --nostarted `date +%H:%M` `date -d '+1 hour' +%H:%M` | sed '/No title/d' | ~/bin/ascii2text | sed 's/  */ /g' | head -2 | tail -1 | cut -c -80"
+        "exec": "~/bin/next-meeting.sh"
     }
 }

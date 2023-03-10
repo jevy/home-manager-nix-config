@@ -1,5 +1,5 @@
 {
-  description = "Jevin's Humi Home Manager configuration";
+  description = "Jevin's Home Manager configuration";
 
   inputs = {
     # Specify the source of Home Manager and Nixpkgs
@@ -46,7 +46,6 @@
               useUserPackages = true;
               users = {
                 jevin     = import ./jevin-linux.nix;
-                jevinhumi = import ./work-linux.nix;
               };
             };
           }
@@ -71,7 +70,6 @@
               extraSpecialArgs = { inherit stylix; };
               users = {
                 jevin     = import ./jevin-linux.nix;
-                jevinhumi = import ./work-linux.nix;
               };
             };
           }
