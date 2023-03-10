@@ -284,8 +284,11 @@
     ".config/polybar-scripts/openweathermap-forecast.sh".source = waybar/polybar/openweathermap-forecast.sh;
     ".config/backgrounds/".source                               = ./backgrounds;
     ".config/zathura/zathurarc".text                            = "set selection-clipboard clipboard";
-    "bin/ascii2text".text                                 = "sed 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' < /dev/stdin";
-    "bin/ascii2text".executable = true;
+    "bin/next-meeting.sh".executable                            = true;
+    "bin/next-meeting.sh".text                                  = ''
+      #!/usr/bin/env bash
+      gcalcli agenda --nocolor --nostarted `date +%H:%M` `date -d '+1 hour' +%H:%M` | sed 's/\x1B\[\([0-9]\{1,2\}\(;[0-9]\{1,2\}\)\?\)\?[mGK]//g' | sed '/No title/d' | sed 's/  */ /g' | sed '/^$/d' | head -1 | cut -f 4- -d ' ' | cut -c -80
+      '';
   };
 
 

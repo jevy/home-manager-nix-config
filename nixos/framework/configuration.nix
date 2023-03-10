@@ -76,22 +76,14 @@
   # networking.interfaces.wlp0s20f3.useDHCP = true;
   # networking.networkmanager.enable = true;
 
-  # For Humility
-  networking.extraHosts =
-    ''
-      127.0.0.1 local.api.humi.ca
-      127.0.0.1 hr.localhost
-      127.0.0.1 payroll
-    '';
-
   programs._1password = {
     enable = true;
-    # polkitPolicyOwners = ["jevin" "jevinhumi"];
+    # polkitPolicyOwners = ["jevin"];
   };
 
   programs._1password-gui = {
     enable = true;
-    polkitPolicyOwners = ["jevin" "jevinhumi"];
+    polkitPolicyOwners = ["jevin" ];
     package = pkgs.unstable._1password-gui;
   };
 
@@ -180,14 +172,6 @@ services.pipewire = {
     hashedPassword = "$6$RQ3xn2S3O1RFFqiA$e725RMH8eJgw4JJ4UnSjuzJ1Pw5lNNaFRW.9M2XCrcCJsAbWPg5qs5hzRZARiK9uastNZN9XnUGBs8yM6kdMZ0";
   };
 
-  users.users.jevinhumi = {
-    shell = pkgs.zsh;
-    isNormalUser = true;
-    extraGroups = [ "plugdev" "wheel" "networkmanager" "docker" "dialout" "audio" "video"]; # Dialout if for usb/serial access for arduino
-
-    hashedPassword = "$6$aw5LoOsiqpalwsvN$NvzZMxYQoBU.uKE6LUG5algVkjp9QoRcRg3EPNL2/zbRH4WAYII5VDu7hgj59Kmjt0lwQ5Vf.lvoALh4fvfik/";
-  };
-
   # users.users.tyler = {
   #   shell = pkgs.zsh;
   #   isNormalUser = true;
@@ -231,7 +215,7 @@ services.pipewire = {
 
   # virtualisation.libvirtd.enable = true;
   # virtualisation.virtualbox.host.enable = true;
-  # users.extraGroups.vboxusers.members = [ "jevin" "jevinhumi" ];
+  # users.extraGroups.vboxusers.members = [ "jevin" ];
   # virtualisation.virtualbox.host.enableExtensionPack = true;
 
   virtualisation.docker.enable = true;
