@@ -331,6 +331,7 @@
     tailscale-home = "sudo tailscale up --accept-routes --exit-node \"octoprint\" --accept-dns";
     pomodoro = "termdown 25m -s -b && ${pkgs.libnotify}/bin/notify-send 'Pomodoro complete. Take a break!'";
     alsafix = "cd ~/.config/alsa && alsactl restore -f asound.state";
+    s = "kitty +kitten ssh";
   };
 
   # For Flakpak
