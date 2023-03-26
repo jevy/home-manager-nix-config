@@ -312,7 +312,6 @@
         Type = "oneshot";
         RemainAfterExit = true;
         ExecStart = "${pkgs.alsa-utils}/sbin/alsactl restore -f ${config.xdg.configHome}/alsa/asound.state";
-        ExecStop = "${pkgs.alsa-utils}/sbin/alsactl store --ignore -f ${config.xdg.configHome}/alsa/asound.state";
       };
 
       Install = {
