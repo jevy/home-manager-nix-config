@@ -20,13 +20,13 @@
 
     "modules-left": [
         "sway/workspaces",
-        "sway/mode"
+        "sway/mode",
+        "custom/meetings"
         //"custom/music"
     ],
-    "modules-center": [
+    //"modules-center": [
         //"custom/taskwarrior"
-        "custom/meetings"
-    ],
+    //],
     "modules-right": [
         "custom/weather",
         "network",
