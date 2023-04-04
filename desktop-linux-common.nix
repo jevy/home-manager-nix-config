@@ -92,21 +92,30 @@
     name = "Nordzy-cursors";
   };
 
-  programs.vscode = {
-    enable = true;
-    package = pkgs.vscode-fhs;
-    # package = pkgs.vscode.fhsWithPackages (ps: with ps; [ rustup zlib openssl.dev pkg-config ]);
-    extensions = with pkgs.vscode-extensions; [
-      vscodevim.vim
-      vadimcn.vscode-lldb
-      matklad.rust-analyzer
-      jdinhlife.gruvbox
-      jnoortheen.nix-ide
-      arrterian.nix-env-selector
-      bungcip.better-toml
-    ];
+  programs.vscode =
+  let
+      save-and-run = pkgs.vscode-utils.extensionFromVscodeMarketplace {
+        name = "save-and-run";
+        publisher = "wk-j";
+        version = "0.0.22";
+        sha256 = "mr6WJ1gmtoBR+wqCfMhtg3OBf3+Mh637j9v416V9A5o=";
+      };
+  in {
+      enable = true;
+      package = pkgs.vscode-fhs;
+      # package = pkgs.vscode.fhsWithPackages (ps: with ps; [ rustup zlib openssl.dev pkg-config ]);
+      extensions = with pkgs.vscode-extensions; [
+        vscodevim.vim
+        vadimcn.vscode-lldb
+        matklad.rust-analyzer
+        jdinhlife.gruvbox
+        jnoortheen.nix-ide
+        arrterian.nix-env-selector
+        bungcip.better-toml
+        save-and-run
+      ];
 
-  };
+    };
   # Wayland + VScode
   # environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
