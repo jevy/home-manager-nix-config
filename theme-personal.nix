@@ -8,14 +8,10 @@
       sha256 = "sha256-U9pfie3qABp5sTr3M9ga/jX8C807FeiXlmEZnC4ZM58=";
     };
   in {
-    stylix.base16Scheme = "${base16-schemes}/gruvbox-dark-hard.yaml";
+    stylix.base16Scheme = "${base16-schemes}/gruvbox-material-dark-soft.yaml";
 
-    stylix.image = ./backgrounds/9.png;
+    stylix.image = ./backgrounds/reddit_Zakoriart.jpg ;
     # stylix.polarity = "dark";
-    # stylix.targets.vim.enable = false;
-    stylix.targets.gtk.enable = false;
-    # stylix.targets.vscode.enable = false;
-    # stylix.targets.rofi.enable = false;
 
   # wayland.windowManager.sway.config =
   # {
