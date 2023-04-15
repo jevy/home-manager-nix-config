@@ -9,7 +9,7 @@
     nixpkgs-unstable.url                = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     muttdown.url                        = "path:./custom_packages/muttdown/";
-    stylix.url                          = "github:danth/stylix";
+    stylix.url                          = "github:danth/stylix/release-22.11";
   };
   outputs = { home-manager, stylix, nixpkgs, nixpkgs-unstable, nixos-hardware, muttdown, ... }@inputs:
 

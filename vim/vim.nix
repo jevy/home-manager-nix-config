@@ -32,7 +32,7 @@
       # ranger-vim
       base16-vim
       vim-nix
-      gruvbox
+      gruvbox-material
       vim-indent-guides
       vim-gitgutter
       nvim-tree-lua

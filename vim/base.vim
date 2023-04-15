@@ -16,9 +16,18 @@ set wildmode=list:longest
 set linebreak
 set relativenumber
 
-" colorscheme Tomorrow-Night
-" colorscheme base16-default-dark
-colorscheme gruvbox
+" From https://github.com/sainnhe/gruvbox-material/blob/master/doc/gruvbox-material.txt
+if has('termguicolors')
+  set termguicolors
+endif
+" For dark version.
+set background=dark
+" This configuration option should be placed before `colorscheme gruvbox-material`.
+" Available values: 'hard', 'medium'(default), 'soft'
+let g:gruvbox_material_background = 'soft'
+" For better performance
+let g:gruvbox_material_better_performance = 0
+colorscheme gruvbox-material
 
 let g:indent_guides_enable_on_vim_startup = 1
 
