@@ -10,7 +10,7 @@
   in {
     stylix.base16Scheme = "${base16-schemes}/gruvbox-material-dark-soft.yaml";
 
-    stylix.image = ./backgrounds/reddit_Zakoriart.jpg ;
+    stylix.image = ./backgrounds/j5vziuan8tra1.jpg;
     # stylix.polarity = "dark";
 
   # wayland.windowManager.sway.config =
