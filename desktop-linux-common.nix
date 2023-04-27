@@ -16,7 +16,7 @@
     zathura
     wally-cli
     vlc
-    signal-desktop
+    unstable.signal-desktop
     # qalculate-gtk
     # nasc # Broken?
     blueberry
