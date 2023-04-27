@@ -25,10 +25,11 @@
     qmk-udev-rules
     fprintd
     qflipper
+    android-udev-rules
   ];
 
   hardware.keyboard.zsa.enable = true;
-
+  programs.adb.enable = true;
   services.hardware.bolt.enable = true;
   services.fwupd.enable = true;
   # services.ratbagd.enable = true;
@@ -165,7 +166,7 @@ services.pipewire = {
   users.users.jevin = {
     shell = pkgs.zsh;
     isNormalUser = true;
-    extraGroups = [ "qemu-libvirtd" "libvirtd" "plugdev" "wheel" "networkmanager" "docker" "dialout" "audio" "video" "syncthing"]; # Dialout if for usb/serial access for arduino
+    extraGroups = [ "qemu-libvirtd" "libvirtd" "plugdev" "wheel" "networkmanager" "docker" "dialout" "audio" "video" "adbusers"]; # Dialout if for usb/serial access for arduino
 
     # `nix-shell -p mkpasswd --run 'mkpasswd -m sha-512'`
     hashedPassword = "$6$RQ3xn2S3O1RFFqiA$e725RMH8eJgw4JJ4UnSjuzJ1Pw5lNNaFRW.9M2XCrcCJsAbWPg5qs5hzRZARiK9uastNZN9XnUGBs8yM6kdMZ0";
