@@ -93,21 +93,6 @@
     name = "Nordzy-cursors";
   };
 
-  programs.vscode = {
-    enable = true;
-    package = pkgs.vscode-fhs;
-    # package = pkgs.vscode.fhsWithPackages (ps: with ps; [ rustup zlib openssl.dev pkg-config ]);
-    extensions = with pkgs.vscode-extensions; [
-      vscodevim.vim
-      vadimcn.vscode-lldb
-      matklad.rust-analyzer
-      jdinhlife.gruvbox
-      jnoortheen.nix-ide
-      arrterian.nix-env-selector
-      bungcip.better-toml
-    ];
-
-  };
   # Wayland + VScode
   # environment.sessionVariables.NIXOS_OZONE_WL = "1";
 

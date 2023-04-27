@@ -16,13 +16,14 @@ set wildmode=list:longest
 set linebreak
 set relativenumber
 
-" colorscheme Tomorrow-Night
-" colorscheme base16-default-dark
-colorscheme gruvbox
-
 let g:indent_guides_enable_on_vim_startup = 1
 
 set updatetime=100 "For Git marker updating to be faster
+
+set background=dark
+let g:gruvbox_material_background = 'soft'
+let g:gruvbox_material_better_performance = 0
+colorscheme gruvbox-material
 
 " Freedom
 " nnoremap <Leader><Space> :Goyo<CR>

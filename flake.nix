@@ -11,73 +11,37 @@
     muttdown.url                        = "path:./custom_packages/muttdown/";
     stylix.url                          = "github:danth/stylix";
   };
-  outputs = { home-manager, stylix, nixpkgs, nixpkgs-unstable, nixos-hardware, muttdown, ... }@inputs:
 
-    # Modeling it after: https://rycee.gitlab.io/home-manager/index.html#sec-flakes-nixos-module
+  outputs = { nixpkgs, nixpkgs-unstable, home-manager, ... }:
     let
-      system = "x86_64-linux";
+      system = "aarch64-darwin";
+      pkgs = nixpkgs.legacyPackages.${system};
       custom-overlays = final: prev: {
         unstable = import nixpkgs-unstable {
           inherit system;
           config.allowUnfree = true;
         };
-        pkgs-with-custom-pkgs = import nixpkgs {
-          inherit system;
-          overlays = [ muttdown.overlay ];
-        };
       };
     in {
-    nixosConfigurations = {
+      homeConfigurations.jevin = home-manager.lib.homeManagerConfiguration {
+        inherit pkgs;
 
-      # Lenovo has hostname `nixos`
-      nixos = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = { inherit inputs muttdown; }; # Pass flake inputs to our config
+        # Specify your home configuration modules here, for example,
+        # the path to your home.nix.
         modules = [
-          ({ config, pkgs, ... }: { nixpkgs.overlays = [ custom-overlays ]; })
-          ./nixos/lenovo/configuration.nix
-          ./nixos/lenovo/hardware-configuration.nix
-          ./printers.nix
-          nixos-hardware.nixosModules.lenovo-thinkpad-x1-7th-gen
-          home-manager.nixosModules.home-manager
-          {
-            home-manager = {
-              useGlobalPkgs = true;
-              useUserPackages = true;
-              users = {
-                jevin     = import ./jevin-linux.nix;
-              };
-            };
-          }
+	   ({ config, pkgs, ... }: { nixpkgs.overlays = [ custom-overlays ]; })
+           ./home.nix
+           ./vim/vim.nix
+           ./zsh.nix
+           ./cli-common.nix
+           ./desktop-mac.nix
+	   {
+		   home = {
+		     username = "jevin";
+		     homeDirectory = "/Users/jevin";
+		   };
+	   }
         ];
       };
-
-      framework = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = { inherit inputs muttdown; }; # Pass flake inputs to our config
-        modules = [
-          ({ config, pkgs, ... }: { nixpkgs.overlays = [ custom-overlays ]; })
-          ./nixos/framework/configuration.nix
-          ./nixos/framework/hardware-configuration.nix
-          ./printers.nix
-          stylix.nixosModules.stylix ./theme-personal.nix
-          nixos-hardware.nixosModules.framework-12th-gen-intel
-          home-manager.nixosModules.home-manager
-          {
-            home-manager = {
-              useGlobalPkgs = true;
-              useUserPackages = true;
-              extraSpecialArgs = { inherit stylix; };
-              users = {
-                jevin     = import ./jevin-linux.nix;
-              };
-            };
-          }
-        ];
-      };
-
     };
-
-  };
-
 }
