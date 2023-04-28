@@ -60,6 +60,7 @@
         "taskwarrior"
         "zoxide"
         "systemd"
+        "yarn"
       ];
     };
   };
