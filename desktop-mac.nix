@@ -123,7 +123,7 @@
       spaces = require("hs.spaces")
 
       -- Enable me to change spaces and move windows to them 
-      local workspaces = {1, 2, 3, 4, 5}
+      local workspaces = {1, 2, 3, 4, 5, 6, 7, 8, 9}
       for i, v in ipairs(workspaces) do
               hs.hotkey.bind({"cmd", "alt", "ctrl"}, tostring(i), function()
                 spaces.gotoSpace(spaces.spacesForScreen(primaryScreen())[i])
