@@ -60,6 +60,7 @@
   # Running into issues with Obisidan and syncthing. Not enough inotify available
   boot.kernel.sysctl."fs.inotify.max_user_instances" = 2147483647;
 
+  networking.nameservers = ["192.168.1.204"];
   networking.hostName = "framework"; # Define your hostname.
   networking.hostId = "6a7f48db";
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
