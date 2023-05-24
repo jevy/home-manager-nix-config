@@ -135,11 +135,7 @@
       end
 
       function primaryScreen()
-          if isDocked() then
-            return "C4DABF08-CACF-41A2-B565-96F6F0832374"
-          else
-            return "37D8832A-2D66-02CA-B9F7-8F30A301B230"
-          end
+        return desktopWithMostSpaces()
       end
 
       function isDocked()
@@ -147,11 +143,29 @@
           local count = 0
           for key, value in pairs(set) do
               count = count + 1
-              if count > 1 then
+              -- One or two because I have my portable monitor
+              -- Three is at home
+              if count > 2 then
                   return true
               end
           end
           return false
+      end
+
+      function desktopWithMostSpaces()
+        local spacesTable = spaces.allSpaces()
+        local maxCount = 0
+        local maxUuid = nil
+
+        for uuid, values in pairs(spacesTable) do
+          local count = #values
+          if count > maxCount then
+            maxCount = count
+            maxUuid = uuid
+          end
+        end
+
+        return maxUuid
       end
     '';
   };
