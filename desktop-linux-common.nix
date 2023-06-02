@@ -56,6 +56,7 @@
     swayidle
     swaylock
     alsa-utils
+    unstable.lens
   ];
 
   services.wlsunset = {
