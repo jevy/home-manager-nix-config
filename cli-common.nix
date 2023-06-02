@@ -30,10 +30,17 @@
     fd
     feh
     ncdu
-    bat
     vagrant
     curl
   ];
+
+  programs.bat = {
+    enable = true;
+    config = {
+      theme = "gruvbox-dark";
+      style = "changes,header";
+    };
+  };
 
   home.sessionVariables = {
     VAGRANT_DEFAULT_PROVIDER = "libvirt";
@@ -41,7 +48,6 @@
 
   home.file = {
     ".config/ranger".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.config/nixpkgs/ranger";
-    ".config/bat/config".source = bat/config;
   };
 
   home.shellAliases = {
