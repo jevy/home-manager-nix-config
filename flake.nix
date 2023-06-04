@@ -3,15 +3,15 @@
 
   inputs = {
     # Specify the source of Home Manager and Nixpkgs
-    home-manager.url                    = "github:nix-community/home-manager/release-22.11";
-    nixpkgs.url                         = "github:NixOS/nixpkgs/nixos-22.11";
+    home-manager.url                    = "github:nix-community/home-manager/release-23.05";
+    nixpkgs.url                         = "github:NixOS/nixpkgs/nixos-23.05";
     nixos-hardware.url                  = "github:NixOS/nixos-hardware";
     nixpkgs-unstable.url                = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    muttdown.url                        = "path:./custom_packages/muttdown/";
-    stylix.url                          = "github:danth/stylix/release-22.11";
+    # muttdown.url                        = "path:./custom_packages/muttdown/";
+    stylix.url                          = "github:danth/stylix/master";
   };
-  outputs = { home-manager, stylix, nixpkgs, nixpkgs-unstable, nixos-hardware, muttdown, ... }@inputs:
+  outputs = { home-manager, stylix, nixpkgs, nixpkgs-unstable, nixos-hardware, ... }@inputs:
 
     # Modeling it after: https://rycee.gitlab.io/home-manager/index.html#sec-flakes-nixos-module
     let
@@ -23,38 +23,15 @@
         };
         pkgs-with-custom-pkgs = import nixpkgs {
           inherit system;
-          overlays = [ muttdown.overlay ];
+          # overlays = [ muttdown.overlay ];
         };
       };
     in {
     nixosConfigurations = {
 
-      # Lenovo has hostname `nixos`
-      nixos = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = { inherit inputs muttdown; }; # Pass flake inputs to our config
-        modules = [
-          ({ config, pkgs, ... }: { nixpkgs.overlays = [ custom-overlays ]; })
-          ./nixos/lenovo/configuration.nix
-          ./nixos/lenovo/hardware-configuration.nix
-          ./printers.nix
-          nixos-hardware.nixosModules.lenovo-thinkpad-x1-7th-gen
-          home-manager.nixosModules.home-manager
-          {
-            home-manager = {
-              useGlobalPkgs = true;
-              useUserPackages = true;
-              users = {
-                jevin     = import ./jevin-linux.nix;
-              };
-            };
-          }
-        ];
-      };
-
       framework = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        specialArgs = { inherit inputs muttdown; }; # Pass flake inputs to our config
+        specialArgs = { inherit inputs; }; # Pass flake inputs to our config
         modules = [
           ({ config, pkgs, ... }: { nixpkgs.overlays = [ custom-overlays ]; })
           ./nixos/framework/configuration.nix
