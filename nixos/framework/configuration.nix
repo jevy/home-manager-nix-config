@@ -142,12 +142,15 @@ services.pipewire = {
 
   # TODO: Try enabling extra portals: https://nixos.wiki/wiki/Sway
   # For Chrome sharing and stuff
-  xdg.portal.wlr = {
+  xdg.portal = {
     enable = true;
-    settings = {
-      screencast = {
-        chooser_type = "simple";
-        chooser_cmd = "slurp -f %o -ro";
+    wlr = {
+      enable = true;
+      settings = {
+        screencast = {
+          chooser_type = "simple";
+          chooser_cmd = "${pkgs.slurp}/bin/slurp -f %o -ro";
+        };
       };
     };
   };

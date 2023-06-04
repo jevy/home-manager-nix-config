@@ -7,7 +7,6 @@
     neovim-remote
     gimp
     unstable.discord
-    firefox-wayland
     unstable.spotify
     unstable.obsidian
     pavucontrol
@@ -99,9 +98,19 @@
     plugins = [ pkgs.obs-studio-plugins.wlrobs ];
   };
 
+  programs.firefox = {
+    enable = true;
+  };
+
+  programs.chromium.enable = true;
+  home.sessionVariables = {
+    NIXOS_OZONE_WL = "1"; # For Wayland Chrome and Electron
+  };
+
   wayland.windowManager.sway = {
     enable = true;
     swaynag.enable = true;
+    systemdIntegration = true;
 
     config = {
 
