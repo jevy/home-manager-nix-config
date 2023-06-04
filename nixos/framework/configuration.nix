@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, muttdown, ... }:
+{ config, pkgs, ... }:
 
 {
   hardware.opengl = {
@@ -60,7 +60,10 @@
   # Running into issues with Obisidan and syncthing. Not enough inotify available
   boot.kernel.sysctl."fs.inotify.max_user_instances" = 2147483647;
 
-  networking.nameservers = ["192.168.1.204"];
+  # services.resolved.enable = false;
+  # networking.resolvconf.enable = false;
+  networking.search = [];
+  # networking.nameservers = ["1.1.1.1"];
   networking.hostName = "framework"; # Define your hostname.
   networking.hostId = "6a7f48db";
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -69,8 +72,6 @@
 
   # Set your time zone.
   time.timeZone = "America/Toronto";
-
-  hardware.video.hidpi.enable = true;
 
   # networking.useDHCP = true;
   # networking.interfaces.enp0s31f6.useDHCP = true;
@@ -189,7 +190,6 @@ services.pipewire = {
 
   # Add unstable packages: https://nixos.wiki/wiki/FAQ/Pinning_Nixpkgs
   # Be sure to change the added channel to match the actually channel below
-  nixpkgs.overlays = [ muttdown.overlay ];
   nixpkgs.config = {
     allowBroken = true;
     allowUnfree = true;
@@ -206,11 +206,7 @@ services.pipewire = {
     DBs = with pkgs.dictdDBs; [ wiktionary wordnet ];
   };
 
-  # programs.zsh.enable = true;
-  programs.vim = {
-    defaultEditor = true ;
-    package = pkgs.vimHugeX;
-  };
+  programs.zsh.enable = true;
 
   environment.sessionVariables = {
     _JAVA_AWT_WM_NONREPARENTING = "1"; # For Arduino & Wayland
@@ -264,7 +260,18 @@ services.pipewire = {
             fontconfig.defaultFonts.monospace = [
               "DejaVu Sans Mono"
             ];
+
+            # Instead of hidpi
+            # From: https://github.com/NixOS/nixpkgs/blob/832bdf74072489b8da042f9769a0a2fac9b579c7/nixos/modules/hardware/video/hidpi.nix
+            fontconfig.antialias = true;
+            fontconfig.subpixel = {
+              rgba = "none";
+              lcdfilter = "none";
+            };
   };
+
+  console.earlySetup = true;
+  boot.loader.systemd-boot.consoleMode = "1";
 
 
 
@@ -290,7 +297,7 @@ services.pipewire = {
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "22.05"; # Did you read the comment?
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.linuxPackages_6_1;
 
 }
 

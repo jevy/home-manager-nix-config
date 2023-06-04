@@ -3,7 +3,7 @@
 {
   home.packages = let
     my-python-packages = python-packages: with python-packages; [
-      wxPython_4_0
+      wxPython_4_2
       markdown
       markdown-include
     ];
@@ -26,7 +26,6 @@
     poppler_utils # mutt-wizard
     python310Packages.goobook # mutt
     python-with-my-packages
-    muttdown
   ];
 
   programs.notmuch = {
