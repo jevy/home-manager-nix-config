@@ -56,6 +56,7 @@
     swaylock
     alsa-utils
     unstable.lens
+    velero
   ];
 
   services.wlsunset = {
@@ -107,10 +108,19 @@
     NIXOS_OZONE_WL = "1"; # For Wayland Chrome and Electron
   };
 
+  # dconf.settings = {
+  #   "org/gnome/mutter" = {
+  #     experimental-features = [ "scale-monitor-framebuffer" ];
+  #   };
+  # };
+
   wayland.windowManager.sway = {
     enable = true;
     swaynag.enable = true;
     systemdIntegration = true;
+    wrapperFeatures = {
+      gtk = true;
+    };
 
     config = {
 
@@ -179,7 +189,7 @@
         "Unknown 0x095F 0x00000000" =
           { pos = "3710 2880";
             resolution = "2256x1504";
-            scale = "1.5";
+            scale = "1";
           };
         "Unknown HP Z27 CN49020L9R" =
           { pos = "6010 1440";
