@@ -95,6 +95,8 @@
   #   defaultSession = "sway";
   # };
   programs.sway.enable = true;
+  programs.sway.package = config.home-manager.users.jevin.wayland.windowManager.sway.package;
+
   security.pam.services.swaylock = {};
   security.sudo.wheelNeedsPassword = false;
 

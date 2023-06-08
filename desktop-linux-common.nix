@@ -49,7 +49,7 @@
     qmk
     audacity
     spotify-tui
-    gnome3.gnome-tweaks
+    # gnome3.gnome-tweaks
     nvd
     pulseaudio
     swayidle
@@ -187,6 +187,12 @@
           };
         # Framework
         "Unknown 0x095F 0x00000000" =
+          { pos = "3710 2880";
+            resolution = "2256x1504";
+            scale = "1";
+          };
+        # Framework (again?)
+        "BOE 0x095F Unknown" =
           { pos = "3710 2880";
             resolution = "2256x1504";
             scale = "1";
