@@ -28,10 +28,10 @@
     android-udev-rules
   ];
 
-  # hardware.keyboard.zsa.enable = true;
-  # programs.adb.enable = true;
-  # services.hardware.bolt.enable = true;
-  # services.fwupd.enable = true;
+  hardware.keyboard.zsa.enable = true;
+  programs.adb.enable = true;
+  services.hardware.bolt.enable = true;
+  services.fwupd.enable = true;
   # services.ratbagd.enable = true;
 
   nix = {
@@ -41,8 +41,10 @@
     '';
    };
 
-  # services.tailscale.enable = true;
-  # networking.firewall.checkReversePath = "loose";
+   services.tailscale = {
+     enable = true;
+     useRoutingFeatures = "client";
+   };
 
   # services.sshd.enable = true;
 
@@ -111,7 +113,7 @@
 
 
   # services.chrony.enable = true;
-  # services.timesyncd.enable = false;
+  services.timesyncd.enable = true;
   # services.syncthing = {
   #   enable = true;
   #   systemService = true;

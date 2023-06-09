@@ -11,7 +11,8 @@
     stylix.base16Scheme = "${base16-schemes}/gruvbox-material-dark-soft.yaml";
 
     stylix.image = ./backgrounds/j5vziuan8tra1.jpg;
-    # stylix.polarity = "dark";
+    stylix.polarity = "dark";
+    stylix.targets.gtk.enable = false;
 
   # wayland.windowManager.sway.config =
   # {
