@@ -7,33 +7,29 @@
   ];
 
   home.packages = with pkgs; [
-    # synology-drive-client
+    synology-drive-client
     # ruby
     # gnumake
     # gcc
     # bundix
     # # python-qt
     # kubernetes-helm
-    # dropbox
+    dropbox
     # arduino
-    # hugo
-    # steam
+    hugo
+    steam
     # ansible
-    # gcalcli
+    gcalcli
     # # etcher
 
-    # prusa-slicer
-    # cura
-    # rpi-imager
-    # element-desktop-wayland
-    # # unstable.sunpaper
-    # bottles
-    # transmission-gtk
-    # unstable.newsflash
-    # qflipper
-    # jellyfin-media-player
-    # zotero
-    # unstable.openscad
+    unstable.prusa-slicer
+    rpi-imager
+    sunpaper
+    newsflash
+    qflipper
+    jellyfin-media-player
+    zotero
+    unstable.openscad
   ];
 
   # wayland.windowManager.sway = {

@@ -74,8 +74,6 @@
   time.timeZone = "America/Toronto";
 
   # networking.useDHCP = true;
-  networking.interfaces.enp0s31f6.useDHCP = true;
-  networking.interfaces.wlp0s20f3.useDHCP = true;
   networking.networkmanager.enable = true;
 
   programs._1password = {
@@ -98,7 +96,7 @@
   programs.sway.package = config.home-manager.users.jevin.wayland.windowManager.sway.package;
 
   # security.pam.services.swaylock = {};
-  # security.sudo.wheelNeedsPassword = false;
+  security.sudo.wheelNeedsPassword = false;
 
   # services.xserver.enable = true;
 
