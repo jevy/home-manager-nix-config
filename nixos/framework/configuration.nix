@@ -20,13 +20,13 @@
     longitude = -75.70;
   };
 
-  # services.udev.packages = with pkgs; [
-  #   unstable.via
-  #   qmk-udev-rules
-  #   fprintd
-  #   qflipper
-  #   android-udev-rules
-  # ];
+  services.udev.packages = with pkgs; [
+    unstable.via
+    qmk-udev-rules
+    fprintd
+    qflipper
+    android-udev-rules
+  ];
 
   # hardware.keyboard.zsa.enable = true;
   # programs.adb.enable = true;
@@ -158,8 +158,8 @@ services.pipewire = {
 
   services.dbus.enable = true;
 
-  # hardware.sane.enable = true;
-  # hardware.sane.drivers.scanSnap.enable = true;
+  hardware.sane.enable = true;
+  hardware.sane.drivers.scanSnap.enable = true;
   # hardware.enableAllFirmware = true;
   # hardware.enableRedistributableFirmware = true;
 
@@ -202,10 +202,10 @@ services.pipewire = {
 
   programs.gnupg.agent.enable = true;
 
-  # services.dictd = {
-  #   enable = true;
-  #   DBs = with pkgs.dictdDBs; [ wiktionary wordnet ];
-  # };
+  services.dictd = {
+    enable = true;
+    DBs = with pkgs.dictdDBs; [ wiktionary wordnet ];
+  };
 
   # programs.zsh.enable = true;
 
@@ -219,7 +219,7 @@ services.pipewire = {
   # users.extraGroups.vboxusers.members = [ "jevin" ];
   # virtualisation.virtualbox.host.enableExtensionPack = true;
 
-  # virtualisation.docker.enable = true;
+  virtualisation.docker.enable = true;
 
   # From: https://www.reddit.com/r/VFIO/comments/p4kmxr/tips_for_single_gpu_passthrough_on_nixos/
   # Also need to update: <ioapic driver="kvm"/>
@@ -240,36 +240,36 @@ services.pipewire = {
   # ----- USER STUFF ------
   #
   #
-  # fonts = {
-  #   fonts = [
-  #             pkgs.dejavu_fonts
-  #             pkgs.freefont_ttf
-  #             pkgs.gyre-fonts
-  #             pkgs.unifont
-  #             pkgs.meslo-lgs-nf
-  #             pkgs.weather-icons
-  #             pkgs.font-awesome
-  #           ];
-  #           fontconfig.defaultFonts.emoji = [
-  #             "MesloLGS NF"
-  #             "Weather Icons"
-  #             "Font Awesome 5 Free"
-  #           ];
-  #           fontconfig.defaultFonts.serif = [
-  #             "DejaVu Serif"
-  #           ];
-  #           fontconfig.defaultFonts.monospace = [
-  #             "DejaVu Sans Mono"
-  #           ];
+  fonts = {
+    fonts = [
+              pkgs.dejavu_fonts
+              pkgs.freefont_ttf
+              pkgs.gyre-fonts
+              pkgs.unifont
+              pkgs.meslo-lgs-nf
+              pkgs.weather-icons
+              pkgs.font-awesome
+            ];
+            fontconfig.defaultFonts.emoji = [
+              "MesloLGS NF"
+              "Weather Icons"
+              "Font Awesome 5 Free"
+            ];
+            fontconfig.defaultFonts.serif = [
+              "DejaVu Serif"
+            ];
+            fontconfig.defaultFonts.monospace = [
+              "DejaVu Sans Mono"
+            ];
 
-  #           # Instead of hidpi
-  #           # From: https://github.com/NixOS/nixpkgs/blob/832bdf74072489b8da042f9769a0a2fac9b579c7/nixos/modules/hardware/video/hidpi.nix
-  #           fontconfig.antialias = true;
-  #           fontconfig.subpixel = {
-  #             rgba = "none";
-  #             lcdfilter = "none";
-  #           };
-  # };
+            # Instead of hidpi
+            # From: https://github.com/NixOS/nixpkgs/blob/832bdf74072489b8da042f9769a0a2fac9b579c7/nixos/modules/hardware/video/hidpi.nix
+            fontconfig.antialias = true;
+            fontconfig.subpixel = {
+              rgba = "none";
+              lcdfilter = "none";
+            };
+  };
 
   # console.earlySetup = true;
   # boot.loader.systemd-boot.consoleMode = "1";
