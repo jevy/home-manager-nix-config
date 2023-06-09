@@ -7,8 +7,8 @@
   ];
 
   home.packages = with pkgs; [
-    docker
-    docker-compose
+    # docker
+    # docker-compose
     imagemagickBig
     mlocate # For ranger
     awscli2
