@@ -86,17 +86,17 @@
     # "text/html"              = [ "firefox.desktop"];
   };
 
-  # home.pointerCursor = {
-  #   package = pkgs.nordzy-cursor-theme;
-  #   gtk.enable = true;
-  #   name = "Nordzy-cursors";
-  # };
+  home.pointerCursor = {
+    package = pkgs.nordzy-cursor-theme;
+    gtk.enable = true;
+    name = "Nordzy-cursors";
+  };
 
 
-  # programs.obs-studio = {
-  #   enable = true;
-  #   plugins = [ pkgs.obs-studio-plugins.wlrobs ];
-  # };
+  programs.obs-studio = {
+    enable = true;
+    plugins = [ pkgs.obs-studio-plugins.wlrobs ];
+  };
 
   programs.firefox = {
     enable = true;
