@@ -20,29 +20,29 @@
     longitude = -75.70;
   };
 
-  services.udev.packages = with pkgs; [
-    unstable.via
-    qmk-udev-rules
-    fprintd
-    qflipper
-    android-udev-rules
-  ];
+  # services.udev.packages = with pkgs; [
+  #   unstable.via
+  #   qmk-udev-rules
+  #   fprintd
+  #   qflipper
+  #   android-udev-rules
+  # ];
 
-  hardware.keyboard.zsa.enable = true;
-  programs.adb.enable = true;
-  services.hardware.bolt.enable = true;
-  services.fwupd.enable = true;
+  # hardware.keyboard.zsa.enable = true;
+  # programs.adb.enable = true;
+  # services.hardware.bolt.enable = true;
+  # services.fwupd.enable = true;
   # services.ratbagd.enable = true;
 
   nix = {
-    package = pkgs.nixUnstable; # or versioned attributes like nix_2_4
+    # package = pkgs.nixUnstable; # or versioned attributes like nix_2_4
     extraOptions = ''
       experimental-features = nix-command flakes
     '';
    };
 
-  services.tailscale.enable = true;
-  networking.firewall.checkReversePath = "loose";
+  # services.tailscale.enable = true;
+  # networking.firewall.checkReversePath = "loose";
 
   # services.sshd.enable = true;
 
@@ -58,25 +58,25 @@
 
   # https://github.com/NixOS/nixpkgs/pull/126777/files
   # Running into issues with Obisidan and syncthing. Not enough inotify available
-  boot.kernel.sysctl."fs.inotify.max_user_instances" = 2147483647;
+  # boot.kernel.sysctl."fs.inotify.max_user_instances" = 2147483647;
 
   # services.resolved.enable = false;
   # networking.resolvconf.enable = false;
-  networking.search = [];
+  # networking.search = [];
   # networking.nameservers = ["1.1.1.1"];
   networking.hostName = "framework"; # Define your hostname.
   networking.hostId = "6a7f48db";
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-  networking.enableIPv6 = false;
-  boot.kernelParams = ["ipv6.disable=1"];
+  # networking.enableIPv6 = false;
+  # boot.kernelParams = ["ipv6.disable=1"];
 
   # Set your time zone.
   time.timeZone = "America/Toronto";
 
   # networking.useDHCP = true;
-  # networking.interfaces.enp0s31f6.useDHCP = true;
-  # networking.interfaces.wlp0s20f3.useDHCP = true;
-  # networking.networkmanager.enable = true;
+  networking.interfaces.enp0s31f6.useDHCP = true;
+  networking.interfaces.wlp0s20f3.useDHCP = true;
+  networking.networkmanager.enable = true;
 
   programs._1password = {
     enable = true;
@@ -97,14 +97,14 @@
   programs.sway.enable = true;
   programs.sway.package = config.home-manager.users.jevin.wayland.windowManager.sway.package;
 
-  security.pam.services.swaylock = {};
-  security.sudo.wheelNeedsPassword = false;
+  # security.pam.services.swaylock = {};
+  # security.sudo.wheelNeedsPassword = false;
 
-  services.xserver.enable = true;
+  # services.xserver.enable = true;
 
   # Enable the GNOME Desktop Environment.
-  services.xserver.displayManager.gdm.enable = true;
-  services.xserver.desktopManager.gnome.enable = true;
+  # services.xserver.displayManager.gdm.enable = true;
+  # services.xserver.desktopManager.gnome.enable = true;
 
   # services.xserver.displayManager.startx.enable = true;
   # services.xserver.desktopManager = {
@@ -112,8 +112,8 @@
   # };
 
 
-  services.chrony.enable = true;
-  services.timesyncd.enable = false;
+  # services.chrony.enable = true;
+  # services.timesyncd.enable = false;
   # services.syncthing = {
   #   enable = true;
   #   systemService = true;
@@ -145,31 +145,32 @@ services.pipewire = {
 
   # TODO: Try enabling extra portals: https://nixos.wiki/wiki/Sway
   # For Chrome sharing and stuff
-  xdg.portal = {
-    enable = true;
-    wlr = {
-      enable = true;
-      settings = {
-        screencast = {
-          chooser_type = "simple";
-          chooser_cmd = "${pkgs.slurp}/bin/slurp -f %o -ro";
-        };
-      };
-    };
-  };
+  # xdg.portal = {
+  #   enable = true;
+  #   wlr = {
+  #     enable = true;
+  #     settings = {
+  #       screencast = {
+  #         chooser_type = "simple";
+  #         chooser_cmd = "${pkgs.slurp}/bin/slurp -f %o -ro";
+  #       };
+  #     };
+  #   };
+  # };
 
   services.dbus.enable = true;
 
-  hardware.sane.enable = true;
-  hardware.sane.drivers.scanSnap.enable = true;
-  hardware.enableAllFirmware = true;
-  hardware.enableRedistributableFirmware = true;
+  # hardware.sane.enable = true;
+  # hardware.sane.drivers.scanSnap.enable = true;
+  # hardware.enableAllFirmware = true;
+  # hardware.enableRedistributableFirmware = true;
 
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
 
   users.mutableUsers = false;
 
+  programs.zsh.enable = true;
   users.users.jevin = {
     shell = pkgs.zsh;
     isNormalUser = true;
@@ -196,31 +197,31 @@ services.pipewire = {
     allowBroken = true;
     allowUnfree = true;
 
-    permittedInsecurePackages = [
-      "electron-13.6.9"
-    ];
+    # permittedInsecurePackages = [
+    #   "electron-13.6.9"
+    # ];
   };
 
   programs.gnupg.agent.enable = true;
 
-  services.dictd = {
-    enable = true;
-    DBs = with pkgs.dictdDBs; [ wiktionary wordnet ];
-  };
+  # services.dictd = {
+  #   enable = true;
+  #   DBs = with pkgs.dictdDBs; [ wiktionary wordnet ];
+  # };
 
-  programs.zsh.enable = true;
+  # programs.zsh.enable = true;
 
-  environment.sessionVariables = {
-    _JAVA_AWT_WM_NONREPARENTING = "1"; # For Arduino & Wayland
-    WLR_DRM_NO_MODIFIERS        = "1"; # For external monitor issues in sway
-  };
+  # environment.sessionVariables = {
+  #   _JAVA_AWT_WM_NONREPARENTING = "1"; # For Arduino & Wayland
+  #   WLR_DRM_NO_MODIFIERS        = "1"; # For external monitor issues in sway
+  # };
 
   # virtualisation.libvirtd.enable = true;
   # virtualisation.virtualbox.host.enable = true;
   # users.extraGroups.vboxusers.members = [ "jevin" ];
   # virtualisation.virtualbox.host.enableExtensionPack = true;
 
-  virtualisation.docker.enable = true;
+  # virtualisation.docker.enable = true;
 
   # From: https://www.reddit.com/r/VFIO/comments/p4kmxr/tips_for_single_gpu_passthrough_on_nixos/
   # Also need to update: <ioapic driver="kvm"/>
@@ -234,46 +235,46 @@ services.pipewire = {
   # };
   # programs.dconf.enable = true;
   # environment.systemPackages = with pkgs; [ virt-manager ];
-  environment.systemPackages = with pkgs; [ cntr ];
+  # environment.systemPackages = with pkgs; [ cntr ];
 
-  boot.kernelModules = [ "v4l2loopback" ];
+  # boot.kernelModules = [ "v4l2loopback" ];
 
   # ----- USER STUFF ------
   #
   #
-  fonts = {
-    fonts = [
-              pkgs.dejavu_fonts
-              pkgs.freefont_ttf
-              pkgs.gyre-fonts
-              pkgs.unifont
-              pkgs.meslo-lgs-nf
-              pkgs.weather-icons
-              pkgs.font-awesome
-            ];
-            fontconfig.defaultFonts.emoji = [
-              "MesloLGS NF"
-              "Weather Icons"
-              "Font Awesome 5 Free"
-            ];
-            fontconfig.defaultFonts.serif = [
-              "DejaVu Serif"
-            ];
-            fontconfig.defaultFonts.monospace = [
-              "DejaVu Sans Mono"
-            ];
+  # fonts = {
+  #   fonts = [
+  #             pkgs.dejavu_fonts
+  #             pkgs.freefont_ttf
+  #             pkgs.gyre-fonts
+  #             pkgs.unifont
+  #             pkgs.meslo-lgs-nf
+  #             pkgs.weather-icons
+  #             pkgs.font-awesome
+  #           ];
+  #           fontconfig.defaultFonts.emoji = [
+  #             "MesloLGS NF"
+  #             "Weather Icons"
+  #             "Font Awesome 5 Free"
+  #           ];
+  #           fontconfig.defaultFonts.serif = [
+  #             "DejaVu Serif"
+  #           ];
+  #           fontconfig.defaultFonts.monospace = [
+  #             "DejaVu Sans Mono"
+  #           ];
 
-            # Instead of hidpi
-            # From: https://github.com/NixOS/nixpkgs/blob/832bdf74072489b8da042f9769a0a2fac9b579c7/nixos/modules/hardware/video/hidpi.nix
-            fontconfig.antialias = true;
-            fontconfig.subpixel = {
-              rgba = "none";
-              lcdfilter = "none";
-            };
-  };
+  #           # Instead of hidpi
+  #           # From: https://github.com/NixOS/nixpkgs/blob/832bdf74072489b8da042f9769a0a2fac9b579c7/nixos/modules/hardware/video/hidpi.nix
+  #           fontconfig.antialias = true;
+  #           fontconfig.subpixel = {
+  #             rgba = "none";
+  #             lcdfilter = "none";
+  #           };
+  # };
 
-  console.earlySetup = true;
-  boot.loader.systemd-boot.consoleMode = "1";
+  # console.earlySetup = true;
+  # boot.loader.systemd-boot.consoleMode = "1";
 
 
 
@@ -298,7 +299,7 @@ services.pipewire = {
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "22.05"; # Did you read the comment?
+  system.stateVersion = "23.05"; # Did you read the comment?
   boot.kernelPackages = pkgs.linuxPackages_6_1;
 
 }

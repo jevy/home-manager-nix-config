@@ -3,11 +3,11 @@
   imports = [
     ./home.nix
     ./vim/vim.nix
-    ./zsh.nix
+    # ./zsh.nix
     ./cli-linux.nix
     ./desktop-linux-personal.nix
-    ./mutt-quickjack.nix
-    ./vscode.nix
+    # ./mutt-quickjack.nix
+    # ./vscode.nix
     # ./amateur_radio.nix
     # ./theme-personal.nix
   ];

@@ -2,35 +2,35 @@
 {
 
   home.packages = with pkgs; [
-    libreoffice
+    # libreoffice
     neovide
-    neovim-remote
-    gimp
-    unstable.discord
+    # neovim-remote
+    # gimp
+    # unstable.discord
     unstable.spotify
     unstable.obsidian
     pavucontrol
-    slack
-    google-chrome
-    zathura
-    wally-cli
-    vlc
-    unstable.signal-desktop
+    # slack
+    # google-chrome
+    # zathura
+    # wally-cli
+    # vlc
+    # unstable.signal-desktop
     # qalculate-gtk
     # nasc # Broken?
     blueberry
-    calendar-cli
-    vdirsyncer
-    khal
+    # calendar-cli
+    # vdirsyncer
+    # khal
     evince
     unstable.xournalpp
     sxiv
-    playerctl
-    doctl
-    pdfarranger
-    zoom-us
-    cht-sh
-    cheat
+    # playerctl
+    # doctl
+    # pdfarranger
+    # zoom-us
+    # cht-sh
+    # cheat
     mako
     grim
     swappy
@@ -41,22 +41,22 @@
     wl-clipboard
     wf-recorder
     jq
-    gnome.simple-scan
-    xdragon # Ranger drag drop
-    xdg-utils
-    ocrmypdf
-    unstable.via
-    qmk
-    audacity
-    spotify-tui
+    # gnome.simple-scan
+    # xdragon # Ranger drag drop
+    # xdg-utils
+    # ocrmypdf
+    # unstable.via
+    # qmk
+    # audacity
+    # spotify-tui
     # gnome3.gnome-tweaks
-    nvd
-    pulseaudio
-    swayidle
-    swaylock
-    alsa-utils
-    unstable.lens
-    velero
+    # nvd
+    # pulseaudio
+    # swayidle
+    # swaylock
+    # alsa-utils
+    # unstable.lens
+    # velero
   ];
 
   services.wlsunset = {
@@ -87,17 +87,17 @@
     # "text/html"              = [ "firefox.desktop"];
   };
 
-  home.pointerCursor = {
-    package = pkgs.nordzy-cursor-theme;
-    gtk.enable = true;
-    name = "Nordzy-cursors";
-  };
+  # home.pointerCursor = {
+  #   package = pkgs.nordzy-cursor-theme;
+  #   gtk.enable = true;
+  #   name = "Nordzy-cursors";
+  # };
 
 
-  programs.obs-studio = {
-    enable = true;
-    plugins = [ pkgs.obs-studio-plugins.wlrobs ];
-  };
+  # programs.obs-studio = {
+  #   enable = true;
+  #   plugins = [ pkgs.obs-studio-plugins.wlrobs ];
+  # };
 
   programs.firefox = {
     enable = true;

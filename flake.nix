@@ -21,10 +21,6 @@
           inherit system;
           config.allowUnfree = true;
         };
-        pkgs-with-custom-pkgs = import nixpkgs {
-          inherit system;
-          # overlays = [ muttdown.overlay ];
-        };
       };
     in {
     nixosConfigurations = {
