@@ -2,35 +2,34 @@
 {
 
   home.packages = with pkgs; [
-    # libreoffice
+    libreoffice
     neovide
-    # neovim-remote
-    # gimp
-    # unstable.discord
+    neovim-remote
+    gimp
+    unstable.discord
     unstable.spotify
     unstable.obsidian
     pavucontrol
-    # slack
+    slack
     # google-chrome
-    # zathura
-    # wally-cli
-    # vlc
-    # unstable.signal-desktop
-    # qalculate-gtk
+    zathura
+    wally-cli
+    vlc
+    unstable.signal-desktop
     # nasc # Broken?
     blueberry
     # calendar-cli
-    # vdirsyncer
+    vdirsyncer
     # khal
     evince
     unstable.xournalpp
     sxiv
-    # playerctl
-    # doctl
-    # pdfarranger
-    # zoom-us
-    # cht-sh
-    # cheat
+    playerctl
+    doctl
+    pdfarranger
+    zoom-us
+    cht-sh
+    cheat
     mako
     grim
     swappy
@@ -41,22 +40,22 @@
     wl-clipboard
     wf-recorder
     jq
-    # gnome.simple-scan
-    # xdragon # Ranger drag drop
-    # xdg-utils
-    # ocrmypdf
-    # unstable.via
-    # qmk
-    # audacity
-    # spotify-tui
+    gnome.simple-scan
+    xdragon # Ranger drag drop
+    xdg-utils
+    ocrmypdf
+    unstable.via
+    qmk
+    audacity
+    spotify-tui
     # gnome3.gnome-tweaks
-    # nvd
-    # pulseaudio
-    # swayidle
-    # swaylock
-    # alsa-utils
-    # unstable.lens
-    # velero
+    nvd
+    pulseaudio
+    swayidle
+    swaylock
+    alsa-utils
+    unstable.lens
+    velero
   ];
 
   services.wlsunset = {
