@@ -92,4 +92,19 @@
                              yabai -m window --grid 4:4:1:1:2:2
     '';
   };
+
+  home.shellAliases = {
+    ls = "lsd";
+    l = "ls -l";
+    lt = "ls --tree";
+    la = "ls -a";
+
+    fdt = "f() fd $1 -t file -X ls -tr -l);f"; # Search files sort by date
+
+    geoip = "curl ifconfig.co/json";
+
+    rebuildhm = "cd ~/.config/nixpkgs && sudo nixos-rebuild switch --flake '.#x86_64-darwin'";
+
+    weather = "${pkgs.curl}/bin/curl https://v2.wttr.in/ottawa";
+  };
 }
