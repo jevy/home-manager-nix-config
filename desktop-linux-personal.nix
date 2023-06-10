@@ -32,12 +32,12 @@
     unstable.openscad
   ];
 
-  # wayland.windowManager.sway = {
-  #   config = {
-  #     startup = [
-  #       { command = "${pkgs.synology-drive-client}/bin/synology-drive"; }
-  #     ];
-  #   };
+  wayland.windowManager.sway = {
+    config = {
+      startup = [
+        { command = "${pkgs.synology-drive-client}/bin/synology-drive"; }
+      ];
+    };
 
-  # };
+  };
 }
