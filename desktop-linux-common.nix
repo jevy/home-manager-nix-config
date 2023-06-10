@@ -194,7 +194,7 @@
         "BOE 0x095F Unknown" =
           { pos = "3710 2880";
             resolution = "2256x1504";
-            scale = "1";
+            scale = "1.5";
           };
         "Unknown HP Z27 CN49020L9R" =
           { pos = "6010 1440";
