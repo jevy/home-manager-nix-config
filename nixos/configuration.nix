@@ -196,6 +196,7 @@ services.pipewire = {
   nixpkgs.config = {
     allowBroken = true;
     allowUnfree = true;
+    segger-jlink.acceptLicense = true; # For B-Parasite Proj
 
     # permittedInsecurePackages = [
     #   "electron-13.6.9"
@@ -203,11 +204,6 @@ services.pipewire = {
   };
 
   programs.gnupg.agent.enable = true;
-
-  services.dictd = {
-    enable = true;
-    DBs = with pkgs.dictdDBs; [ wiktionary wordnet ];
-  };
 
   # programs.zsh.enable = true;
 
