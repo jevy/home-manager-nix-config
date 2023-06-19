@@ -13,7 +13,7 @@
     # gcc
     # bundix
     # # python-qt
-    # kubernetes-helm
+    kubernetes-helm
     dropbox
     # arduino
     hugo
@@ -30,6 +30,7 @@
     jellyfin-media-player
     zotero
     unstable.openscad
+    nrfconnect
   ];
 
   wayland.windowManager.sway = {
