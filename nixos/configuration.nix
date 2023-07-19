@@ -158,6 +158,17 @@ services.pipewire = {
     };
   };
 
+  # For xournaljj fix
+  # https://github.com/NixOS/nixpkgs/issues/163107#issuecomment-1100569484
+  environment.systemPackages = [
+    pkgs.gnome.adwaita-icon-theme
+    pkgs.shared-mime-info
+  ];
+  environment.pathsToLink = [
+    "/share/icons"
+    "/share/mime"
+  ];
+
   services.dbus.enable = true;
 
   hardware.sane.enable = true;
