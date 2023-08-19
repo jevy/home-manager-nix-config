@@ -7,7 +7,7 @@
     nixos-hardware.url                  = "github:NixOS/nixos-hardware";
     nixpkgs-unstable.url                = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    stylix.url                          = "github:danth/stylix/master";
+    stylix.url                          = "github:danth/stylix/7bcf3ce6c9e9225e87d4e3b0c2e7d27a39954c02";
   };
 
   outputs = { self, home-manager, stylix, nixpkgs, nixpkgs-unstable, nixos-hardware, ... }@inputs:
