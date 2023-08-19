@@ -265,6 +265,7 @@
           "${modifier}+i" = "exec ${pkgs.blueberry}/bin/blueberry";
           "${modifier}+o" = "exec ${pkgs.rofi-bluetooth}/bin/rofi-bluetooth";
           "${modifier}+p" = "exec ${pkgs.swaylock}/bin/swaylock -f -c 000088";
+          "${modifier}+m" = "exec ${pkgs.warpd}/bin/warpd --hint";
 
           # Controls
           "XF86AudioMute"        = "exec ${pkgs.pamixer}/bin/pamixer -t";
