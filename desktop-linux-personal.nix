@@ -30,7 +30,9 @@
     jellyfin-media-player
     zotero
     unstable.openscad
-    nrfconnect
+    eww-wayland
+    qgis
+    ledfx
   ];
 
   wayland.windowManager.sway = {

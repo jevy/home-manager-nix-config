@@ -3,8 +3,8 @@
 
   home.packages = with pkgs; [
     libreoffice
-    neovide
-    neovim-remote
+    unstable.neovide
+    unstable.neovim-remote
     gimp
     unstable.discord
     unstable.spotify
@@ -58,6 +58,9 @@
     velero
     restic
     masterpdfeditor
+    gparted
+    warpd
+    keybase-gui
   ];
 
   services.wlsunset = {
@@ -103,6 +106,8 @@
   programs.firefox = {
     enable = true;
   };
+
+  services.keybase.enable = true;
 
   programs.chromium.enable = true;
   home.sessionVariables = {
