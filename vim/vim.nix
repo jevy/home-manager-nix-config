@@ -4,6 +4,7 @@
     enable = true;
     viAlias = true;
     vimAlias = true;
+    defaultEditor = true;
     coc = {
       enable = true;
       settings = {
