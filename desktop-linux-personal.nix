@@ -33,6 +33,7 @@
     eww-wayland
     qgis
     ledfx
+    cc2538-bsl
   ];
 
   wayland.windowManager.sway = {

@@ -32,6 +32,7 @@
     ncdu
     vagrant
     curl
+    tree
   ];
 
   programs.bat = {

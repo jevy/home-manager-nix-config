@@ -61,6 +61,8 @@
     gparted
     warpd
     keybase-gui
+    docker
+    docker-compose
   ];
 
   services.wlsunset = {
