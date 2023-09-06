@@ -69,6 +69,7 @@
   # networking.resolvconf.enable = false;
   # networking.search = [];
   # networking.nameservers = ["1.1.1.1"];
+  networking.nameservers = ["192.168.1.207"];
   networking.hostName = "framework"; # Define your hostname.
   networking.hostId = "6a7f48db";
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
