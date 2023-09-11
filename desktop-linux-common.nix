@@ -63,6 +63,8 @@
     keybase-gui
     docker
     docker-compose
+    chromedriver
+    lazydocker
   ];
 
   services.wlsunset = {
@@ -76,6 +78,7 @@
 
   programs.go.enable = true;
   programs.java.enable = true;
+  programs.direnv.enable = true;
 
   programs.rofi = {
     enable = true;
