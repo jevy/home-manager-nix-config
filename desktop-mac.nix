@@ -94,7 +94,7 @@
   };
 
   home.shellAliases = {
-    ls = "lsd";
+    ls = "eza";
     l = "ls -l";
     lt = "ls --tree";
     la = "ls -a";
