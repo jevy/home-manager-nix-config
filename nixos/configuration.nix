@@ -196,6 +196,8 @@ services.pipewire = {
     hashedPassword = "$6$RQ3xn2S3O1RFFqiA$e725RMH8eJgw4JJ4UnSjuzJ1Pw5lNNaFRW.9M2XCrcCJsAbWPg5qs5hzRZARiK9uastNZN9XnUGBs8yM6kdMZ0";
   };
 
+  nix.settings.trusted-users = [ "root" "jevin" ];
+
   # users.users.tyler = {
   #   shell = pkgs.zsh;
   #   isNormalUser = true;
