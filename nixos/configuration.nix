@@ -116,6 +116,7 @@
   # };
 
 
+  services.languagetool.enable = true; # For neovim
   # services.chrony.enable = true;
   services.timesyncd.enable = true;
   # services.syncthing = {
