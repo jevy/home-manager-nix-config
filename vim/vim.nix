@@ -5,24 +5,6 @@
     viAlias = true;
     vimAlias = true;
     defaultEditor = true;
-    coc = {
-      enable = true;
-      settings = {
-        languageserver = {
-            nix = {
-              command = "rnix-lsp";
-              filetypes = [ "nix" ];
-            };
-            ltex = {
-              command = "ltex-ls";
-              filetypes = [ "markdown" "text" ];
-              settings = {
-                language = "en-CA";
-              };
-            };
-        };
-      };
-    };
     plugins = with pkgs.vimPlugins; [
       vim-airline
       vim-surround
@@ -41,7 +23,6 @@
       fzf-vim
       vim-rooter
       vim-easy-align
-      coc-solargraph
       vim-dirdiff
       vim-fugitive
 
@@ -69,7 +50,6 @@
       plenary-nvim
       telescope-nvim
       telescope-fzy-native-nvim
-
     ]
     ++ [pkgs.unstable.vimPlugins.leap-nvim];
 
@@ -78,10 +58,8 @@
       rubyPackages.solargraph
       rnix-lsp
       ltex-ls
-
-      # rubocop
-      # tree-sitter
     ];
+
     extraConfig = builtins.concatStringsSep "\n" [
         (lib.strings.fileContents ./base.vim)
       ''
@@ -101,6 +79,10 @@
         }
 
         require('leap').add_default_mappings()
+
+        require'lspconfig'.ltex.setup{}
+        require'lspconfig'.rnix.setup{}
+        require'lspconfig'.solargraph.setup{}
         EOF
       ''
       ];
