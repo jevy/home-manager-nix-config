@@ -294,7 +294,9 @@
 
       input = {
         "*" = {
-          xkb_options = "ctrl:nocaps";
+          xkb_options = "ctrl:nocaps,grp:win_space_toggle";
+          xkb_layout = "us,us";
+          xkb_variant = ",colemak";
         };
         "1133:45088:MX_Vertical_Mouse" = {
             accel_profile = "flat";
