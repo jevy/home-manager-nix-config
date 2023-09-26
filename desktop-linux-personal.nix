@@ -34,6 +34,12 @@
     qgis
     ledfx
     cc2538-bsl
+
+    glxinfo
+    vulkan-tools
+
+    protonup-qt
+    steamtinkerlaunch
   ];
 
   wayland.windowManager.sway = {
