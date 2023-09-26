@@ -7,9 +7,14 @@
 {
   hardware.opengl = {
     enable = true;
-    # package = pkgs.unstable.mesa.drivers;
-    # package32 = pkgs.unstable.pkgsi686Linux.mesa.drivers;
+    extraPackages = with pkgs; [
+      vaapiIntel         # LIBVA_DRIVER_NAME=i965 (older but works better for Firefox/Chromium)
+      intel-media-driver
+    ];
   };
+
+  # https://nixos.wiki/wiki/Intel_Graphics
+  boot.kernelParams = ["i915.force_probe=4626"];
 
   # services.xserver.videoDrivers =  [
   #   "intel-media-driver"
@@ -74,7 +79,6 @@
   networking.hostId = "6a7f48db";
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
   # networking.enableIPv6 = false;
-  # boot.kernelParams = ["ipv6.disable=1"];
 
   # Set your time zone.
   time.timeZone = "America/Toronto";
