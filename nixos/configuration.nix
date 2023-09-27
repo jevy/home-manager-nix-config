@@ -88,13 +88,13 @@
 
   programs._1password = {
     enable = true;
-    package = pkgs.unstable._1password;
+    package = pkgs._1password;
   };
 
   programs._1password-gui = {
     enable = true;
     polkitPolicyOwners = ["jevin" ];
-    package = pkgs.unstable._1password-gui;
+    package = pkgs._1password-gui;
   };
 
   # services.xserver.enable = true;
