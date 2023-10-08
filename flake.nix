@@ -8,7 +8,7 @@
     nixpkgs-unstable.url                = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     stylix.url                          = "github:danth/stylix/7bcf3ce6c9e9225e87d4e3b0c2e7d27a39954c02";
-    hyprland.url                        = "github:hyprwm/Hyprland";
+    hyprland.url                        = "github:hyprwm/Hyprland/v0.30.0";
   };
 
   outputs = { self, home-manager, stylix, nixpkgs, nixpkgs-unstable, nixos-hardware, hyprland, ... }@inputs:
@@ -34,17 +34,22 @@
         ./printers.nix
         stylix.nixosModules.stylix ./theme-personal.nix
         nixos-hardware.nixosModules.framework-12th-gen-intel
-        home-manager.nixosModules.home-manager
         {
           home-manager = {
             useGlobalPkgs = true;
             useUserPackages = true;
             extraSpecialArgs = { inherit stylix; };
             users = {
-              jevin = import ./jevin-linux.nix;
+              jevin = {
+                imports = [
+                  ./jevin-linux.nix
+                  hyprland.homeManagerModules.default
+                ];
+              };
             };
           };
         }
+        home-manager.nixosModules.home-manager
       ];
 
     in

@@ -63,9 +63,6 @@
     };
   };
 
-  programs.hyprland.enable = true;
-  programs.hyprland.xwayland.hidpi = true;
-
   # https://github.com/NixOS/nixpkgs/pull/126777/files
   # Running into issues with Obisidan and syncthing. Not enough inotify available
   # boot.kernel.sysctl."fs.inotify.max_user_instances" = 2147483647;
