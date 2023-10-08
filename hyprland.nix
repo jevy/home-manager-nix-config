@@ -4,7 +4,7 @@
   wayland.windowManager.hyprland.extraConfig = ''
     $mod = SUPER
 
-    bind = $mod, F, exec, firefox
+    bind = $mod, u, exec, firefox
     bind = , Print, exec, grimblast copy area
 
     # workspaces
