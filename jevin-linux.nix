@@ -10,5 +10,6 @@
     ./vscode.nix
     # ./amateur_radio.nix
     ./theme-personal.nix
+    ./hyprland.nix
   ];
 }
