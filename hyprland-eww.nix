@@ -1,26 +1,122 @@
-{ config, pkgs, eww, ... }:
+{ config, pkgs, ... }:
 
 {
-  home.packages = with pkgs; [ eww ];
+  home.packages = with pkgs; [
+    unstable.eww-wayland
+    socat
+  ];
 
-  xdg.configFile."eww.yuck" = {
+  xdg.configFile."eww/eww.scss" = {
     text = ''
-      (deflisten workspaces :initial "[]" "bash ~/.config/eww/scripts/get-workspaces")
-      (deflisten current_workspace :initial "1" "bash ~/.config/eww/scripts/get-active-workspace")
-      (defwidget workspaces []
-        (eventbox :onscroll "bash ~/.config/eww/scripts/change-active-workspace {} ''${current_workspace}" :class "workspaces-widget"
-          (box :space-evenly true
-            (label :text "''${workspaces}''${current_workspace}" :visible false)
-            (for workspace in workspaces
-              (eventbox :onclick "hyprctl dispatch workspace ''${workspace.id}"
-                (box :class "workspace-entry ''${workspace.id == current_workspace ? "current" : ""} ''${workspace.windows > 0 ? "occupied" : "empty"}"
-                  (label :text "''${workspace.id}")
-                  )
+      * {
+        all: unset; //Unsets everything so you can style everything from scratch
+      }
+
+      //Global Styles
+      .bar {
+        background-color: #3a3a3a;
+        color: #b0b4bc;
+        padding: 10px;
+      }
+
+      // Styles on classes (see eww.yuck for more information)
+
+      .sidestuff slider {
+        all: unset;
+        color: #ffd5cd;
+      }
+
+      .metric scale trough highlight {
+        all: unset;
+        background-color: #D35D6E;
+        color: #000000;
+        border-radius: 10px;
+      }
+      .metric scale trough {
+        all: unset;
+        background-color: #4e4e4e;
+        border-radius: 50px;
+        min-height: 3px;
+        min-width: 50px;
+        margin-left: 10px;
+        margin-right: 20px;
+      }
+      .metric scale trough highlight {
+        all: unset;
+        background-color: #D35D6E;
+        color: #000000;
+        border-radius: 10px;
+      }
+      .metric scale trough {
+        all: unset;
+        background-color: #4e4e4e;
+        border-radius: 50px;
+        min-height: 3px;
+        min-width: 50px;
+        margin-left: 10px;
+        margin-right: 20px;
+      }
+      .label-ram {
+        font-size: large;
+      }
+      .workspaces button:hover {
+        color: #D35D6E;
+      }
+      '';
+  };
+  xdg.configFile."eww/eww.yuck" = {
+    text = ''
+
+    (deflisten workspaces :initial "[]" "bash ~/.config/eww/scripts/get-workspaces")
+    (deflisten current_workspace :initial "1" "bash ~/.config/eww/scripts/get-active-workspace")
+    (defwidget workspaces []
+      (eventbox :onscroll "bash ~/.config/eww/scripts/change-active-workspace {} ''${current_workspace}" :class "workspaces-widget"
+        (box :space-evenly true
+          (label :text "''${workspaces}''${current_workspace}" :visible false)
+          (for workspace in workspaces
+            (eventbox :onclick "hyprctl dispatch workspace ''${workspace.id}"
+              (box :class "workspace-entry ''${workspace.id == current_workspace ? "current" : ""} ''${workspace.windows > 0 ? "occupied" : "empty"}"
+                (label :text "''${workspace.id}")
                 )
               )
             )
           )
         )
+      )
+
+    (defpoll time :interval "1s"
+      "date '+%I:%M %p %e %B %Y'")
+
+    (defwidget sidestuff []
+    (box :class "sidestuff" :orientation "h" :space-evenly false :halign "end"
+      time))
+
+    (defwidget music []
+      (box :class "music"
+           :orientation "h"
+           :space-evenly false
+           :halign "center"
+        "Music placeholder"))
+
+    (defwidget bar []
+      (centerbox :orientation "h"
+        (workspaces)
+        (music)
+        (sidestuff)))
+
+    (defwindow topbar
+               :monitor 0
+               :geometry (geometry :x "0%"
+                                   :y "0%"
+                                   :width "90%"
+                                   :height "10px"
+                                   :anchor "top center")
+               :stacking "fg"
+               :windowtype "dock"
+               :exclusive true
+               :focusable false
+    (bar))
+
     '';
   };
   xdg.configFile."eww/scripts/change-active-workspace" = {
