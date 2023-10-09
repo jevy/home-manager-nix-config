@@ -9,11 +9,9 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     stylix.url                          = "github:danth/stylix/7bcf3ce6c9e9225e87d4e3b0c2e7d27a39954c02";
     hyprland.url                        = "github:hyprwm/Hyprland/v0.30.0";
-    eww.url                             = "github:elkowar/eww/a9a35c1804d72ef92e04ee71555bd9e5a08fa17e";
-    rust-overlay.url                    = "github:oxalica/rust-overlay";
   };
 
-  outputs = { self, home-manager, stylix, nixpkgs, nixpkgs-unstable, nixos-hardware, hyprland, eww, rust-overlay, ... }@inputs:
+  outputs = { self, home-manager, stylix, nixpkgs, nixpkgs-unstable, nixos-hardware, hyprland, ... }@inputs:
 
     let
       mkSystemConfiguration = system: modules: nixpkgs.lib.nixosSystem {
@@ -22,11 +20,15 @@
         modules = modules;
       };
 
+      unstableOverlay = self: super: {
+        unstable = import inputs.nixpkgs-unstable {
+          system = "x86_64-linux";
+          config.allowUnfree = true;
+        };
+      };
+
       linuxModules = [
-        ({ config, pkgs, ... }: {
-          nixpkgs.overlays = [ rust-overlay.overlays.default ];
-          environment.systemPackages = [ pkgs.rust-bin.nightly."2023-07-14".default ];
-        })
+        ({ config, pkgs, ... }: { nixpkgs.overlays = [ unstableOverlay ]; })
         ./nixos/configuration.nix
         ./nixos/hardware-configuration.nix
         ./printers.nix
@@ -36,10 +38,7 @@
           home-manager = {
             useGlobalPkgs = true;
             useUserPackages = true;
-            extraSpecialArgs = {
-              inherit stylix;
-              eww = inputs.eww.packages.x86_64-linux.eww;
-            };
+            extraSpecialArgs = { inherit stylix; };
             users = {
               jevin = {
                 imports = [

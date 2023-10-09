@@ -30,7 +30,6 @@
     jellyfin-media-player
     zotero
     unstable.openscad
-    eww-wayland
     qgis
     ledfx
     cc2538-bsl
