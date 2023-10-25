@@ -33,6 +33,7 @@
     vagrant
     curl
     tree
+    gh
   ];
 
   programs.bat = {
