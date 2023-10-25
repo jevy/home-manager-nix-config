@@ -23,7 +23,7 @@
     aliases = {
       st = "status";
     };
-    delta.enable = true;
+    difftastic.enable = true;
   };
 
   home.keyboard = {
