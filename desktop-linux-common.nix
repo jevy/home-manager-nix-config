@@ -181,6 +181,7 @@
     pomodoro = "termdown 25m -s -b && ${pkgs.libnotify}/bin/notify-send 'Pomodoro complete. Take a break!'";
     alsafix = "cd ~/.config/alsa && alsactl restore -f asound.state";
     s = "kitty +kitten ssh";
+    colordropper = "grim -g \"$(slurp -p)\" -t ppm - | convert - -format '%[pixel:p{0,0}]' txt:-";
   };
 
   # For Flakpak
