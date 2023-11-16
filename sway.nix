@@ -176,7 +176,7 @@
             pointer_accel = "-0.2";
         };
         "2362:628:PIXA3854:00_093A:0274_Touchpad" = {
-          tap = "enabled";
+          tap = "disable";
           tap_button_map = "lrm";
           dwt = "enabled";
         };
