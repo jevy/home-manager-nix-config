@@ -65,6 +65,7 @@
     docker-compose
     chromedriver
     lazydocker
+    bottles
   ];
 
   services.wlsunset = {
