@@ -217,11 +217,12 @@ services.pipewire = {
     allowUnfree = true;
     segger-jlink.acceptLicense = true; # For B-Parasite Proj
 
-    # permittedInsecurePackages = [
-    #   "electron-13.6.9"
-    # ];
+    permittedInsecurePackages = [
+      "electron-25.9.0"
+    ];
   };
 
+  services.gvfs.enable = true;
   programs.gnupg.agent.enable = true;
 
   # programs.zsh.enable = true;
@@ -236,7 +237,7 @@ services.pipewire = {
   # users.extraGroups.vboxusers.members = [ "jevin" ];
   # virtualisation.virtualbox.host.enableExtensionPack = true;
 
-  virtualisation.docker.enable = true;
+    virtualisation.docker.enable = true;
 
   # From: https://www.reddit.com/r/VFIO/comments/p4kmxr/tips_for_single_gpu_passthrough_on_nixos/
   # Also need to update: <ioapic driver="kvm"/>
@@ -258,7 +259,7 @@ services.pipewire = {
   #
   #
   fonts = {
-    fonts = [
+    packages = [
               pkgs.dejavu_fonts
               pkgs.freefont_ttf
               pkgs.gyre-fonts

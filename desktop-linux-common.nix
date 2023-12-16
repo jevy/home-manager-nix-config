@@ -61,11 +61,10 @@
     gparted
     warpd
     keybase-gui
-    docker
-    docker-compose
     chromedriver
-    lazydocker
     bottles
+    unstable.ollama
+    docker-compose
   ];
 
   services.wlsunset = {
@@ -97,11 +96,11 @@
     "text/html"              = [ "firefox.desktop"];
   };
 
-  home.pointerCursor = {
-    package = pkgs.nordzy-cursor-theme;
-    gtk.enable = true;
-    name = "Nordzy-cursors";
-  };
+  # home.pointerCursor = {
+  #   package = pkgs.nordzy-cursor-theme;
+  #   gtk.enable = true;
+  #   name = "Nordzy-cursors";
+  # };
 
 
   programs.obs-studio = {

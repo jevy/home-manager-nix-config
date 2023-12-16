@@ -2,7 +2,7 @@
   wayland.windowManager.sway = {
     enable = true;
     swaynag.enable = true;
-    systemdIntegration = true;
+    systemd.enable = true;
     wrapperFeatures = {
       gtk = true;
     };
