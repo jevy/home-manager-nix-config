@@ -54,6 +54,15 @@
       plenary-nvim
       telescope-nvim
       telescope-fzy-native-nvim
+      (pkgs.vimUtils.buildVimPlugin {
+        name = "vim-ai";
+        src = pkgs.fetchFromGitHub {
+          owner = "madox2";
+          repo = "vim-ai";
+          rev = "4692eec84b5aa9d95256bef515bd1d17471e5570";
+          sha256 = "YRN8aJX7TG1qX89JgfzE1oBhU7dncC3LJov7+kFbOg8=";  # Replace with the correct SHA256 hash
+        };
+      })
     ]
     ++ [pkgs.unstable.vimPlugins.leap-nvim];
 
