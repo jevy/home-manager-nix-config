@@ -4,7 +4,7 @@ source colors-gruvbox-shuber.muttrc
 
 set realname = "Jevin Maltais"
 set from = "jevin@quickjack.ca"
-set sendmail = "muttdown --sendmail-passthru"
+set sendmail = "muttdown --sendmail-passthru --force-markdown"
 set use_envelope_from = yes
 alias me jevin <jevin@quickjack.ca>
 set folder = "~/Maildir/quickjack/mail"

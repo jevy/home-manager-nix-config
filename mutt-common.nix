@@ -1,4 +1,4 @@
-{ config, lib, pkgs, modulesPath, ... }:
+{ config, lib, pkgs, muttdown, modulesPath, ... }:
 
 {
   home.packages = let
@@ -26,6 +26,7 @@
     poppler_utils # mutt-wizard
     python310Packages.goobook # mutt
     python-with-my-packages
+    muttdown.packages.${pkgs.system}.muttdown
   ];
 
   programs.notmuch = {
