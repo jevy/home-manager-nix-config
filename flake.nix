@@ -8,9 +8,10 @@
     nixpkgs-unstable.url                = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     stylix.url                          = "github:danth/stylix";
+    muttdown.url                        = "github:jevy/muttdown";
   };
 
-  outputs = { self, home-manager, stylix, nixpkgs, nixpkgs-unstable, nixos-hardware, ... }@inputs:
+  outputs = { self, home-manager, stylix, nixpkgs, nixpkgs-unstable, muttdown, nixos-hardware, ... }@inputs:
 
     let
       mkSystemConfiguration = system: modules: nixpkgs.lib.nixosSystem {
@@ -40,7 +41,9 @@
           home-manager = {
             useGlobalPkgs = true;
             useUserPackages = true;
-            extraSpecialArgs = { inherit stylix; };
+            extraSpecialArgs = {
+              inherit stylix muttdown;
+            };
             users = {
               jevin = {
                 imports = [
