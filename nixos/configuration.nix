@@ -7,6 +7,7 @@
 {
   hardware.opengl = {
     enable = true;
+    driSupport32Bit = true;
     extraPackages = with pkgs; [
       vaapiIntel         # LIBVA_DRIVER_NAME=i965 (older but works better for Firefox/Chromium)
       intel-media-driver
@@ -71,7 +72,7 @@
   # networking.resolvconf.enable = false;
   # networking.search = [];
   # networking.nameservers = ["1.1.1.1"];
-  networking.nameservers = ["192.168.1.207"];
+  # networking.nameservers = ["192.168.1.207"];
   networking.hostName = "framework"; # Define your hostname.
   networking.hostId = "6a7f48db";
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -146,7 +147,7 @@ services.pipewire = {
   # alsa.support32Bit = true;
   pulse.enable = true;
   # If you want to use JACK applications, uncomment this
-  #jack.enable = true;
+  jack.enable = true;
 };
 
   # TODO: Try enabling extra portals: https://nixos.wiki/wiki/Sway
@@ -237,7 +238,10 @@ services.pipewire = {
   # users.extraGroups.vboxusers.members = [ "jevin" ];
   # virtualisation.virtualbox.host.enableExtensionPack = true;
 
-    virtualisation.docker.enable = true;
+  virtualisation.docker = {
+    enable = true;
+    storageDriver = "zfs";
+  };
 
   # From: https://www.reddit.com/r/VFIO/comments/p4kmxr/tips_for_single_gpu_passthrough_on_nixos/
   # Also need to update: <ioapic driver="kvm"/>

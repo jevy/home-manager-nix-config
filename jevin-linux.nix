@@ -12,5 +12,6 @@
     ./theme-personal.nix
     # ./hyprland.nix
     ./sway.nix
+    ./music-making.nix
   ];
 }
