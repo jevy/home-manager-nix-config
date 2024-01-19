@@ -39,6 +39,7 @@
     protonup-qt
     steamtinkerlaunch
     bitwig-studio
+    terraform
   ];
 
   wayland.windowManager.sway = {

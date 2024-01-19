@@ -77,6 +77,11 @@ nmap <silent> gy <Plug>(coc-type-definition)
 nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
 
+" ChatGPT editing
+"
+xnoremap <leader>s :AIEdit fix grammar and spelling. Be sure to only reply with the result. Make it casual, without fluffy language. Use similar style to what is there now<CR>
+nnoremap <leader>s :AIEdit fix grammar and spelling. Be sure to only reply with the result. Make it casual, without fluffy language. Use similar style to what is there now<CR>
+
 augroup HiglightTODO
     autocmd!
     autocmd WinEnter,VimEnter * :silent! call matchadd('Todo', 'TODO', -1)

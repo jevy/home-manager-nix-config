@@ -3,8 +3,7 @@
 
   home.packages = with pkgs; [
     libreoffice
-    unstable.neovide
-    unstable.neovim-remote
+    neovide
     gimp
     unstable.discord
     unstable.spotify
@@ -105,7 +104,11 @@
 
   programs.obs-studio = {
     enable = true;
-    plugins = [ pkgs.obs-studio-plugins.wlrobs ];
+    plugins = [ 
+      pkgs.obs-studio-plugins.wlrobs 
+      pkgs.obs-studio-plugins.obs-pipewire-audio-capture
+      pkgs.obs-studio-plugins.obs-backgroundremoval
+    ];
   };
 
   programs.firefox = {
@@ -173,7 +176,7 @@
   };
 
   home.shellAliases = {
-    v = "${pkgs.unstable.neovide}/bin/neovide";
+    v = "${pkgs.neovide}/bin/neovide";
     screen-record = "${pkgs.wf-recorder}/bin/wf-recorder -g \"$(${pkgs.slurp}/bin/slurp)\" --file=$HOME/Screenshots/latest-recording.mp4";
     screen-record-with-audio = "${pkgs.wf-recorder}/bin/wf-recorder -a -g \"$(${pkgs.slurp}/bin/slurp)\" --file=$HOME/Screenshots/latest-recording.mp4";
     tailscale-us = "sudo tailscale up --accept-routes --exit-node \"us-tailscale\" --accept-dns";
