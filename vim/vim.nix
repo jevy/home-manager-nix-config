@@ -64,7 +64,7 @@
         };
       })
     ]
-    ++ [pkgs.unstable.vimPlugins.leap-nvim];
+    ++ [pkgs.vimPlugins.leap-nvim];
 
     extraPackages = with pkgs; [
       # Ruby LSP - https://blog.backtick.consulting/neovims-built-in-lsp-with-ruby-and-rails/

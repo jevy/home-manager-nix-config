@@ -18,7 +18,7 @@
 
     # For Wine in wayland, just make the screen scaling to 1
     # and display position to 0,0
-    unstable.wineWowPackages.unstableFull
+    wineWowPackages.unstableFull
     qjackctl
   ];
 

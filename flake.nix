@@ -2,16 +2,21 @@
   description = "Jevin's Home Manager configuration";
 
   inputs = {
-    home-manager.url                    = "github:nix-community/home-manager/release-23.11";
-    nixpkgs.url                         = "github:NixOS/nixpkgs/nixos-23.11";
+    home-manager = {
+      url                               = "github:nix-community/home-manager/master";
+      inputs.nixpkgs.follows            = "nixpkgs";
+    };
+    stable = {
+      url                               = "github:NixOS/nixpkgs/nixos-23.11";
+      inputs.nixpkgs.follows            = "stable";
+    };
     nixos-hardware.url                  = "github:NixOS/nixos-hardware";
-    nixpkgs-unstable.url                = "github:NixOS/nixpkgs/nixos-unstable";
-    home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    stylix.url                          = "github:danth/stylix";
+    nixpkgs.url                         = "github:NixOS/nixpkgs/nixos-unstable";
+    stylix.url                          = "github:danth/stylix/master";
     muttdown.url                        = "github:jevy/muttdown";
   };
 
-  outputs = { self, home-manager, stylix, nixpkgs, nixpkgs-unstable, muttdown, nixos-hardware, ... }@inputs:
+  outputs = { self, home-manager, stylix, nixpkgs, stable, muttdown, nixos-hardware, ... }@inputs:
 
     let
       mkSystemConfiguration = system: modules: nixpkgs.lib.nixosSystem {
@@ -20,8 +25,8 @@
         modules = modules;
       };
 
-      unstableOverlay = self: super: {
-        unstable = import inputs.nixpkgs-unstable {
+      stableOverlay = self: super: {
+        unstable = import inputs.stable {
           system = "x86_64-linux";
           config.allowUnfree = true;
           config.permittedInsecurePackages = [
@@ -31,7 +36,7 @@
       };
 
       linuxModules = [
-        ({ config, pkgs, ... }: { nixpkgs.overlays = [ unstableOverlay ]; })
+        ({ config, pkgs, ... }: { nixpkgs.overlays = [ stableOverlay ]; })
         ./nixos/configuration.nix
         ./nixos/hardware-configuration.nix
         ./printers.nix
