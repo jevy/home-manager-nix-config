@@ -2,18 +2,12 @@
   description = "Jevin's Home Manager configuration";
 
   inputs = {
-    home-manager = {
-      url                               = "github:nix-community/home-manager/master";
-      inputs.nixpkgs.follows            = "nixpkgs";
-    };
-    stable = {
-      url                               = "github:NixOS/nixpkgs/nixos-23.11";
-      inputs.nixpkgs.follows            = "stable";
-    };
-    nixos-hardware.url                  = "github:NixOS/nixos-hardware";
-    nixpkgs.url                         = "github:NixOS/nixpkgs/nixos-unstable";
-    stylix.url                          = "github:danth/stylix/master";
-    muttdown.url                        = "github:jevy/muttdown";
+    home-manager.url = "github:nix-community/home-manager/master";
+    nixos-hardware.url = "github:NixOS/nixos-hardware";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    stable.url = "github:NixOS/nixpkgs/nixos-23.11";
+    stylix.url = "github:danth/stylix/master";
+    muttdown.url = "github:jevy/muttdown";
   };
 
   outputs = { self, home-manager, stylix, nixpkgs, stable, muttdown, nixos-hardware, ... }@inputs:
