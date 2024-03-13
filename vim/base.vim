@@ -65,6 +65,7 @@ set shiftwidth=2
 set softtabstop=2
 set nowrap
 
+let g:indent_guides_enable_on_vim_startup = 1
 
 " Use `[g` and `]g` to navigate diagnostics
 " Use `:CocDiagnostics` to get all diagnostics of current buffer in location list

@@ -18,7 +18,7 @@
     ldns # drill
     unzip
     fzf # For ranger
-    unstable.yt-dlp
+    yt-dlp
     tmux
     termdown
     httpie
@@ -26,7 +26,7 @@
     pandoc
     texlive.combined.scheme-full
     zip
-    unstable.eza
+    eza
     fd
     feh
     ncdu

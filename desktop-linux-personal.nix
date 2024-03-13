@@ -22,14 +22,14 @@
     gcalcli
     # # etcher
 
-    unstable.prusa-slicer
+    prusa-slicer
     rpi-imager
     sunpaper
     newsflash
     qflipper
     jellyfin-media-player
     zotero
-    unstable.openscad
+    openscad
     ledfx
     cc2538-bsl
 

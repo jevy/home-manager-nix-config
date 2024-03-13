@@ -2,7 +2,7 @@
 
 {
   home.packages = with pkgs; [
-    unstable.eww-wayland
+    eww-wayland
     socat
   ];
 

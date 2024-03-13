@@ -27,7 +27,7 @@
   };
 
   services.udev.packages = with pkgs; [
-    unstable.via
+    via
     qmk-udev-rules
     fprintd
     qflipper
@@ -118,7 +118,6 @@
   # };
 
 
-  services.languagetool.enable = true; # For neovim
   # services.chrony.enable = true;
   services.timesyncd.enable = true;
   # services.syncthing = {
