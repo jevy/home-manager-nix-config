@@ -155,8 +155,6 @@
           "XF86AudioPrev"        = "exec ${pkgs.playerctl}/bin/playerctl previous";
           "Print"                = "exec ${pkgs.grim}/bin/grim -g \"$(${pkgs.slurp}/bin/slurp)\" - | ${pkgs.swappy}/bin/swappy -f -";
           "${modifier}+n"        = "exec ${pkgs.mako}/bin/makoctl dismiss";
-          "XF86Tools"            = "exec ${pkgs.spotify-tui}/bin/spt pb -v $(($(${pkgs.spotify-tui}/bin/spt pb -f %v)-20)) "; # F13 for macropad
-          "XF86Launch5"          = "exec ${pkgs.spotify-tui}/bin/spt pb -v $(($(${pkgs.spotify-tui}/bin/spt pb -f %v)+20)) "; # F14 for macropad
         };
 
       keycodebindings = {
