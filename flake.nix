@@ -8,9 +8,10 @@
     stable.url = "github:NixOS/nixpkgs/nixos-23.11";
     stylix.url = "github:danth/stylix/master";
     muttdown.url = "github:jevy/muttdown";
+    pythonEnv.url = "path:./pythonEnv.nix";
   };
 
-  outputs = { self, home-manager, stylix, nixpkgs, stable, muttdown, nixos-hardware, ... }@inputs:
+  outputs = { self, home-manager, stylix, nixpkgs, stable, muttdown, nixos-hardware, pythonEnv, ... }@inputs:
 
     let
       mkSystemConfiguration = system: modules: nixpkgs.lib.nixosSystem {
@@ -47,6 +48,7 @@
               jevin = {
                 imports = [
                   ./jevin-linux.nix
+                  inputs.pythonEnv
                 ];
               };
             };

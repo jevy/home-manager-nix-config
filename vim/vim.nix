@@ -1,5 +1,8 @@
 { config, pkgs, lib, ... }:
 {
+  home.packages = [
+    python-with-my-packages
+  ];
   programs.neovim = {
     enable = true;
     viAlias = true;
@@ -25,6 +28,7 @@
       vim-easy-align
       vim-dirdiff
       vim-fugitive
+      rnvimr
 
       # Tree Sitter stuff
       (nvim-treesitter.withPlugins (
