@@ -38,12 +38,6 @@
            ./zsh.nix
            ./cli-common.nix
            ./desktop-mac.nix
-	   {
-		   home = {
-		     username = "jevin";
-		     homeDirectory = "/Users/jevin";
-		   };
-	   }
          ];
 
       pythonEnv = import ./pythonEnv.nix { inherit pkgs; };

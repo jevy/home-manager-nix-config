@@ -14,7 +14,7 @@
   home.stateVersion = "23.05";
 
   # Let Home Manager install and manage itself.
-  # programs.home-manager.enable = true;
+  programs.home-manager.enable = true;
 
   programs.git = {
     enable = true;
@@ -30,6 +30,11 @@
     layout = "us";
     variant = "qwerty,colemak-dh";
     options = [ "ctrl:nocaps" "grp:alt_shift_toggle" ];
+  };
+
+  home = {
+    username = "jevin";
+    homeDirectory = "/Users/jevin";
   };
 
 }

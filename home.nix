@@ -31,5 +31,4 @@
     variant = "qwerty,colemak-dh";
     options = [ "ctrl:nocaps" "grp:alt_shift_toggle" ];
   };
-
 }
