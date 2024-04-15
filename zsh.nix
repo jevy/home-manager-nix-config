@@ -9,7 +9,6 @@
     enableCompletion = true;
     initExtra = ''
       source ${pkgs.zsh-vi-mode}/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh
-      source <(velero completion zsh)
     '';
     plugins = [
         {

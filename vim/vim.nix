@@ -63,8 +63,7 @@
           sha256 = "YRN8aJX7TG1qX89JgfzE1oBhU7dncC3LJov7+kFbOg8=";  # Replace with the correct SHA256 hash
         };
       })
-    ]
-    ++ [pkgs.unstable.vimPlugins.leap-nvim];
+    ];
 
     extraPackages = with pkgs; [
       # Ruby LSP - https://blog.backtick.consulting/neovims-built-in-lsp-with-ruby-and-rails/
