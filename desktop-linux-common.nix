@@ -1,27 +1,27 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 {
 
   home.packages = with pkgs; [
     libreoffice
     neovide
     gimp
-    unstable.discord
-    unstable.spotify
-    unstable.obsidian
+    discord
+    spotify
+    obsidian
     pavucontrol
     slack
     # google-chrome
     zathura
     wally-cli
     vlc
-    unstable.signal-desktop
+    signal-desktop
     # nasc # Broken?
     blueberry
     # calendar-cli
     vdirsyncer
     # khal
     evince
-    unstable.xournalpp
+    xournalpp
     sxiv
     playerctl
     doctl
@@ -43,17 +43,16 @@
     xdragon # Ranger drag drop
     xdg-utils
     ocrmypdf
-    unstable.via
+    via
     qmk
     audacity
-    spotify-tui
     # gnome3.gnome-tweaks
     nvd
     pulseaudio
     swayidle
     swaylock
     alsa-utils
-    unstable.lens
+    lens
     velero
     restic
     masterpdfeditor
@@ -62,7 +61,7 @@
     keybase-gui
     chromedriver
     bottles
-    unstable.ollama
+    ollama
     docker-compose
   ];
 
@@ -81,8 +80,8 @@
 
   programs.rofi = {
     enable = true;
-    package = pkgs.rofi-wayland.override { plugins = [ pkgs.rofi-emoji pkgs.rofi-calc pkgs.rofi-power-menu]; };
-    # plugins = [ pkgs.rofi-emoji pkgs.rofi-calc pkgs.rofi-power-menu ];
+    # package = pkgs.rofi-wayland.override { plugins = [ pkgs.rofi-emoji pkgs.rofi-calc pkgs.rofi-power-menu]; };
+    plugins = [ pkgs.rofi-emoji pkgs.rofi-calc pkgs.rofi-power-menu ];
   };
 
   xdg.enable = true;
