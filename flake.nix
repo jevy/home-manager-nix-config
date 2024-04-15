@@ -30,6 +30,20 @@
         };
       };
 
+      macModules = [
+           ./home-mac.nix
+           ./vim/vim.nix
+           ./zsh.nix
+           ./cli-common.nix
+           ./desktop-mac.nix
+	   {
+		   home = {
+		     username = "jevin";
+		     homeDirectory = "/Users/jevin";
+		   };
+	   }
+         ];
+
       linuxModules = [
         ({ config, pkgs, ... }: { nixpkgs.overlays = [ unstableOverlay ]; })
         ./nixos/configuration.nix
@@ -61,5 +75,13 @@
       nixosConfigurations = {
         x86_64-linux = mkSystemConfiguration "x86_64-linux" linuxModules;
       };
+      homeConfigurations = {
+        jevin = home-manager.lib.homeManagerConfiguration {
+          pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+          extraSpecialArgs = {inherit inputs;};
+          modules = macModules;
+        };
+      };
     };
+
 }

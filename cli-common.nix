@@ -18,7 +18,6 @@
     ldns # drill
     unzip
     fzf # For ranger
-    unstable.yt-dlp
     tmux
     termdown
     httpie
@@ -26,11 +25,9 @@
     pandoc
     texlive.combined.scheme-full
     zip
-    unstable.eza
     fd
     feh
     ncdu
-    vagrant
     curl
     tree
     gh
@@ -53,7 +50,6 @@
   };
 
   home.shellAliases = {
-    ls = "eza";
     l = "ls -l";
     lt = "ls --tree";
     la = "ls -a";
