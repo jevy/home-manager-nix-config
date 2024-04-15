@@ -12,8 +12,8 @@ in
   home.packages = with pkgs; [
     taskwarrior
     taskwarrior-tui
-    tasksh
-    taskopen
+    # tasksh
+    # taskopen
   ];
 
   home.shellAliases = {
@@ -26,14 +26,14 @@ in
   };
 
 
-  home.file = {
-    ".taskrc".source = taskwarrior/taskrc;
-    ".task/hooks/on-modify.relative-recur" = {
-      source = "${relative-recur}/on-modify.relative-recur";
-      executable = true;
-    };
-  };
+  # home.file = {
+  #   ".taskrc".source = taskwarrior/taskrc;
+  #   ".task/hooks/on-modify.relative-recur" = {
+  #     source = "${relative-recur}/on-modify.relative-recur";
+  #     executable = true;
+  #   };
+  # };
 
-  services.taskwarrior-sync.enable = true;
+  # services.taskwarrior-sync.enable = true;
 
 }

@@ -7,6 +7,8 @@
     nerd-font-patcher
     exa
     neovide
+    scrcpy
+    direnv
   ];
 
   home.file.yabai = {

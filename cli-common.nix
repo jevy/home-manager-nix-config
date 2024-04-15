@@ -33,6 +33,7 @@
     bat
     vagrant
     curl
+    tree
   ];
 
   home.sessionVariables = {

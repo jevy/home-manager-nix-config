@@ -15,11 +15,11 @@
 # Use the command 'task show' to see all defaults and overrides
 
 # Files
-data.location=/home/jevinhumi/.task
+data.location=/home/jevin/.task
 
-taskd.certificate=/home/jevinhumi/secrets/taskwarrior-intheam/private.certificate.pem
-taskd.key=/home/jevinhumi/secrets/taskwarrior-intheam/private.key.pem
-taskd.ca=/home/jevinhumi/secrets/taskwarrior-intheam/ca.cert.pem
+taskd.certificate=/home/jevin/secrets/taskwarrior-intheam/private.certificate.pem
+taskd.key=/home/jevin/secrets/taskwarrior-intheam/private.key.pem
+taskd.ca=/home/jevin/secrets/taskwarrior-intheam/ca.cert.pem
 taskd.server=inthe.am:53589
 taskd.credentials=inthe_am/jevin.maltais/b5e2703c-a82b-4c76-b3e4-6164da67f97c
 taskd.trust=strict
