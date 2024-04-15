@@ -16,8 +16,7 @@
     abook # mutt-wizard
     urlscan # mutt-wizard
     poppler_utils # mutt-wizard
-    python310Packages.goobook # mutt
-    python-with-my-packages
+    # python310Packages.goobook # mutt
     muttdown.packages.${pkgs.system}.muttdown
   ];
 

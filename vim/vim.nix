@@ -1,8 +1,5 @@
 { config, pkgs, lib, ... }:
 {
-  home.packages = [
-    python-with-my-packages
-  ];
   programs.neovim = {
     enable = true;
     viAlias = true;

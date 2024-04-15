@@ -8,12 +8,14 @@
     stable.url = "github:NixOS/nixpkgs/nixos-23.11";
     stylix.url = "github:danth/stylix/master";
     muttdown.url = "github:jevy/muttdown";
-    pythonEnv.url = "path:./pythonEnv.nix";
   };
 
-  outputs = { self, home-manager, stylix, nixpkgs, stable, muttdown, nixos-hardware, pythonEnv, ... }@inputs:
+  outputs = { self, home-manager, stylix, nixpkgs, stable, muttdown, nixos-hardware, ... }@inputs:
 
     let
+      system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.${system};
+
       mkSystemConfiguration = system: modules: nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = { inherit inputs; };
@@ -29,6 +31,8 @@
           ];
         };
       };
+
+      pythonEnv = import ./pythonEnv.nix { inherit pkgs; };
 
       linuxModules = [
         ({ config, pkgs, ... }: { nixpkgs.overlays = [ stableOverlay ]; })
@@ -48,8 +52,8 @@
               jevin = {
                 imports = [
                   ./jevin-linux.nix
-                  inputs.pythonEnv
                 ];
+                home.packages = [ pythonEnv ];
               };
             };
           };

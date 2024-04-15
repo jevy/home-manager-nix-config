@@ -23,7 +23,7 @@
       };
 
       modifier = "Mod4";
-      menu = "rofi -show run";
+      menu = "rofi -modes run -show run";
       workspaceAutoBackAndForth = true;
 
       startup =
@@ -137,7 +137,7 @@
 
           # Launch programs
           # TODO: Pull over working rofi config
-          "${modifier}+c" = "exec rofi -show calc";
+          "${modifier}+c" = "exec rofi -modes calc -show calc";
           "${modifier}+u" = "exec firefox";
           "${modifier}+t" = "exec kitty -- ${pkgs.ranger}/bin/ranger ~/Downloads";
           "${modifier}+i" = "exec ${pkgs.blueberry}/bin/blueberry";
