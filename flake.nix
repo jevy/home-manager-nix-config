@@ -2,26 +2,28 @@
   description = "Jevin's Home Manager configuration";
 
   inputs = {
-    home-manager.url                    = "github:nix-community/home-manager/release-23.11";
-    nixpkgs.url                         = "github:NixOS/nixpkgs/nixos-23.11";
-    nixos-hardware.url                  = "github:NixOS/nixos-hardware";
-    nixpkgs-unstable.url                = "github:NixOS/nixpkgs/nixos-unstable";
-    home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    stylix.url                          = "github:danth/stylix";
-    muttdown.url                        = "github:jevy/muttdown";
+    home-manager.url = "github:nix-community/home-manager/master";
+    nixos-hardware.url = "github:NixOS/nixos-hardware";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    stable.url = "github:NixOS/nixpkgs/nixos-23.11";
+    stylix.url = "github:danth/stylix/master";
+    muttdown.url = "github:jevy/muttdown";
   };
 
-  outputs = { self, home-manager, stylix, nixpkgs, nixpkgs-unstable, muttdown, nixos-hardware, ... }@inputs:
+  outputs = { self, home-manager, stylix, nixpkgs, stable, muttdown, nixos-hardware, ... }@inputs:
 
     let
+      system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.${system};
+
       mkSystemConfiguration = system: modules: nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = { inherit inputs; };
         modules = modules;
       };
 
-      unstableOverlay = self: super: {
-        unstable = import inputs.nixpkgs-unstable {
+      stableOverlay = self: super: {
+        unstable = import inputs.stable {
           system = "x86_64-linux";
           config.allowUnfree = true;
           config.permittedInsecurePackages = [
@@ -44,8 +46,10 @@
 	   }
          ];
 
+      pythonEnv = import ./pythonEnv.nix { inherit pkgs; };
+
       linuxModules = [
-        ({ config, pkgs, ... }: { nixpkgs.overlays = [ unstableOverlay ]; })
+        ({ config, pkgs, ... }: { nixpkgs.overlays = [ stableOverlay ]; })
         ./nixos/configuration.nix
         ./nixos/hardware-configuration.nix
         ./printers.nix
@@ -63,6 +67,7 @@
                 imports = [
                   ./jevin-linux.nix
                 ];
+                home.packages = [ pythonEnv ];
               };
             };
           };

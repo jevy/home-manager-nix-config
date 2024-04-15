@@ -25,6 +25,7 @@
       vim-easy-align
       vim-dirdiff
       vim-fugitive
+      rnvimr
 
       # Tree Sitter stuff
       (nvim-treesitter.withPlugins (
@@ -68,8 +69,8 @@
     extraPackages = with pkgs; [
       # Ruby LSP - https://blog.backtick.consulting/neovims-built-in-lsp-with-ruby-and-rails/
       rubyPackages.solargraph
-      rnix-lsp
       ltex-ls
+      terraform-ls
     ];
 
     extraConfig = builtins.concatStringsSep "\n" [
@@ -95,6 +96,13 @@
         require'lspconfig'.ltex.setup{}
         require'lspconfig'.rnix.setup{}
         require'lspconfig'.solargraph.setup{}
+        require'lspconfig'.terraformls.setup{}
+        vim.api.nvim_create_autocmd({"BufWritePre"}, {
+          pattern = {"*.tf", "*.tfvars"},
+          callback = function()
+            vim.lsp.buf.format()
+          end,
+        })
 
         -- Global mappings.
         -- See `:help vim.diagnostic.*` for documentation on any of the below functions

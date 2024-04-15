@@ -23,7 +23,7 @@
       };
 
       modifier = "Mod4";
-      menu = "rofi -show run";
+      menu = "rofi -modes run -show run";
       workspaceAutoBackAndForth = true;
 
       startup =
@@ -137,7 +137,7 @@
 
           # Launch programs
           # TODO: Pull over working rofi config
-          "${modifier}+c" = "exec rofi -show calc";
+          "${modifier}+c" = "exec rofi -modes calc -show calc";
           "${modifier}+u" = "exec firefox";
           "${modifier}+t" = "exec kitty -- ${pkgs.ranger}/bin/ranger ~/Downloads";
           "${modifier}+i" = "exec ${pkgs.blueberry}/bin/blueberry";
@@ -155,8 +155,6 @@
           "XF86AudioPrev"        = "exec ${pkgs.playerctl}/bin/playerctl previous";
           "Print"                = "exec ${pkgs.grim}/bin/grim -g \"$(${pkgs.slurp}/bin/slurp)\" - | ${pkgs.swappy}/bin/swappy -f -";
           "${modifier}+n"        = "exec ${pkgs.mako}/bin/makoctl dismiss";
-          "XF86Tools"            = "exec ${pkgs.spotify-tui}/bin/spt pb -v $(($(${pkgs.spotify-tui}/bin/spt pb -f %v)-20)) "; # F13 for macropad
-          "XF86Launch5"          = "exec ${pkgs.spotify-tui}/bin/spt pb -v $(($(${pkgs.spotify-tui}/bin/spt pb -f %v)+20)) "; # F14 for macropad
         };
 
       keycodebindings = {

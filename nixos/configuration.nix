@@ -27,7 +27,7 @@
   };
 
   services.udev.packages = with pkgs; [
-    unstable.via
+    via
     qmk-udev-rules
     fprintd
     qflipper
@@ -54,7 +54,11 @@
 
   # services.sshd.enable = true;
 
-  boot.loader.systemd-boot.enable = true;
+  boot.loader.systemd-boot = {
+    enable = true;
+    configurationLimit = 20;
+  };
+
   boot.loader.efi.canTouchEfiVariables = true;
   boot.supportedFilesystems = [ "zfs" ];
   boot.initrd.luks.devices = {
@@ -118,7 +122,6 @@
   # };
 
 
-  services.languagetool.enable = true; # For neovim
   # services.chrony.enable = true;
   services.timesyncd.enable = true;
   # services.syncthing = {
@@ -234,9 +237,9 @@ services.pipewire = {
   # };
 
   # virtualisation.libvirtd.enable = true;
-  # virtualisation.virtualbox.host.enable = true;
-  # users.extraGroups.vboxusers.members = [ "jevin" ];
-  # virtualisation.virtualbox.host.enableExtensionPack = true;
+  virtualisation.virtualbox.host.enable = true;
+  users.extraGroups.vboxusers.members = [ "jevin" ];
+  virtualisation.virtualbox.host.enableExtensionPack = true;
 
   virtualisation.docker = {
     enable = true;

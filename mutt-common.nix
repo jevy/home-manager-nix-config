@@ -1,15 +1,7 @@
 { config, lib, pkgs, muttdown, modulesPath, ... }:
 
 {
-  home.packages = let
-    my-python-packages = python-packages: with python-packages; [
-      wxPython_4_2
-      markdown
-      markdown-include
-    ];
-    python-with-my-packages = pkgs.python3.withPackages my-python-packages;
-  in
-  with pkgs; [
+  home.packages = with pkgs; [
     # mutt-wizard
     neomutt # mutt-wizard
     curl # mutt-wizard
@@ -24,8 +16,7 @@
     abook # mutt-wizard
     urlscan # mutt-wizard
     poppler_utils # mutt-wizard
-    python310Packages.goobook # mutt
-    python-with-my-packages
+    # python310Packages.goobook # mutt
     muttdown.packages.${pkgs.system}.muttdown
   ];
 
