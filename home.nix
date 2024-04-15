@@ -32,9 +32,4 @@
     options = [ "ctrl:nocaps" "grp:alt_shift_toggle" ];
   };
 
-   home = {
-     username = "jevin";
-     homeDirectory = "/Users/jevin";
-   };
-
 }
