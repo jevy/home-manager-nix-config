@@ -3,8 +3,8 @@
 
   inputs = {
     # Specify the source of Home Manager and Nixpkgs
-    home-manager.url                    = "github:nix-community/home-manager/release-22.11";
-    nixpkgs.url                         = "github:NixOS/nixpkgs/nixos-22.11";
+    home-manager.url                    = "github:nix-community/home-manager/release-23.05";
+    nixpkgs.url                         = "github:NixOS/nixpkgs/nixos-23.05";
     nixos-hardware.url                  = "github:NixOS/nixos-hardware";
     nixpkgs-unstable.url                = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
@@ -34,6 +34,7 @@
            ./vim/vim.nix
            ./zsh.nix
            ./cli-common.nix
+           ./taskwarrior-work.nix
            ./desktop-mac.nix
 	   {
 		   home = {

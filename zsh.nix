@@ -4,13 +4,19 @@
     zoxide
   ];
 
+  home.shellAliases = {
+    pomodoro = "termdown 25m -s -b && ${pkgs.libnotify}/bin/notify-send 'Pomodoro complete. Take a break!'";
+  };
+
   programs.zsh = {
     enable = true;
     enableCompletion = true;
     initExtra = ''
       source ${pkgs.zsh-vi-mode}/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh
-      path+=('$HOME/.local/bin')
       eval "$(dev _hook)"
+      ulimit -n 10240
+      eval "$(nodenv init -)"
+      path+=('$HOME/.local/bin')
     '';
     plugins = [
         {
@@ -56,11 +62,14 @@
         "ruby"
         "rails"
         "sudo"
-        "kubectl"
+        # "kubectl" # Conflicts with Kafka `kaf` tool
         "taskwarrior"
         "zoxide"
         "systemd"
         "yarn"
+        "direnv"
+        "aws"
+        "nvm"
       ];
     };
   };
