@@ -1,4 +1,10 @@
 { config, pkgs, libs, ... }:
+let
+  customRanger = pkgs.ranger.override {
+    neoVimSupport = true;
+    imagePreviewSupport = true;
+  };
+in
 {
   home.packages = with pkgs; [
     visidata
@@ -34,6 +40,7 @@
     curl
     tree
     gh
+    devenv
   ];
 
   programs.bat = {
