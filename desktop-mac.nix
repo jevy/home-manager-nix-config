@@ -4,6 +4,10 @@
     # spacebar
     # yabai
     # skhd
+    nerd-font-patcher
+    neovide
+    scrcpy
+    direnv
   ];
 
   home.file.yabai = {
@@ -68,17 +72,6 @@
       hyper - k : yabai -m window --warp north
       hyper - j : yabai -m window --warp south
 
-      hyper - 1 : yabai -m space --focus 1
-      hyper - 2 : yabai -m space --focus 2
-      hyper - 3 : yabai -m space --focus 3
-      hyper - 4 : yabai -m space --focus 4
-      hyper - 5 : yabai -m space --focus 5
-      hyper - 6 : yabai -m space --focus 6
-      hyper - 7 : yabai -m space --focus 7
-      hyper - 8 : yabai -m space --focus 8
-      hyper - 9 : yabai -m space --focus 9
-      hyper - 0 : yabai -m space --focus 0
-
       cmd + alt + ctrl - i : yabai -m display --focus 1 # Top monitor
       hyper - i            : yabai -m window --display 1; yabai -m display --focus 1
       cmd + alt + ctrl - o : yabai -m display --focus 2 # Side monitor
@@ -93,8 +86,68 @@
     '';
   };
 
+  home.file.hammerspoon = {
+    executable = false;
+    target = ".hammerspoon/init.lua";
+    text = ''
+      hs.hotkey.bind({}, "F19", function()
+        hs.spotify.volumeDown()
+      end)
+      hs.hotkey.bind({}, "F20", function()
+        hs.spotify.volumeUp()
+      end)
+
+      spaces = require("hs.spaces")
+
+      -- Enable me to change spaces and move windows to them 
+      local workspaces = {1, 2, 3, 4, 5, 6, 7, 8, 9}
+      for i, v in ipairs(workspaces) do
+              hs.hotkey.bind({"cmd", "alt", "ctrl"}, tostring(i), function()
+                spaces.gotoSpace(spaces.spacesForScreen(primaryScreen())[i])
+              end)
+
+              hs.hotkey.bind({"cmd", "alt", "ctrl", "shift"}, tostring(i), function()
+                spaces.moveWindowToSpace(hs.window.focusedWindow(), spaces.spacesForScreen(primaryScreen())[i])
+              end)
+      end
+
+      function primaryScreen()
+        return desktopWithMostSpaces()
+      end
+
+      function isDocked()
+          local set = spaces.allSpaces()
+          local count = 0
+          for key, value in pairs(set) do
+              count = count + 1
+              -- One or two because I have my portable monitor
+              -- Three is at home
+              if count > 2 then
+                  return true
+              end
+          end
+          return false
+      end
+
+      function desktopWithMostSpaces()
+        local spacesTable = spaces.allSpaces()
+        local maxCount = 0
+        local maxUuid = nil
+
+        for uuid, values in pairs(spacesTable) do
+          local count = #values
+          if count > maxCount then
+            maxCount = count
+            maxUuid = uuid
+          end
+        end
+
+        return maxUuid
+      end
+    '';
+  };
+
   home.shellAliases = {
-    ls = "eza";
     l = "ls -l";
     lt = "ls --tree";
     la = "ls -a";
