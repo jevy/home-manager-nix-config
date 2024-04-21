@@ -63,6 +63,8 @@
     bottles
     ollama
     docker-compose
+    diff-pdf
+    numbat
   ];
 
   services.wlsunset = {
