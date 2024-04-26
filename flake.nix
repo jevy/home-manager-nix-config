@@ -35,6 +35,7 @@
       macModules = [
            ./home-mac.nix
            ./vim/vim.nix
+           ./zsh-clio.nix
            ./zsh.nix
            ./cli-common.nix
            ./desktop-mac.nix
