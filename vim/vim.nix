@@ -24,7 +24,7 @@
       vim-easy-align
       vim-dirdiff
       vim-fugitive
-      rnvimr
+      # rnvimr
       leap-nvim
       vim-rails
       indent-blankline-nvim
@@ -42,14 +42,16 @@
         p.javascript
         p.typescript
         p.latex
+        p.c
+        p.vimdoc
       ]))
 
 
       # completion-treesitter
       nvim-treesitter-textobjects
       nvim-treesitter-context
-      vim-lsp
-      nvim-lspconfig
+      # vim-lsp
+      # nvim-lspconfig
 
       # Text completion
       # cmp-nvim-lsp
@@ -70,8 +72,9 @@
     ];
 
     extraPackages = with pkgs; [
-      ltex-ls
-      terraform-ls
+      tree-sitter
+      # ltex-ls
+      # terraform-ls
     ];
 
     extraConfig = builtins.concatStringsSep "\n" [
@@ -85,7 +88,7 @@
 
         require('leap').add_default_mappings()
 
-        require'treesitter-context'.setup{
+        require'treesitter-context'.setup {
           enable = true,
           max_lines = 0,
           min_window_height = 0,
@@ -98,10 +101,8 @@
           },
           indent = {
             enable = true,
-          }
-        }
-
-        require'nvim-treesitter.configs'.setup {
+          },
+          -- https://github.com/nvim-treesitter/nvim-treesitter-textobjects
           textobjects = {
             select = {
               enable = true,
@@ -131,23 +132,64 @@
 
                 ["ac"] = { query = "@class.outer", desc = "Select outer part of a class" },
                 ["ic"] = { query = "@class.inner", desc = "Select inner part of a class" },
-              },
+              }
             },
+            move = {
+              enable = true,
+              set_jumps = true, -- whether to set jumps in the jumplist
+              goto_next_start = {
+                ["]m"] = "@function.outer",
+                ["]]"] = { query = "@class.outer", desc = "Next class start" },
+                --
+                -- You can use regex matching (i.e. lua pattern) and/or pass a list in a "query" key to group multiple queires.
+                ["]o"] = "@loop.*",
+                -- ["]o"] = { query = { "@loop.inner", "@loop.outer" } }
+                --
+                -- You can pass a query group to use query from `queries/<lang>/<query_group>.scm file in your runtime path.
+                -- Below example nvim-treesitter's `locals.scm` and `folds.scm`. They also provide highlights.scm and indent.scm.
+                ["]s"] = { query = "@scope", query_group = "locals", desc = "Next scope" },
+                ["]z"] = { query = "@fold", query_group = "folds", desc = "Next fold" },
+              },
+              goto_next_end = {
+                ["]M"] = "@function.outer",
+                ["]["] = "@class.outer",
+              },
+              goto_previous_start = {
+                ["[m"] = "@function.outer",
+                ["[["] = "@class.outer",
+              },
+              goto_previous_end = {
+                ["[M"] = "@function.outer",
+                ["[]"] = "@class.outer",
+              },
+              -- Below will go to either the start or the end, whichever is closer.
+              -- Use if you want more granular movements
+              -- Make it even more gradual by adding multiple queries and regex.
+              goto_next = {
+                ["]d"] = "@conditional.outer",
+              },
+              goto_previous = {
+                ["[d"] = "@conditional.outer",
+              }
+            }
           },
         }
 
-        require("ibl").setup()
+        local ts_repeat_move = require "nvim-treesitter.textobjects.repeatable_move"
+        -- Repeat movement with ; and ,
+        -- ensure ; goes forward and , goes backward regardless of the last direction
+        vim.keymap.set({ "n", "x", "o" }, ";", ts_repeat_move.repeat_last_move_next)
+        vim.keymap.set({ "n", "x", "o" }, ",", ts_repeat_move.repeat_last_move_previous)
+        vim.keymap.set({ "n", "x", "o" }, "f", ts_repeat_move.builtin_f)
+        vim.keymap.set({ "n", "x", "o" }, "F", ts_repeat_move.builtin_F)
+        vim.keymap.set({ "n", "x", "o" }, "t", ts_repeat_move.builtin_t)
+        vim.keymap.set({ "n", "x", "o" }, "T", ts_repeat_move.builtin_T)
 
-        require'lspconfig'.ltex.setup{}
-        require'lspconfig'.rnix.setup{}
-        require'lspconfig'.terraformls.setup{}
-        require'lspconfig'.solargraph.setup{
-          settings = {
-            solargraph = {
-              diagnostics = true
-            }
-          }
-        }
+
+        vim.opt.foldmethod = "expr"
+        vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
+
+        require("ibl").setup()
 
         EOF
       ''
