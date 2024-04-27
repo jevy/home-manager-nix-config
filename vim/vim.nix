@@ -44,8 +44,8 @@
         p.latex
         p.c
         p.vimdoc
+        p.json
       ]))
-
 
       # completion-treesitter
       nvim-treesitter-textobjects
