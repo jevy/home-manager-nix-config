@@ -95,6 +95,8 @@
           line_numbers = true,
         }
 
+        vim.opt.foldlevel = 3
+
         require("nvim-treesitter.configs").setup {
           highlight = {
             enable = true,
