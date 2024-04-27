@@ -40,6 +40,7 @@
     steamtinkerlaunch
     bitwig-studio
     terraform
+    llm
   ];
 
   wayland.windowManager.sway = {
