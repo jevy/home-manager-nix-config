@@ -81,7 +81,26 @@
         (lib.strings.fileContents ./base.vim)
       ''
         lua << EOF
-        require("nvim-tree").setup()
+
+        -- Nvim-tree
+        vim.g.loaded_netrw = 1
+        vim.g.loaded_netrwPlugin = 1
+        vim.opt.termguicolors = true
+        require("nvim-tree").setup({
+          view = {
+            width = 60,
+          },
+          renderer = {
+            group_empty = true,
+          },
+          filters = {
+            dotfiles = true,
+          },
+            update_focused_file = {
+            enable = true,
+            update_cwd = true,
+          }
+        })
         vim.api.nvim_set_keymap('n', '<C-n>', ':NvimTreeToggle<CR>', { noremap = true, silent = true })
         vim.api.nvim_set_keymap('n', '<C-f>', ':Telescope find_files<CR>', { noremap = true, silent = true })
         vim.api.nvim_set_keymap('n', '<C-g>', ':Telescope live_grep<CR>', { noremap = true, silent = true })
