@@ -54,8 +54,9 @@
       nvim-lspconfig
 
       # Text completion
-      # cmp-nvim-lsp
-      # nvim-cmp
+      cmp-nvim-lsp
+      nvim-cmp
+      ultisnips
 
       plenary-nvim
       telescope-nvim
@@ -213,9 +214,38 @@
 
         require("ibl").setup()
 
+        local cmp = require('cmp')
+        cmp.setup({
+          snippet = {
+            -- REQUIRED - you must specify a snippet engine
+            expand = function(args)
+              vim.fn["UltiSnips#Anon"](args.body)
+            end,
+          },
+          window = {
+            completion = cmp.config.window.bordered(),
+            documentation = cmp.config.window.bordered(),
+          },
+          mapping = cmp.mapping.preset.insert({
+            ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+            ['<C-f>'] = cmp.mapping.scroll_docs(4),
+            ['<C-Space>'] = cmp.mapping.complete(),
+            ['<C-e>'] = cmp.mapping.abort(),
+            ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
+          }),
+          sources = cmp.config.sources({
+            { name = 'nvim_lsp' },
+            { name = 'ultisnips' },
+          }, {
+            { name = 'buffer' },
+          })
+        })
+
+        local capabilities = require('cmp_nvim_lsp').default_capabilities()
 
         -- LSP Stuff
         require('lspconfig').tsserver.setup{
+          capabilities = capabilities,
           init_options = {
             plugins = {
               {
