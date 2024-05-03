@@ -51,7 +51,7 @@
       nvim-treesitter-textobjects
       nvim-treesitter-context
       # vim-lsp
-      # nvim-lspconfig
+      nvim-lspconfig
 
       # Text completion
       # cmp-nvim-lsp
@@ -73,6 +73,7 @@
 
     extraPackages = with pkgs; [
       tree-sitter
+      nodePackages.typescript-language-server
       # ltex-ls
       # terraform-ls
     ];
@@ -212,6 +213,23 @@
 
         require("ibl").setup()
 
+
+        -- LSP Stuff
+        require('lspconfig').tsserver.setup{
+          init_options = {
+            plugins = {
+              {
+                location = "shouldbeautofound",
+                languages = {"javascript", "typescript", "typescriptreact"},
+              },
+            },
+          },
+          filetypes = {
+            "javascript",
+            "typescript",
+            "typescriptreact"
+          },
+        }
         EOF
       ''
     ];
