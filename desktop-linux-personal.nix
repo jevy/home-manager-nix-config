@@ -41,6 +41,9 @@
     bitwig-studio
     terraform
     llm
+    talosctl
+    fluxcd
+    kustomize
   ];
 
   wayland.windowManager.sway = {

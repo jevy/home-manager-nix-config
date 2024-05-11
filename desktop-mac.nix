@@ -8,6 +8,7 @@
     neovide
     scrcpy
     direnv
+    lazygit
   ];
 
   home.file.yabai = {
