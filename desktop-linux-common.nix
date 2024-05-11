@@ -65,6 +65,10 @@
     docker-compose
     diff-pdf
     numbat
+    datasette
+    sqlite-utils
+    lazygit
+    csvlens
   ];
 
   services.wlsunset = {
