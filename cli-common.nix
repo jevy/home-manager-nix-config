@@ -45,10 +45,6 @@ in {
 
   programs.bat = {
     enable = true;
-    config = {
-      theme = "gruvbox-dark";
-      style = "changes,header";
-    };
   };
 
   programs.tmux = {
@@ -57,10 +53,18 @@ in {
     customPaneNavigationAndResize = true;
     historyLimit = 10000;
     mouse = true;
+    prefix = "C-a";
     plugins = with pkgs.tmuxPlugins; [
       power-theme
       vim-tmux-navigator
     ];
+    extraConfig = ''
+      bind | split-window -h
+      bind - split-window -v
+      unbind '"'
+      unbind %
+      set-option -g display-time 0
+    '';
   };
 
   home.sessionVariables = {
