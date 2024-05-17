@@ -58,6 +58,9 @@
       nvim-cmp
       ultisnips
 
+      # Formatting
+      efmls-configs-nvim
+
       plenary-nvim
       telescope-nvim
       telescope-fzy-native-nvim
@@ -75,6 +78,12 @@
     extraPackages = with pkgs; [
       tree-sitter
       nodePackages.typescript-language-server
+      efm-langserver # Formatting and Linting
+      luajitPackages.luacheck # Lua Linting
+      stylua # Lua Formating
+      alejandra # Nix formating
+      nodePackages.eslint # Typescript
+      nodePackages.prettier # HTML
       # ltex-ls
       # terraform-ls
     ];
@@ -209,8 +218,7 @@
         vim.keymap.set({ "n", "x", "o" }, "T", ts_repeat_move.builtin_T)
 
 
-        vim.opt.foldmethod = "expr"
-        vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
+        vim.opt.foldmethod = "indent"
 
         require("ibl").setup()
 
@@ -259,6 +267,20 @@
             "typescript",
             "typescriptreact"
           },
+        }
+
+        -- Formatting
+        require "lspconfig".efm.setup {
+            init_options = {documentFormatting = true},
+            settings = {
+                rootMarkers = {".git/"},
+                languages = {
+                  lua = {
+                    require('efmls-configs.linters.luacheck'),
+                    require('efmls-configs.formatters.stylua'),
+                  }
+                }
+            }
         }
         EOF
       ''
