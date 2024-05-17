@@ -1,11 +1,14 @@
-{ config, pkgs, libs, ... }:
-let
+{
+  config,
+  pkgs,
+  libs,
+  ...
+}: let
   customRanger = pkgs.ranger.override {
     neoVimSupport = true;
     imagePreviewSupport = true;
   };
-in
-{
+in {
   home.packages = with pkgs; [
     visidata
     wget
@@ -25,7 +28,6 @@ in
     unzip
     fzf # For ranger
     yt-dlp
-    tmux
     termdown
     httpie
     kubectx
@@ -49,6 +51,18 @@ in
     };
   };
 
+  programs.tmux = {
+    enable = true;
+    keyMode = "vi";
+    customPaneNavigationAndResize = true;
+    historyLimit = 10000;
+    mouse = true;
+    plugins = with pkgs.tmuxPlugins; [
+      power-theme
+      vim-tmux-navigator
+    ];
+  };
+
   home.sessionVariables = {
     VAGRANT_DEFAULT_PROVIDER = "libvirt";
   };
@@ -70,5 +84,4 @@ in
 
     weather = "${pkgs.curl}/bin/curl https://v2.wttr.in/ottawa";
   };
-
 }
