@@ -1,5 +1,19 @@
-{ config, pkgs, lib, ... }:
 {
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
+  home.file.luacheckrc = {
+    target = ".luacheckrc";
+    executable = false;
+    text = ''
+      read_globals = {
+        "vim",
+      }
+    '';
+  };
+
   programs.neovim = {
     enable = true;
     viAlias = true;
@@ -61,6 +75,8 @@
       # Formatting
       efmls-configs-nvim
 
+      lspsaga-nvim # LSP Navigation
+
       plenary-nvim
       telescope-nvim
       telescope-fzy-native-nvim
@@ -70,7 +86,7 @@
           owner = "madox2";
           repo = "vim-ai";
           rev = "4692eec84b5aa9d95256bef515bd1d17471e5570";
-          sha256 = "YRN8aJX7TG1qX89JgfzE1oBhU7dncC3LJov7+kFbOg8=";  # Replace with the correct SHA256 hash
+          sha256 = "YRN8aJX7TG1qX89JgfzE1oBhU7dncC3LJov7+kFbOg8="; # Replace with the correct SHA256 hash
         };
       })
     ];
@@ -85,12 +101,13 @@
       nodePackages.eslint # Typescript
       nodePackages.prettier # HTML
       nil # Nix LSP
+      lua-language-server # lua lsp
       # ltex-ls
       # terraform-ls
     ];
 
     extraConfig = builtins.concatStringsSep "\n" [
-        (lib.strings.fileContents ./base.vim)
+      (lib.strings.fileContents ./base.vim)
       ''
         lua << EOF
         ${builtins.readFile ./neovim-setup.lua}
