@@ -65,14 +65,14 @@ set nowrap
 
 " Use `[g` and `]g` to navigate diagnostics
 " Use `:CocDiagnostics` to get all diagnostics of current buffer in location list
-nmap <silent> [g <Plug>(coc-diagnostic-prev)
-nmap <silent> ]g <Plug>(coc-diagnostic-next)
+" nmap <silent> [g <Plug>(coc-diagnostic-prev)
+" nmap <silent> ]g <Plug>(coc-diagnostic-next)
 
 " GoTo code navigation
-nmap <silent> gd <Plug>(coc-definition)
-nmap <silent> gy <Plug>(coc-type-definition)
-nmap <silent> gi <Plug>(coc-implementation)
-nmap <silent> gr <Plug>(coc-references)
+" nmap <silent> gd <Plug>(coc-definition)
+" nmap <silent> gy <Plug>(coc-type-definition)
+" nmap <silent> gi <Plug>(coc-implementation)
+" nmap <silent> gr <Plug>(coc-references)
 
 " ChatGPT editing
 "
@@ -95,6 +95,8 @@ augroup AutoAdjustResize
   autocmd!
   autocmd VimResized * execute "normal! \<C-w>="
 augroup end
+
+nnoremap gd :Gvdiffsplit<CR>
 
 " prabirshrestha/vim-lsp setup
 function! s:on_lsp_buffer_enabled() abort
