@@ -30,8 +30,6 @@ require("treesitter-context").setup({
 	line_numbers = true,
 })
 
-vim.opt.foldlevel = 3
-
 require("nvim-treesitter.configs").setup({
 	highlight = {
 		enable = true,
@@ -121,8 +119,6 @@ local ts_repeat_move = require("nvim-treesitter.textobjects.repeatable_move")
 -- vim.keymap.set({ "n", "x", "o" }, "F", ts_repeat_move.builtin_F)
 -- vim.keymap.set({ "n", "x", "o" }, "t", ts_repeat_move.builtin_t)
 -- vim.keymap.set({ "n", "x", "o" }, "T", ts_repeat_move.builtin_T)
-
-vim.opt.foldmethod = "indent"
 
 require("ibl").setup()
 
