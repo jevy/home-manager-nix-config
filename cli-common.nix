@@ -41,6 +41,10 @@ in {
     tree
     gh
     devenv
+    csvlens
+    superfile
+    lazygit
+    jq
   ];
 
   programs.bat = {
