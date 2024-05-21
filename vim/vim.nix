@@ -102,7 +102,7 @@
       nodePackages.eslint # Typescript
       nodePackages.prettier # HTML
       nil # Nix LSP
-      lua-language-server # lua lsp
+      # lua-language-server # lua lsp
       # ltex-ls
       # terraform-ls
     ];
