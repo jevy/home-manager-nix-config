@@ -1,6 +1,9 @@
-{ config, lib, pkgs, ... }:
 {
-
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   home.packages = with pkgs; [
     libreoffice
     neovide
@@ -38,7 +41,6 @@
     kooha
     wl-clipboard
     wf-recorder
-    jq
     gnome.simple-scan
     xdragon # Ranger drag drop
     xdg-utils
@@ -67,8 +69,6 @@
     numbat
     datasette
     sqlite-utils
-    lazygit
-    csvlens
   ];
 
   services.wlsunset = {
@@ -87,17 +87,16 @@
   programs.rofi = {
     enable = true;
     # package = pkgs.rofi-wayland.override { plugins = [ pkgs.rofi-emoji pkgs.rofi-calc pkgs.rofi-power-menu]; };
-    plugins = [ pkgs.rofi-emoji pkgs.rofi-calc pkgs.rofi-power-menu ];
+    plugins = [pkgs.rofi-emoji pkgs.rofi-calc pkgs.rofi-power-menu];
   };
 
   xdg.enable = true;
   xdg.mimeApps.enable = true;
-  xdg.mimeApps.defaultApplications =
-  {
-    "application/pdf" = [ "zathura.desktop"];
-    "x-scheme-handler/http"  = [ "firefox.desktop"];
-    "x-scheme-handler/https" = [ "firefox.desktop"];
-    "text/html"              = [ "firefox.desktop"];
+  xdg.mimeApps.defaultApplications = {
+    "application/pdf" = ["zathura.desktop"];
+    "x-scheme-handler/http" = ["firefox.desktop"];
+    "x-scheme-handler/https" = ["firefox.desktop"];
+    "text/html" = ["firefox.desktop"];
   };
 
   # home.pointerCursor = {
@@ -106,11 +105,10 @@
   #   name = "Nordzy-cursors";
   # };
 
-
   programs.obs-studio = {
     enable = true;
-    plugins = [ 
-      pkgs.obs-studio-plugins.wlrobs 
+    plugins = [
+      pkgs.obs-studio-plugins.wlrobs
       pkgs.obs-studio-plugins.obs-pipewire-audio-capture
       pkgs.obs-studio-plugins.obs-backgroundremoval
     ];
@@ -133,22 +131,21 @@
   #   };
   # };
 
-  home.sessionPath = [ "$HOME/bin" ];
+  home.sessionPath = ["$HOME/bin"];
   home.file = {
-    ".config/mako/config".source                                = mako/config;
-    ".config/waybar/config".source                              = waybar/config;
-    ".config/waybar/style.css".source                           = waybar/style.css;
-    ".config/polybar-scripts/player-mpris-simple.sh".source     = waybar/polybar/player-mpris-simple.sh;
+    ".config/mako/config".source = mako/config;
+    ".config/waybar/config".source = waybar/config;
+    ".config/waybar/style.css".source = waybar/style.css;
+    ".config/polybar-scripts/player-mpris-simple.sh".source = waybar/polybar/player-mpris-simple.sh;
     ".config/polybar-scripts/openweathermap-forecast.sh".source = waybar/polybar/openweathermap-forecast.sh;
-    ".config/backgrounds/".source                               = ./backgrounds;
-    ".config/zathura/zathurarc".text                            = "set selection-clipboard clipboard";
-    "bin/next-meeting.sh".executable                            = true;
-    "bin/next-meeting.sh".text                                  = ''
+    ".config/backgrounds/".source = ./backgrounds;
+    ".config/zathura/zathurarc".text = "set selection-clipboard clipboard";
+    "bin/next-meeting.sh".executable = true;
+    "bin/next-meeting.sh".text = ''
       #!/usr/bin/env bash
       gcalcli agenda --nocolor --nostarted `date +%H:%M` `date -d '+1 hour' +%H:%M` | sed 's/\x1B\[\([0-9]\{1,2\}\(;[0-9]\{1,2\}\)\?\)\?[mGK]//g' | sed '/No title/d' | sed 's/  */ /g' | sed '/^$/d' | head -1 | cut -f 4- -d ' ' | cut -c -30
-      '';
+    '';
   };
-
 
   xdg.configFile."swappy/config" = {
     text = ''
@@ -174,10 +171,9 @@
       };
 
       Install = {
-        WantedBy = [ "default.target" ];
+        WantedBy = ["default.target"];
       };
     };
-
   };
 
   home.shellAliases = {

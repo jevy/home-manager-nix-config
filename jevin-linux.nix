@@ -1,5 +1,9 @@
-{ config, pkgs, libs, ... }:
 {
+  config,
+  pkgs,
+  libs,
+  ...
+}: {
   imports = [
     ./home.nix
     ./vim/vim.nix
@@ -9,7 +13,7 @@
     ./mutt-quickjack.nix
     ./vscode.nix
     # ./amateur_radio.nix
-    ./theme-personal.nix
+    # ./theme-personal.nix
     # ./hyprland.nix
     ./sway.nix
     ./music-making.nix
