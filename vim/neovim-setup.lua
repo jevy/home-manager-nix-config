@@ -177,28 +177,28 @@ require("lspconfig").nil_ls.setup({
 
 -- Lua/Vim LSP
 
-require("lspconfig").lua_ls.setup({
-	settings = {
-		Lua = {
-			diagnostics = {
-				globals = { "vim" },
-			},
-		},
-	},
-})
+-- require("lspconfig").lua_ls.setup({
+-- 	settings = {
+-- 		Lua = {
+-- 			diagnostics = {
+-- 				globals = { "vim" },
+-- 			},
+-- 		},
+-- 	},
+-- })
 
-require("lspsaga").setup({
-	move_in_saga = {
-		prev = "<C-k>",
-		next = "<C-j>",
-	},
-	finder_action_keys = {
-		open = "<CR>",
-	},
-	definition_action_keys = {
-		edit = "<CR>",
-	},
-})
+-- require("lspsaga").setup({
+-- 	move_in_saga = {
+-- 		prev = "<C-k>",
+-- 		next = "<C-j>",
+-- 	},
+-- 	finder_action_keys = {
+-- 		open = "<CR>",
+-- 	},
+-- 	definition_action_keys = {
+-- 		edit = "<CR>",
+-- 	},
+-- })
 -- Formatting
 require("lspconfig").efm.setup({
 	init_options = {
