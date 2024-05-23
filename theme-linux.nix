@@ -1,18 +1,21 @@
-{ pkgs, config, stylix,  ... }:
+{
+  pkgs,
+  config,
+  stylix,
+  ...
+}: let
+  base16-schemes = pkgs.fetchFromGitHub {
+    owner = "tinted-theming";
+    repo = "base16-schemes";
+    rev = "cf6bc892a24af19e11383adedc6ce7901f133ea7";
+    sha256 = "sha256-U9pfie3qABp5sTr3M9ga/jX8C807FeiXlmEZnC4ZM58=";
+  };
+in {
+  stylix.base16Scheme = "${base16-schemes}/gruvbox-material-dark-soft.yaml";
 
-  let
-    base16-schemes = pkgs.fetchFromGitHub {
-      owner = "tinted-theming";
-      repo = "base16-schemes";
-      rev = "cf6bc892a24af19e11383adedc6ce7901f133ea7";
-      sha256 = "sha256-U9pfie3qABp5sTr3M9ga/jX8C807FeiXlmEZnC4ZM58=";
-    };
-  in {
-    stylix.base16Scheme = "${base16-schemes}/gruvbox-material-dark-soft.yaml";
-
-    stylix.image = ./backgrounds/j5vziuan8tra1.jpg;
-    stylix.polarity = "dark";
-    stylix.targets.gtk.enable = false;
+  stylix.image = ./backgrounds/j5vziuan8tra1.jpg;
+  stylix.polarity = "dark";
+  stylix.targets.gtk.enable = false;
 
   # wayland.windowManager.sway.config =
   # {
@@ -21,5 +24,4 @@
   #     "Unknown 0x5A2D 0x00000000".bg = "~/.config/backgrounds/rocket.png fit";
   #   };
   # };
-
-  }
+}
