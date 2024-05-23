@@ -44,6 +44,7 @@
       indent-blankline-nvim
       rainbow-delimiters-nvim
       vim-cool # Turn off highlighting after a search
+      vim-tmux-navigator
 
       (pkgs.vimPlugins.nvim-treesitter.withPlugins (p: [
         p.ruby

@@ -53,13 +53,14 @@ in {
 
   programs.tmux = {
     enable = true;
+    sensibleOnTop = false;
     keyMode = "vi";
     customPaneNavigationAndResize = true;
     historyLimit = 10000;
     mouse = true;
-    prefix = "C-a";
+    shortcut = "a";
+    terminal = "screen-256color";
     plugins = with pkgs.tmuxPlugins; [
-      power-theme
       vim-tmux-navigator
     ];
     extraConfig = ''
