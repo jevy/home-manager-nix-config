@@ -1,15 +1,16 @@
 # Edit this configuration file to define what should be installed on
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
-
-{ config, pkgs, ... }:
-
 {
+  config,
+  pkgs,
+  ...
+}: {
   hardware.opengl = {
     enable = true;
     driSupport32Bit = true;
     extraPackages = with pkgs; [
-      vaapiIntel         # LIBVA_DRIVER_NAME=i965 (older but works better for Firefox/Chromium)
+      vaapiIntel # LIBVA_DRIVER_NAME=i965 (older but works better for Firefox/Chromium)
       intel-media-driver
     ];
   };
@@ -45,12 +46,12 @@
     extraOptions = ''
       experimental-features = nix-command flakes
     '';
-   };
+  };
 
-   services.tailscale = {
-     enable = true;
-     useRoutingFeatures = "client";
-   };
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "client";
+  };
 
   # services.sshd.enable = true;
 
@@ -60,7 +61,7 @@
   };
 
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.supportedFilesystems = [ "zfs" ];
+  boot.supportedFilesystems = ["zfs"];
   boot.initrd.luks.devices = {
     root = {
       device = "/dev/nvme0n1p1";
@@ -79,6 +80,9 @@
   # networking.nameservers = ["192.168.1.207"];
   networking.hostName = "framework"; # Define your hostname.
   networking.hostId = "6a7f48db";
+  networking.hosts = {
+    "127.0.0.1" = ["db"];
+  };
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
   # networking.enableIPv6 = false;
 
@@ -95,7 +99,7 @@
 
   programs._1password-gui = {
     enable = true;
-    polkitPolicyOwners = ["jevin" ];
+    polkitPolicyOwners = ["jevin"];
     package = pkgs._1password-gui;
   };
 
@@ -121,7 +125,6 @@
   #   gnome.enable = true;
   # };
 
-
   # services.chrony.enable = true;
   services.timesyncd.enable = true;
   # services.syncthing = {
@@ -143,15 +146,15 @@
     };
   };
 
-security.rtkit.enable = true;
-services.pipewire = {
-  enable = true;
-  # alsa.enable = true;
-  # alsa.support32Bit = true;
-  pulse.enable = true;
-  # If you want to use JACK applications, uncomment this
-  jack.enable = true;
-};
+  security.rtkit.enable = true;
+  services.pipewire = {
+    enable = true;
+    # alsa.enable = true;
+    # alsa.support32Bit = true;
+    pulse.enable = true;
+    # If you want to use JACK applications, uncomment this
+    jack.enable = true;
+  };
 
   # TODO: Try enabling extra portals: https://nixos.wiki/wiki/Sway
   # For Chrome sharing and stuff
@@ -195,13 +198,13 @@ services.pipewire = {
   users.users.jevin = {
     shell = pkgs.zsh;
     isNormalUser = true;
-    extraGroups = [ "qemu-libvirtd" "libvirtd" "plugdev" "wheel" "networkmanager" "docker" "dialout" "audio" "video" "adbusers"]; # Dialout if for usb/serial access for arduino
+    extraGroups = ["qemu-libvirtd" "libvirtd" "plugdev" "wheel" "networkmanager" "docker" "dialout" "audio" "video" "adbusers"]; # Dialout if for usb/serial access for arduino
 
     # `nix-shell -p mkpasswd --run 'mkpasswd -m sha-512'`
     hashedPassword = "$6$RQ3xn2S3O1RFFqiA$e725RMH8eJgw4JJ4UnSjuzJ1Pw5lNNaFRW.9M2XCrcCJsAbWPg5qs5hzRZARiK9uastNZN9XnUGBs8yM6kdMZ0";
   };
 
-  nix.settings.trusted-users = [ "root" "jevin" ];
+  nix.settings.trusted-users = ["root" "jevin"];
 
   # users.users.tyler = {
   #   shell = pkgs.zsh;
@@ -237,9 +240,9 @@ services.pipewire = {
   # };
 
   # virtualisation.libvirtd.enable = true;
-  virtualisation.virtualbox.host.enable = true;
-  users.extraGroups.vboxusers.members = [ "jevin" ];
-  virtualisation.virtualbox.host.enableExtensionPack = true;
+  # virtualisation.virtualbox.host.enable = true;
+  # users.extraGroups.vboxusers.members = ["jevin"];
+  # virtualisation.virtualbox.host.enableExtensionPack = true;
 
   virtualisation.docker = {
     enable = true;
@@ -267,39 +270,37 @@ services.pipewire = {
   #
   fonts = {
     packages = [
-              pkgs.dejavu_fonts
-              pkgs.freefont_ttf
-              pkgs.gyre-fonts
-              pkgs.unifont
-              pkgs.meslo-lgs-nf
-              pkgs.weather-icons
-              pkgs.font-awesome
-            ];
-            fontconfig.defaultFonts.emoji = [
-              "MesloLGS NF"
-              "Weather Icons"
-              "Font Awesome 5 Free"
-            ];
-            fontconfig.defaultFonts.serif = [
-              "DejaVu Serif"
-            ];
-            fontconfig.defaultFonts.monospace = [
-              "DejaVu Sans Mono"
-            ];
+      pkgs.dejavu_fonts
+      pkgs.freefont_ttf
+      pkgs.gyre-fonts
+      pkgs.unifont
+      pkgs.meslo-lgs-nf
+      pkgs.weather-icons
+      pkgs.font-awesome
+    ];
+    fontconfig.defaultFonts.emoji = [
+      "MesloLGS NF"
+      "Weather Icons"
+      "Font Awesome 5 Free"
+    ];
+    fontconfig.defaultFonts.serif = [
+      "DejaVu Serif"
+    ];
+    fontconfig.defaultFonts.monospace = [
+      "DejaVu Sans Mono"
+    ];
 
-            # Instead of hidpi
-            # From: https://github.com/NixOS/nixpkgs/blob/832bdf74072489b8da042f9769a0a2fac9b579c7/nixos/modules/hardware/video/hidpi.nix
-            fontconfig.antialias = true;
-            fontconfig.subpixel = {
-              rgba = "none";
-              lcdfilter = "none";
-            };
+    # Instead of hidpi
+    # From: https://github.com/NixOS/nixpkgs/blob/832bdf74072489b8da042f9769a0a2fac9b579c7/nixos/modules/hardware/video/hidpi.nix
+    fontconfig.antialias = true;
+    fontconfig.subpixel = {
+      rgba = "none";
+      lcdfilter = "none";
+    };
   };
 
   # console.earlySetup = true;
   # boot.loader.systemd-boot.consoleMode = "1";
-
-
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
@@ -324,6 +325,4 @@ services.pipewire = {
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "23.05"; # Did you read the comment?
   boot.kernelPackages = pkgs.linuxPackages_6_1;
-
 }
-
