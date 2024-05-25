@@ -1,51 +1,61 @@
-{ config, pkgs, libs, ... }:
 {
-  home.packages = with pkgs; [
-    zoxide
-  ];
+  config,
+  pkgs,
+  libs,
+  ...
+}: {
+  programs.fzf = {
+    enable = true;
+    enableZshIntegration = true;
+  };
+
+  programs.zoxide = {
+    enable = true;
+    enableZshIntegration = true;
+  };
+
+  programs.eza = {
+    enable = true;
+    enableZshIntegration = true;
+    git = true;
+    icons = true;
+  };
 
   programs.zsh = {
     enable = true;
     enableCompletion = true;
-    initExtra = ''
-      source ${pkgs.zsh-vi-mode}/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh
-    '';
+    autosuggestion.enable = true;
     plugins = [
-        {
-          name = "zsh-nix-shell";
-          file = "nix-shell.plugin.zsh";
-          src = pkgs.fetchFromGitHub {
-            owner = "chisui";
-            repo = "zsh-nix-shell";
-            rev = "v0.5.0";
-            sha256 = "0za4aiwwrlawnia4f29msk822rj9bgcygw6a8a6iikiwzjjz0g91";
-          };
-        }
-        {
-          name = "fzf-tab";
-          file = "fzf-tab.plugin.zsh";
-          src = pkgs.fetchFromGitHub {
-            owner = "Aloxaf";
-            repo = "fzf-tab";
-            rev = "938eef72e93ddb0609205a663bf0783f4e1b5fae";
-            sha256 = "xP0IoCeyZyYU+iKUkIoIAMn75r6R3TJYhAKoQgC1dWg=";
-          };
-        }
-        {
-          name = "powerlevel10k";
-          file = "powerlevel10k.zsh-theme";
-          src = pkgs.fetchFromGitHub {
-            owner = "romkatv";
-            repo = "powerlevel10k";
-            rev = "v1.16.1";
-            sha256 = "DLiKH12oqaaVChRqY0Q5oxVjziZdW/PfnRW1fCSCbjo=";
-          };
-        }
-        {
-          name = "powerlevel10k-config";
-          file = "p10k.zsh";
-          src = pkgs.lib.cleanSource ./p10k;
-        }
+      {
+        name = "zsh-nix-shell";
+        file = "nix-shell.plugin.zsh";
+        src = pkgs.fetchFromGitHub {
+          owner = "chisui";
+          repo = "zsh-nix-shell";
+          rev = "v0.8.0";
+          sha256 = "1lzrn0n4fxfcgg65v0qhnj7wnybybqzs4adz7xsrkgmcsr0ii8b7";
+        };
+      }
+      {
+        name = "vi-mode";
+        src = pkgs.zsh-vi-mode;
+        file = "share/zsh-vi-mode/zsh-vi-mode.plugin.zsh";
+      }
+      {
+        name = "powerlevel10k";
+        file = "powerlevel10k.zsh-theme";
+        src = pkgs.fetchFromGitHub {
+          owner = "romkatv";
+          repo = "powerlevel10k";
+          rev = "v1.20.0";
+          sha256 = "ES5vJXHjAKw/VHjWs8Au/3R+/aotSbY7PWnWAMzCR8E=";
+        };
+      }
+      {
+        name = "powerlevel10k-config";
+        file = "p10k.zsh";
+        src = pkgs.lib.cleanSource ./p10k;
+      }
     ];
     oh-my-zsh = {
       enable = true;
@@ -56,9 +66,12 @@
         "sudo"
         "kubectl"
         "taskwarrior"
-        "zoxide"
         "systemd"
         "aws"
+        "fluxcd"
+        "helm"
+        "man"
+        "tmux"
       ];
     };
   };

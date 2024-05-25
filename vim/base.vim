@@ -98,6 +98,8 @@ augroup end
 
 nnoremap gd :Gvdiffsplit<CR>
 
+set splitbelow
+
 " prabirshrestha/vim-lsp setup
 function! s:on_lsp_buffer_enabled() abort
     setlocal omnifunc=lsp#complete
