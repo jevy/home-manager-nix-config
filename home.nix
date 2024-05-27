@@ -1,6 +1,8 @@
-{ config, pkgs, ... }:
-
 {
+  config,
+  pkgs,
+  ...
+}: {
   # nixpkgs.config.allowUnfreePredicate = (pkg: true);
 
   # This value determines the Home Manager release that your
@@ -23,13 +25,15 @@
     aliases = {
       st = "status";
     };
+    extraConfig = {
+      push.autoSetupRemote = true;
+    };
     difftastic.enable = true;
   };
 
   home.keyboard = {
     layout = "us";
     variant = "qwerty,colemak-dh";
-    options = [ "ctrl:nocaps" "grp:alt_shift_toggle" ];
+    options = ["ctrl:nocaps" "grp:alt_shift_toggle"];
   };
-
 }
