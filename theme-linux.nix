@@ -15,7 +15,12 @@ in {
 
   stylix.image = ./backgrounds/j5vziuan8tra1.jpg;
   stylix.polarity = "dark";
-  stylix.targets.gtk.enable = false;
+  home-manager.sharedModules = [
+    {
+      stylix.targets.gtk.enable = false;
+      stylix.targets.firefox.enable = false;
+    }
+  ];
 
   # wayland.windowManager.sway.config =
   # {
