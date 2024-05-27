@@ -175,17 +175,22 @@ require("lspconfig").nil_ls.setup({
 	capabilities = capabilities,
 })
 
+-- Ruby LSP
+require("lspconfig").solargraph.setup({
+	capabilities = capabilities,
+})
+
 -- Lua/Vim LSP
 
--- require("lspconfig").lua_ls.setup({
--- 	settings = {
--- 		Lua = {
--- 			diagnostics = {
--- 				globals = { "vim" },
--- 			},
--- 		},
--- 	},
--- })
+require("lspconfig").lua_ls.setup({
+	settings = {
+		Lua = {
+			diagnostics = {
+				globals = { "vim" },
+			},
+		},
+	},
+})
 
 -- require("lspsaga").setup({
 -- 	move_in_saga = {
