@@ -63,7 +63,6 @@
         "git"
         "ruby"
         "rails"
-        "sudo"
         "kubectl"
         "taskwarrior"
         "systemd"
