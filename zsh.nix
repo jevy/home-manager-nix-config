@@ -6,7 +6,7 @@
 }: {
   programs.fzf = {
     enable = true;
-    enableZshIntegration = true;
+    # enableZshIntegration = true;
   };
 
   programs.zoxide = {
@@ -24,7 +24,7 @@
   programs.zsh = {
     enable = true;
     enableCompletion = true;
-    autosuggestion.enable = true;
+    # autosuggestion.enable = true;
     plugins = [
       {
         name = "zsh-nix-shell";
