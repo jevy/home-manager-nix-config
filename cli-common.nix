@@ -92,5 +92,9 @@ in {
     rebuildhm = "cd ~/.config/nixpkgs && sudo nixos-rebuild switch --flake '.#x86_64-linux'";
 
     weather = "${pkgs.curl}/bin/curl https://v2.wttr.in/ottawa";
+
+    lg = "lazygit";
+
+    lhead = "ls --sort created -r | head";
   };
 }
