@@ -229,7 +229,12 @@
     ];
   };
 
+  # Automount drives
+  services.devmon.enable = true;
   services.gvfs.enable = true;
+  services.udisks2.enable = true;
+  services.udisks2.mountOnMedia = true;
+
   programs.gnupg.agent.enable = true;
 
   # programs.zsh.enable = true;
