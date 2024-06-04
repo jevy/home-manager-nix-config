@@ -1,8 +1,10 @@
-{ config, pkgs, libs, ... }:
-
 {
-  imports =
-  [
+  config,
+  pkgs,
+  libs,
+  ...
+}: {
+  imports = [
     ./desktop-linux-common.nix
   ];
 
@@ -22,7 +24,7 @@
     gcalcli
     # # etcher
 
-    prusa-slicer
+    bambu-studio
     rpi-imager
     sunpaper
     newsflash
@@ -49,9 +51,8 @@
   wayland.windowManager.sway = {
     config = {
       startup = [
-        { command = "${pkgs.synology-drive-client}/bin/synology-drive"; }
+        {command = "${pkgs.synology-drive-client}/bin/synology-drive";}
       ];
     };
-
   };
 }
