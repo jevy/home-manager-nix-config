@@ -46,6 +46,7 @@
       rainbow-delimiters-nvim
       vim-cool # Turn off highlighting after a search
       vim-tmux-navigator
+      which-key-nvim
 
       (pkgs.vimPlugins.nvim-treesitter.withPlugins (p: [
         p.ruby
@@ -105,9 +106,9 @@
       nodePackages.prettier # HTML
       nil # Nix LSP
       lua-language-server # lua lsp
-      solargraph
+      # solargraph
       # ltex-ls
-      # terraform-ls
+      terraform-ls
     ];
 
     extraConfig = builtins.concatStringsSep "\n" [
