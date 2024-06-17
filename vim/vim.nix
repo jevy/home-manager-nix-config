@@ -106,7 +106,7 @@
       nodePackages.prettier # HTML
       nil # Nix LSP
       lua-language-server # lua lsp
-      # solargraph
+      solargraph
       # ltex-ls
       terraform-ls
     ];
