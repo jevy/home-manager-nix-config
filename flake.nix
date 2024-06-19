@@ -53,6 +53,7 @@
       ./desktop-mac.nix
       stylix.homeManagerModules.stylix
       ./theme-mac.nix
+      ./taskwarrior-work.nix
       {
         home = {
           username = "jevin";
