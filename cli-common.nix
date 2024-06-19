@@ -36,7 +36,6 @@ in {
     zip
     fd
     feh
-    ncdu
     curl
     tree
     gh

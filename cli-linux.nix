@@ -1,8 +1,10 @@
-{ config, pkgs, libs, ... }:
-
 {
-  imports =
-  [
+  config,
+  pkgs,
+  libs,
+  ...
+}: {
+  imports = [
     ./cli-common.nix
   ];
 
@@ -16,6 +18,7 @@
     btop
     xsv
     bashmount
+    ncdu
   ];
 
   programs.kitty = {
