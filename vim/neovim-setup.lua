@@ -34,6 +34,8 @@ vim.opt.wrap = false
 
 vim.opt.splitbelow = true
 
+vim.g.mapleader = " "
+
 -- Highlight trailing whitespace
 vim.cmd([[
   highlight ExtraWhitespace ctermbg=red guibg=red
@@ -113,12 +115,40 @@ require("nvim-treesitter.configs").setup({
 		select = {
 			enable = true,
 			lookahead = true,
+			keymaps = {
+				["af"] = "@function.outer",
+				["if"] = "@function.inner",
+				["ap"] = "@parameter.outer",
+				["ip"] = "@parameter.inner",
+				["ac"] = "@comment.outer",
+			},
+			include_surrounding_whitespace = false,
 		},
 		swap = {
 			enable = true,
 		},
 		move = {
 			enable = true,
+			goto_next_start = {
+				["]f"] = "@function.outer",
+				["]p"] = "@parameter.outer",
+			},
+			goto_next_end = {
+				["]F"] = "@function.outer",
+			},
+			goto_previous_start = {
+				["[f"] = "@function.outer",
+				["[p"] = "@parameter.outer",
+			},
+			goto_previous_end = {
+				["[F"] = "@function.outer",
+			},
+			goto_next = {
+				["]d"] = "@conditional.outer",
+			},
+			goto_previous = {
+				["[d"] = "@conditional.outer",
+			},
 		},
 		highlight = {
 			enable = true,
@@ -126,12 +156,48 @@ require("nvim-treesitter.configs").setup({
 		indent = {
 			enable = true,
 		},
+		lsp_interop = {
+			enable = true,
+			border = "none",
+			floating_preview_opts = {},
+			peek_definition_code = {
+				["<leader>df"] = "@function.outer",
+				["<leader>dF"] = "@class.outer",
+			},
+		},
+	},
+	incremental_selection = {
+		enable = true,
+		keymaps = {
+			init_selection = "<Leader>ss", -- set to `false` to disable one of the mappings
+			node_incremental = "<Leader>sm",
+			scope_incremental = "<Leader>sc",
+			node_decremental = "<Leader>sr",
+		},
 	},
 })
 
-vim.opt.foldmethod = "expr"
-vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
-vim.opt.foldenable = false
+-- Repeat movement with ; and ,
+local ts_repeat_move = require("nvim-treesitter.textobjects.repeatable_move")
+vim.keymap.set({ "n", "x", "o" }, ";", ts_repeat_move.repeat_last_move)
+vim.keymap.set({ "n", "x", "o" }, ",", ts_repeat_move.repeat_last_move_opposite)
+
+vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+vim.opt.foldtext = "v:lua.vim.treesitter.foldtext()"
+
+require("nvim-treesitter.configs").setup({
+	textobjects = {
+		select = {
+			enable = true,
+
+			lookahead = true,
+			include_surrounding_whitespace = true,
+		},
+		move = {
+			enable = true,
+		},
+	},
+})
 
 -- Indent blank line
 -- Integrate with rainbow-delimeters
