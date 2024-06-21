@@ -1,4 +1,82 @@
--- Nvim-tree
+vim.opt.mouse = "a"
+vim.opt.compatible = false
+vim.opt.backup = false
+vim.opt.writebackup = false
+vim.opt.swapfile = false
+vim.opt.incsearch = true
+vim.opt.listchars = { tab = ">-", trail = "-" }
+vim.opt.number = true
+vim.opt.scrolloff = 5
+vim.opt.showmatch = true
+vim.opt.ignorecase = true
+-- vim.opt.autochdir = true
+vim.opt.wildmode = { "list", "longest" }
+vim.opt.linebreak = true
+vim.opt.relativenumber = true
+
+if vim.fn.has("termguicolors") == 1 then
+	vim.opt.termguicolors = true
+end
+vim.opt.background = "dark"
+
+vim.g.gruvbox_material_background = "soft"
+vim.g.gruvbox_material_better_performance = 0
+vim.cmd.colorscheme("gruvbox-material")
+
+vim.opt.updatetime = 100
+vim.opt.smartindent = true
+vim.opt.autoindent = true
+-- vim.cmd("filetype indent on")
+vim.opt.expandtab = true
+vim.opt.shiftwidth = 2
+vim.opt.softtabstop = 2
+vim.opt.wrap = false
+
+vim.opt.splitbelow = true
+
+-- Highlight trailing whitespace
+vim.cmd([[
+  highlight ExtraWhitespace ctermbg=red guibg=red
+  match ExtraWhitespace /\s\+$/
+  autocmd BufWinEnter * match ExtraWhitespace /\s\+$/
+  autocmd InsertEnter * match ExtraWhitespace /\s\+\%#\@<!$/
+  autocmd InsertLeave * match ExtraWhitespace /\s\+$/
+  autocmd BufWinLeave * call clearmatches()
+  autocmd Syntax * syn match ExtraWhitespace /\s\+$\| \+\ze\t/
+]])
+
+-- Map keys
+-- vim.api.nvim_set_keymap("n", "gd", ":Gvdiffsplit<CR>", { noremap = true, silent = true })
+
+-- Spell check in Latex
+vim.cmd([[
+  augroup latexsettings
+    autocmd!
+    autocmd FileType tex set spell
+  augroup END
+]])
+
+-- Autocommands
+vim.cmd([[
+  augroup HiglightTODO
+    autocmd!
+    autocmd WinEnter,VimEnter * :silent! call matchadd('Todo', 'TODO', -1)
+  augroup END
+
+  augroup AutoAdjustResize
+    autocmd!
+    autocmd VimResized * execute "normal! \<C-w>="
+  augroup END
+
+  augroup lsp_install
+    au!
+    autocmd User lsp_buffer_enabled call s:on_lsp_buffer_enabled()
+  augroup END
+
+  autocmd CursorHold .notes :write
+]])
+
+-- Nvim-tree setup
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 vim.opt.termguicolors = true
@@ -23,12 +101,12 @@ vim.api.nvim_set_keymap("n", "<C-g>", ":Telescope live_grep<CR>", { noremap = tr
 
 require("leap").add_default_mappings()
 
-require("treesitter-context").setup({
-	enable = true,
-	max_lines = 0,
-	min_window_height = 0,
-	line_numbers = true,
-})
+-- require("treesitter-context").setup({
+--   enable = true,
+--   max_lines = 0,
+--   min_window_height = 0,
+--   line_numbers = true,
+-- })
 
 require("nvim-treesitter.configs").setup({
 	textobjects = {
@@ -42,15 +120,52 @@ require("nvim-treesitter.configs").setup({
 		move = {
 			enable = true,
 		},
+		highlight = {
+			enable = true,
+		},
+		indent = {
+			enable = true,
+		},
 	},
 })
 
-require("ibl").setup()
+vim.opt.foldmethod = "expr"
+vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
+vim.opt.foldenable = false
 
+-- Indent blank line
+-- Integrate with rainbow-delimeters
+local highlight = {
+	"RainbowRed",
+	"RainbowYellow",
+	"RainbowBlue",
+	"RainbowOrange",
+	"RainbowGreen",
+	"RainbowViolet",
+	"RainbowCyan",
+}
+local hooks = require("ibl.hooks")
+-- create the highlight groups in the highlight setup hook, so they are reset
+-- every time the colorscheme changes
+hooks.register(hooks.type.HIGHLIGHT_SETUP, function()
+	vim.api.nvim_set_hl(0, "RainbowRed", { fg = "#E06C75" })
+	vim.api.nvim_set_hl(0, "RainbowYellow", { fg = "#E5C07B" })
+	vim.api.nvim_set_hl(0, "RainbowBlue", { fg = "#61AFEF" })
+	vim.api.nvim_set_hl(0, "RainbowOrange", { fg = "#D19A66" })
+	vim.api.nvim_set_hl(0, "RainbowGreen", { fg = "#98C379" })
+	vim.api.nvim_set_hl(0, "RainbowViolet", { fg = "#C678DD" })
+	vim.api.nvim_set_hl(0, "RainbowCyan", { fg = "#56B6C2" })
+end)
+
+vim.g.rainbow_delimiters = { highlight = highlight }
+require("ibl").setup({ scope = { highlight = highlight } })
+
+hooks.register(hooks.type.SCOPE_HIGHLIGHT, hooks.builtin.scope_highlight_from_extmark)
+
+-- Completion
 local cmp = require("cmp")
 cmp.setup({
 	snippet = {
-		-- REQUIRED - you must specify a snippet engine
 		expand = function(args)
 			vim.fn["UltiSnips#Anon"](args.body)
 		end,
@@ -64,7 +179,7 @@ cmp.setup({
 		["<C-f>"] = cmp.mapping.scroll_docs(4),
 		["<C-Space>"] = cmp.mapping.complete(),
 		["<C-e>"] = cmp.mapping.abort(),
-		["<CR>"] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
+		["<CR>"] = cmp.mapping.confirm({ select = true }),
 	}),
 	sources = cmp.config.sources({
 		{ name = "nvim_lsp" },
@@ -76,8 +191,7 @@ cmp.setup({
 
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
--- LSPs
---
+-- Typescript LSP
 require("lspconfig").tsserver.setup({
 	capabilities = capabilities,
 	init_options = {
@@ -100,16 +214,15 @@ require("lspconfig").nil_ls.setup({
 	capabilities = capabilities,
 })
 
--- Ruby LSP
-require("lspconfig").solargraph.setup({
-	capabilities = capabilities,
-	filetypes = {
-		"ruby",
-	},
-})
+-- -- Ruby LSP
+-- require("lspconfig").solargraph.setup({
+--   capabilities = capabilities,
+--   filetypes = {
+--     "ruby",
+--   },
+-- })
 
 -- Lua/Vim LSP
-
 require("lspconfig").lua_ls.setup({
 	settings = {
 		Lua = {
@@ -130,16 +243,16 @@ vim.api.nvim_create_autocmd({ "BufWritePre" }, {
 })
 
 -- require("lspsaga").setup({
--- 	move_in_saga = {
--- 		prev = "<C-k>",
--- 		next = "<C-j>",
--- 	},
--- 	finder_action_keys = {
--- 		open = "<CR>",
--- 	},
--- 	definition_action_keys = {
--- 		edit = "<CR>",
--- 	},
+--   move_in_saga = {
+--     prev = "<C-k>",
+--     next = "<C-j>",
+--   },
+--   finder_action_keys = {
+--     open = "<CR>",
+--   },
+--   definition_action_keys = {
+--     edit = "<CR>",
+--   },
 -- })
 -- Formatting
 require("lspconfig").efm.setup({
