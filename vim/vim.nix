@@ -22,11 +22,11 @@
     defaultEditor = true;
     plugins = with pkgs.vimPlugins; [
       vim-airline
-      vim-surround
-      vim-commentary
+      # vim-surround
+      # vim-commentary
       vim-json
       vim-markdown
-      goyo-vim
+      # goyo-vim
       # ranger-vim
       base16-vim
       vim-nix
@@ -41,7 +41,6 @@
       vim-fugitive
       # rnvimr
       leap-nvim
-      vim-rails
       indent-blankline-nvim
       rainbow-delimiters-nvim
       vim-cool # Turn off highlighting after a search
@@ -112,7 +111,6 @@
     ];
 
     extraConfig = builtins.concatStringsSep "\n" [
-      (lib.strings.fileContents ./base.vim)
       ''
         lua << EOF
         ${builtins.readFile ./neovim-setup.lua}
