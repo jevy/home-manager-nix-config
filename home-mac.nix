@@ -1,6 +1,8 @@
-{ config, pkgs, ... }:
-
 {
+  config,
+  pkgs,
+  ...
+}: {
   # nixpkgs.config.allowUnfreePredicate = (pkg: true);
 
   # This value determines the Home Manager release that your
@@ -28,8 +30,7 @@
 
   home.keyboard = {
     layout = "us";
-    variant = "qwerty,colemak-dh";
-    options = [ "ctrl:nocaps" "grp:alt_shift_toggle" ];
+    variant = "qwerty";
+    options = ["ctrl:nocaps"];
   };
-
 }
