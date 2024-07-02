@@ -33,7 +33,7 @@
 
   home.keyboard = {
     layout = "us";
-    variant = "qwerty,colemak-dh";
-    options = ["ctrl:nocaps" "grp:alt_shift_toggle"];
+    variant = "qwerty";
+    options = ["ctrl:nocaps"];
   };
 }
