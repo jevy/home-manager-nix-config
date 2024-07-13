@@ -62,6 +62,7 @@
         p.c
         p.vimdoc
         p.json
+        p.html
       ]))
 
       # completion-treesitter
