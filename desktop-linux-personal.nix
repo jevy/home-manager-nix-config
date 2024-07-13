@@ -46,6 +46,8 @@
     talosctl
     fluxcd
     kustomize
+    mqttx
+    mqttui
   ];
 
   wayland.windowManager.sway = {
