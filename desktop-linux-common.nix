@@ -41,7 +41,7 @@
     kooha
     wl-clipboard
     wf-recorder
-    simple-scan
+    gnome.simple-scan
     xdragon # Ranger drag drop
     xdg-utils
     ocrmypdf
