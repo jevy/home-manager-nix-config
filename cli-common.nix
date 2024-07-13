@@ -44,6 +44,7 @@ in {
     superfile
     lazygit
     jq
+    doggo
   ];
 
   programs.bat = {
