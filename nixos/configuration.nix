@@ -87,8 +87,7 @@
   # networking.enableIPv6 = false;
 
   # Set your time zone.
-  # time.timeZone = "America/Toronto";
-  time.timeZone = "Europe/Zurich";
+  time.timeZone = "America/Toronto";
 
   # networking.useDHCP = true;
   networking.networkmanager.enable = true;
