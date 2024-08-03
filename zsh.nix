@@ -25,6 +25,11 @@
     enable = true;
     enableCompletion = true;
     # autosuggestion.enable = true;
+    initExtraFirst = ''
+      if [[ -f ~/secrets/ai_keys ]]; then
+          source ~/secrets/ai_keys
+      fi
+    '';
     plugins = [
       {
         name = "zsh-nix-shell";
