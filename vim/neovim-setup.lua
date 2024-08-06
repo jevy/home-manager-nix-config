@@ -364,4 +364,3 @@ vim.api.nvim_create_autocmd("BufWritePre", {
 })
 
 local wk = require("which-key")
-wk.register(mappings, opts)

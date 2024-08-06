@@ -7,16 +7,18 @@
   base16-schemes = pkgs.fetchFromGitHub {
     owner = "tinted-theming";
     repo = "base16-schemes";
-    rev = "cf6bc892a24af19e11383adedc6ce7901f133ea7";
-    sha256 = "sha256-U9pfie3qABp5sTr3M9ga/jX8C807FeiXlmEZnC4ZM58=";
+    rev = "2b6f2d0677216ddda50c9cabd6ee70fae4665f81";
+    sha256 = "1pb979mwamg82pkx0bnim9sw129jvswialrsgarn9qa25mk36dsm";
   };
 in {
   stylix.base16Scheme = "${base16-schemes}/gruvbox-material-dark-soft.yaml";
+  stylix.enable = true;
 
   stylix.image = ./backgrounds/j5vziuan8tra1.jpg;
   stylix.polarity = "dark";
   home-manager.sharedModules = [
     {
+      stylix.enable = true;
       stylix.targets.gtk.enable = false;
       stylix.targets.firefox.enable = false;
     }

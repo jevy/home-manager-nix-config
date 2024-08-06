@@ -6,9 +6,9 @@
   pkgs,
   ...
 }: {
-  hardware.opengl = {
+  hardware.graphics = {
     enable = true;
-    driSupport32Bit = true;
+    enable32Bit = true;
     extraPackages = with pkgs; [
       vaapiIntel # LIBVA_DRIVER_NAME=i965 (older but works better for Firefox/Chromium)
       intel-media-driver
@@ -174,7 +174,7 @@
   # For xournaljj fix
   # https://github.com/NixOS/nixpkgs/issues/163107#issuecomment-1100569484
   environment.systemPackages = [
-    pkgs.gnome.adwaita-icon-theme
+    pkgs.adwaita-icon-theme
     pkgs.shared-mime-info
   ];
   environment.pathsToLink = [
