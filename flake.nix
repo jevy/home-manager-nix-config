@@ -5,8 +5,8 @@
     home-manager.url = "github:nix-community/home-manager/master";
     nixos-hardware.url = "github:NixOS/nixos-hardware";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    stable.url = "github:NixOS/nixpkgs/nixos-23.11";
-    stylix.url = "github:danth/stylix/master";
+    stable.url = "github:NixOS/nixpkgs/nixos-24.05";
+    stylix.url = "github:danth/stylix";
     muttdown.url = "github:jevy/muttdown";
     aider.url = "git+https://src.thehellings.com/greg/aider-flake";
   };
@@ -31,10 +31,6 @@
         specialArgs = {inherit inputs;};
         modules = modules;
       };
-
-    stylixModified = stylix.overrideScope' (self: super: {
-      gnome-shell = null;
-    });
 
     stableOverlay = self: super: {
       unstable = import inputs.stable {

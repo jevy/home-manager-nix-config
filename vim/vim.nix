@@ -45,7 +45,15 @@
       rainbow-delimiters-nvim
       vim-cool # Turn off highlighting after a search
       vim-tmux-navigator
-      which-key-nvim
+      (pkgs.vimUtils.buildVimPlugin {
+        name = "which-key";
+        src = pkgs.fetchFromGitHub {
+          owner = "folke";
+          repo = "which-key.nvim";
+          rev = "v3.13.2";
+          sha256 = "nv9s4/ax2BoL9IQdk42uN7mxIVFYiTK+1FVvWDKRnGM=";
+        };
+      })
 
       (pkgs.vimPlugins.nvim-treesitter.withPlugins (p: [
         p.ruby
