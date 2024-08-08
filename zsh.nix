@@ -26,8 +26,11 @@
     enableCompletion = true;
     # autosuggestion.enable = true;
     initExtraFirst = ''
-      if [[ -f ~/secrets/ai_keys ]]; then
-          source ~/secrets/ai_keys
+      if [[ -f /home/jevin/secrets/openai ]]; then
+        export OPENAI_API_KEY=$(< /home/jevin/secrets/openai)
+      fi
+      if [[ -f /home/jevin/secrets/anthropic ]]; then
+        export ANTHROPIC_API_KEY=$(< /home/jevy/secrets/anthropic)
       fi
     '';
     plugins = [
