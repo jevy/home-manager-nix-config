@@ -30,7 +30,7 @@
         export OPENAI_API_KEY=$(< /home/jevin/secrets/openai)
       fi
       if [[ -f /home/jevin/secrets/anthropic ]]; then
-        export ANTHROPIC_API_KEY=$(< /home/jevy/secrets/anthropic)
+        export ANTHROPIC_API_KEY=$(< /home/jevin/secrets/anthropic)
       fi
     '';
     plugins = [
