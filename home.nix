@@ -18,19 +18,6 @@
   # Let Home Manager install and manage itself.
   # programs.home-manager.enable = true;
 
-  programs.git = {
-    enable = true;
-    userName = "jevin";
-    userEmail = "jevin@quickjack.ca";
-    aliases = {
-      st = "status";
-    };
-    extraConfig = {
-      push.autoSetupRemote = true;
-    };
-    difftastic.enable = true;
-  };
-
   home.keyboard = {
     layout = "us";
     variant = "qwerty";
