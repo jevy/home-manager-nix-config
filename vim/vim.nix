@@ -4,15 +4,15 @@
   lib,
   ...
 }: {
-  home.file.luacheckrc = {
-    target = ".luacheckrc";
-    executable = false;
-    text = ''
-      read_globals = {
-        "vim",
-      }
-    '';
-  };
+  # home.file.luacheckrc = {
+  #   target = ".luacheckrc";
+  #   executable = false;
+  #   text = ''
+  #     read_globals = {
+  #       "vim",
+  #     }
+  #   '';
+  # };
 
   programs.neovim = {
     enable = true;
@@ -107,7 +107,7 @@
       tree-sitter
       nodePackages.typescript-language-server
       efm-langserver # Formatting and Linting
-      luajitPackages.luacheck # Lua Linting
+      # luajitPackages.luacheck # Lua Linting
       stylua # Lua Formating
       alejandra # Nix formating
       nodePackages.eslint # Typescript
