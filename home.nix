@@ -23,4 +23,13 @@
     variant = "qwerty";
     options = ["ctrl:nocaps"];
   };
+  programs.git = {
+    enable = true;
+    userName = "jevin";
+    userEmail = "jevin@quickjack.ca";
+    extraConfig = {
+      push.autoSetupRemote = true;
+    };
+    difftastic.enable = true;
+  };
 }
