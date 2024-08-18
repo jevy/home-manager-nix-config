@@ -11,7 +11,7 @@
   home.packages = with pkgs; [
     imagemagickBig
     mlocate # For ranger
-    awscli2
+    # awscli2 # Broken Aug 18 2024
     usbutils
     kitty
     ripgrep-all

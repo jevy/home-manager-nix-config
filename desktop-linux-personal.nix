@@ -48,6 +48,7 @@
     kustomize
     mqttx
     mqttui
+    spotify-player
   ];
 
   wayland.windowManager.sway = {
