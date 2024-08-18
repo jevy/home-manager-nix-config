@@ -52,7 +52,6 @@
       stylix.homeManagerModules.stylix
       ./theme-mac.nix
       ./taskwarrior-work.nix
-      ./git.nix
       {
         home = {
           username = "jevin";
@@ -74,7 +73,6 @@
       ./printers.nix
       stylix.nixosModules.stylix
       ./theme-linux.nix
-      ./git.nix
       nixos-hardware.nixosModules.framework-12th-gen-intel
       {
         home-manager = {
