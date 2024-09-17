@@ -60,7 +60,7 @@
         p.nix
         p.regex
         p.yaml
-        p.json
+        # p.json # Failed to build
         p.markdown
         p.dockerfile
         p.lua
