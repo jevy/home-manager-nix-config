@@ -45,6 +45,7 @@ in {
     lazygit
     jq
     doggo
+    tre-command
   ];
 
   programs.bat = {
