@@ -21,3 +21,5 @@ report.in.filter            = status:pending limit:page (+in)
 report.in.labels            = ID,Description
 
 confirmation=no
+
+report.default=ready
