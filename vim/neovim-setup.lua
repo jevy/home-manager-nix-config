@@ -280,13 +280,13 @@ require("lspconfig").nil_ls.setup({
 	capabilities = capabilities,
 })
 
--- -- Ruby LSP
--- require("lspconfig").solargraph.setup({
---   capabilities = capabilities,
---   filetypes = {
---     "ruby",
---   },
--- })
+-- Ruby LSP
+require("lspconfig").solargraph.setup({
+  capabilities = capabilities,
+  filetypes = {
+    "ruby",
+  },
+})
 
 -- Lua/Vim LSP
 require("lspconfig").lua_ls.setup({
