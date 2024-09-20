@@ -30,7 +30,6 @@
   services.udev.packages = with pkgs; [
     via
     qmk-udev-rules
-    fprintd
     qflipper
     android-udev-rules
   ];
@@ -126,7 +125,10 @@
   # };
 
   # services.chrony.enable = true;
-  services.timesyncd.enable = true;
+  services.timesyncd = {
+    servers = ["0.ca.pool.ntp.org" "1.ca.pool.ntp.org"];
+    enable = true;
+  };
   # services.syncthing = {
   #   enable = true;
   #   systemService = true;
