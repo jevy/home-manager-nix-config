@@ -8,7 +8,6 @@
     stable.url = "github:NixOS/nixpkgs/nixos-24.05";
     stylix.url = "github:danth/stylix";
     muttdown.url = "github:jevy/muttdown";
-    aider.url = "git+https://src.thehellings.com/greg/aider-flake";
   };
 
   outputs = {
@@ -19,7 +18,6 @@
     stable,
     muttdown,
     nixos-hardware,
-    aider,
     ...
   } @ inputs: let
     system = "x86_64-linux";
@@ -86,7 +84,7 @@
               imports = [
                 ./jevin-linux.nix
               ];
-              home.packages = [pythonEnv aider.packages.x86_64-linux.default];
+              home.packages = [pythonEnv];
             };
           };
         };
