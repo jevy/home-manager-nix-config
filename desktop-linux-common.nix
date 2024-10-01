@@ -68,6 +68,7 @@
     diff-pdf
     numbat
     sqlite-utils
+    pdftk
   ];
 
   services.wlsunset = {
