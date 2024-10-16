@@ -228,34 +228,48 @@ require("ibl").setup({ scope = { highlight = highlight } })
 
 hooks.register(hooks.type.SCOPE_HIGHLIGHT, hooks.builtin.scope_highlight_from_extmark)
 
+-- Snippets
+
+local ls = require("luasnip")
+require("luasnip.loaders.from_vscode").lazy_load()
+
+vim.keymap.set({ "i" }, "<C-K>", function()
+	ls.expand()
+end, { silent = true })
+vim.keymap.set({ "i", "s" }, "<C-L>", function()
+	ls.jump(1)
+end, { silent = true })
+vim.keymap.set({ "i", "s" }, "<C-J>", function()
+	ls.jump(-1)
+end, { silent = true })
+
+vim.keymap.set({ "i", "s" }, "<C-E>", function()
+	if ls.choice_active() then
+		ls.change_choice(1)
+	end
+end, { silent = true })
+
 -- Completion
 
 local cmp = require("cmp")
-local cmp_ultisnips_mappings = require("cmp_nvim_ultisnips.mappings")
 
 cmp.setup({
 	snippet = {
 		expand = function(args)
-			vim.fn["UltiSnips#Anon"](args.body)
-			vim.snippet.expand(args.body)
+			require("luasnip").lsp_expand(args.body)
+			-- vim.snippet.expand(args.body)
 		end,
 	},
 	mapping = cmp.mapping.preset.insert({
-		["<Tab>"] = cmp.mapping(function(fallback)
-			cmp_ultisnips_mappings.expand_or_jump_forwards(fallback)
-		end, { "i", "s" }),
-		["<S-Tab>"] = cmp.mapping(function(fallback)
-			cmp_ultisnips_mappings.jump_backwards(fallback)
-		end, { "i", "s" }),
 		["<C-b>"] = cmp.mapping.scroll_docs(-4),
 		["<C-f>"] = cmp.mapping.scroll_docs(4),
-		["<C-Space>"] = cmp.mapping.complete(),
+		["<C-o>"] = cmp.mapping.complete(),
 		["<C-e>"] = cmp.mapping.abort(),
-		["<C-]>"] = cmp.mapping.confirm({ select = true }),
+		["<Tab>"] = cmp.mapping.confirm({ select = true }),
 	}),
 	sources = cmp.config.sources({
 		{ name = "nvim_lsp" },
-		{ name = "ultisnips" },
+		{ name = "luasnip" },
 	}, {
 		{ name = "buffer" },
 	}),
@@ -296,6 +310,7 @@ require("lspconfig").solargraph.setup({
 
 -- Lua/Vim LSP
 require("lspconfig").lua_ls.setup({
+	capabilities = capabilities,
 	settings = {
 		Lua = {
 			diagnostics = {
@@ -369,4 +384,35 @@ vim.api.nvim_create_autocmd("BufWritePre", {
 	end,
 })
 
+require("avante_lib").load()
+require("avante").setup({
+	provider = "claude",
+	auto_suggestions_provider = "claude",
+	claude = {
+		endpoint = "https://api.anthropic.com",
+		model = "claude-3-5-sonnet-20240620",
+		temperature = 0,
+		max_tokens = 4096,
+	},
+	mappings = {
+		suggestion = {
+			accept = "<M-l>",
+			next = "<M-]>",
+			prev = "<M-[>",
+			dismiss = "<C-]>",
+		},
+	},
+})
+
+require("lualine").setup({
+	options = {
+		icons_enabled = true,
+		theme = "auto",
+	},
+	sections = {
+		lualine_a = { "mode" },
+		lualine_c = { "filename", "lsp_progress" },
+		lualine_z = { "location" },
+	},
+})
 local wk = require("which-key")

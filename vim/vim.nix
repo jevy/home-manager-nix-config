@@ -21,7 +21,8 @@
     vimdiffAlias = true;
     defaultEditor = true;
     plugins = with pkgs.vimPlugins; [
-      vim-airline
+      lualine-nvim
+      lualine-lsp-progress
       # vim-surround
       # vim-commentary
       vim-json
@@ -54,6 +55,8 @@
           sha256 = "nv9s4/ax2BoL9IQdk42uN7mxIVFYiTK+1FVvWDKRnGM=";
         };
       })
+      avante-nvim
+      vim-startuptime
 
       (pkgs.vimPlugins.nvim-treesitter.withPlugins (p: [
         p.ruby
@@ -82,9 +85,8 @@
       # Text completion
       cmp-nvim-lsp
       nvim-cmp
-      ultisnips
-      vim-snippets
-      cmp-nvim-ultisnips
+      luasnip
+      friendly-snippets
 
       # Formatting
       efmls-configs-nvim
