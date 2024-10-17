@@ -144,6 +144,11 @@
           scale = "2";
           transform = "270";
         };
+        "Dell Inc. Dell U4924DW 3KWV0S3" = {
+          pos = "5320 2880";
+          resolution = "5120x1440";
+          scale = "1";
+        };
       };
 
       workspaceOutputAssign = let
