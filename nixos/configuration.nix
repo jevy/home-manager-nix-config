@@ -38,6 +38,7 @@
   programs.adb.enable = true;
   services.hardware.bolt.enable = true;
   services.fwupd.enable = true;
+  services.ddccontrol.enable = true;
   # services.ratbagd.enable = true;
 
   nix = {

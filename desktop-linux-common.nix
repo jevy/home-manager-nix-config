@@ -69,6 +69,9 @@
     numbat
     sqlite-utils
     pdftk
+    ddcutil
+    ddcui
+    gddccontrol
   ];
 
   services.wlsunset = {
