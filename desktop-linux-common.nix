@@ -71,7 +71,6 @@
     pdftk
     ddcutil
     ddcui
-    gddccontrol
   ];
 
   services.wlsunset = {
