@@ -53,6 +53,40 @@
     useRoutingFeatures = "client";
   };
 
+  # Idea taken from [dreamsofcode](https://github.com/dreamsofcode-io/home-row-mods)
+  services.kanata = {
+    enable = true;
+    keyboards = {
+      internalKeyboard = {
+        devices = [
+          "/dev/input/by-path/platform-i8042-serio-0-event-kbd"
+        ];
+        extraDefCfg = "process-unmapped-keys yes";
+        config = ''
+          (defsrc
+           a s d f j k l ;
+          )
+          (defvar
+           tap-time 150
+           hold-time 200
+          )
+          (defalias
+           a (tap-hold $tap-time $hold-time a lctl)
+           s (tap-hold $tap-time $hold-time s lalt)
+           d (tap-hold $tap-time $hold-time d lsft)
+           f (tap-hold $tap-time $hold-time f lctl)
+           j (tap-hold $tap-time $hold-time j rctl)
+           k (tap-hold $tap-time $hold-time k rsft)
+           l (tap-hold $tap-time $hold-time l ralt)
+           ; (tap-hold $tap-time $hold-time ; rmet)
+          )
+          (deflayer base
+           @a  @s  @d  @f  @j  @k  @l  @;
+          )
+        '';
+      };
+    };
+  };
   # services.sshd.enable = true;
 
   boot.loader.systemd-boot = {
@@ -201,7 +235,7 @@
   users.users.jevin = {
     shell = pkgs.zsh;
     isNormalUser = true;
-    extraGroups = ["qemu-libvirtd" "libvirtd" "plugdev" "wheel" "networkmanager" "docker" "dialout" "audio" "video" "adbusers"]; # Dialout if for usb/serial access for arduino
+    extraGroups = ["qemu-libvirtd" "libvirtd" "plugdev" "wheel" "networkmanager" "docker" "dialout" "audio" "video" "adbusers" "uinput"]; # Dialout if for usb/serial access for arduino
 
     # `nix-shell -p mkpasswd --run 'mkpasswd -m sha-512'`
     hashedPassword = "$6$RQ3xn2S3O1RFFqiA$e725RMH8eJgw4JJ4UnSjuzJ1Pw5lNNaFRW.9M2XCrcCJsAbWPg5qs5hzRZARiK9uastNZN9XnUGBs8yM6kdMZ0";
