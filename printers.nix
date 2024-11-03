@@ -6,7 +6,13 @@
   # Enable CUPS to print documents.
   services.printing = {
     enable = true;
-    drivers = [pkgs.hplip];
+    drivers = [pkgs.hplip pkgs.brlaser];
+  };
+
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;
+    openFirewall = true;
   };
 
   # Jevin - If need to regenerate the deviceUri: To add the printer; 1. `nix-shell -p hplip` 2. hp-makeuri <IP> 3. Add that URL to cups
