@@ -15,7 +15,7 @@
     slack
     # google-chrome
     zathura
-    wally-cli
+    keymapp
     vlc
     signal-desktop
     # nasc # Broken?
