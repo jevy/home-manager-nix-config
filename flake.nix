@@ -70,6 +70,7 @@
       ./nixos/hardware-configuration.nix
       ./printers.nix
       stylix.nixosModules.stylix
+      # ./hyprland.nix
       ./theme-linux.nix
       nixos-hardware.nixosModules.framework-12th-gen-intel
       {
