@@ -126,11 +126,6 @@
   # networking.useDHCP = true;
   networking.networkmanager.enable = true;
 
-  programs._1password = {
-    enable = true;
-    package = pkgs._1password;
-  };
-
   programs._1password-gui = {
     enable = true;
     polkitPolicyOwners = ["jevin"];
