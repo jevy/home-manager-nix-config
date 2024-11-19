@@ -5,7 +5,6 @@
     # yabai
     # skhd
     nerd-font-patcher
-    neovide
     scrcpy
     direnv
     lazygit

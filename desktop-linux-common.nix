@@ -6,7 +6,6 @@
 }: {
   home.packages = with pkgs; [
     libreoffice
-    neovide
     gimp
     discord
     spotify
@@ -122,6 +121,8 @@
 
   services.keybase.enable = true;
 
+  # programs.neovide.enable = true;
+
   programs.chromium.enable = true;
   home.sessionVariables = {
     NIXOS_OZONE_WL = "1"; # For Wayland Chrome and Electron
@@ -179,13 +180,11 @@
   };
 
   home.shellAliases = {
-    v = "${pkgs.neovide}/bin/neovide";
     screen-record = "${pkgs.wf-recorder}/bin/wf-recorder -g \"$(${pkgs.slurp}/bin/slurp)\" --file=$HOME/Screenshots/latest-recording.mp4";
     screen-record-with-audio = "${pkgs.wf-recorder}/bin/wf-recorder -a -g \"$(${pkgs.slurp}/bin/slurp)\" --file=$HOME/Screenshots/latest-recording.mp4";
     tailscale-us = "sudo tailscale up --accept-routes --exit-node \"us-tailscale\" --accept-dns";
     tailscale-home = "sudo tailscale up --accept-routes --exit-node \"octoprint\" --accept-dns";
     pomodoro = "termdown 25m -s -b && ${pkgs.libnotify}/bin/notify-send 'Pomodoro complete. Take a break!'";
-    alsafix = "cd ~/.config/alsa && alsactl restore -f asound.state";
     s = "kitty +kitten ssh";
     colordropper = "grim -g \"$(slurp -p)\" -t ppm - | convert - -format '%[pixel:p{0,0}]' txt:-";
   };
