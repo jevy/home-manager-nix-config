@@ -14,8 +14,8 @@ in {
   stylix.base16Scheme = "${base16-schemes}/gruvbox-material-dark-soft.yaml";
   stylix.enable = true;
 
-  stylix.image = ./backgrounds/j5vziuan8tra1.jpg;
-  stylix.polarity = "dark";
+  stylix.image = ./backgrounds/sun.png;
+  stylix.polarity = "light";
   home-manager.sharedModules = [
     {
       stylix.enable = true;
