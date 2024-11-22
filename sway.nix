@@ -9,10 +9,12 @@
     enable = true;
     swaynag.enable = true;
     systemd.enable = true;
+    checkConfig = true;
     wrapperFeatures = {
       gtk = true;
     };
 
+    extraConfig = "smart_gaps inverse_outer";
     config = {
       bars = [
         {command = "${config.programs.waybar.package}/bin/waybar";}
@@ -20,6 +22,9 @@
 
       gaps = {
         smartBorders = "on";
+        # outer = 300;
+        left = 1000;
+        right = 1000;
       };
 
       assigns = {
@@ -152,9 +157,8 @@
       };
 
       workspaceOutputAssign = let
-        primary-output = "Goldstar Company Ltd LG ULTRAGEAR 106NTLE12344";
+        primary-output = "Dell Inc. Dell U4924DW 3KWV0S3";
         secondary-output = "Unknown 0x5A2D 0x00000000";
-        side-output = "Unknown HP Z27 CN49020L9R";
       in [
         {
           workspace = "1";
@@ -178,7 +182,7 @@
         }
         {
           workspace = "6";
-          output = "${side-output} ${secondary-output}";
+          output = "${primary-output} ${secondary-output}";
         }
         {
           workspace = "7";
