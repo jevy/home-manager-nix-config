@@ -14,7 +14,6 @@
       gtk = true;
     };
 
-    extraConfig = "smart_gaps inverse_outer";
     config = {
       bars = [
         {command = "${config.programs.waybar.package}/bin/waybar";}
@@ -22,9 +21,6 @@
 
       gaps = {
         smartBorders = "on";
-        # outer = 300;
-        left = 1000;
-        right = 1000;
       };
 
       assigns = {
