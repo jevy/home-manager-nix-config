@@ -2,10 +2,10 @@
   description = "Jevin's Home Manager configuration";
 
   inputs = {
-    home-manager.url = "github:nix-community/home-manager/master";
+    home-manager.url = "github:nix-community/home-manager/release-24.11";
     nixos-hardware.url = "github:NixOS/nixos-hardware";
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    stable.url = "github:NixOS/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     stylix.url = "github:danth/stylix";
     muttdown.url = "github:jevy/muttdown";
   };
@@ -15,7 +15,7 @@
     home-manager,
     stylix,
     nixpkgs,
-    stable,
+    unstable,
     muttdown,
     nixos-hardware,
     ...
@@ -30,8 +30,8 @@
         modules = modules;
       };
 
-    stableOverlay = self: super: {
-      unstable = import inputs.stable {
+    unstableOverlay = self: super: {
+      unstable = import inputs.unstable {
         system = "x86_64-linux";
         config.allowUnfree = true;
         config.permittedInsecurePackages = [
@@ -65,7 +65,7 @@
         config,
         pkgs,
         ...
-      }: {nixpkgs.overlays = [stableOverlay];})
+      }: {nixpkgs.overlays = [unstableOverlay];})
       ./nixos/configuration.nix
       ./nixos/hardware-configuration.nix
       ./printers.nix
