@@ -32,7 +32,6 @@
     jellyfin-media-player
     zotero
     openscad
-    ledfx
     cc2538-bsl
 
     glxinfo

@@ -121,7 +121,13 @@
 
   services.keybase.enable = true;
 
-  # programs.neovide.enable = true;
+  programs.neovide = {
+    enable = true;
+    settings = {
+      theme = "auto";
+    };
+  };
+
 
   programs.chromium.enable = true;
   home.sessionVariables = {
