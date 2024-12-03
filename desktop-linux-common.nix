@@ -70,6 +70,7 @@
     pdftk
     ddcutil
     ddcui
+    psst
   ];
 
   services.wlsunset = {
@@ -128,7 +129,6 @@
     };
   };
 
-
   programs.chromium.enable = true;
   home.sessionVariables = {
     NIXOS_OZONE_WL = "1"; # For Wayland Chrome and Electron
@@ -186,6 +186,7 @@
   };
 
   home.shellAliases = {
+    v = "${pkgs.neovide}/bin/neovide";
     screen-record = "${pkgs.wf-recorder}/bin/wf-recorder -g \"$(${pkgs.slurp}/bin/slurp)\" --file=$HOME/Screenshots/latest-recording.mp4";
     screen-record-with-audio = "${pkgs.wf-recorder}/bin/wf-recorder -a -g \"$(${pkgs.slurp}/bin/slurp)\" --file=$HOME/Screenshots/latest-recording.mp4";
     tailscale-us = "sudo tailscale up --accept-routes --exit-node \"us-tailscale\" --accept-dns";
