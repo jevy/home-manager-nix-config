@@ -110,6 +110,35 @@ require("leap").add_default_mappings()
 --   line_numbers = true,
 -- })
 
+-- Define the on_attach function
+local on_attach = function(client, bufnr)
+	-- Enable completion triggered by <c-x><c-o>
+	vim.api.nvim_buf_set_option(bufnr, "omnifunc", "v:lua.vim.lsp.omnifunc")
+
+	-- Define key mappings
+	local opts = { noremap = true, silent = true, buffer = bufnr }
+
+	-- LSP Keybindings
+	vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
+	vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
+	vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
+	vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts)
+	vim.keymap.set("n", "<C-k>", vim.lsp.buf.signature_help, opts)
+	vim.keymap.set("n", "<leader>wa", vim.lsp.buf.add_workspace_folder, opts)
+	vim.keymap.set("n", "<leader>wr", vim.lsp.buf.remove_workspace_folder, opts)
+	vim.keymap.set("n", "<leader>wl", function()
+		print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+	end, opts)
+	vim.keymap.set("n", "<leader>D", vim.lsp.buf.type_definition, opts)
+	vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
+	vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, opts)
+	vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
+	vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float, opts)
+	vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, opts)
+	vim.keymap.set("n", "]d", vim.diagnostic.goto_next, opts)
+	vim.keymap.set("n", "<leader>q", vim.diagnostic.setloclist, opts)
+end
+
 require("nvim-treesitter.configs").setup({
 	textobjects = {
 		select = {
@@ -184,20 +213,6 @@ vim.keymap.set({ "n", "x", "o" }, ",", ts_repeat_move.repeat_last_move_opposite)
 
 vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.opt.foldtext = "v:lua.vim.treesitter.foldtext()"
-
-require("nvim-treesitter.configs").setup({
-	textobjects = {
-		select = {
-			enable = true,
-
-			lookahead = true,
-			include_surrounding_whitespace = true,
-		},
-		move = {
-			enable = true,
-		},
-	},
-})
 
 -- Indent blank line
 -- Integrate with rainbow-delimeters
@@ -280,6 +295,7 @@ local capabilities = require("cmp_nvim_lsp").default_capabilities()
 -- Typescript LSP
 require("lspconfig").ts_ls.setup({
 	capabilities = capabilities,
+	on_attach = on_attach,
 	init_options = {
 		plugins = {
 			{
@@ -298,11 +314,13 @@ require("lspconfig").ts_ls.setup({
 -- Nix LSP
 require("lspconfig").nil_ls.setup({
 	capabilities = capabilities,
+	on_attach = on_attach,
 })
 
 -- Ruby LSP
 require("lspconfig").solargraph.setup({
 	capabilities = capabilities,
+	on_attach = on_attach,
 	filetypes = {
 		"ruby",
 	},
@@ -311,6 +329,7 @@ require("lspconfig").solargraph.setup({
 -- Lua/Vim LSP
 require("lspconfig").lua_ls.setup({
 	capabilities = capabilities,
+	on_attach = on_attach,
 	settings = {
 		Lua = {
 			diagnostics = {
