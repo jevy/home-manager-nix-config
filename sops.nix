@@ -1,5 +1,5 @@
-{ config,
-}:
+# { config,
+# }:
 {
   sops = {
     age.keyFile = "/home/jevin/.config/sops/age/keys.txt"; # must have no password!
@@ -10,7 +10,7 @@
 
     secrets.openai_api_key = {
       # sopsFile = ./secrets.yml.enc; # optionally define per-secret files
-      path = "${config.sops.defaultSymlinkPath}/openai_api_key";
+      path = "${defaultSymlinkPath}/openai_api_key";
     };
   };
 }
