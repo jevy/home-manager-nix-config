@@ -72,7 +72,6 @@
       ./nixos/hardware-configuration.nix
       ./printers.nix
       stylix.nixosModules.stylix
-      sops-nix.nixosModules.sops
       ./theme-linux.nix
       nixos-hardware.nixosModules.framework-12th-gen-intel
       {
@@ -86,6 +85,7 @@
             jevin = {
               imports = [
                 ./jevin-linux.nix
+                inputs.sops-nix.homeManagerModules.sops
               ];
               # home.packages = [pythonEnv];
             };

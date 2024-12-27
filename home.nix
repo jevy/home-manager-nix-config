@@ -32,4 +32,17 @@
     };
     difftastic.enable = true;
   };
+
+  sops = {
+    age.keyFile = "/home/jevin/.config/sops/age/keys.txt"; # must have no password!
+
+    defaultSopsFile = ./secrets.yaml;
+
+    secrets.openai_api_key = {
+      path = "${config.sops.defaultSymlinkPath}/openai_api_key";
+    };
+    secrets.anthropic_api_key = {
+      path = "${config.sops.defaultSymlinkPath}/anthropic_api_key";
+    };
+  };
 }
