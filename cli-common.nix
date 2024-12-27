@@ -45,6 +45,7 @@ in {
     jq
     doggo
     tre-command
+    unstable.aichat
   ];
 
   programs.bat = {
