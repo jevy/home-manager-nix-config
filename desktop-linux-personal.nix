@@ -48,7 +48,7 @@
     mqttx
     mqttui
     spotify-player
-    aider-chat
+    unstable.aider-chat
   ];
 
   wayland.windowManager.sway = {
