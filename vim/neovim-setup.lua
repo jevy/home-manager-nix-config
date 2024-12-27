@@ -58,6 +58,14 @@ vim.cmd([[
   augroup END
 ]])
 
+-- Set wrap for markdown files
+vim.cmd([[
+  augroup MarkdownSettings
+    autocmd!
+    autocmd FileType markdown setlocal wrap
+  augroup END
+]])
+
 -- Autocommands
 vim.cmd([[
   augroup HiglightTODO
@@ -317,6 +325,31 @@ require("lspconfig").nil_ls.setup({
 	on_attach = on_attach,
 })
 
+-- Language Server
+require("lspconfig").ltex.setup({
+	capabilities = capabilities,
+	on_attach = on_attach,
+	settings = {
+		ltex = {
+			language = "en-CA",
+		},
+	},
+})
+
+vim.keymap.set("n", "<leader>aw", function()
+	vim.lsp.buf.execute_command({
+		command = "_ltex.addToDictionary",
+		arguments = {
+			{
+				uri = vim.uri_from_bufnr(0),
+				words = {
+					["en-CA"] = { vim.fn.expand("<cword>") },
+				},
+			},
+		},
+	})
+end, { desc = "Add word to dictionary" })
+
 -- Ruby LSP
 require("lspconfig").solargraph.setup({
 	capabilities = capabilities,
@@ -435,3 +468,19 @@ require("lualine").setup({
 	},
 })
 local wk = require("which-key")
+
+require("trouble").setup({
+	group = true,
+	padding = true,
+        action_keys = {
+          close = "q",
+          cancel = "<esc>",
+          next = "j",
+          previous = "k",
+        };
+})
+
+-- Add keymaps for Trouble
+vim.keymap.set("n", "<leader>xx", "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", { desc = "Buffer Diagnostics (Trouble)" })
+vim.keymap.set("n", "<leader>cs", "<cmd>Trouble symbols toggle focus=false<cr>", { desc = "Symbols (Trouble)" })
+vim.keymap.set("n", "<leader>cl", "<cmd>Trouble lsp toggle focus=false win.position=right<cr>", { desc = "LSP Definitions / references / ... (Trouble)" })

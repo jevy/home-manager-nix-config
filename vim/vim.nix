@@ -1,17 +1,18 @@
 {
   config,
   pkgs,
-  lib,
   ...
 }: {
-  home.file.luacheckrc = {
-    target = ".luacheckrc";
-    executable = false;
-    text = ''
-      read_globals = {
-        "vim",
-      }
-    '';
+  home.file = {
+    luacheckrc = {
+      target = ".luacheckrc";
+      executable = false;
+      text = ''
+        read_globals = {
+          "vim",
+        }
+      '';
+    };
   };
 
   programs.neovim = {
@@ -46,6 +47,7 @@
       rainbow-delimiters-nvim
       vim-cool # Turn off highlighting after a search
       vim-tmux-navigator
+      trouble-nvim
       (pkgs.vimUtils.buildVimPlugin {
         name = "which-key";
         src = pkgs.fetchFromGitHub {
@@ -118,9 +120,9 @@
       nodePackages.prettier # HTML
       nil # Nix LSP
       lua-language-server # lua lsp
-      solargraph
-      # ltex-ls
-      terraform-ls
+      solargraph # Ruby
+      ltex-ls # Language Server
+      terraform-ls # Terraform
     ];
 
     extraConfig = builtins.concatStringsSep "\n" [
