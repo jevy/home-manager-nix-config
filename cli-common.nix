@@ -46,6 +46,8 @@ in {
     doggo
     tre-command
     unstable.aichat
+    sops # Encryption
+    age # Encryption
   ];
 
   programs.bat = {
