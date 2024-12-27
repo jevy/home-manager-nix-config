@@ -58,33 +58,52 @@ vim.cmd([[
   augroup END
 ]])
 
--- Set wrap for markdown files
+-- Set wrap for markdown and Avante files
 vim.cmd([[
-  augroup MarkdownSettings
+  augroup MarkdownWrap
     autocmd!
     autocmd FileType markdown setlocal wrap
   augroup END
 ]])
 
 -- Autocommands
-vim.cmd([[
-  augroup HiglightTODO
-    autocmd!
-    autocmd WinEnter,VimEnter * :silent! call matchadd('Todo', 'TODO', -1)
-  augroup END
+-- Highlight TODO
+vim.api.nvim_create_augroup("HighlightTODO", { clear = true })
+vim.api.nvim_create_autocmd({ "WinEnter", "VimEnter" }, {
+	group = "HighlightTODO",
+	pattern = "*",
+	callback = function()
+		vim.fn.matchadd("Todo", "TODO", -1)
+	end,
+})
 
-  augroup AutoAdjustResize
-    autocmd!
-    autocmd VimResized * execute "normal! \<C-w>="
-  augroup END
+-- Auto-adjust window size on resize
+vim.api.nvim_create_augroup("AutoAdjustResize", { clear = true })
+vim.api.nvim_create_autocmd("VimResized", {
+	group = "AutoAdjustResize",
+	pattern = "*",
+	command = "wincmd =",
+})
 
-  augroup lsp_install
-    au!
-    autocmd User lsp_buffer_enabled call s:on_lsp_buffer_enabled()
-  augroup END
+-- LSP installation
+vim.api.nvim_create_augroup("LspInstall", { clear = true })
+vim.api.nvim_create_autocmd("User", {
+	group = "LspInstall",
+	pattern = "lsp_buffer_enabled",
+	callback = function()
+		-- Replace this with the actual function you want to call
+		-- vim.fn['s:on_lsp_buffer_enabled']()
+		print("LSP buffer enabled")
+	end,
+})
 
-  autocmd CursorHold .notes :write
-]])
+-- Auto-save notes
+vim.api.nvim_create_augroup("AutoSaveNotes", { clear = true })
+vim.api.nvim_create_autocmd("CursorHold", {
+	group = "AutoSaveNotes",
+	pattern = "*.notes",
+	command = "write",
+})
 
 -- Nvim-tree setup
 vim.g.loaded_netrw = 1
@@ -332,6 +351,7 @@ require("lspconfig").ltex.setup({
 	settings = {
 		ltex = {
 			language = "en-CA",
+			disabledRules = { ["en-CA"] = { "SPELLING" } },
 		},
 	},
 })
@@ -456,31 +476,39 @@ require("avante").setup({
 	},
 })
 
-require("lualine").setup({
-	options = {
-		icons_enabled = true,
-		theme = "auto",
-	},
-	sections = {
-		lualine_a = { "mode" },
-		lualine_c = { "filename", "lsp_progress" },
-		lualine_z = { "location" },
+local wk = require("which-key")
+
+-- Markview configuration
+local markview_filetypes = { "markdown", "vimwiki", "Avante" }
+require("markview").setup({
+	ft = markview_filetypes,
+	opts = {
+		filetypes = markview_filetypes,
 	},
 })
-local wk = require("which-key")
 
 require("trouble").setup({
 	group = true,
 	padding = true,
-        action_keys = {
-          close = "q",
-          cancel = "<esc>",
-          next = "j",
-          previous = "k",
-        };
+	action_keys = {
+		close = "q",
+		cancel = "<esc>",
+		next = "j",
+		previous = "k",
+	},
 })
 
 -- Add keymaps for Trouble
-vim.keymap.set("n", "<leader>xx", "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", { desc = "Buffer Diagnostics (Trouble)" })
+vim.keymap.set(
+	"n",
+	"<leader>xx",
+	"<cmd>Trouble diagnostics toggle filter.buf=0<cr>",
+	{ desc = "Buffer Diagnostics (Trouble)" }
+)
 vim.keymap.set("n", "<leader>cs", "<cmd>Trouble symbols toggle focus=false<cr>", { desc = "Symbols (Trouble)" })
-vim.keymap.set("n", "<leader>cl", "<cmd>Trouble lsp toggle focus=false win.position=right<cr>", { desc = "LSP Definitions / references / ... (Trouble)" })
+vim.keymap.set(
+	"n",
+	"<leader>cl",
+	"<cmd>Trouble lsp toggle focus=false win.position=right<cr>",
+	{ desc = "LSP Definitions / references / ... (Trouble)" }
+)

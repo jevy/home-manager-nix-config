@@ -27,7 +27,8 @@
       # vim-surround
       # vim-commentary
       vim-json
-      vim-markdown
+      # vim-markdown
+      markview-nvim
       # goyo-vim
       # ranger-vim
       base16-vim
