@@ -59,7 +59,9 @@
         };
       })
       avante-nvim
-      vim-startuptime
+      dressing-nvim # For Avante
+      nui-nvim # For Avante
+      plenary-nvim # For Avante
 
       (pkgs.vimPlugins.nvim-treesitter.withPlugins (p: [
         p.ruby
@@ -96,7 +98,6 @@
 
       lspsaga-nvim # LSP Navigation
 
-      plenary-nvim
       telescope-nvim
       telescope-fzy-native-nvim
       (pkgs.vimUtils.buildVimPlugin {
