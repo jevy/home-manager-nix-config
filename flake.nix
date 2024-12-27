@@ -8,6 +8,7 @@
     unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     stylix.url = "github:danth/stylix";
     muttdown.url = "github:jevy/muttdown";
+    sops-nix.url = "github:Mic92/sops-nix";
   };
 
   outputs = {
@@ -18,6 +19,7 @@
     unstable,
     muttdown,
     nixos-hardware,
+    sops-nix,
     ...
   } @ inputs: let
     system = "x86_64-linux";
@@ -70,6 +72,7 @@
       ./nixos/hardware-configuration.nix
       ./printers.nix
       stylix.nixosModules.stylix
+      sops-nix.nixosModules.sops
       ./theme-linux.nix
       nixos-hardware.nixosModules.framework-12th-gen-intel
       {

@@ -25,13 +25,9 @@
     enable = true;
     enableCompletion = true;
     # autosuggestion.enable = true;
-    initExtraFirst = ''
-      if [[ -f /home/jevin/secrets/openai ]]; then
-        export OPENAI_API_KEY=$(< /home/jevin/secrets/openai)
-      fi
-      if [[ -f /home/jevin/secrets/anthropic ]]; then
-        export ANTHROPIC_API_KEY=$(< /home/jevin/secrets/anthropic)
-      fi
+    initExtra = ''
+      export OPENAI_API_KEY=$(cat ${config.sops.secrets.openai_api_key.path})
+      export ANTHROPIC_API_KEY=$(cat ${config.sops.secrets.anthropic_api_key.path})
     '';
     plugins = [
       {
