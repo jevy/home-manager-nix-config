@@ -351,7 +351,7 @@ require("lspconfig").ltex.setup({
 	settings = {
 		ltex = {
 			language = "en-CA",
-			disabledRules = { ["en-CA"] = { "SPELLING" } },
+			disabledRules = { ["en-CA"] = { "MORFOLOGIK_RULE_EN_CA" } },
 		},
 	},
 })
