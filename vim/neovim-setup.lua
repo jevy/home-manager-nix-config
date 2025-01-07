@@ -401,6 +401,11 @@ vim.api.nvim_create_autocmd({ "BufWritePre" }, {
 	end,
 })
 
+require("lspconfig").kotlin_language_server.setup({
+	capabilities = capabilities,
+	on_attach = on_attach,
+})
+
 -- require("lspsaga").setup({
 --   move_in_saga = {
 --     prev = "<C-k>",

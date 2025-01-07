@@ -68,6 +68,7 @@
         p.nix
         p.regex
         p.yaml
+        p.kotlin
         # p.json # Failed to build
         p.markdown
         p.dockerfile
@@ -125,6 +126,7 @@
       solargraph # Ruby
       ltex-ls # Language Server
       terraform-ls # Terraform
+      kotlin-language-server # Kotlin
     ];
 
     extraConfig = builtins.concatStringsSep "\n" [
