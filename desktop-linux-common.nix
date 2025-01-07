@@ -9,7 +9,7 @@
     gimp
     discord
     spotify
-    obsidian
+    unstable.obsidian
     pavucontrol
     slack
     # google-chrome
@@ -71,6 +71,7 @@
     ddcutil
     ddcui
     psst
+    unstable.ghostty
   ];
 
   services.wlsunset = {
