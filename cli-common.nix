@@ -60,7 +60,7 @@ in {
     keyMode = "vi";
     customPaneNavigationAndResize = true;
     historyLimit = 10000;
-    focusEvents = true;
+    # focusEvents = true; # Only in HM 25.05 + 
     escapeTime = 200;
     mouse = true;
     shortcut = "a";
