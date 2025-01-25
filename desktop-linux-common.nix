@@ -113,6 +113,11 @@
   #   name = "Nordzy-cursors";
   # };
 
+  programs.vscode = {
+    enable = true;
+    package = pkgs.vscode.fhs;
+  };
+
   programs.obs-studio = {
     enable = true;
     plugins = [
