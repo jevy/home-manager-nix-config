@@ -60,6 +60,8 @@ in {
     keyMode = "vi";
     customPaneNavigationAndResize = true;
     historyLimit = 10000;
+    focusEvents = true;
+    escapeTime = 200;
     mouse = true;
     shortcut = "a";
     terminal = "screen-256color";
