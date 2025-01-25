@@ -9,6 +9,10 @@
     stylix.url = "github:danth/stylix/release-24.11";
     muttdown.url = "github:jevy/muttdown";
     sops-nix.url = "github:Mic92/sops-nix";
+    nixvim = {
+      url = "github:nix-community/nixvim/nixos-24.11";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
@@ -20,6 +24,7 @@
     muttdown,
     nixos-hardware,
     sops-nix,
+    nixvim,
     ...
   } @ inputs: let
     system = "x86_64-linux";
@@ -86,6 +91,7 @@
               imports = [
                 ./jevin-linux.nix
                 inputs.sops-nix.homeManagerModules.sops
+                inputs.nixvim.homeManagerModules.nixvim
               ];
               # home.packages = [pythonEnv];
             };

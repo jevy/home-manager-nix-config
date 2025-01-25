@@ -3,7 +3,7 @@
   pkgs,
   ...
 }: {
-  # nixpkgs.config.allowUnfreePredicate = (pkg: true);
+  # ixpkgs.config.allowUnfreePredicate = (pkg: true);
 
   # This value determines the Home Manager release that your
   # configuration is compatible with. This helps avoid breakage
@@ -27,10 +27,25 @@
     enable = true;
     userName = "jevin";
     userEmail = "jevin@quickjack.ca";
-    extraConfig = {
-      push.autoSetupRemote = true;
-    };
     difftastic.enable = true;
+  };
+
+  programs.nixvim = {
+  	enable = true;
+	colorschemes.gruvbox.enable = true;
+	opts = {
+		relativenumber = true;
+	};
+	plugins = {
+		gitgutter.enable = true;
+		lualine.enable = true;
+		leap.enable = true;
+		nvim-tree.enable = true;
+		which-key.enable = true;
+		rainbow-delimiters.enable = true;
+		tmux-navigator.enable = true;
+		trouble.enable = true;
+	};
   };
 
   sops = {
