@@ -21,6 +21,7 @@ in {
       stylix.enable = true;
       stylix.targets.gtk.enable = false;
       stylix.targets.firefox.enable = false;
+      stylix.targets.neovim.enable = false;
     }
   ];
 
