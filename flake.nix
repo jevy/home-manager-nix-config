@@ -49,7 +49,7 @@
 
     macModules = [
       ./home-mac.nix
-      ./vim/vim.nix
+      ./nixvim.nix
       ./zsh-spellbook.nix
       ./zsh.nix
       ./cli-common.nix
@@ -92,6 +92,7 @@
                 ./jevin-linux.nix
                 inputs.sops-nix.homeManagerModules.sops
                 inputs.nixvim.homeManagerModules.nixvim
+                ./nixvim.nix
               ];
               # home.packages = [pythonEnv];
             };
