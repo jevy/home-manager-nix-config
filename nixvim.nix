@@ -13,6 +13,12 @@
       shiftwidth = 2;
       tabstop = 2;
       splitbelow = true;
+      showmatch = true;
+      ignorecase = true;
+      scrolloff = 5;
+      incsearch = true;
+      writebackup = false;
+      backup = false;
     };
     vimAlias = true;
     viAlias = true;
@@ -27,6 +33,7 @@
           ts_ls.enable = true;
           kotlin_language_server.enable = true;
           marksman.enable = true;
+          gopls.enable = true;
         };
       };
       lsp-format.enable = true;
@@ -34,11 +41,15 @@
         enable = true;
         disableNetrw = true;
         hijackNetrw = true;
+        filters = {
+          dotfiles = true;
+        };
         onAttach = {
           __raw = ''
             vim.api.nvim_set_keymap("n", "<C-n>", ":NvimTreeToggle<CR>", { noremap = true, silent = true })
           '';
         };
+        updateFocusedFile.enable = true;
       };
       none-ls = {
         enable = true;
