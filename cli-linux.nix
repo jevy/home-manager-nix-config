@@ -19,6 +19,7 @@
     xsv
     bashmount
     ncdu
+    grpcurl
   ];
 
   programs.kitty = {
