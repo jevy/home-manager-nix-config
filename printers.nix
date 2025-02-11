@@ -6,7 +6,7 @@
   # Enable CUPS to print documents.
   services.printing = {
     enable = true;
-    drivers = [pkgs.hplip pkgs.brlaser];
+    drivers = [pkgs.hplip pkgs.brlaser pkgs.cups-brother-hll3230cdw];
   };
 
   services.avahi = {
