@@ -18,11 +18,17 @@
   # Jevin - If need to regenerate the deviceUri: To add the printer; 1. `nix-shell -p hplip` 2. hp-makeuri <IP> 3. Add that URL to cups
   # Model = `lminfo -m`
   hardware.printers.ensurePrinters = [
+    # {
+    #   model = "drv:///hp/hpcups.drv/hp-officejet_pro_9010_series.ppd";
+    #   deviceUri = "hp:/net/HP_OfficeJet_Pro_9010_series?ip=192.168.1.76";
+    #   location = "Basement";
+    #   name = "HP_Officejet_Pro_9010";
+    # }
     {
-      model = "drv:///hp/hpcups.drv/hp-officejet_pro_9010_series.ppd";
-      deviceUri = "hp:/net/HP_OfficeJet_Pro_9010_series?ip=192.168.1.76";
+      model = "everywhere";
+      deviceUri = "ipp://192.168.3.225/ipp";
       location = "Basement";
-      name = "HP_Officejet_Pro_9010";
+      name = "BrotherHL_L3270CDW";
     }
   ];
 }
