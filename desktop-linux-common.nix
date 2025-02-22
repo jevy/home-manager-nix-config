@@ -72,6 +72,7 @@
     ddcui
     psst
     unstable.ghostty
+    unstable.repomix
   ];
 
   services.wlsunset = {

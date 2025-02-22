@@ -75,6 +75,8 @@
         "helm"
         "man"
         "tmux"
+        "docker-compose"
+        "docker"
       ];
     };
   };
