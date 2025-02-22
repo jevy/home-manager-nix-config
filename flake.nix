@@ -37,7 +37,8 @@
         modules = modules;
       };
 
-    unstableOverlay = self: super: {
+    # Overlay for Linux
+    unstableOverlayLinux = self: super: {
       unstable = import inputs.unstable {
         system = "x86_64-linux";
         config.allowUnfree = true;
@@ -47,9 +48,29 @@
       };
     };
 
+    # Overlay for macOS (change "aarch64-darwin" to "x86_64-darwin" if you are on Intel)
+    unstableOverlayDarwin = self: super: {
+      unstable = import inputs.unstable {
+        system = "aarch64-darwin";
+        config.allowUnfree = true;
+        config.permittedInsecurePackages = [
+          "electron-25.9.0"
+        ];
+      };
+    };
+
     macModules = [
+      # Insert the overlay for mac here
+      ({
+        config,
+        pkgs,
+        ...
+      }: {
+        nixpkgs.overlays = [unstableOverlayDarwin];
+      })
+
       ./home-mac.nix
-      ./nixvim.nix
+      inputs.sops-nix.homeManagerModules.sops
       ./zsh-spellbook.nix
       ./zsh.nix
       ./cli-common.nix
@@ -57,6 +78,8 @@
       stylix.homeManagerModules.stylix
       ./theme-mac.nix
       ./taskwarrior-work.nix
+      inputs.nixvim.homeManagerModules.nixvim
+      ./nixvim.nix
       {
         home = {
           username = "jevin";
@@ -65,14 +88,16 @@
       }
     ];
 
-    # pythonEnv = import ./pythonEnv.nix {inherit pkgs;};
-
     linuxModules = [
+      # Insert the overlay for Linux
       ({
         config,
         pkgs,
         ...
-      }: {nixpkgs.overlays = [unstableOverlay];})
+      }: {
+        nixpkgs.overlays = [unstableOverlayLinux];
+      })
+
       ./nixos/configuration.nix
       ./nixos/hardware-configuration.nix
       ./printers.nix
@@ -94,7 +119,6 @@
                 inputs.nixvim.homeManagerModules.nixvim
                 ./nixvim.nix
               ];
-              # home.packages = [pythonEnv];
             };
           };
         };
@@ -102,11 +126,15 @@
       home-manager.nixosModules.home-manager
     ];
   in {
+    # Linux system
     nixosConfigurations = {
       x86_64-linux = mkSystemConfiguration "x86_64-linux" linuxModules;
     };
+
+    # macOS Home Manager
     homeConfigurations = {
       jevin = home-manager.lib.homeManagerConfiguration {
+        # Switch to x86_64-darwin if you have an Intel Mac
         pkgs = nixpkgs.legacyPackages.aarch64-darwin;
         extraSpecialArgs = {inherit inputs;};
         modules = macModules;
