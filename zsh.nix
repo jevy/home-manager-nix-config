@@ -25,10 +25,10 @@
     enable = true;
     enableCompletion = true;
     # autosuggestion.enable = true;
-    initExtra = ''
-      export OPENAI_API_KEY=$(cat ${config.sops.secrets.openai_api_key.path})
-      export ANTHROPIC_API_KEY=$(cat ${config.sops.secrets.anthropic_api_key.path})
-    '';
+    # initExtra = ''
+    #   export OPENAI_API_KEY=$(cat ${config.sops.secrets.openai_api_key.path})
+    #   export ANTHROPIC_API_KEY=$(cat ${config.sops.secrets.anthropic_api_key.path})
+    # '';
     plugins = [
       {
         name = "zsh-nix-shell";

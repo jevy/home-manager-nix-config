@@ -6,6 +6,12 @@
   # See the generated vimrc: nixvim-print-init
   programs.nixvim = {
     enable = true;
+    extraPlugins = [pkgs.vimPlugins.leap-nvim];
+    extraConfigLua =
+      # lua
+      ''
+        local leap = require("leap")
+      '';
     colorschemes.gruvbox.enable = true;
     opts = {
       relativenumber = true;
@@ -30,7 +36,7 @@
         enable = true;
         servers = {
           nil_ls.enable = true; # nix
-          ts_ls.enable = true;
+          # ts_ls.enable = true;
           kotlin_language_server.enable = true;
           marksman.enable = true;
           gopls.enable = true;
@@ -85,10 +91,19 @@
         settings = {
           indent.enable = true;
           highlight.enable = true;
+          incremental_selection = {
+            enable = true;
+            keymaps = {
+              init_selection = false;
+              node_decremental = "grl"; # less
+              node_incremental = "grm"; # more
+              scope_incremental = "grc";
+            };
+          };
         };
-
         grammarPackages = with pkgs.vimPlugins.nvim-treesitter.builtGrammars; [
           bash
+          csv
           dockerfile
           json
           lua
@@ -96,18 +111,84 @@
           make
           markdown
           nix
+          gitcommit
+          gitignore
           javascript
           json
           ruby
           regex
           toml
+          typescript
+          tsx
           vim
           vimdoc
           yaml
         ];
       };
       treesitter-context.enable = true;
-      treesitter-textobjects.enable = true;
+      treesitter-textobjects = {
+        enable = true;
+        select = {
+          enable = true;
+          lookahead = false;
+          keymaps = {
+            "af" = "@function.outer";
+            "if" = "@function.inner";
+            "il" = "@loop.inner";
+            "al" = "@loop.outer";
+            "icd" = "@conditional.inner";
+            "acd" = "@conditional.outer";
+            "acm" = "@comment.outer";
+            "ast" = "@statement.outer";
+            "isc" = "@scopename.inner";
+            "iB" = "@block.inner"; # Mini uses this for brackets
+            "aB" = "@block.outer";
+            "ia" = "@parameter.inner";
+            "aa" = "@parameter.outer";
+          };
+        };
+        move = {
+          enable = true;
+          setJumps = true;
+          gotoNextStart = {
+            "]m" = "@function.outer";
+            "]im" = "@function.inner";
+            ")" = "@parameter.inner";
+            "]c" = "@call.outer";
+            "]ic" = "@call.inner";
+          };
+          gotoNextEnd = {
+            "]M" = "@function.outer";
+            "]iM" = "@function.inner";
+            "g)" = "@parameter.inner";
+            "]C" = "@call.outer";
+            "]iC" = "@call.inner";
+          };
+          gotoPreviousStart = {
+            "[m" = "@function.outer";
+            "[im" = "@function.inner";
+            "(" = "@parameter.inner";
+            "[c" = "@call.outer";
+            "[ic" = "@call.inner";
+          };
+          gotoPreviousEnd = {
+            "[M" = "@function.outer";
+            "[iM" = "@function.inner";
+            "g(" = "@parameter.inner";
+            "[C" = "@call.outer";
+            "[iC" = "@call.inner";
+          };
+        };
+        lspInterop = {
+          enable = true;
+          border = "none";
+          floatingPreviewOpts = {};
+          peekDefinitionCode = {
+            "<leader>df" = "@function.outer";
+            "<leader>dF" = "@class.outer";
+          };
+        };
+      };
     };
   };
 }
