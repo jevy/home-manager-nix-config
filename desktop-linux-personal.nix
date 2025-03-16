@@ -39,10 +39,7 @@
 
     protonup-qt
     steamtinkerlaunch
-    bitwig-studio
-    terraform
     llm
-    talosctl
     fluxcd
     kustomize
     mqttx
