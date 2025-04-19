@@ -129,7 +129,7 @@
         };
         # Framework (again?)
         "BOE 0x095F Unknown" = {
-          pos = "3816 3317";
+          pos = "7177 4320";
           resolution = "2256x1504";
           scale = "1.5";
         };
