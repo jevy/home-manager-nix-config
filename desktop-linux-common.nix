@@ -53,7 +53,6 @@
     swayidle
     swaylock
     alsa-utils
-    lens
     velero
     restic
     masterpdfeditor
@@ -87,6 +86,7 @@
   programs.go.enable = true;
   programs.java.enable = true;
   programs.direnv.enable = true;
+  programs.qutebrowser.enable = true;
 
   programs.zed-editor = {
     enable = true;
