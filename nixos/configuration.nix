@@ -119,6 +119,26 @@
   };
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
   # networking.enableIPv6 = false;
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = [
+      80
+      22
+      8080 # Python connection test
+      27124 # Obsidian REST for MCP
+      27123 # Obsidian REST for MCP
+    ];
+
+    # interfaces = {
+    #   docker0 = {
+    #     allowedTCPPorts = [
+    #       8080 # Python connection test
+    #       27124 # Obsidian REST for MCP
+    #       27123 # Obsidian REST for MCP
+    #     ];
+    #   };
+    # };
+  };
 
   # Set your time zone.
   time.timeZone = "America/Toronto";
