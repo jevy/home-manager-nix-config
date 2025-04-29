@@ -105,16 +105,6 @@
       };
 
       output = {
-        "Goldstar Company Ltd LG ULTRAGEAR 106NTLE12344" = {
-          pos = "2570 1440";
-          resolution = "3440x1440";
-          scale = "1";
-        };
-        "LG Electronics LG ULTRAGEAR 106NTLE12344" = {
-          pos = "5214 2880";
-          resolution = "3440x1440";
-          scale = "1";
-        };
         # Lenovo
         "Unknown 0x5A2D 0x00000000" = {
           pos = "3710 2880";
@@ -132,18 +122,6 @@
           pos = "7177 4320";
           resolution = "2256x1504";
           scale = "1.5";
-        };
-        "Unknown HP Z27 CN49020L9R" = {
-          pos = "6010 1440";
-          resolution = "1920x1200";
-          scale = "1";
-          transform = "270";
-        };
-        "HP Inc. HP Z27 CN49020L9R" = {
-          pos = "8654 2880";
-          resolution = "3840x2160";
-          scale = "2";
-          transform = "270";
         };
         "Dell Inc. Dell U4924DW 3KWV0S3" = {
           pos = "5320 2880";
