@@ -19,8 +19,16 @@
         {command = "${config.programs.waybar.package}/bin/waybar";}
       ];
 
+      floating = {
+        titlebar = true;
+        border = 5;
+      };
+
       gaps = {
         smartBorders = "on";
+        smartGaps = false;
+        inner = 0;
+        outer = 0;
       };
 
       assigns = {
@@ -212,6 +220,8 @@
           "XF86AudioPrev" = "exec ${pkgs.playerctl}/bin/playerctl previous";
           "Print" = "exec ${pkgs.grim}/bin/grim -g \"$(${pkgs.slurp}/bin/slurp)\" - | ${pkgs.swappy}/bin/swappy -f -";
           "${modifier}+n" = "exec ${pkgs.mako}/bin/makoctl dismiss";
+          "${modifier}+g" = "gaps horizontal current toggle 1300"; # For ultrawide single window
+          "${modifier}+f" = "floating toggle";
         };
 
       keycodebindings = {
