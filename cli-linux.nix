@@ -20,6 +20,7 @@
     bashmount
     ncdu
     grpcurl
+    dysk
   ];
 
   programs.kitty = {
