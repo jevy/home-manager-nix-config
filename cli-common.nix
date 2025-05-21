@@ -15,7 +15,7 @@ in {
     ranger
     git
     speedtest-cli
-    k9s
+    unstable.k9s
     kubectl
     ripgrep
     ripgrep-all
