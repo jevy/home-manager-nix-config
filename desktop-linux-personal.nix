@@ -20,9 +20,7 @@
     # arduino
     hugo
     steam
-    # ansible
     gcalcli
-    # # etcher
 
     bambu-studio
     rpi-imager
@@ -46,6 +44,9 @@
     mqttui
     spotify-player
     unstable.aider-chat
+    hypnotix
+    unstable.qdmr
+    calibre
   ];
 
   wayland.windowManager.sway = {
