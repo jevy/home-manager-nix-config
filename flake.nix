@@ -13,6 +13,10 @@
       url = "github:nix-community/nixvim/nixos-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    mcp-config = {
+      url = "path:./mcp";
+      inputs.nixpkgs.follows = "unstable";
+    };
   };
 
   outputs = {
@@ -25,6 +29,7 @@
     nixos-hardware,
     sops-nix,
     nixvim,
+    mcp-config,
     ...
   } @ inputs: let
     system = "x86_64-linux";
@@ -89,7 +94,6 @@
     ];
 
     linuxModules = [
-      # Insert the overlay for Linux
       ({
         config,
         pkgs,
@@ -118,6 +122,11 @@
                 inputs.sops-nix.homeManagerModules.sops
                 inputs.nixvim.homeManagerModules.nixvim
                 ./nixvim.nix
+                ({pkgs, ...}: {
+                  home.packages = [
+                    inputs.mcp-config.packages.${pkgs.system}.default
+                  ];
+                })
               ];
             };
           };
@@ -142,3 +151,4 @@
     };
   };
 }
+
