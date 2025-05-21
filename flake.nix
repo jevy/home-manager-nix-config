@@ -123,9 +123,16 @@
                 inputs.nixvim.homeManagerModules.nixvim
                 ./nixvim.nix
                 ({pkgs, ...}: {
+                  # Only put the executables BuildEnv in your packages
                   home.packages = [
-                    inputs.mcp-config.packages.${pkgs.system}.default
+                    inputs.mcp-config.packages."x86_64-linux".default # Use literal system key
                   ];
+
+                  # Drop the JSON out to ~/.config/mcp_servers/generated_mcp_config.json
+                  # Now using the direct output from mcp/flake.nix as the source path,
+                  # assuming generatedMcpConfig is the path to the file itself.
+                  home.file.".config/mcp_servers/generated_mcp_config.json".source =
+                    inputs.mcp-config.packages."x86_64-linux".generatedMcpConfig; # Use literal system key
                 })
               ];
             };
