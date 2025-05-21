@@ -51,6 +51,10 @@
   services.tailscale = {
     enable = true;
     useRoutingFeatures = "client";
+    extraSetFlags = [
+      "--accept-dns=true"
+      "--exit-node=''"
+    ];
   };
 
   # Idea taken from [dreamsofcode](https://github.com/dreamsofcode-io/home-row-mods)
