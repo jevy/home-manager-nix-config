@@ -53,9 +53,11 @@
     useRoutingFeatures = "client";
     extraSetFlags = [
       "--accept-dns=true"
-      "--exit-node=''"
     ];
   };
+
+  # Some kind of tailscale issue
+  systemd.services.tailscaled.after = ["systemd-networkd-wait-online.service"];
 
   # Idea taken from [dreamsofcode](https://github.com/dreamsofcode-io/home-row-mods)
   services.kanata = {
@@ -153,7 +155,6 @@
   programs._1password-gui = {
     enable = true;
     polkitPolicyOwners = ["jevin"];
-    package = pkgs._1password-gui;
   };
 
   # services.xserver.enable = true;

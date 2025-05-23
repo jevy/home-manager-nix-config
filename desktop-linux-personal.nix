@@ -39,6 +39,7 @@
     steamtinkerlaunch
     llm
     fluxcd
+    unstable.fluxcd-operator
     kustomize
     mqttx
     mqttui

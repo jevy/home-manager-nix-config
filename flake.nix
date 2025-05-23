@@ -13,8 +13,8 @@
       url = "github:nix-community/nixvim/nixos-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    mcp-config = {
-      url = "path:./mcp";
+    mcp-servers-nix = {
+      url = "github:natsukium/mcp-servers-nix";
       inputs.nixpkgs.follows = "unstable";
     };
   };
@@ -29,11 +29,19 @@
     nixos-hardware,
     sops-nix,
     nixvim,
-    mcp-config,
+    mcp-servers-nix,
     ...
   } @ inputs: let
     system = "x86_64-linux";
     pkgs = nixpkgs.legacyPackages.${system};
+
+    generateMcpOutputs = import ./mcp/config.nix;
+
+    mcpOutputs = generateMcpOutputs {
+      unstablePkgsInput = inputs.unstable;
+      mcpServersNixInput = inputs.mcp-servers-nix;
+      inherit system;
+    };
 
     mkSystemConfiguration = system: modules:
       nixpkgs.lib.nixosSystem {
@@ -49,6 +57,46 @@
         config.allowUnfree = true;
         config.permittedInsecurePackages = [
           "electron-25.9.0"
+        ];
+        overlays = [
+          (final: prev: {
+            fluxcd-operator = prev.fluxcd-operator.overrideAttrs (oldAttrs: {
+              version = "0.20.0";
+              src = prev.fetchFromGitHub {
+                owner = "controlplaneio-fluxcd";
+                repo = "flux-operator";
+                rev = "v0.20.0";
+                hash = "sha256-GGHufHUqTylgynK19aaj4KAawlzzuz3iSEHa+vVVPMM=";
+              };
+
+              vendorHash = "sha256-5uT/pcfXrinyJ1hXmQ+vmWNuyO33c6d5PAjm6kwOZmY=";
+
+              subPackages = ["cmd/cli" "cmd/mcp"];
+
+              ldflags = [
+                "-s"
+                "-w"
+                "-X main.VERSION=0.20.0"
+              ];
+
+              env.CGO_ENABLED = "0";
+
+              doCheck = false;
+
+              postInstall = ''
+                # Rename the CLI binary to flux-operator (keeping original behavior)
+                mv $out/bin/cli $out/bin/flux-operator
+                # Rename the MCP binary to flux-operator-mcp
+                mv $out/bin/mcp $out/bin/flux-operator-mcp
+              '';
+
+              meta =
+                oldAttrs.meta
+                // {
+                  description = "Kubernetes CRD controller that manages the lifecycle of CNCF Flux CD with MCP server support";
+                };
+            });
+          })
         ];
       };
     };
@@ -112,6 +160,7 @@
         home-manager = {
           useGlobalPkgs = true;
           useUserPackages = true;
+          backupFileExtension = "backup";
           extraSpecialArgs = {
             inherit stylix muttdown;
           };
@@ -122,18 +171,20 @@
                 inputs.sops-nix.homeManagerModules.sops
                 inputs.nixvim.homeManagerModules.nixvim
                 ./nixvim.nix
-                ({pkgs, ...}: {
-                  # Only put the executables BuildEnv in your packages
-                  home.packages = [
-                    inputs.mcp-config.packages."x86_64-linux".default # Use literal system key
-                  ];
+                (
+                  {...}: {
+                    home.packages = [
+                      mcpOutputs.default
+                    ];
 
-                  # Drop the JSON out to ~/.config/mcp_servers/generated_mcp_config.json
-                  # Now using the direct output from mcp/flake.nix as the source path,
-                  # assuming generatedMcpConfig is the path to the file itself.
-                  home.file.".config/mcp_servers/generated_mcp_config.json".source =
-                    inputs.mcp-config.packages."x86_64-linux".generatedMcpConfig; # Use literal system key
-                })
+                    # First, create the settings directory
+                    home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/.keep".text = "";
+
+                    # Then, place the file inside it
+                    home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json".source =
+                      mcpOutputs.generatedMcpConfig;
+                  }
+                )
               ];
             };
           };
@@ -151,11 +202,13 @@
     homeConfigurations = {
       jevin = home-manager.lib.homeManagerConfiguration {
         # Switch to x86_64-darwin if you have an Intel Mac
-        pkgs = nixpkgs.legacyPackages.aarch64-darwin;
-        extraSpecialArgs = {inherit inputs;};
+        pkgs = nixpkgs.legacyPackages.aarch64-darwin; # This is for macOS specific packages
+        extraSpecialArgs = {
+          inherit inputs;
+          # If mcpOutputs were needed for macOS, you'd define and pass a mac-specific version
+        };
         modules = macModules;
       };
     };
   };
 }
-
