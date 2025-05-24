@@ -36,4 +36,5 @@
 }
   imports = [
     ./stylix-common.nix
+    inputs.spicetify-nix.homeManagerModules.spicetify
   ];
