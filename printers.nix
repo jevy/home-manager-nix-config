@@ -24,11 +24,11 @@
     #   location = "Basement";
     #   name = "HP_Officejet_Pro_9010";
     # }
-    {
-      model = "everywhere";
-      deviceUri = "ipp://192.168.3.225/ipp";
-      location = "Basement";
-      name = "BrotherHL_L3270CDW";
-    }
+    # {
+    #   model = "everywhere";
+    #   deviceUri = "ipp://192.168.3.225/ipp";
+    #   location = "Basement";
+    #   name = "BrotherHL_L3270CDW";
+    # }
   ];
 }

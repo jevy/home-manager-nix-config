@@ -16,7 +16,7 @@
     kitty
     ripgrep-all
     btop
-    xsv
+    xan
     bashmount
     ncdu
     grpcurl
