@@ -2,13 +2,13 @@
   config,
   lib,
   pkgs,
+  spicetify-nix,
   ...
 }: {
   home.packages = with pkgs; [
     libreoffice
     gimp
     discord
-    spotify
     unstable.obsidian
     pavucontrol
     slack
@@ -82,7 +82,7 @@
     systemdTarget = "sway-session.target";
   };
 
-  # services.mpris-proxy.enable = true;
+  programs.spotify-player.enable = true;
 
   programs.go.enable = true;
   programs.java.enable = true;
@@ -131,14 +131,18 @@
 
   programs.firefox = {
     enable = true;
-    profiles.default = {}; # Ensure the default profile is enabled
+    profiles.default = {};
+  };
+
+  programs.spicetify = {
+    enable = true;
   };
 
   stylix.targets.firefox = {
     enable = false;
     profileNames = ["default"];
   };
-
+  
   services.keybase.enable = true;
 
   programs.neovide = {

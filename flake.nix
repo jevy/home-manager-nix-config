@@ -8,6 +8,7 @@
     unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     stylix.url = "github:danth/stylix/release-25.05";
     muttdown.url = "github:jevy/muttdown";
+    spicetify-nix.url = "github:Gerg-L/spicetify-nix/24.11";
     sops-nix.url = "github:Mic92/sops-nix";
     nixvim = {
       url = "github:nix-community/nixvim/nixos-25.05";
@@ -30,6 +31,7 @@
     sops-nix,
     nixvim,
     mcp-servers-nix,
+    spicetify-nix,
     ...
   } @ inputs: let
     system = "x86_64-linux";
@@ -164,7 +166,7 @@
           useUserPackages = true;
           backupFileExtension = "backup";
           extraSpecialArgs = {
-            inherit stylix muttdown;
+            inherit inputs stylix muttdown;
           };
           users = {
             jevin = {
@@ -214,3 +216,4 @@
     };
   };
 }
+

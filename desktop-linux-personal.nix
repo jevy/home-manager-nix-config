@@ -43,7 +43,6 @@
     kustomize
     mqttx
     mqttui
-    spotify-player
     unstable.aider-chat
     hypnotix
     unstable.qdmr
