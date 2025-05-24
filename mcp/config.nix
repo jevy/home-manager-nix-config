@@ -71,14 +71,6 @@ let
       --set TZDIR "${pkgs_for_mkconfig.tzdata}/share/zoneinfo"
   '';
 
-  # Create wrapper for mcp-server-fetch
-  fetchWrapper = pkgs_for_mkconfig.runCommand "mcp-server-fetch-wrapper" {
-    buildInputs = [ pkgs_for_mkconfig.makeWrapper ];
-  } ''
-    mkdir -p $out/bin
-    makeWrapper ${pkgs_for_mcp_executables.mcp-server-fetch}/bin/mcp-server-fetch $out/bin/mcp-server-fetch-wrapper
-  '';
-
   # Create wrapper for mcp-server-git
   gitWrapper = pkgs_for_mkconfig.runCommand "mcp-server-git-wrapper" {
     buildInputs = [ pkgs_for_mkconfig.makeWrapper ];
@@ -105,7 +97,6 @@ in
     name = "mcp-server-executables";
     paths = [
       timeWrapper
-      fetchWrapper
       gitWrapper
       fluxMcpWrapper
     ];
@@ -116,7 +107,6 @@ in
     programs = {
       # Disable the built-in modules since we're using custom wrappers
       time.enable = false;
-      fetch.enable = false;
       git.enable = false;
       # TODO add (as per your original mcp/flake.nix)
       # Obsidian
@@ -136,10 +126,6 @@ in
         '';
       in {
         # Use our custom wrappers instead of the built-in modules
-        "fetch" = {
-          command = "${fetchWrapper}/bin/mcp-server-fetch-wrapper";
-          args = [];
-        };
         "git" = {
           command = "${gitWrapper}/bin/mcp-server-git-wrapper";
           args = [];
