@@ -3,7 +3,7 @@
 # - unstablePkgsInput: The raw 'inputs.unstable' from your main flake.
 # - mcpServersNixInput: The 'inputs.mcp-servers-nix' from your main flake.
 # - system: The target system architecture (e.g., "x86_64-linux").
-{ unstablePkgsInput, mcpServersNixInput, system ? "x86_64-linux" }:
+{ unstablePkgsInput, mcpServersNixInput, system ? "x86_64-linux", user ? "jevin" }:
 
 let
   # pkgs instance from 'unstable' *with* the mcp-servers-nix overlay.
@@ -62,41 +62,40 @@ let
   };
 
   # Create wrapper for mcp-server-time with proper timezone data access
-  timeWrapper = pkgs_for_mkconfig.writeShellScriptBin "mcp-server-time-wrapper" ''
-    #!${pkgs_for_mkconfig.stdenv.shell}
-    # Set timezone data path for Python's zoneinfo module
-    export PYTHONPATH="${pkgs_for_mkconfig.python3Packages.tzdata}/${pkgs_for_mkconfig.python3.sitePackages}:$PYTHONPATH"
-    # Set system timezone data as fallback
-    export TZDIR="${pkgs_for_mkconfig.tzdata}/share/zoneinfo"
-    # Execute the actual mcp-server-time with all arguments
-    exec "${pkgs_for_mcp_executables.mcp-server-time}/bin/mcp-server-time" "$@"
+  timeWrapper = pkgs_for_mkconfig.runCommand "mcp-server-time-wrapper" {
+    buildInputs = [ pkgs_for_mkconfig.makeWrapper ];
+  } ''
+    mkdir -p $out/bin
+    makeWrapper ${pkgs_for_mcp_executables.mcp-server-time}/bin/mcp-server-time $out/bin/mcp-server-time-wrapper \
+      --set PYTHONPATH "${pkgs_for_mkconfig.python3Packages.tzdata}/${pkgs_for_mkconfig.python3.sitePackages}" \
+      --set TZDIR "${pkgs_for_mkconfig.tzdata}/share/zoneinfo"
   '';
 
   # Create wrapper for mcp-server-fetch
-  fetchWrapper = pkgs_for_mkconfig.writeShellScriptBin "mcp-server-fetch-wrapper" ''
-    #!${pkgs_for_mkconfig.stdenv.shell}
-    exec "${pkgs_for_mcp_executables.mcp-server-fetch}/bin/mcp-server-fetch" "$@"
+  fetchWrapper = pkgs_for_mkconfig.runCommand "mcp-server-fetch-wrapper" {
+    buildInputs = [ pkgs_for_mkconfig.makeWrapper ];
+  } ''
+    mkdir -p $out/bin
+    makeWrapper ${pkgs_for_mcp_executables.mcp-server-fetch}/bin/mcp-server-fetch $out/bin/mcp-server-fetch-wrapper
   '';
 
   # Create wrapper for mcp-server-git
-  gitWrapper = pkgs_for_mkconfig.writeShellScriptBin "mcp-server-git-wrapper" ''
-    #!${pkgs_for_mkconfig.stdenv.shell}
-    # Ensure git is available in PATH
-    export PATH="${pkgs_for_mkconfig.git}/bin:$PATH"
-    exec "${pkgs_for_mcp_executables.mcp-server-git}/bin/mcp-server-git" "$@"
+  gitWrapper = pkgs_for_mkconfig.runCommand "mcp-server-git-wrapper" {
+    buildInputs = [ pkgs_for_mkconfig.makeWrapper ];
+  } ''
+    mkdir -p $out/bin
+    makeWrapper ${pkgs_for_mcp_executables.mcp-server-git}/bin/mcp-server-git $out/bin/mcp-server-git-wrapper \
+      --prefix PATH : ${pkgs_for_mkconfig.git}/bin
   '';
 
-  # Flux MCP Server wrapper
-  fluxMcpWrapper = pkgs_for_mkconfig.writeShellScriptBin "run-flux-operator-mcp" ''
-    #!${pkgs_for_mkconfig.stdenv.shell}
-    
-    # Set default KUBECONFIG if not already set
-    if [ -z "$KUBECONFIG" ]; then
-      export KUBECONFIG="$HOME/.kube/config"
-    fi
-    
-    # Execute flux-operator-mcp with serve command and any additional args
-    exec ${pkgs_for_mkconfig.fluxcd-operator}/bin/flux-operator-mcp serve "$@"
+  # Flux MCP Server wrapper using makeWrapper
+  fluxMcpWrapper = pkgs_for_mkconfig.runCommand "run-flux-operator-mcp" {
+    buildInputs = [ pkgs_for_mkconfig.makeWrapper ];
+  } ''
+    mkdir -p $out/bin
+    makeWrapper ${pkgs_for_mkconfig.fluxcd-operator}/bin/flux-operator-mcp $out/bin/run-flux-operator-mcp \
+      --add-flags "serve" \
+      --set KUBECONFIG "/home/${user}/.kube/config"
   '';
 
 in
@@ -126,12 +125,14 @@ in
     fileName = "mcp_settings.json";
     settings = {
       servers = let
-        kubernetesWrapper = pkgs_for_mkconfig.writeShellScriptBin "run-mcp-kubernetes" ''
-          #!${pkgs_for_mkconfig.stdenv.shell}
-          # Add nodejs to PATH so npx can find node for the executed script
-          export PATH="${pkgs_for_mkconfig.nodejs}/bin:$PATH"
-          # Execute npx with its original arguments, passing along any arguments given to this wrapper
-          exec "${pkgs_for_mkconfig.lib.getExe' pkgs_for_mkconfig.nodejs "npx"}" -y mcp-server-kubernetes "$@"
+        kubernetesWrapper = pkgs_for_mkconfig.runCommand "run-mcp-kubernetes" {
+          buildInputs = [ pkgs_for_mkconfig.makeWrapper ];
+        } ''
+          mkdir -p $out/bin
+          makeWrapper ${pkgs_for_mkconfig.lib.getExe' pkgs_for_mkconfig.nodejs "npx"} $out/bin/run-mcp-kubernetes \
+            --add-flags "-y" \
+            --add-flags "mcp-server-kubernetes" \
+            --prefix PATH : ${pkgs_for_mkconfig.nodejs}/bin
         '';
       in {
         # Use our custom wrappers instead of the built-in modules
@@ -154,9 +155,6 @@ in
         "flux-operator-mcp" = {
           command = "${fluxMcpWrapper}/bin/run-flux-operator-mcp";
           args = [];
-          env = {
-            # KUBECONFIG will be set by the wrapper if not already present
-          };
         };
       };
     };
