@@ -41,12 +41,16 @@
       unstablePkgsInput = inputs.unstable;
       mcpServersNixInput = inputs.mcp-servers-nix;
       inherit system;
+      user = "jevin";
     };
 
     mkSystemConfiguration = system: modules:
       nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = {inherit inputs;};
+        specialArgs = {
+          inherit inputs;
+          user = "jevin";
+        };
         modules = modules;
       };
 
