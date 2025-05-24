@@ -133,7 +133,6 @@
       ./cli-common.nix
       ./desktop-mac.nix
       stylix.homeManagerModules.stylix
-      ./stylix-common.nix
       ./taskwarrior-work.nix
       inputs.nixvim.homeManagerModules.nixvim
       ./nixvim.nix
@@ -174,26 +173,25 @@
                 inputs.sops-nix.homeManagerModules.sops
                 inputs.nixvim.homeManagerModules.nixvim
                 ./nixvim.nix
-                ./stylix-common.nix # Moved here
-                (
-                  {...}: {
-                    home.packages = [
-                      mcpOutputs.default
-                    ];
-
-                    # First, create the settings directory
-                    home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/.keep".text = "";
-
-                    # Then, place the file inside it
-                    home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json".source =
-                      mcpOutputs.generatedMcpConfig;
-                  }
-                )
-              ];
-            };
-          };
-        };
-      }
+                          (
+                            {...}: {
+                              home.packages = [
+                                mcpOutputs.default
+                              ];
+          
+                              # First, create the settings directory
+                              home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/.keep".text = "";
+          
+                              # Then, place the file inside it
+                              home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json".source =
+                                mcpOutputs.generatedMcpConfig;
+                            }
+                          )
+                        ];
+                      };
+                    };
+                  };
+                }
       home-manager.nixosModules.home-manager
     ];
   in {

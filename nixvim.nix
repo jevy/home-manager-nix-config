@@ -12,7 +12,8 @@
       ''
         local leap = require("leap")
       '';
-    colorschemes.gruvbox.enable = true;
+    # Using stylix nixvim module instead
+    # colorschemes.gruvbox.enable = true;
     opts = {
       relativenumber = true;
       expandtab = true;
