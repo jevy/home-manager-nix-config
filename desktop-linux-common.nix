@@ -131,6 +131,12 @@
 
   programs.firefox = {
     enable = true;
+    profiles.default = {}; # Ensure the default profile is enabled
+  };
+
+  stylix.targets.firefox = {
+    enable = false;
+    profileNames = ["default"];
   };
 
   services.keybase.enable = true;
