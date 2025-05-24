@@ -11,6 +11,7 @@
     ./zsh.nix
     ./cli-linux.nix
     ./desktop-linux-personal.nix
+    ./stylix-common.nix
     ./mutt-quickjack.nix
     # ./amateur_radio.nix
     # ./theme-personal.nix
@@ -18,4 +19,6 @@
     ./sway.nix
     ./music-making.nix
   ];
+
 }
+

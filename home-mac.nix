@@ -34,3 +34,6 @@
     options = ["ctrl:nocaps"];
   };
 }
+  imports = [
+    ./stylix-common.nix
+  ];
