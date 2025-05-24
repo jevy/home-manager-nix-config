@@ -133,7 +133,7 @@
       ./cli-common.nix
       ./desktop-mac.nix
       stylix.homeManagerModules.stylix
-      ./theme-mac.nix
+      ./stylix-common.nix
       ./taskwarrior-work.nix
       inputs.nixvim.homeManagerModules.nixvim
       ./nixvim.nix
@@ -158,7 +158,6 @@
       ./nixos/hardware-configuration.nix
       ./printers.nix
       stylix.nixosModules.stylix
-      ./theme-linux.nix
       nixos-hardware.nixosModules.framework-12th-gen-intel
       {
         home-manager = {
@@ -175,6 +174,7 @@
                 inputs.sops-nix.homeManagerModules.sops
                 inputs.nixvim.homeManagerModules.nixvim
                 ./nixvim.nix
+                ./stylix-common.nix # Moved here
                 (
                   {...}: {
                     home.packages = [
