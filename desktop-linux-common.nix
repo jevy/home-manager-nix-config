@@ -138,11 +138,16 @@
     enable = true;
   };
 
-  stylix.targets.firefox = {
-    enable = false;
-    profileNames = ["default"];
+  stylix.targets = {
+    firefox = {
+      enable = false;
+      profileNames = ["default"];
+    };
+    vscode = {
+      enable = false;
+    };
   };
-  
+
   services.keybase.enable = true;
 
   programs.neovide = {
