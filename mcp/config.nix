@@ -68,7 +68,8 @@ let
     mkdir -p $out/bin
     makeWrapper ${pkgs_for_mcp_executables.mcp-server-time}/bin/mcp-server-time $out/bin/mcp-server-time-wrapper \
       --set PYTHONPATH "${pkgs_for_mkconfig.python3Packages.tzdata}/${pkgs_for_mkconfig.python3.sitePackages}" \
-      --set TZDIR "${pkgs_for_mkconfig.tzdata}/share/zoneinfo"
+      --set TZDIR "${pkgs_for_mkconfig.tzdata}/share/zoneinfo" \
+      --add-flags "--local-timezone America/Toronto"
   '';
 
   # Create wrapper for mcp-server-git
@@ -90,6 +91,64 @@ let
       --set KUBECONFIG "/home/${user}/.kube/config"
   '';
 
+  # myfitnesspal-mcp package definition (revised)
+  myfitnesspalMcpPkg = pkgs_for_mkconfig.callPackage ({ lib, stdenv, python3, fetchFromGitHub, makeWrapper, python3Packages }:
+    let
+      pythonEnv = python3.withPackages (ps: with ps; [
+        fastapi # uvicorn is a dependency of fastapi
+        mcp # Assuming pkgs_for_mkconfig.python3Packages.mcp based on mcp>=1.9.1 in pyproject.toml
+        myfitnesspal
+        browser-cookie3
+      ]);
+    in
+    stdenv.mkDerivation rec {
+      pname = "myfitnesspal-mcp";
+      version = "0.1.0"; # Or "unstable-YYYY-MM-DD"
+
+      src = fetchFromGitHub {
+        owner = "jevy";
+        repo = "myfitnesspal-mcp";
+        rev = "main";
+        # IMPORTANT: Replace this placeholder hash with the actual hash after running nix-prefetch-url or a build attempt.
+        hash = "sha256-Hxhb64UOgM8DPBtBJNCka0aRKO5GgZjdB4haWN+XLVk="; 
+      };
+
+      nativeBuildInputs = [ makeWrapper ]; # makeWrapper is a build-time tool
+
+      buildPhase = ''
+        echo "Custom buildPhase: Doing nothing here, setup is in installPhase."
+      '';
+
+      installPhase = ''
+        runHook preInstall
+
+        mkdir -p $out/bin
+        mkdir -p $out/lib/python-site-packages
+
+        # Copy the application code
+        cp -R ${src}/src/nutrition_coach $out/lib/python-site-packages/nutrition_coach
+
+        # Create the wrapper script
+        makeWrapper ${pythonEnv}/bin/uvicorn $out/bin/myfitnesspal-mcp-server \
+          --set PYTHONPATH "$out/lib/python-site-packages:${pythonEnv}/${python3.sitePackages}" \
+          --set MYFITNESSPAL_COOKIE_FILE "/home/jevin/myfitnesspal_cookies.txt" \
+          --add-flags "nutrition_coach.api_server:app --host 0.0.0.0 --port 9087"
+
+        runHook postInstall
+      '';
+
+      doCheck = false;
+
+      meta = with lib; {
+        description = "MCP server for MyFitnessPal (custom stdenv build)";
+        homepage = "https://github.com/jevy/myfitnesspal-mcp";
+        license = licenses.asl20; # Verify actual license
+        maintainers = [ ]; # User to fill
+        platforms = platforms.linux;
+      };
+    }
+  ) {};
+
 in
 {
   # Package containing the wrapped MCP server executables
@@ -99,6 +158,7 @@ in
       timeWrapper
       gitWrapper
       fluxMcpWrapper
+      myfitnesspalMcpPkg
     ];
   };
 
@@ -140,6 +200,11 @@ in
         };
         "flux-operator-mcp" = {
           command = "${fluxMcpWrapper}/bin/run-flux-operator-mcp";
+          args = [];
+        };
+        "myfitnesspal-mcp" = {
+          command = "${myfitnesspalMcpPkg}/bin/myfitnesspal-mcp-server";
+          # args are hardcoded in the package's postInstall
           args = [];
         };
       };
