@@ -47,6 +47,7 @@
     hypnotix
     unstable.qdmr
     calibre
+    talosctl
   ];
 
   wayland.windowManager.sway = {
