@@ -6,6 +6,7 @@
   # See the generated vimrc: nixvim-print-init
   programs.nixvim = {
     enable = true;
+    defaultEditor = true;
     extraPlugins = [pkgs.vimPlugins.leap-nvim];
     extraConfigLua =
       # lua
