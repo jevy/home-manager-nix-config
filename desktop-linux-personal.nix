@@ -48,6 +48,7 @@
     unstable.qdmr
     calibre
     talosctl
+    kicad
   ];
 
   wayland.windowManager.sway = {
