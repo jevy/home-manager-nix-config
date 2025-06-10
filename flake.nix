@@ -142,7 +142,6 @@
         home = {
           username = "jevin";
           homeDirectory = "/Users/jevin";
-          sessionVariables = "vim";
         };
       }
     ];
