@@ -41,5 +41,14 @@
     secrets.anthropic_api_key = {
       path = "${config.sops.defaultSymlinkPath}/anthropic_api_key";
     };
+    secrets.gemini_api_key = {
+      path = "${config.sops.defaultSymlinkPath}/gemini_api_key";
+    };
+  };
+
+  home.sessionVariables = {
+    OPENAI_API_KEY = "$(cat ${config.sops.secrets.openai_api_key.path})";
+    ANTHROPIC_API_KEY = "$(cat ${config.sops.secrets.anthropic_api_key.path})";
+    GEMINI_API_KEY = "$(cat ${config.sops.secrets.gemini_api_key.path})";
   };
 }
