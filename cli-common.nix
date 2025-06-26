@@ -38,7 +38,6 @@ in {
     curl
     tree
     gh
-    devenv
     csvlens
     superfile
     lazygit
@@ -48,6 +47,7 @@ in {
     unstable.aichat
     sops # Encryption
     age # Encryption
+    awscli2
   ];
 
   programs.bat = {
