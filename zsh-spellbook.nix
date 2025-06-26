@@ -6,9 +6,10 @@
       if [[ -f /Users/jevin/secrets/node_auth ]]; then
         export NODE_AUTH_TOKEN=$(< /Users/jevin/secrets/node_auth)
       fi
-      if [[ -f /Users/jevin/secrets/anthropic ]]; then
-        export ANTHROPIC_API_KEY=$(< /Users/jevin/secrets/anthropic)
-      fi
+      # Clear API keys to avoid using personal keys at work
+      unset ANTHROPIC_API_KEY
+      unset OPENAI_API_KEY
+      unset GEMINI_API_KEY
     '';
   };
   home.shellAliases = {
