@@ -7,12 +7,22 @@
   programs.nixvim = {
     enable = true;
     defaultEditor = true;
-    extraPlugins = [pkgs.vimPlugins.leap-nvim];
+    extraPlugins = [
+      pkgs.vimPlugins.leap-nvim
+      pkgs.vimPlugins.vim-rooter
+    ];
     extraConfigLua =
       # lua
       ''
         local leap = require("leap")
       '';
+    extraConfigVim = ''
+      " vim-rooter configuration
+      let g:rooter_patterns = ['.git', 'Makefile', 'package.json', 'flake.nix', 'Cargo.toml', 'pyproject.toml', 'go.mod']
+      let g:rooter_change_directory_for_non_project_files = 'current'
+      let g:rooter_silent_chdir = 0
+      let g:rooter_resolve_links = 1
+    '';
     # Using stylix nixvim module instead
     # colorschemes.gruvbox.enable = true;
     opts = {
