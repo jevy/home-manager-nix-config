@@ -177,7 +177,6 @@
                 inputs.sops-nix.homeManagerModules.sops
                 inputs.nixvim.homeManagerModules.nixvim
                 ./nixvim.nix
-                ./stylix-common.nix
                           (
                             {...}: {
                               home.packages = [
