@@ -173,10 +173,10 @@
       owner = "github";
       repo = "github-mcp-server";
       rev = "main";
-      hash = "sha256-00600as8glm5za44izzacg2wr6j1bnmdgvsxqk3bxwmvi68vb60d";
+      hash = "sha256-DZi1kYm78r7GxF3v16pdQZrMxWPq/0iI+qXSh7QCwAA=";
     };
 
-    vendorHash = "sha256-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="; # Replace with actual hash
+    vendorHash = "sha256-GYfK5QQH0DhoJqc4ynZBWuhhrG5t6KoGpUkZPSfWfEQ=";
 
     subPackages = ["cmd/github-mcp-server"];
 
@@ -185,9 +185,20 @@
     nativeBuildInputs = [pkgs_for_mkconfig.makeWrapper];
 
     postInstall = ''
-      # Create a wrapper to inject the secret
-      makeWrapper $out/bin/github-mcp-server $out/bin/run-github-mcp-server \
-        --set GITHUB_PERSONAL_ACCESS_TOKEN "$(cat /run/user/1000/secrets/github_personal_access_token)"
+      # Move the original binary to avoid a name conflict
+      mv $out/bin/github-mcp-server $out/bin/github-mcp-server-real
+
+      # Create a new wrapper script that will be executed by the MCP client
+      cat > $out/bin/run-github-mcp-server <<EOF
+      #!/bin/sh
+      # Export the token by reading the secret file at runtime, when this script is called
+      export GITHUB_PERSONAL_ACCESS_TOKEN="\$(cat /run/user/1000/secrets/github_personal_access_token)"
+      # Execute the actual server binary, passing through all arguments
+      exec "$out/bin/github-mcp-server-real" "\$@"
+      EOF
+
+      # Make the new wrapper script executable
+      chmod +x $out/bin/run-github-mcp-server
     '';
 
     meta = with pkgs_for_mkconfig.lib; {

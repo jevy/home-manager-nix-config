@@ -35,20 +35,19 @@
 
     defaultSopsFile = ./secrets.yaml;
 
-    secrets.openai_api_key = {
-      path = "${config.sops.defaultSymlinkPath}/openai_api_key";
-    };
-    secrets.anthropic_api_key = {
-      path = "${config.sops.defaultSymlinkPath}/anthropic_api_key";
-    };
-    secrets.gemini_api_key = {
-      path = "${config.sops.defaultSymlinkPath}/gemini_api_key";
-    };
+    secrets.openai_api_key = {};
+    secrets.anthropic_api_key = {};
+    secrets.gemini_api_key = {};
+    secrets.github_personal_access_token = {};
   };
 
-  home.sessionVariables = {
-    OPENAI_API_KEY = "$(cat ${config.sops.secrets.openai_api_key.path})";
-    ANTHROPIC_API_KEY = "$(cat ${config.sops.secrets.anthropic_api_key.path})";
-    GEMINI_API_KEY = "$(cat ${config.sops.secrets.gemini_api_key.path})";
+  home.file.".config/zsh/api_keys.zsh" = {
+    executable = true;
+    text = ''
+      export OPENAI_API_KEY=$(cat ${config.sops.secrets.openai_api_key.path})
+      export ANTHROPIC_API_KEY=$(cat ${config.sops.secrets.anthropic_api_key.path})
+      export GEMINI_API_KEY=$(cat ${config.sops.secrets.gemini_api_key.path})
+      export GITHUB_PERSONAL_ACCESS_TOKEN=$(cat ${config.sops.secrets.github_personal_access_token.path})
+    '';
   };
 }
