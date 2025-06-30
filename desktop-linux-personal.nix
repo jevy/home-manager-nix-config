@@ -37,7 +37,7 @@
 
     protonup-qt
     steamtinkerlaunch
-    llm
+    unstable.llm
     fluxcd
     unstable.fluxcd-operator
     kustomize
