@@ -182,24 +182,6 @@
 
     ldflags = ["-s" "-w"];
 
-    nativeBuildInputs = [pkgs_for_mkconfig.makeWrapper];
-
-    postInstall = ''
-      # Move the original binary to avoid a name conflict
-      mv $out/bin/github-mcp-server $out/bin/github-mcp-server-real
-
-      # Create a new wrapper script that will be executed by the MCP client
-      cat > $out/bin/run-github-mcp-server <<EOF
-      #!/bin/sh
-      # Export the token by reading the secret file at runtime, when this script is called
-      export GITHUB_PERSONAL_ACCESS_TOKEN="\$(cat /run/user/1000/secrets/github_personal_access_token)"
-      # Execute the actual server binary, passing through all arguments
-      exec "$out/bin/github-mcp-server-real" "\$@"
-      EOF
-
-      # Make the new wrapper script executable
-      chmod +x $out/bin/run-github-mcp-server
-    '';
 
     meta = with pkgs_for_mkconfig.lib; {
       description = "GitHub MCP Server built from source";
@@ -248,7 +230,7 @@ in {
       in {
         # Use our custom wrappers instead of the built-in modules
         "github" = {
-          command = "${githubMcpPkg}/bin/run-github-mcp-server";
+          command = "run-github-mcp-server";
           args = ["stdio"];
         };
         "git" = {
