@@ -25,10 +25,11 @@
     enable = true;
     enableCompletion = true;
     # autosuggestion.enable = true;
-    # initExtra = ''
-    #   export OPENAI_API_KEY=$(cat ${config.sops.secrets.openai_api_key.path})
-    #   export ANTHROPIC_API_KEY=$(cat ${config.sops.secrets.anthropic_api_key.path})
-    # '';
+    initContent = ''
+      if [ -f "${config.home.homeDirectory}/.config/zsh/api_keys.zsh" ]; then
+        source "${config.home.homeDirectory}/.config/zsh/api_keys.zsh"
+      fi
+    '';
     plugins = [
       {
         name = "zsh-nix-shell";
