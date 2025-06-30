@@ -164,19 +164,39 @@
         };
       }
   ) {};
-
   # Wrapper for github-mcp-server to inject sops secret
-  githubMcpWrapper =
-    pkgs_for_mkconfig.runCommand "github-mcp-server-wrapper" {
-    } ''
-            mkdir -p $out/bin
-            cat > $out/bin/run-github-mcp-server <<EOF
-      #!${pkgs_for_mkconfig.bash}/bin/bash
-      export GITHUB_PERSONAL_ACCESS_TOKEN=$(cat /run/user/1000/secrets/github_personal_access_token)
-      exec ${pkgs_for_mcp_executables.github-mcp-server}/bin/github-mcp-server "$@"
-      EOF
-            chmod +x $out/bin/run-github-mcp-server
+  githubMcpPkg = pkgs_for_mkconfig.buildGoModule rec {
+    pname = "github-mcp-server";
+    version = "unstable-2024-05-22";
+
+    src = pkgs_for_mkconfig.fetchFromGitHub {
+      owner = "github";
+      repo = "github-mcp-server";
+      rev = "main";
+      hash = "sha256-00600as8glm5za44izzacg2wr6j1bnmdgvsxqk3bxwmvi68vb60d";
+    };
+
+    vendorHash = "sha256-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="; # Replace with actual hash
+
+    subPackages = ["cmd/github-mcp-server"];
+
+    ldflags = ["-s" "-w"];
+
+    nativeBuildInputs = [pkgs_for_mkconfig.makeWrapper];
+
+    postInstall = ''
+      # Create a wrapper to inject the secret
+      makeWrapper $out/bin/github-mcp-server $out/bin/run-github-mcp-server \
+        --set GITHUB_PERSONAL_ACCESS_TOKEN "$(cat /run/user/1000/secrets/github_personal_access_token)"
     '';
+
+    meta = with pkgs_for_mkconfig.lib; {
+      description = "GitHub MCP Server built from source";
+      homepage = "https://github.com/github/github-mcp-server";
+      license = licenses.mit; # As per repository
+      maintainers = [];
+    };
+  };
 in {
   # Package containing the wrapped MCP server executables
   default = pkgs_for_mkconfig.buildEnv {
@@ -186,7 +206,7 @@ in {
       gitWrapper
       fluxMcpWrapper
       myfitnesspalMcpPkg
-      githubMcpWrapper
+      githubMcpPkg
     ];
   };
 
@@ -196,7 +216,7 @@ in {
       # Disable the built-in modules since we're using custom wrappers
       time.enable = true;
       git.enable = true;
-      github.enable = true;
+      github.enable = false; # Keep this disabled to avoid conflicts
       # TODO add (as per your original mcp/flake.nix)
       # Obsidian
     };
@@ -217,8 +237,8 @@ in {
       in {
         # Use our custom wrappers instead of the built-in modules
         "github" = {
-          command = "${githubMcpWrapper}/bin/run-github-mcp-server";
-          args = [];
+          command = "${githubMcpPkg}/bin/run-github-mcp-server";
+          args = ["stdio"];
         };
         "git" = {
           command = "${gitWrapper}/bin/mcp-server-git-wrapper";
