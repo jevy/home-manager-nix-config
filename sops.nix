@@ -12,5 +12,8 @@
       # sopsFile = ./secrets.yml.enc; # optionally define per-secret files
       path = "${defaultSymlinkPath}/openai_api_key";
     };
+    secrets.github_personal_access_token = {
+      path = "${defaultSymlinkPath}/github_personal_access_token";
+    };
   };
 }
