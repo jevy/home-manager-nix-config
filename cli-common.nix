@@ -48,6 +48,7 @@ in {
     sops # Encryption
     age # Encryption
     awscli2
+    unstable.devenv
   ];
 
   programs.bat = {

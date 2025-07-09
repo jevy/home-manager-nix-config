@@ -22,7 +22,7 @@
     steam
     gcalcli
 
-    bambu-studio
+    unstable.bambu-studio
     rpi-imager
     sunpaper
     newsflash
