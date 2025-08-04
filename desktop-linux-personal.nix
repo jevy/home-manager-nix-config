@@ -22,7 +22,8 @@
     steam
     gcalcli
 
-    unstable.bambu-studio
+    # unstable.bambu-studio
+    # unstable.orca-slicer
     rpi-imager
     sunpaper
     newsflash
@@ -49,6 +50,7 @@
     calibre
     talosctl
     kicad
+    unstable.renovate
   ];
 
   wayland.windowManager.sway = {
