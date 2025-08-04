@@ -222,7 +222,6 @@
     pomodoro = "termdown 25m -s -b && ${pkgs.libnotify}/bin/notify-send 'Pomodoro complete. Take a break!'";
     s = "kitty +kitten ssh";
     colordropper = "grim -g \"$(slurp -p)\" -t ppm - | convert - -format '%[pixel:p{0,0}]' txt:-";
-    bambutemp = "nix run nixpkgs/573c650e8a14b2faa0041645ab18aed7e60f0c9a#bambu-studio";
   };
 
   # For Flakpak
