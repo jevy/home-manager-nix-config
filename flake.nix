@@ -63,6 +63,7 @@
         config.allowUnfree = true;
         config.permittedInsecurePackages = [
           "electron-25.9.0"
+          "libsoup-2.74.3"
         ];
         overlays = [
           (final: prev: {
@@ -101,6 +102,16 @@
                 // {
                   description = "Kubernetes CRD controller that manages the lifecycle of CNCF Flux CD with MCP server support";
                 };
+            });
+            
+            bambu-studio = prev.bambu-studio.overrideAttrs (oldAttrs: {
+              version = "02.01.01.52";
+              src = prev.fetchFromGitHub {
+                owner = "bambulab";
+                repo = "BambuStudio";
+                rev = "v02.01.01.52";
+                hash = "sha256-AyHb2Gxa7sWxxZaktfy0YGhITr1RMqmXrdibds5akuQ=";
+              };
             });
           })
         ];
@@ -177,25 +188,25 @@
                 inputs.sops-nix.homeManagerModules.sops
                 inputs.nixvim.homeManagerModules.nixvim
                 ./nixvim.nix
-                          (
-                            {...}: {
-                              home.packages = [
-                                mcpOutputs.default
-                              ];
-          
-                              # First, create the settings directory
-                              home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/.keep".text = "";
-          
-                              # Then, place the file inside it
-                              home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json".source =
-                                mcpOutputs.generatedMcpConfig;
-                            }
-                          )
-                        ];
-                      };
-                    };
-                  };
-                }
+                (
+                  {...}: {
+                    home.packages = [
+                      mcpOutputs.default
+                    ];
+
+                    # First, create the settings directory
+                    home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/.keep".text = "";
+
+                    # Then, place the file inside it
+                    home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json".source =
+                      mcpOutputs.generatedMcpConfig;
+                  }
+                )
+              ];
+            };
+          };
+        };
+      }
       home-manager.nixosModules.home-manager
     ];
   in {
@@ -218,4 +229,3 @@
     };
   };
 }
-
