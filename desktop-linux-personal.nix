@@ -22,7 +22,7 @@
     steam
     gcalcli
 
-    # unstable.bambu-studio
+    bambu-studio
     # unstable.orca-slicer
     rpi-imager
     sunpaper
@@ -51,6 +51,8 @@
     talosctl
     kicad
     unstable.renovate
+    esptool
+    freecad-wayland
   ];
 
   wayland.windowManager.sway = {
