@@ -11,7 +11,7 @@
 in {
   home.packages = with pkgs; [
     wget
-    neofetch
+    fastfetch
     ranger
     git
     speedtest-cli
