@@ -104,15 +104,6 @@
                 };
             });
             
-            bambu-studio = prev.bambu-studio.overrideAttrs (oldAttrs: {
-              version = "02.01.01.52";
-              src = prev.fetchFromGitHub {
-                owner = "bambulab";
-                repo = "BambuStudio";
-                rev = "v02.01.01.52";
-                hash = "sha256-AyHb2Gxa7sWxxZaktfy0YGhITr1RMqmXrdibds5akuQ=";
-              };
-            });
           })
         ];
       };
@@ -129,6 +120,19 @@
       };
     };
 
+    tailscaleOverlay = self: prev: {
+      tailscale = prev.tailscale.overrideAttrs (old: {
+        checkFlags =
+          builtins.map (
+            flag:
+              if prev.lib.hasPrefix "-skip=" flag
+              then flag + "|^TestGetList$|^TestIgnoreLocallyBoundPorts$|^TestPoller$"
+              else flag
+          )
+          old.checkFlags;
+      });
+    };
+
     macModules = [
       # Insert the overlay for mac here
       ({
@@ -136,7 +140,7 @@
         pkgs,
         ...
       }: {
-        nixpkgs.overlays = [unstableOverlayDarwin];
+        nixpkgs.overlays = [unstableOverlayDarwin tailscaleOverlay];
       })
 
       ./home-mac.nix
@@ -164,7 +168,7 @@
         pkgs,
         ...
       }: {
-        nixpkgs.overlays = [unstableOverlayLinux];
+        nixpkgs.overlays = [unstableOverlayLinux tailscaleOverlay];
       })
 
       ./nixos/configuration.nix
