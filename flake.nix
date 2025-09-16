@@ -103,7 +103,19 @@
                   description = "Kubernetes CRD controller that manages the lifecycle of CNCF Flux CD with MCP server support";
                 };
             });
-            
+            volsync = prev.buildGoModule rec {
+              pname = "volsync";
+              version = "latest";
+              src = prev.fetchFromGitHub {
+                owner = "backube";
+                repo = "volsync";
+                rev = "ebdf7e9d66c22802ee4d5e24c897041adc17db90";
+                sha256 = "sha256-SLYVclFk2BsP9waYQHwNsWtLGt5fSRkIgWdeL8Lp1iA=";
+              };
+              proxyVendor = true;
+              vendorHash = "sha256-AuGRtQ2ItAsgDfF3uCAHQCK2lATMqXChxN8Dr98UmGo=";
+              subPackages = ["kubectl-volsync"];
+            };
           })
         ];
       };
