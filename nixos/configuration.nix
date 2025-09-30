@@ -101,12 +101,18 @@
   };
 
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.supportedFilesystems = ["zfs"];
+  boot.supportedFilesystems = ["zfs" "nfs"];
   boot.initrd.luks.devices = {
     root = {
       device = "/dev/nvme0n1p1";
       preLVM = true;
     };
+  };
+
+  fileSystems."/mnt/synology-backup" = {
+    device = "192.168.1.187:/volume1/proxmox";
+    fsType = "nfs";
+    options = ["x-systemd.automount" "noauto" "x-systemd.idle-timeout=600"];
   };
 
   # https://github.com/NixOS/nixpkgs/pull/126777/files
@@ -394,5 +400,5 @@
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "24.11"; # Did you read the comment?
-  boot.kernelPackages = pkgs.linuxPackages_6_15;
+  boot.kernelPackages = pkgs.linuxPackages_6_16;
 }

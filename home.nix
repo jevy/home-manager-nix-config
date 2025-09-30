@@ -53,6 +53,18 @@ in
     secrets.anthropic_api_key = {};
     secrets.gemini_api_key = {};
     secrets.github_personal_access_token = {};
+    secrets.restic_password = {};
+  };
+
+  services.restic = {
+    enable = true;
+    backups = {
+      "synology" = {
+        repository = "rest:http://restic-server.apps:8000/postgresql";
+        passwordFile = config.sops.secrets.restic_password.path;
+        initialize = false;
+      };
+    };
   };
 
   home.packages = [ run-github-mcp-server ];
