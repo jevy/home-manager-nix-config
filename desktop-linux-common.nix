@@ -72,7 +72,7 @@
     psst
     unstable.ghostty
     unstable.repomix
-    tidal-hifi
+    nethogs
   ];
 
   services.wlsunset = {

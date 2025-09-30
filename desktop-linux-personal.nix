@@ -22,8 +22,8 @@
     steam
     gcalcli
 
-    # unstable.bambu-studio
-    # unstable.orca-slicer
+    unstable.bambu-studio
+    unstable.orca-slicer
     rpi-imager
     sunpaper
     newsflash
@@ -48,7 +48,7 @@
     hypnotix
     unstable.qdmr
     calibre
-    talosctl
+    unstable.talosctl
     kicad
     unstable.renovate
     esptool

@@ -37,13 +37,10 @@
     system = "x86_64-linux";
     pkgs = nixpkgs.legacyPackages.${system};
 
-    generateMcpOutputs = import ./mcp/config.nix;
-
-    mcpOutputs = generateMcpOutputs {
+    mcpConfig = import ./mcp/config.nix {
       unstablePkgsInput = inputs.unstable;
       mcpServersNixInput = inputs.mcp-servers-nix;
       inherit system;
-      user = "jevin";
     };
 
     mkSystemConfiguration = system: modules:
@@ -206,16 +203,12 @@
                 ./nixvim.nix
                 (
                   {...}: {
-                    home.packages = [
-                      mcpOutputs.default
-                    ];
-
                     # First, create the settings directory
                     home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/.keep".text = "";
 
                     # Then, place the file inside it
                     home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json".source =
-                      mcpOutputs.generatedMcpConfig;
+                      mcpConfig;
                   }
                 )
               ];
