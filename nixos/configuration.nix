@@ -328,13 +328,13 @@
   # From: https://www.reddit.com/r/VFIO/comments/p4kmxr/tips_for_single_gpu_passthrough_on_nixos/
   # Also need to update: <ioapic driver="kvm"/>
   # Enable libvirtd
-  # virtualisation.libvirtd = {
-  #   enable = true;
-  #   # onBoot = "ignore";
-  #   # onShutdown = "shutdown";
-  #   qemu.ovmf.enable = true;
-  #   qemu.runAsRoot = true;
-  # };
+  virtualisation.libvirtd = {
+    enable = true;
+    # onBoot = "ignore";
+    # onShutdown = "shutdown";
+    qemu.ovmf.enable = true;
+    qemu.runAsRoot = true;
+  };
   # programs.dconf.enable = true;
   # environment.systemPackages = with pkgs; [ virt-manager ];
   # environment.systemPackages = with pkgs; [ cntr ];
