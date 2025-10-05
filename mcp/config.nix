@@ -31,6 +31,7 @@ in
       time.enable = true;
       git.enable = true;
       nixos.enable = true;
+      serena.enable = true;
     };
     flavor = "claude";
     fileName = "mcp_settings.json";
