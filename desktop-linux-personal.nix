@@ -22,8 +22,8 @@
     steam
     gcalcli
 
-    unstable.bambu-studio
-    unstable.orca-slicer
+    # unstable.bambu-studio
+    # unstable.orca-slicer
     rpi-imager
     sunpaper
     newsflash
