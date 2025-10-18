@@ -1,14 +1,16 @@
-{ config, pkgs, libs, ... }:
-
 {
-
+  config,
+  pkgs,
+  libs,
+  ...
+}: {
   home.packages = with pkgs; [
     yabridge
     yabridgectl
-    carla
     qjackctl
     qtractor
     patchage
+    bitwig-studio
     # wineWowPackages.staging # Kinda works
     # winePackages.waylandFull # No
     # wineWow64Packages.waylandFull # No
@@ -21,5 +23,4 @@
     wineWowPackages.unstableFull
     qjackctl
   ];
-
 }
