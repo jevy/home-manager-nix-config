@@ -46,7 +46,7 @@
     mqttui
     unstable.aider-chat
     hypnotix
-    unstable.qdmr
+    # unstable.qdmr
     calibre
     unstable.talosctl
     kicad

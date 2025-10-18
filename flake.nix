@@ -10,6 +10,7 @@
     muttdown.url = "github:jevy/muttdown";
     spicetify-nix.url = "github:Gerg-L/spicetify-nix/24.11";
     sops-nix.url = "github:Mic92/sops-nix";
+    musnix.url = "github:musnix/musnix";
     nixvim = {
       url = "github:nix-community/nixvim/nixos-25.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -186,6 +187,11 @@
       stylix.nixosModules.stylix
       ./stylix-common.nix
       nixos-hardware.nixosModules.framework-12th-gen-intel
+      inputs.musnix.nixosModules.musnix
+      {
+        musnix.enable = true;
+        users.users.jevin.extraGroups = [ "audio" ];
+      }
       {
         home-manager = {
           useGlobalPkgs = true;
