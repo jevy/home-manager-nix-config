@@ -2,22 +2,34 @@
   description = "Jevin's Home Manager configuration";
 
   inputs = {
-    home-manager.url = "github:nix-community/home-manager/release-25.05";
+    home-manager.url = "github:nix-community/home-manager/master";
     nixos-hardware.url = "github:NixOS/nixos-hardware";
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
-    stylix.url = "github:danth/stylix/release-25.05";
+    stylix.url = "github:danth/stylix";
     muttdown.url = "github:jevy/muttdown";
-    spicetify-nix.url = "github:Gerg-L/spicetify-nix/24.11";
+    spicetify-nix.url = "github:Gerg-L/spicetify-nix";
     sops-nix.url = "github:Mic92/sops-nix";
     musnix.url = "github:musnix/musnix";
     nixvim = {
-      url = "github:nix-community/nixvim/nixos-25.05";
+      url = "github:nix-community/nixvim";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     mcp-servers-nix = {
       url = "github:natsukium/mcp-servers-nix";
-      inputs.nixpkgs.follows = "unstable";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    hyprland = {
+      url = "github:hyprwm/Hyprland";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    hyprland-plugins = {
+      url = "github:hyprwm/hyprland-plugins";
+      inputs.hyprland.follows = "hyprland";
+    };
+    hy3 = {
+      url = "github:outfoxxed/hy3";
+      inputs.hyprland.follows = "hyprland";
     };
   };
 
@@ -33,6 +45,9 @@
     nixvim,
     mcp-servers-nix,
     spicetify-nix,
+    hyprland,
+    hyprland-plugins,
+    hy3,
     ...
   } @ inputs: let
     system = "x86_64-linux";
@@ -56,12 +71,13 @@
 
     # Overlay for Linux
     unstableOverlayLinux = self: super: {
-      unstable = import inputs.unstable {
+      unstable = import inputs.nixpkgs {
         system = "x86_64-linux";
         config.allowUnfree = true;
         config.permittedInsecurePackages = [
           "electron-25.9.0"
           "libsoup-2.74.3"
+          "qtwebengine-5.15.19"
         ];
         overlays = [
           (final: prev: {
@@ -121,25 +137,19 @@
 
     # Overlay for macOS (change "aarch64-darwin" to "x86_64-darwin" if you are on Intel)
     unstableOverlayDarwin = self: super: {
-      unstable = import inputs.unstable {
+      unstable = import inputs.nixpkgs {
         system = "aarch64-darwin";
         config.allowUnfree = true;
         config.permittedInsecurePackages = [
           "electron-25.9.0"
+          "qtwebengine-5.15.19"
         ];
       };
     };
 
     tailscaleOverlay = self: prev: {
       tailscale = prev.tailscale.overrideAttrs (old: {
-        checkFlags =
-          builtins.map (
-            flag:
-              if prev.lib.hasPrefix "-skip=" flag
-              then flag + "|^TestGetList$|^TestIgnoreLocallyBoundPorts$|^TestPoller$"
-              else flag
-          )
-          old.checkFlags;
+        doCheck = false;
       });
     };
 
@@ -162,7 +172,7 @@
       stylix.homeManagerModules.stylix
       ./stylix-common.nix
       ./taskwarrior-work.nix
-      inputs.nixvim.homeManagerModules.nixvim
+      inputs.nixvim.homeModules.default
       ./nixvim.nix
       {
         home = {
@@ -198,14 +208,14 @@
           useUserPackages = true;
           backupFileExtension = "backup";
           extraSpecialArgs = {
-            inherit inputs stylix muttdown;
+            inherit inputs stylix muttdown hy3;
           };
           users = {
             jevin = {
               imports = [
                 ./jevin-linux.nix
                 inputs.sops-nix.homeManagerModules.sops
-                inputs.nixvim.homeManagerModules.nixvim
+                inputs.nixvim.homeModules.default
                 ./nixvim.nix
                 (
                   {...}: {

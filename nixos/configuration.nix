@@ -4,6 +4,7 @@
 {
   config,
   pkgs,
+  inputs,
   ...
 }: {
   hardware.graphics = {
@@ -170,7 +171,35 @@
   #   defaultSession = "sway";
   # };
   programs.sway.enable = true;
-  programs.sway.package = config.home-manager.users.jevin.wayland.windowManager.sway.package;
+  programs.regreet.enable = true;
+  services.greetd.enable = true;
+  home-manager.users.greeter = { pkgs, ... }: {
+    home.stateVersion = "24.11";
+    services.hypridle = {
+      enable = true;
+      settings = {
+        listener = [
+          {
+            timeout = 180; # 3 minutes
+            on-timeout = "hyprctl dispatch dpms off";
+            on-resume = "hyprctl dispatch dpms on";
+          }
+        ];
+      };
+    };
+  };
+  # programs.sway.package = config.home-manager.users.jevin.wayland.windowManager.sway.package;
+  
+  # Enable Hyprland
+  programs.hyprland = {
+    enable = true;
+    package = inputs.hyprland.packages.${pkgs.system}.hyprland;
+    withUWSM = true;
+  };
+
+  services.hypridle = {
+    enable = true;
+  };
 
   # security.pam.services.swaylock = {};
   security.sudo.wheelNeedsPassword = false;
@@ -241,6 +270,7 @@
     pkgs.adwaita-icon-theme
     pkgs.shared-mime-info
   ];
+
   environment.pathsToLink = [
     "/share/icons"
     "/share/mime"
@@ -291,6 +321,7 @@
     permittedInsecurePackages = [
       "electron-25.9.0"
       "libsoup-2.74.3"
+      "qtwebengine-5.15.19"
     ];
   };
 
@@ -332,7 +363,6 @@
     enable = true;
     # onBoot = "ignore";
     # onShutdown = "shutdown";
-    qemu.ovmf.enable = true;
     qemu.runAsRoot = true;
   };
   # programs.dconf.enable = true;

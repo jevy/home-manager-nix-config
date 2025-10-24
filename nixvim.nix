@@ -57,17 +57,21 @@
       lsp-format.enable = true;
       nvim-tree = {
         enable = true;
-        disableNetrw = true;
-        hijackNetrw = true;
-        filters = {
-          dotfiles = true;
+        settings = {
+          disable_netrw = true;
+          hijack_netrw = true;
+          filters = {
+            dotfiles = true;
+          };
+          on_attach = {
+            __raw = ''
+              vim.api.nvim_set_keymap("n", "<C-n>", ":NvimTreeToggle<CR>", { noremap = true, silent = true })
+            '';
+          };
+          update_focused_file = {
+            enable = true;
+          };
         };
-        onAttach = {
-          __raw = ''
-            vim.api.nvim_set_keymap("n", "<C-n>", ":NvimTreeToggle<CR>", { noremap = true, silent = true })
-          '';
-        };
-        updateFocusedFile.enable = true;
       };
       none-ls = {
         enable = true;
