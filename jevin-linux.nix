@@ -53,5 +53,29 @@
   programs.ashell = {
     enable = true;
     systemd.enable = true;
+    settings = {
+      modules = {
+        left = [ "Workspaces" ];
+        center = [ ];
+        right = [
+          "CustomWeather"
+          "MediaPlayer"
+          "Tray"
+          [
+            "Clock"
+            "Privacy"
+            "Settings"
+          ]
+        ];
+      };
+      CustomModule = [
+        {
+          name = "CustomWeather";
+          icon = "";
+          command = "wget -O - http://wttr.in/.png?m&format=v2 | feh - -Z";
+          listen_cmd = "~/.config/nixpkgs/waybar/polybar/ashell-weather.sh";
+        }
+      ];
+    };
   };
 }
