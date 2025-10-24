@@ -190,6 +190,7 @@
         lib.mkOptionDefault {
           "${modifier}+Shift+q" = "kill";
           "${modifier}+Shift+r" = "reload";
+          "${modifier}+Shift+e" = "exec swaymsg exit";
 
           "${modifier}+Control+Shift+l" = "move workspace to output right";
           "${modifier}+Control+Shift+h" = "move workspace to output left";

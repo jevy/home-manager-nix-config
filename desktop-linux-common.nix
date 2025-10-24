@@ -157,7 +157,7 @@
     };
   };
 
-  programs.chromium.enable = true;
+  programs.chromium.enable = true; # qtwebengine takes a really long time
   home.sessionVariables = {
     NIXOS_OZONE_WL = "1"; # For Wayland Chrome and Electron
   };
