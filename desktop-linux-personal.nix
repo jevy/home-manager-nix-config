@@ -3,7 +3,8 @@
   pkgs,
   libs,
   ...
-}: {
+}:
+{
   imports = [
     ./desktop-linux-common.nix
   ];
@@ -54,12 +55,21 @@
     esptool
     freecad-wayland
     img2pdf
+
+    # Radio stuff
+    yewtube
+    cmus
+    pyradio
+    mpv
   ];
+
+  programs.radio-active.enable = true;
+  programs.radio-cli.enable = true;
 
   wayland.windowManager.sway = {
     config = {
       startup = [
-        {command = "${pkgs.synology-drive-client}/bin/synology-drive";}
+        { command = "${pkgs.synology-drive-client}/bin/synology-drive"; }
       ];
     };
   };
