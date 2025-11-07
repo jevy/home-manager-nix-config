@@ -6,6 +6,16 @@
   ...
 }:
 {
+  home.packages = with pkgs; [
+    hyprpaper
+    upower
+  ];
+
+  xdg.configFile."hypr/hyprpaper.conf".text = ''
+    preload = ~/.config/nixpkgs/backgrounds/midevil.png
+    wallpaper = ,~/.config/nixpkgs/backgrounds/midevil.png
+  '';
+
   imports = [
     ./home.nix
     #./vim/vim.nix
@@ -38,18 +48,47 @@
     ./music-making.nix
   ];
 
+  programs.hyprlock = {
+    enable = true;
+    settings = {
+      general = {
+        hide_cursor = true;
+        ignore_empty_input = true;
+      };
+      background = pkgs.lib.mkForce [
+        {
+          path = "~/.config/nixpkgs/backgrounds/midevil.png";
+          blur_passes = 3;
+          blur_size = 8;
+        }
+      ];
+      input-field = pkgs.lib.mkForce [
+        {
+          position = "0, -80";
+        }
+      ];
+    };
+  };
+
   services.hypridle = {
     enable = true;
     settings = {
       listener = [
         {
-          timeout = 180; # 3 minutes
+          timeout = 120;
+          on-timeout = "pidof hyprlock || hyprlock";
+        }
+        {
+          timeout = 180;
           on-timeout = "hyprctl dispatch dpms off";
           on-resume = "hyprctl dispatch dpms on";
         }
       ];
     };
   };
+
+  services.playerctld.enable = true;
+
   programs.ashell = {
     enable = true;
     systemd.enable = true;
@@ -63,6 +102,7 @@
           "Tray"
           [
             "Clock"
+            "Volume"
             "Privacy"
             "Settings"
           ]
@@ -77,5 +117,11 @@
         }
       ];
     };
+  };
+
+  home.sessionVariables = {
+    LIBVA_DRIVER_NAME = "iHD";
+    __GLX_VENDOR_LIBRARY_NAME = "mesa";
+    WLR_NO_HARDWARE_CURSORS = "1";
   };
 }

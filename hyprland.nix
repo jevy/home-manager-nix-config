@@ -62,10 +62,12 @@
       };
 
       animations = {
-        enabled = true;
+        enabled = false;
       };
 
       "$mod" = "SUPER";
+
+      exec-once = "${pkgs.hyprpaper}/bin/hyprpaper";
 
       bind = [
         # Window management
@@ -114,7 +116,7 @@
         "$mod, B, exec, firefox"
         "$mod, T, exec, kitty -- ${pkgs.ranger}/bin/ranger ~/Downloads"
         "$mod, I, exec, ${pkgs.blueberry}/bin/blueberry"
-        "$mod, P, exec, ${pkgs.swaylock}/bin/swaylock -f -c 000088"
+        "$mod, P, exec, ${pkgs.hyprlock}/bin/hyprlock"
         "$mod, M, exec, ${pkgs.warpd}/bin/warpd --hint"
         
         # Window and group management
