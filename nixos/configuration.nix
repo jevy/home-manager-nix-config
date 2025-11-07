@@ -39,6 +39,7 @@
   programs.adb.enable = true;
   services.hardware.bolt.enable = true;
   services.fwupd.enable = true;
+  services.upower.enable = true;
   services.ddccontrol.enable = true;
   # services.ratbagd.enable = true;
 
@@ -173,21 +174,6 @@
   programs.sway.enable = true;
   programs.regreet.enable = true;
   services.greetd.enable = true;
-  home-manager.users.greeter = { pkgs, ... }: {
-    home.stateVersion = "24.11";
-    services.hypridle = {
-      enable = true;
-      settings = {
-        listener = [
-          {
-            timeout = 180; # 3 minutes
-            on-timeout = "hyprctl dispatch dpms off";
-            on-resume = "hyprctl dispatch dpms on";
-          }
-        ];
-      };
-    };
-  };
   # programs.sway.package = config.home-manager.users.jevin.wayland.windowManager.sway.package;
   
   # Enable Hyprland
