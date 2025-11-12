@@ -187,6 +187,17 @@
     enable = true;
   };
 
+  services.logind = {
+    lidSwitch = "lock";
+    lidSwitchDocked = "ignore";
+    lidSwitchExternalPower = "lock";
+    settings = {
+      Login = {
+        LidSwitchIgnoreInhibited = "yes";
+      };
+    };
+  };
+
   # security.pam.services.swaylock = {};
   security.sudo.wheelNeedsPassword = false;
 
