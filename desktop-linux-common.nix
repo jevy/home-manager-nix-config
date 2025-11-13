@@ -4,7 +4,8 @@
   pkgs,
   spicetify-nix,
   ...
-}: {
+}:
+{
   home.packages = with pkgs; [
     libreoffice
     gimp
@@ -91,29 +92,38 @@
 
   programs.zed-editor = {
     enable = true;
-    extensions = ["nix" "kotlin" "gruvbox-material"];
+    extensions = [
+      "nix"
+      "kotlin"
+      "gruvbox-material"
+    ];
   };
 
   programs.rofi = {
     enable = true;
     # package = pkgs.rofi-wayland.override { plugins = [ pkgs.rofi-emoji pkgs.rofi-calc pkgs.rofi-power-menu]; };
-    plugins = [pkgs.rofi-emoji pkgs.rofi-calc pkgs.rofi-power-menu];
+    plugins = [
+      pkgs.rofi-emoji
+      pkgs.rofi-calc
+      pkgs.rofi-power-menu
+    ];
   };
 
   xdg.enable = true;
   xdg.mimeApps.enable = true;
   xdg.mimeApps.defaultApplications = {
-    "application/pdf" = ["zathura.desktop"];
-    "x-scheme-handler/http" = ["firefox.desktop"];
-    "x-scheme-handler/https" = ["firefox.desktop"];
-    "text/html" = ["firefox.desktop"];
+    "application/pdf" = [ "zathura.desktop" ];
+    "x-scheme-handler/http" = [ "firefox.desktop" ];
+    "x-scheme-handler/https" = [ "firefox.desktop" ];
+    "text/html" = [ "firefox.desktop" ];
   };
 
-  # home.pointerCursor = {
-  #   package = pkgs.nordzy-cursor-theme;
-  #   gtk.enable = true;
-  #   name = "Nordzy-cursors";
-  # };
+  home.pointerCursor = {
+    gtk.enable = true;
+    hyprcursor.enable = true;
+    package = pkgs.vanilla-dmz;
+    name = "Vanilla-DMZ";
+  };
 
   programs.vscode = {
     enable = true;
@@ -131,7 +141,7 @@
 
   programs.firefox = {
     enable = true;
-    profiles.default = {};
+    profiles.default = { };
   };
 
   programs.spicetify = {
@@ -141,7 +151,7 @@
   stylix.targets = {
     firefox = {
       enable = false;
-      profileNames = ["default"];
+      profileNames = [ "default" ];
     };
     vscode = {
       enable = false;
@@ -168,13 +178,14 @@
   #   };
   # };
 
-  home.sessionPath = ["$HOME/bin"];
+  home.sessionPath = [ "$HOME/bin" ];
   home.file = {
     ".config/mako/config".source = mako/config;
     ".config/waybar/config".source = waybar/config;
     ".config/waybar/style.css".source = waybar/style.css;
     ".config/polybar-scripts/player-mpris-simple.sh".source = waybar/polybar/player-mpris-simple.sh;
-    ".config/polybar-scripts/openweathermap-forecast.sh".source = waybar/polybar/openweathermap-forecast.sh;
+    ".config/polybar-scripts/openweathermap-forecast.sh".source =
+      waybar/polybar/openweathermap-forecast.sh;
     ".config/backgrounds/".source = ./backgrounds;
     ".config/zathura/zathurarc".text = "set selection-clipboard clipboard";
     "bin/next-meeting.sh".executable = true;
@@ -208,7 +219,7 @@
       };
 
       Install = {
-        WantedBy = ["default.target"];
+        WantedBy = [ "default.target" ];
       };
     };
   };
