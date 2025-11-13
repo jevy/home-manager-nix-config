@@ -97,6 +97,7 @@
   programs.ashell = {
     enable = true;
     systemd.enable = true;
+    systemd.target = "hyprland-session.target";
     settings = {
       modules = {
         left = [ "Workspaces" ];
@@ -121,6 +122,20 @@
           listen_cmd = "~/.config/nixpkgs/waybar/polybar/ashell-weather.sh";
         }
       ];
+    };
+  };
+
+  systemd.user.services.ashell = {
+    Unit = {
+      BindsTo = [ "hyprland-session.target" ];
+      PartOf = [
+        "hyprland-session.target"
+        "graphical-session.target"
+      ];
+      After = [ "hyprland-session.target" ];
+    };
+    Service = {
+      RestartSec = "2s";
     };
   };
 
