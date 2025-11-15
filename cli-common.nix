@@ -14,7 +14,7 @@
       owner = "kagisearch";
       repo = "ask";
       rev = "master";
-      sha256 = "sha256-H2/H41A+iW89iG4j/vjB4gX9X1Y2Z3z4y5f6g7h8i9o="; # This will need to be updated
+      sha256 = "sha256-3q9WWhDXmdDouLRHKp14F+FeSPG1IoCL4jVbcHJdtnk=";
     };
     installPhase = ''
       mkdir -p $out/bin
