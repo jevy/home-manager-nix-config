@@ -377,21 +377,32 @@
       pkgs.freefont_ttf
       pkgs.gyre-fonts
       pkgs.unifont
-      pkgs.meslo-lgs-nf
+      pkgs.nerd-fonts.meslo-lg
+      pkgs.nerd-fonts.symbols-only
       pkgs.weather-icons
       pkgs.font-awesome
+      pkgs.noto-fonts-color-emoji
     ];
-    fontconfig.defaultFonts.emoji = [
-      "MesloLGS NF"
-      "Weather Icons"
-      "Font Awesome 5 Free"
-    ];
-    fontconfig.defaultFonts.serif = [
-      "DejaVu Serif"
-    ];
-    fontconfig.defaultFonts.monospace = [
-      "DejaVu Sans Mono"
-    ];
+    fontconfig.defaultFonts = {
+      serif = [
+        "DejaVu Serif"
+      ];
+      sansSerif = [
+        "DejaVu Sans"
+      ];
+      monospace = [
+        "MesloLGS Nerd Font"
+        "Symbols Nerd Font"
+        "Weather Icons"
+        "DejaVu Sans Mono"
+      ];
+      emoji = [
+        "Noto Color Emoji"
+        "Symbols Nerd Font"
+        "Weather Icons"
+        "Font Awesome 5 Free"
+      ];
+    };
 
     # Instead of hidpi
     # From: https://github.com/NixOS/nixpkgs/blob/832bdf74072489b8da042f9769a0a2fac9b579c7/nixos/modules/hardware/video/hidpi.nix

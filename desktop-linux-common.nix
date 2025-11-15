@@ -188,6 +188,10 @@
       waybar/polybar/openweathermap-forecast.sh;
     ".config/backgrounds/".source = ./backgrounds;
     ".config/zathura/zathurarc".text = "set selection-clipboard clipboard";
+    ".config/ghostty/config".text = ''
+      font-family = MesloLGS Nerd Font
+      font-size = 11
+    '';
     "bin/next-meeting.sh".executable = true;
     "bin/next-meeting.sh".text = ''
       #!/usr/bin/env bash
