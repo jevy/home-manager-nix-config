@@ -8,6 +8,19 @@
     neoVimSupport = true;
     imagePreviewSupport = true;
   };
+  ask = pkgs.stdenv.mkDerivation {
+    name = "ask";
+    src = pkgs.fetchFromGitHub {
+      owner = "kagisearch";
+      repo = "ask";
+      rev = "master";
+      sha256 = "sha256-H2/H41A+iW89iG4j/vjB4gX9X1Y2Z3z4y5f6g7h8i9o="; # This will need to be updated
+    };
+    installPhase = ''
+      mkdir -p $out/bin
+      cp ask $out/bin/
+    '';
+  };
 in {
   home.packages = with pkgs; [
     wget
@@ -49,6 +62,8 @@ in {
     age # Encryption
     awscli2
     unstable.devenv
+    ask
+    bc
   ];
 
   programs.bat = {
@@ -61,7 +76,7 @@ in {
     keyMode = "vi";
     customPaneNavigationAndResize = true;
     historyLimit = 10000;
-    # focusEvents = true; # Only in HM 25.05 + 
+    # focusEvents = true; # Only in HM 25.05 +
     escapeTime = 200;
     mouse = true;
     shortcut = "a";
@@ -80,6 +95,7 @@ in {
 
   home.sessionVariables = {
     VAGRANT_DEFAULT_PROVIDER = "libvirt";
+    OPENROUTER_API_KEY = config.sops.secrets.openrouter_api_key.path;
   };
 
   home.file = {

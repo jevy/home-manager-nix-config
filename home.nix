@@ -54,6 +54,7 @@ in
     secrets.gemini_api_key = {};
     secrets.github_personal_access_token = {};
     secrets.restic_password = {};
+    secrets.openrouter_api_key = {};
   };
 
   services.restic = {
