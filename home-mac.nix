@@ -10,10 +10,15 @@
 
   programs.git = {
     enable = true;
-    userName = "jevin";
-    userEmail = "jevin@quickjack.ca";
+    settings.user = {
+      name = "jevin";
+      email = "jevin@quickjack.ca";
+    };
     aliases = { st = "status"; };
-    difftastic.enable = true;
+  };
+  programs.difftastic = {
+    enable = true;
+    git.enable = true;
   };
 
   home.keyboard = {

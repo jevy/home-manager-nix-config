@@ -144,64 +144,66 @@
       treesitter-context.enable = true;
       treesitter-textobjects = {
         enable = true;
-        select = {
-          enable = true;
-          lookahead = false;
-          keymaps = {
-            "af" = "@function.outer";
-            "if" = "@function.inner";
-            "il" = "@loop.inner";
-            "al" = "@loop.outer";
-            "icd" = "@conditional.inner";
-            "acd" = "@conditional.outer";
-            "acm" = "@comment.outer";
-            "ast" = "@statement.outer";
-            "isc" = "@scopename.inner";
-            "iB" = "@block.inner"; # Mini uses this for brackets
-            "aB" = "@block.outer";
-            "ia" = "@parameter.inner";
-            "aa" = "@parameter.outer";
+        settings = {
+          select = {
+            enable = true;
+            lookahead = false;
+            keymaps = {
+              "af" = "@function.outer";
+              "if" = "@function.inner";
+              "il" = "@loop.inner";
+              "al" = "@loop.outer";
+              "icd" = "@conditional.inner";
+              "acd" = "@conditional.outer";
+              "acm" = "@comment.outer";
+              "ast" = "@statement.outer";
+              "isc" = "@scopename.inner";
+              "iB" = "@block.inner"; # Mini uses this for brackets
+              "aB" = "@block.outer";
+              "ia" = "@parameter.inner";
+              "aa" = "@parameter.outer";
+            };
           };
-        };
-        move = {
-          enable = true;
-          setJumps = true;
-          gotoNextStart = {
-            "]m" = "@function.outer";
-            "]im" = "@function.inner";
-            ")" = "@parameter.inner";
-            "]c" = "@call.outer";
-            "]ic" = "@call.inner";
+          move = {
+            enable = true;
+            set_jumps = true;
+            goto_next_start = {
+              "]m" = "@function.outer";
+              "]im" = "@function.inner";
+              ")" = "@parameter.inner";
+              "]c" = "@call.outer";
+              "]ic" = "@call.inner";
+            };
+            goto_next_end = {
+              "]M" = "@function.outer";
+              "]iM" = "@function.inner";
+              "g)" = "@parameter.inner";
+              "]C" = "@call.outer";
+              "]iC" = "@call.inner";
+            };
+            goto_previous_start = {
+              "[m" = "@function.outer";
+              "[im" = "@function.inner";
+              "(" = "@parameter.inner";
+              "[c" = "@call.outer";
+              "[ic" = "@call.inner";
+            };
+            goto_previous_end = {
+              "[M" = "@function.outer";
+              "[iM" = "@function.inner";
+              "g(" = "@parameter.inner";
+              "[C" = "@call.outer";
+              "[iC" = "@call.inner";
+            };
           };
-          gotoNextEnd = {
-            "]M" = "@function.outer";
-            "]iM" = "@function.inner";
-            "g)" = "@parameter.inner";
-            "]C" = "@call.outer";
-            "]iC" = "@call.inner";
-          };
-          gotoPreviousStart = {
-            "[m" = "@function.outer";
-            "[im" = "@function.inner";
-            "(" = "@parameter.inner";
-            "[c" = "@call.outer";
-            "[ic" = "@call.inner";
-          };
-          gotoPreviousEnd = {
-            "[M" = "@function.outer";
-            "[iM" = "@function.inner";
-            "g(" = "@parameter.inner";
-            "[C" = "@call.outer";
-            "[iC" = "@call.inner";
-          };
-        };
-        lspInterop = {
-          enable = true;
-          border = "none";
-          floatingPreviewOpts = {};
-          peekDefinitionCode = {
-            "<leader>df" = "@function.outer";
-            "<leader>dF" = "@class.outer";
+          lsp_interop = {
+            enable = true;
+            border = "none";
+            floating_preview_opts = {};
+            peek_definition_code = {
+              "<leader>df" = "@function.outer";
+              "<leader>dF" = "@class.outer";
+            };
           };
         };
       };

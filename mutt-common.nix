@@ -17,7 +17,7 @@
     urlscan # mutt-wizard
     poppler-utils # mutt-wizard
     # python310Packages.goobook # mutt
-    muttdown.packages.${pkgs.system}.muttdown
+    muttdown.packages.${pkgs.stdenv.hostPlatform.system}.muttdown
   ];
 
   programs.notmuch = {
