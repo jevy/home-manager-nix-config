@@ -46,15 +46,15 @@ in
 
   sops = {
     age.keyFile = "/home/jevin/.config/sops/age/keys.txt"; # must have no password!
-
     defaultSopsFile = ./secrets.yaml;
-
-    secrets.openai_api_key = {};
-    secrets.anthropic_api_key = {};
-    secrets.gemini_api_key = {};
-    secrets.github_personal_access_token = {};
-    secrets.restic_password = {};
-    secrets.openrouter_api_key = {};
+    secrets = {
+      openrouter_api_key = {};
+      openai_api_key = {};
+      anthropic_api_key = {};
+      gemini_api_key = {};
+      github_personal_access_token = {};
+      restic_password = {};
+    };
   };
 
   services.restic = {

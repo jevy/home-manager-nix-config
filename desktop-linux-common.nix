@@ -42,7 +42,7 @@
     wl-clipboard
     wf-recorder
     simple-scan
-    xdragon # Ranger drag drop
+    dragon-drop # Ranger drag drop
     xdg-utils
     ocrmypdf
     via

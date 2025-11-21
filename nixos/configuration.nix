@@ -6,7 +6,8 @@
   pkgs,
   inputs,
   ...
-}: {
+}:
+{
   hardware.graphics = {
     enable = true;
     enable32Bit = true;
@@ -17,7 +18,7 @@
   };
 
   # https://nixos.wiki/wiki/Intel_Graphics
-  boot.kernelParams = ["i915.force_probe=4626"];
+  boot.kernelParams = [ "i915.force_probe=4626" ];
 
   # services.xserver.videoDrivers =  [
   #   "intel-media-driver"
@@ -31,8 +32,7 @@
   services.udev.packages = with pkgs; [
     via
     qmk-udev-rules
-    qflipper
-    android-udev-rules
+    qFlipper
   ];
 
   hardware.keyboard.zsa.enable = true;
@@ -59,7 +59,7 @@
   };
 
   # Some kind of tailscale issue
-  systemd.services.tailscaled.after = ["systemd-networkd-wait-online.service"];
+  systemd.services.tailscaled.after = [ "systemd-networkd-wait-online.service" ];
 
   # Idea taken from [dreamsofcode](https://github.com/dreamsofcode-io/home-row-mods)
   services.kanata = {
@@ -103,7 +103,10 @@
   };
 
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.supportedFilesystems = ["zfs" "nfs"];
+  boot.supportedFilesystems = [
+    "zfs"
+    "nfs"
+  ];
   boot.initrd.luks.devices = {
     root = {
       device = "/dev/nvme0n1p1";
@@ -114,7 +117,11 @@
   fileSystems."/mnt/synology-backup" = {
     device = "192.168.1.187:/volume1/proxmox";
     fsType = "nfs";
-    options = ["x-systemd.automount" "noauto" "x-systemd.idle-timeout=600"];
+    options = [
+      "x-systemd.automount"
+      "noauto"
+      "x-systemd.idle-timeout=600"
+    ];
   };
 
   # https://github.com/NixOS/nixpkgs/pull/126777/files
@@ -129,7 +136,7 @@
   networking.hostName = "framework"; # Define your hostname.
   networking.hostId = "6a7f48db";
   networking.hosts = {
-    "127.0.0.1" = ["db"];
+    "127.0.0.1" = [ "db" ];
   };
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
   # networking.enableIPv6 = false;
@@ -162,7 +169,7 @@
 
   programs._1password-gui = {
     enable = true;
-    polkitPolicyOwners = ["jevin"];
+    polkitPolicyOwners = [ "jevin" ];
     package = pkgs.unstable._1password-gui;
   };
 
@@ -175,7 +182,7 @@
   programs.regreet.enable = true;
   services.greetd.enable = true;
   # programs.sway.package = config.home-manager.users.jevin.wayland.windowManager.sway.package;
-  
+
   # Enable Hyprland
   programs.hyprland = {
     enable = true;
@@ -188,14 +195,9 @@
   };
 
   services.logind = {
-    lidSwitch = "lock";
+    lidSwitch = "suspend";
     lidSwitchDocked = "ignore";
-    lidSwitchExternalPower = "lock";
-    settings = {
-      Login = {
-        LidSwitchIgnoreInhibited = "yes";
-      };
-    };
+    lidSwitchExternalPower = "ignore";
   };
 
   # security.pam.services.swaylock = {};
@@ -214,7 +216,10 @@
 
   # services.chrony.enable = true;
   services.timesyncd = {
-    servers = ["0.ca.pool.ntp.org" "1.ca.pool.ntp.org"];
+    servers = [
+      "0.ca.pool.ntp.org"
+      "1.ca.pool.ntp.org"
+    ];
     enable = true;
   };
   # services.syncthing = {
@@ -289,13 +294,29 @@
   users.users.jevin = {
     shell = pkgs.zsh;
     isNormalUser = true;
-    extraGroups = ["qemu-libvirtd" "libvirtd" "plugdev" "wheel" "networkmanager" "docker" "dialout" "audio" "video" "adbusers" "uinput"]; # Dialout if for usb/serial access for arduino
+    extraGroups = [
+      "qemu-libvirtd"
+      "libvirtd"
+      "plugdev"
+      "wheel"
+      "networkmanager"
+      "docker"
+      "dialout"
+      "audio"
+      "video"
+      "adbusers"
+      "uinput"
+    ]; # Dialout if for usb/serial access for arduino
 
     # `nix-shell -p mkpasswd --run 'mkpasswd -m sha-512'`
     hashedPassword = "$6$RQ3xn2S3O1RFFqiA$e725RMH8eJgw4JJ4UnSjuzJ1Pw5lNNaFRW.9M2XCrcCJsAbWPg5qs5hzRZARiK9uastNZN9XnUGBs8yM6kdMZ0";
   };
 
-  nix.settings.trusted-users = ["root" "jevin"];
+  nix.settings.trusted-users = [
+    "root"
+    "jevin"
+  ];
+  nix.settings.download-buffer-size = 268435456;
 
   # users.users.tyler = {
   #   shell = pkgs.zsh;
@@ -438,5 +459,5 @@
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "24.11"; # Did you read the comment?
-  boot.kernelPackages = pkgs.linuxPackages_6_16;
+  boot.kernelPackages = pkgs.linuxPackages_6_12;
 }

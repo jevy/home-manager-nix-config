@@ -9,13 +9,13 @@
     msmtp # mutt-wizard
     pass # mutt-wizard
     gnupg # mutt-wizard
-    pinentry # mutt-wizard
+    # pinentry # mutt-wizard
     # notmuch # mutt-wizard
     # lieer # mutt-wizard
     w3m # mutt-wizard
     abook # mutt-wizard
     urlscan # mutt-wizard
-    poppler_utils # mutt-wizard
+    poppler-utils # mutt-wizard
     # python310Packages.goobook # mutt
     muttdown.packages.${pkgs.system}.muttdown
   ];

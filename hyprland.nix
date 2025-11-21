@@ -21,7 +21,7 @@
         hy3 = {
           no_gaps_when_only = 1;
           node_collapse_policy = 2;
-          
+
           tabs = {
             height = 22;
             padding = 6;
@@ -62,7 +62,7 @@
       };
 
       animations = {
-        enabled = false;
+        enabled = true;
       };
 
       "$mod" = "SUPER";
@@ -118,7 +118,7 @@
         "$mod, I, exec, ${pkgs.blueberry}/bin/blueberry"
         "$mod, P, exec, ${pkgs.hyprlock}/bin/hyprlock"
         "$mod, M, exec, ${pkgs.warpd}/bin/warpd --hint"
-        
+
         # Window and group management
         "$mod, F, togglefloating"
         "$mod, H, hy3:movefocus, l"
@@ -130,7 +130,7 @@
         "$mod SHIFT, H, hy3:movewindow, l"
         "$mod SHIFT, K, hy3:movewindow, u"
         "$mod SHIFT, J, hy3:movewindow, d"
-        
+
         # Tab navigation (similar to Sway's group navigation)
         "$mod, O, hy3:focustab, r, wrap"
         "$mod, U, hy3:focustab, l, wrap"
@@ -154,6 +154,6 @@
   };
 
   # UWSM environment configuration
-  xdg.configFile."uwsm/env".source =
-    "${config.home.sessionVariablesPackage}/etc/profile.d/hm-session-vars.sh";
+  # xdg.configFile."uwsm/env".source =
+  #   "${config.home.sessionVariablesPackage}/etc/profile.d/hm-session-vars.sh";
 }

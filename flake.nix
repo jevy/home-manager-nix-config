@@ -20,12 +20,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprland = {
-      url = "github:hyprwm/Hyprland";
+      url = "git+https://github.com/hyprwm/Hyprland";
       inputs.nixpkgs.follows = "nixpkgs";
-    };
-    hyprland-plugins = {
-      url = "github:hyprwm/hyprland-plugins";
-      inputs.hyprland.follows = "hyprland";
     };
     hy3 = {
       url = "github:outfoxxed/hy3";
@@ -33,224 +29,246 @@
     };
   };
 
-  outputs = {
-    self,
-    home-manager,
-    stylix,
-    nixpkgs,
-    unstable,
-    muttdown,
-    nixos-hardware,
-    sops-nix,
-    nixvim,
-    mcp-servers-nix,
-    spicetify-nix,
-    hyprland,
-    hyprland-plugins,
-    hy3,
-    ...
-  } @ inputs: let
-    system = "x86_64-linux";
-    pkgs = nixpkgs.legacyPackages.${system};
+  outputs =
+    {
+      self,
+      home-manager,
+      stylix,
+      nixpkgs,
+      unstable,
+      muttdown,
+      nixos-hardware,
+      sops-nix,
+      nixvim,
+      mcp-servers-nix,
+      spicetify-nix,
+      hyprland,
+      hy3,
+      ...
+    }@inputs:
+    let
+      system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.${system};
 
-    mcpConfig = import ./mcp/config.nix {
-      unstablePkgsInput = inputs.unstable;
-      mcpServersNixInput = inputs.mcp-servers-nix;
-      inherit system;
-    };
-
-    mkSystemConfiguration = system: modules:
-      nixpkgs.lib.nixosSystem {
+      mcpConfig = import ./mcp/config.nix {
+        unstablePkgsInput = inputs.unstable;
+        mcpServersNixInput = inputs.mcp-servers-nix;
         inherit system;
-        specialArgs = {
-          inherit inputs;
-          user = "jevin";
-        };
-        modules = modules;
       };
 
-    # Overlay for Linux
-    unstableOverlayLinux = self: super: {
-      unstable = import inputs.nixpkgs {
-        system = "x86_64-linux";
-        config.allowUnfree = true;
-        config.permittedInsecurePackages = [
-          "electron-25.9.0"
-          "libsoup-2.74.3"
-          "qtwebengine-5.15.19"
-        ];
-        overlays = [
-          (final: prev: {
-            fluxcd-operator = prev.fluxcd-operator.overrideAttrs (oldAttrs: {
-              version = "0.20.0";
-              src = prev.fetchFromGitHub {
-                owner = "controlplaneio-fluxcd";
-                repo = "flux-operator";
-                rev = "v0.20.0";
-                hash = "sha256-GGHufHUqTylgynK19aaj4KAawlzzuz3iSEHa+vVVPMM=";
-              };
+      mkSystemConfiguration =
+        system: modules:
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = {
+            inherit inputs;
+            user = "jevin";
+          };
+          modules = modules;
+        };
 
-              vendorHash = "sha256-5uT/pcfXrinyJ1hXmQ+vmWNuyO33c6d5PAjm6kwOZmY=";
+      # Overlay for Linux
+      unstableOverlayLinux = self: super: {
+        unstable = import inputs.nixpkgs {
+          system = "x86_64-linux";
+          config.allowUnfree = true;
+          config.permittedInsecurePackages = [
+            "electron-25.9.0"
+            "libsoup-2.74.3"
+            "qtwebengine-5.15.19"
+          ];
+          overlays = [
+            (final: prev: {
+              fluxcd-operator = prev.fluxcd-operator.overrideAttrs (oldAttrs: {
+                version = "0.20.0";
+                src = prev.fetchFromGitHub {
+                  owner = "controlplaneio-fluxcd";
+                  repo = "flux-operator";
+                  rev = "v0.20.0";
+                  hash = "sha256-GGHufHUqTylgynK19aaj4KAawlzzuz3iSEHa+vVVPMM=";
+                };
 
-              subPackages = ["cmd/cli" "cmd/mcp"];
+                vendorHash = "sha256-5uT/pcfXrinyJ1hXmQ+vmWNuyO33c6d5PAjm6kwOZmY=";
 
-              ldflags = [
-                "-s"
-                "-w"
-                "-X main.VERSION=0.20.0"
-              ];
+                subPackages = [
+                  "cmd/cli"
+                  "cmd/mcp"
+                ];
 
-              env.CGO_ENABLED = "0";
+                ldflags = [
+                  "-s"
+                  "-w"
+                  "-X main.VERSION=0.20.0"
+                ];
 
-              doCheck = false;
+                env.CGO_ENABLED = "0";
 
-              postInstall = ''
-                # Rename the CLI binary to flux-operator (keeping original behavior)
-                mv $out/bin/cli $out/bin/flux-operator
-                # Rename the MCP binary to flux-operator-mcp
-                mv $out/bin/mcp $out/bin/flux-operator-mcp
-              '';
+                doCheck = false;
 
-              meta =
-                oldAttrs.meta
-                // {
+                postInstall = ''
+                  # Rename the CLI binary to flux-operator (keeping original behavior)
+                  mv $out/bin/cli $out/bin/flux-operator
+                  # Rename the MCP binary to flux-operator-mcp
+                  mv $out/bin/mcp $out/bin/flux-operator-mcp
+                '';
+
+                meta = oldAttrs.meta // {
                   description = "Kubernetes CRD controller that manages the lifecycle of CNCF Flux CD with MCP server support";
                 };
-            });
-            volsync = prev.buildGoModule rec {
-              pname = "volsync";
-              version = "latest";
-              src = prev.fetchFromGitHub {
-                owner = "backube";
-                repo = "volsync";
-                rev = "ebdf7e9d66c22802ee4d5e24c897041adc17db90";
-                sha256 = "sha256-SLYVclFk2BsP9waYQHwNsWtLGt5fSRkIgWdeL8Lp1iA=";
+              });
+              volsync = prev.buildGoModule rec {
+                pname = "volsync";
+                version = "latest";
+                src = prev.fetchFromGitHub {
+                  owner = "backube";
+                  repo = "volsync";
+                  rev = "ebdf7e9d66c22802ee4d5e24c897041adc17db90";
+                  sha256 = "sha256-SLYVclFk2BsP9waYQHwNsWtLGt5fSRkIgWdeL8Lp1iA=";
+                };
+                proxyVendor = true;
+                vendorHash = "sha256-AuGRtQ2ItAsgDfF3uCAHQCK2lATMqXChxN8Dr98UmGo=";
+                subPackages = [ "kubectl-volsync" ];
               };
-              proxyVendor = true;
-              vendorHash = "sha256-AuGRtQ2ItAsgDfF3uCAHQCK2lATMqXChxN8Dr98UmGo=";
-              subPackages = ["kubectl-volsync"];
-            };
-          })
-        ];
-      };
-    };
-
-    # Overlay for macOS (change "aarch64-darwin" to "x86_64-darwin" if you are on Intel)
-    unstableOverlayDarwin = self: super: {
-      unstable = import inputs.nixpkgs {
-        system = "aarch64-darwin";
-        config.allowUnfree = true;
-        config.permittedInsecurePackages = [
-          "electron-25.9.0"
-          "qtwebengine-5.15.19"
-        ];
-      };
-    };
-
-    tailscaleOverlay = self: prev: {
-      tailscale = prev.tailscale.overrideAttrs (old: {
-        doCheck = false;
-      });
-    };
-
-    macModules = [
-      # Insert the overlay for mac here
-      ({
-        config,
-        pkgs,
-        ...
-      }: {
-        nixpkgs.overlays = [unstableOverlayDarwin tailscaleOverlay];
-      })
-
-      ./home-mac.nix
-      inputs.sops-nix.homeManagerModules.sops
-      ./zsh-spellbook.nix
-      ./zsh.nix
-      ./cli-common.nix
-      ./desktop-mac.nix
-      stylix.homeManagerModules.stylix
-      ./stylix-common.nix
-      ./taskwarrior-work.nix
-      inputs.nixvim.homeModules.default
-      ./nixvim.nix
-      {
-        home = {
-          username = "jevin";
-          homeDirectory = "/Users/jevin";
+            })
+          ];
         };
-      }
-    ];
+      };
 
-    linuxModules = [
-      ({
-        config,
-        pkgs,
-        ...
-      }: {
-        nixpkgs.overlays = [unstableOverlayLinux tailscaleOverlay];
-      })
+      # Overlay for macOS (change "aarch64-darwin" to "x86_64-darwin" if you are on Intel)
+      unstableOverlayDarwin = self: super: {
+        unstable = import inputs.nixpkgs {
+          system = "aarch64-darwin";
+          config.allowUnfree = true;
+          config.permittedInsecurePackages = [
+            "electron-25.9.0"
+            "qtwebengine-5.15.19"
+          ];
+        };
+      };
 
-      ./nixos/configuration.nix
-      ./nixos/hardware-configuration.nix
-      ./printers.nix
-      stylix.nixosModules.stylix
-      ./stylix-common.nix
-      nixos-hardware.nixosModules.framework-12th-gen-intel
-      inputs.musnix.nixosModules.musnix
-      {
-        musnix.enable = true;
-        users.users.jevin.extraGroups = [ "audio" ];
-      }
-      {
-        home-manager = {
-          useGlobalPkgs = true;
-          useUserPackages = true;
-          backupFileExtension = "backup";
+      tailscaleOverlay = self: prev: {
+        tailscale = prev.tailscale.overrideAttrs (old: {
+          doCheck = false;
+        });
+      };
+
+      macModules = [
+        # Insert the overlay for mac here
+        (
+          {
+            config,
+            pkgs,
+            ...
+          }:
+          {
+            nixpkgs.overlays = [
+              unstableOverlayDarwin
+              tailscaleOverlay
+            ];
+          }
+        )
+
+        ./home-mac.nix
+        inputs.sops-nix.homeManagerModules.sops
+        ./zsh-spellbook.nix
+        ./zsh.nix
+        ./cli-common.nix
+        ./desktop-mac.nix
+        stylix.homeManagerModules.stylix
+        ./stylix-common.nix
+        ./taskwarrior-work.nix
+        inputs.nixvim.homeModules.default
+        ./nixvim.nix
+        {
+          home = {
+            username = "jevin";
+            homeDirectory = "/Users/jevin";
+          };
+        }
+      ];
+
+      linuxModules = [
+        (
+          {
+            config,
+            pkgs,
+            ...
+          }:
+          {
+            nixpkgs.overlays = [
+              unstableOverlayLinux
+              tailscaleOverlay
+            ];
+          }
+        )
+
+        ./nixos/configuration.nix
+        ./nixos/hardware-configuration.nix
+        ./printers.nix
+        stylix.nixosModules.stylix
+        ./stylix-common.nix
+        nixos-hardware.nixosModules.framework-12th-gen-intel
+        inputs.musnix.nixosModules.musnix
+        {
+          musnix.enable = true;
+          users.users.jevin.extraGroups = [ "audio" ];
+        }
+        {
+          home-manager = {
+            useGlobalPkgs = true;
+            useUserPackages = true;
+            backupFileExtension = "backup";
+            extraSpecialArgs = {
+              inherit
+                inputs
+                stylix
+                muttdown
+                hy3
+                ;
+            };
+            users = {
+              jevin = {
+                imports = [
+                  ./jevin-linux.nix
+                  inputs.sops-nix.homeManagerModules.sops
+                  inputs.nixvim.homeModules.default
+                  ./nixvim.nix
+                  (
+                    { ... }:
+                    {
+                      # First, create the settings directory
+                      home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/.keep".text = "";
+
+                      # Then, place the file inside it
+                      home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json".source =
+                        mcpConfig;
+                    }
+                  )
+                ];
+              };
+            };
+          };
+        }
+        home-manager.nixosModules.home-manager
+      ];
+    in
+    {
+      # Linux system
+      nixosConfigurations = {
+        x86_64-linux = mkSystemConfiguration "x86_64-linux" linuxModules;
+      };
+
+      # macOS Home Manager
+      homeConfigurations = {
+        jevin = home-manager.lib.homeManagerConfiguration {
+          # Switch to x86_64-darwin if you have an Intel Mac
+          pkgs = nixpkgs.legacyPackages.aarch64-darwin; # This is for macOS specific packages
           extraSpecialArgs = {
-            inherit inputs stylix muttdown hy3;
+            inherit inputs;
+            # If mcpOutputs were needed for macOS, you'd define and pass a mac-specific version
           };
-          users = {
-            jevin = {
-              imports = [
-                ./jevin-linux.nix
-                inputs.sops-nix.homeManagerModules.sops
-                inputs.nixvim.homeModules.default
-                ./nixvim.nix
-                (
-                  {...}: {
-                    # First, create the settings directory
-                    home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/.keep".text = "";
-
-                    # Then, place the file inside it
-                    home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json".source =
-                      mcpConfig;
-                  }
-                )
-              ];
-            };
-          };
+          modules = macModules;
         };
-      }
-      home-manager.nixosModules.home-manager
-    ];
-  in {
-    # Linux system
-    nixosConfigurations = {
-      x86_64-linux = mkSystemConfiguration "x86_64-linux" linuxModules;
-    };
-
-    # macOS Home Manager
-    homeConfigurations = {
-      jevin = home-manager.lib.homeManagerConfiguration {
-        # Switch to x86_64-darwin if you have an Intel Mac
-        pkgs = nixpkgs.legacyPackages.aarch64-darwin; # This is for macOS specific packages
-        extraSpecialArgs = {
-          inherit inputs;
-          # If mcpOutputs were needed for macOS, you'd define and pass a mac-specific version
-        };
-        modules = macModules;
       };
     };
-  };
 }

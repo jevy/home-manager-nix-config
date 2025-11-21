@@ -28,13 +28,13 @@
     rpi-imager
     sunpaper
     newsflash
-    qflipper
-    jellyfin-media-player
+    qFlipper
+    # jellyfin-media-player # build broken on ffmpeg 8.0 via qtwebengine
     zotero
     openscad
     cc2538-bsl
 
-    glxinfo
+    mesa-demos
     vulkan-tools
 
     protonup-qt
@@ -58,9 +58,11 @@
 
     # Radio stuff
     yewtube
-    cmus
+    # cmus # broken build against ffmpeg 8.0
     pyradio
     mpv
+    mixxx
+    spotdl
   ];
 
   programs.radio-active.enable = true;
