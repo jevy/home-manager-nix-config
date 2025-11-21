@@ -8,19 +8,6 @@
     neoVimSupport = true;
     imagePreviewSupport = true;
   };
-  ask = pkgs.stdenv.mkDerivation {
-    name = "ask";
-    src = pkgs.fetchFromGitHub {
-      owner = "kagisearch";
-      repo = "ask";
-      rev = "master";
-      sha256 = "sha256-3q9WWhDXmdDouLRHKp14F+FeSPG1IoCL4jVbcHJdtnk=";
-    };
-    installPhase = ''
-      mkdir -p $out/bin
-      cp ask $out/bin/
-    '';
-  };
 in {
   home.packages = with pkgs; [
     wget
@@ -39,7 +26,7 @@ in {
     ldns # drill
     unzip
     fzf # For ranger
-    yt-dlp
+    unstable.yt-dlp
     termdown
     httpie
     kubectx
@@ -62,7 +49,30 @@ in {
     age # Encryption
     awscli2
     unstable.devenv
-    ask
+    (let
+      ask-script = pkgs.stdenv.mkDerivation {
+        name = "ask-unwrapped";
+        src = pkgs.fetchFromGitHub {
+          owner = "kagisearch";
+          repo = "ask";
+          rev = "master";
+          sha256 = "sha256-3q9WWhDXmdDouLRHKp14F+FeSPG1IoCL4jVbcHJdtnk=";
+        };
+        installPhase = ''
+          mkdir -p $out/bin
+          cp ask $out/bin/
+        '';
+      };
+    in
+      pkgs.writeShellApplication {
+        name = "ask";
+        runtimeInputs = [ask-script];
+        text = ''
+          OPENROUTER_API_KEY=$(cat "${config.sops.secrets.openrouter_api_key.path}")
+          export OPENROUTER_API_KEY
+          exec ask "$@"
+        '';
+      })
     bc
   ];
 
@@ -95,7 +105,6 @@ in {
 
   home.sessionVariables = {
     VAGRANT_DEFAULT_PROVIDER = "libvirt";
-    OPENROUTER_API_KEY = config.sops.secrets.openrouter_api_key.path;
   };
 
   home.file = {
@@ -118,5 +127,6 @@ in {
     lg = "lazygit";
 
     lhead = "ls --sort created -r | head";
+
   };
 }

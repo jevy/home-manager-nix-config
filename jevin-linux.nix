@@ -122,6 +122,7 @@
           listen_cmd = "~/.config/nixpkgs/waybar/polybar/ashell-weather.sh";
         }
       ];
+      workspaces.visibilityMode = "MonitorSpecific";
     };
   };
 

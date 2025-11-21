@@ -43,7 +43,6 @@
       startup = [
         {command = "${pkgs.slack}/bin/slack";}
         {command = "spotify";}
-        {command = "${pkgs.flashfocus}/bin/flashfocus";}
         {command = "${pkgs.unstable._1password-gui}/bin/1password";}
         {command = "swayidle -w timeout 300 'swaylock -f -c 00a00a' timeout 600 'swaymsg \"output * dpms off\"' resume 'swaymsg \"output * dpms on\"' before-sleep 'swaylock -f -c 000000'";}
       ];
