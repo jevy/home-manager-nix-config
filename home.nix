@@ -39,9 +39,14 @@ in
   };
   programs.git = {
     enable = true;
-    userName = "jevin";
-    userEmail = "jevin@quickjack.ca";
-    difftastic.enable = true;
+    settings.user = {
+      name = "jevin";
+      email = "jevin@quickjack.ca";
+    };
+  };
+  programs.difftastic = {
+    enable = true;
+    git.enable = true;
   };
 
   sops = {
