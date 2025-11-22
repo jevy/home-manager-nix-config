@@ -66,7 +66,6 @@
     docker-compose
     diff-pdf
     numbat
-    sqlite-utils
     pdftk
     ddcutil
     ddcui
