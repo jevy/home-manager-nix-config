@@ -9,7 +9,15 @@
     ./desktop-linux-common.nix
   ];
 
-  home.packages = with pkgs; [
+  home.packages = with pkgs; let
+    llmWithPlugins =
+      unstable.python313.withPackages (ps: [
+        ps.llm
+        ps.llm-cmd
+        ps.llm-openrouter
+      ]);
+  in [
+    llmWithPlugins
     synology-drive-client
     # ruby
     # gnumake
@@ -39,7 +47,6 @@
 
     protonup-qt
     steamtinkerlaunch
-    unstable.llm
     fluxcd
     unstable.fluxcd-operator
     kustomize
