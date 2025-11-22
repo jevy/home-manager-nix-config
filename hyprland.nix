@@ -12,7 +12,9 @@
     xwayland.enable = true;
     plugins = [ hy3.packages.x86_64-linux.hy3 ];
 
-    settings = {
+    settings = let
+      layoutAware = dispatcher: direction: ''exec, sh -c 'cur=$(hyprctl -j getoption general:layout | ${pkgs.jq}/bin/jq -r .str); if [ "$cur" = "hy3" ]; then hyprctl dispatch hy3:${dispatcher} ${direction}; else hyprctl dispatch ${dispatcher} ${direction}; fi' '';
+    in {
       general = {
         layout = "hy3";
       };
@@ -128,21 +130,21 @@
 
         # Window and group management
         "$mod, F, togglefloating"
-        "$mod, H, hy3:movefocus, l"
-        "$mod, L, hy3:movefocus, r"
-        "$mod, K, hy3:movefocus, u"
-        "$mod, J, hy3:movefocus, d"
-        "$mod, Y, exec, hyprctl dispatch layout hy3"
-        "$mod, D, exec, hyprctl dispatch layout dwindle"
+        "$mod, H, ${layoutAware "movefocus" "l"}"
+        "$mod, L, ${layoutAware "movefocus" "r"}"
+        "$mod, K, ${layoutAware "movefocus" "u"}"
+        "$mod, J, ${layoutAware "movefocus" "d"}"
+        "$mod, Y, exec, sh -c 'cur=$(hyprctl -j getoption general:layout | ${pkgs.jq}/bin/jq -r .str); [ \"$cur\" = \"hy3\" ] && hyprctl keyword general:layout dwindle || hyprctl keyword general:layout hy3'"
+        "$mod, D, exec, hyprctl keyword general:layout dwindle"
         "$mod SHIFT, F, fullscreen"
-        "$mod SHIFT, L, hy3:movewindow, r"
-        "$mod SHIFT, H, hy3:movewindow, l"
-        "$mod SHIFT, K, hy3:movewindow, u"
-        "$mod SHIFT, J, hy3:movewindow, d"
+        "$mod SHIFT, L, ${layoutAware "movewindow" "r"}"
+        "$mod SHIFT, H, ${layoutAware "movewindow" "l"}"
+        "$mod SHIFT, K, ${layoutAware "movewindow" "u"}"
+        "$mod SHIFT, J, ${layoutAware "movewindow" "d"}"
 
         # Tab navigation (similar to Sway's group navigation)
-        "$mod, O, hy3:focustab, r, wrap"
-        "$mod, U, hy3:focustab, l, wrap"
+        "$mod, O, hy3:focustab, r"
+        "$mod, U, hy3:focustab, l"
         "$mod SHIFT, O, hy3:movewindow, r, once"
         "$mod SHIFT, U, hy3:movewindow, l, once"
 
