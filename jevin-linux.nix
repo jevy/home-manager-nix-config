@@ -119,7 +119,7 @@
           name = "CustomWeather";
           icon = "";
           command = "wget -O - http://wttr.in/.png?m&format=v2 | feh - -Z";
-          listen_cmd = "~/.config/nixpkgs/waybar/polybar/ashell-weather.sh";
+          listen_cmd = "/home/jevin/.config/nixpkgs/waybar/polybar/ashell-weather.sh";
         }
       ];
       workspaces.visibility_mode = "MonitorSpecific";
