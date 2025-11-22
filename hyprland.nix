@@ -65,6 +65,13 @@
         enabled = true;
       };
 
+      dwindle = {
+        preserve_split = true;
+        single_window_aspect_ratio = "16 9";
+        single_window_aspect_ratio_tolerance = 0.1;
+        split_width_multiplier = 1.15;
+      };
+
       "$mod" = "SUPER";
 
       exec-once = "${pkgs.hyprpaper}/bin/hyprpaper";
@@ -125,6 +132,8 @@
         "$mod, L, hy3:movefocus, r"
         "$mod, K, hy3:movefocus, u"
         "$mod, J, hy3:movefocus, d"
+        "$mod, Y, exec, hyprctl dispatch layout hy3"
+        "$mod, D, exec, hyprctl dispatch layout dwindle"
         "$mod SHIFT, F, fullscreen"
         "$mod SHIFT, L, hy3:movewindow, r"
         "$mod SHIFT, H, hy3:movewindow, l"
