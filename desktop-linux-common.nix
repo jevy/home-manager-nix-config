@@ -88,6 +88,14 @@
   programs.direnv.enable = true;
   programs.qutebrowser.enable = true;
 
+  programs.ghostty = {
+    enable = true;
+    enableZshIntegration = true;
+    settings = {
+      shell-integration-features = "sudo,ssh-env,ssh-terminfo";
+    };
+  };
+
   programs.zed-editor = {
     enable = true;
     extensions = ["nix" "kotlin" "gruvbox-material"];
