@@ -1,11 +1,9 @@
+{ config, lib, pkgs, spicetify-nix, inputs, ... }:
 {
-  config,
-  lib,
-  pkgs,
-  spicetify-nix,
-  ...
-}:
-{
+  imports = [
+    ./nixvim-vscode-home.nix
+  ];
+
   home.packages = with pkgs; [
     libreoffice
     gimp
@@ -70,7 +68,6 @@
     ddcutil
     ddcui
     psst
-    unstable.ghostty
     unstable.repomix
     nethogs
   ];
@@ -88,6 +85,14 @@
   programs.java.enable = true;
   programs.direnv.enable = true;
   programs.qutebrowser.enable = true;
+
+  programs.ghostty = {
+    enable = true;
+    enableZshIntegration = true;
+    settings = {
+      shell-integration-features = "sudo,ssh-env,ssh-terminfo";
+    };
+  };
 
   programs.zed-editor = {
     enable = true;

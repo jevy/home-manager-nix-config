@@ -1,5 +1,12 @@
-{ config, pkgs, libs, ... }:
+{ config, pkgs, libs, inputs, ... }:
 {
+  imports = [
+    ./nixvim-vscode-home.nix
+  ];
+
+  home.username = "jevin";
+  home.homeDirectory = "/Users/jevin";
+
   home.packages = with pkgs; [
     # spacebar
     # yabai
