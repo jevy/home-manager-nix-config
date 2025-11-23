@@ -173,21 +173,6 @@
   programs.sway.enable = true;
   programs.regreet.enable = true;
   services.greetd.enable = true;
-  home-manager.users.greeter = { pkgs, ... }: {
-    home.stateVersion = "24.11";
-    services.hypridle = {
-      enable = true;
-      settings = {
-        listener = [
-          {
-            timeout = 180; # 3 minutes
-            on-timeout = "hyprctl dispatch dpms off";
-            on-resume = "hyprctl dispatch dpms on";
-          }
-        ];
-      };
-    };
-  };
   # programs.sway.package = config.home-manager.users.jevin.wayland.windowManager.sway.package;
   
   # Enable Hyprland
