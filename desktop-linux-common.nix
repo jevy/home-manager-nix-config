@@ -1,10 +1,8 @@
-{
-  config,
-  lib,
-  pkgs,
-  spicetify-nix,
-  ...
-}: {
+{ config, lib, pkgs, spicetify-nix, inputs, ... }: {
+  imports = [
+    ./nixvim-vscode-home.nix
+  ];
+
   home.packages = with pkgs; [
     libreoffice
     gimp
