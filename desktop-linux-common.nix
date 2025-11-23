@@ -83,7 +83,11 @@
 
   programs.go.enable = true;
   programs.java.enable = true;
-  programs.direnv.enable = true;
+  programs.direnv = {
+    enable = true;
+    nix-direnv.enable = true;
+  };
+
   programs.qutebrowser.enable = true;
 
   programs.ghostty = {
@@ -174,9 +178,9 @@
   };
 
   programs.chromium.enable = true; # qtwebengine takes a really long time
-  home.sessionVariables = {
-    NIXOS_OZONE_WL = "1"; # For Wayland Chrome and Electron
-  };
+  # home.sessionVariables = {
+  #   NIXOS_OZONE_WL = "1"; # For Wayland Chrome and Electron
+  # };
 
   # dconf.settings = {
   #   "org/gnome/mutter" = {
