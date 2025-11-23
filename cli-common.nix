@@ -50,7 +50,7 @@ in {
     awscli2
     unstable.devenv
     repomix
-    poppler_utils
+    poppler-utils
     (let
       ask-script = pkgs.stdenv.mkDerivation {
         name = "ask-unwrapped";
