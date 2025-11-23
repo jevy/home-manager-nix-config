@@ -57,15 +57,6 @@ in {
     enable = true;
   };
 
-  programs.ghostty = {
-    enable = true;
-    enableZshIntegration = true;
-    package = pkgs.ghostty-bin;
-    settings = {
-      shell-integration-features = "sudo,ssh-env,ssh-terminfo";
-    };
-  };
-
   programs.tmux = {
     enable = true;
     sensibleOnTop = false;
