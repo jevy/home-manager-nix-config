@@ -30,6 +30,18 @@
         source "${config.home.homeDirectory}/.config/zsh/api_keys.zsh"
       fi
     '';
+    initExtra = ''
+      # Ensure Nix paths are at the front of $PATH (some plugins reorder it)
+      nix_user_path="$HOME/.nix-profile/bin"
+      nix_system_path="/nix/var/nix/profiles/default/bin"
+      export PATH="$nix_user_path:$nix_system_path:$(echo "$PATH" | tr ':' '\n' \
+        | grep -v "$nix_user_path" | grep -v "$nix_system_path" | paste -sd: -)"
+    '';
+    envExtra = ''
+      if [ -e "$HOME/.nix-profile/etc/profile.d/nix.sh" ]; then
+        . "$HOME/.nix-profile/etc/profile.d/nix.sh"
+      fi
+    '';
     plugins = [
       {
         name = "zsh-nix-shell";

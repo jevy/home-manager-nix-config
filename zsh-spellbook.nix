@@ -7,6 +7,9 @@
       if [[ -f /Users/jevin/secrets/node_auth ]]; then
         export NODE_AUTH_TOKEN=$(< /Users/jevin/secrets/node_auth)
       fi
+      if [[ -f /Users/jevin/secrets/localstack ]]; then
+        export LOCALSTACK_AUTH_TOKEN=$(< /Users/jevin/secrets/localstack)
+      fi
       # Clear API keys to avoid using personal keys at work
       unset ANTHROPIC_API_KEY
       unset OPENAI_API_KEY
