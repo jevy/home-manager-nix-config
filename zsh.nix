@@ -29,8 +29,7 @@
       if [ -f "${config.home.homeDirectory}/.config/zsh/api_keys.zsh" ]; then
         source "${config.home.homeDirectory}/.config/zsh/api_keys.zsh"
       fi
-    '';
-    initExtra = ''
+
       # Ensure Nix paths are at the front of $PATH (some plugins reorder it)
       nix_user_path="$HOME/.nix-profile/bin"
       nix_system_path="/nix/var/nix/profiles/default/bin"
