@@ -174,32 +174,6 @@
       ./taskwarrior-work.nix
       inputs.nixvim.homeModules.default
       ./nixvim.nix
-      ({
-        config,
-        pkgs,
-        inputs,
-        ...
-      }: let
-        nixvimPkgs = inputs.nixvim.legacyPackages.${pkgs.stdenv.hostPlatform.system};
-        nvimVscode = nixvimPkgs.makeNixvim (import ./nixvim-vscode.nix);
-        nvimWrapperText = builtins.readFile "${nvimVscode}/bin/nvim";
-        # Extract the -u <path> target from the wrapper script
-        initVscodePath = let
-          parts = pkgs.lib.strings.splitString " -u " nvimWrapperText;
-        in if (builtins.length parts) < 2 then
-          throw "Could not find -u path in wrapped nvim script"
-        else
-          let tail = builtins.elemAt parts 1;
-              # Grab up to the first space/newline, yielding the init.lua store path
-              firstToken = builtins.head (pkgs.lib.strings.splitString " " tail);
-          in firstToken;
-      in {
-        home = {
-          username = "jevin";
-          homeDirectory = "/Users/jevin";
-          file.".config/nvim/init-vscode.lua".source = initVscodePath;
-        };
-      })
     ];
 
     linuxModules = [
