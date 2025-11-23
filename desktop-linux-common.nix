@@ -70,7 +70,6 @@
     ddcutil
     ddcui
     psst
-    unstable.ghostty
     unstable.repomix
     nethogs
   ];

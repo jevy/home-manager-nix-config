@@ -49,10 +49,21 @@ in {
     age # Encryption
     awscli2
     unstable.devenv
+    repomix
+    poppler_utils
   ];
 
   programs.bat = {
     enable = true;
+  };
+
+  programs.ghostty = {
+    enable = true;
+    enableZshIntegration = true;
+    package = pkgs.ghostty-bin;
+    settings = {
+      shell-integration-features = "sudo,ssh-env,ssh-terminfo";
+    };
   };
 
   programs.tmux = {
@@ -61,11 +72,11 @@ in {
     keyMode = "vi";
     customPaneNavigationAndResize = true;
     historyLimit = 10000;
-    # focusEvents = true; # Only in HM 25.05 + 
+    shell = "${pkgs.zsh}/bin/zsh";
+    # focusEvents = true; # Only in HM 25.05 +
     escapeTime = 200;
     mouse = true;
     shortcut = "a";
-    terminal = "screen-256color";
     plugins = with pkgs.tmuxPlugins; [
       vim-tmux-navigator
     ];
@@ -75,6 +86,7 @@ in {
       unbind '"'
       unbind %
       set-option -g display-time 0
+      set-option -g default-command "${pkgs.zsh}/bin/zsh -l"
     '';
   };
 
