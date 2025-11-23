@@ -84,8 +84,8 @@
           };
         };
       };
-      markview.enable = true;
-      rainbow-delimiters.enable = true;
+      markview.enable = false;
+      rainbow-delimiters.enable = false;
       telescope = {
         enable = true;
         extensions = {

@@ -49,6 +49,8 @@ in {
     age # Encryption
     awscli2
     unstable.devenv
+    repomix
+    poppler_utils
     (let
       ask-script = pkgs.stdenv.mkDerivation {
         name = "ask-unwrapped";
@@ -86,11 +88,12 @@ in {
     keyMode = "vi";
     customPaneNavigationAndResize = true;
     historyLimit = 10000;
+    shell = "${pkgs.zsh}/bin/zsh";
+    # focusEvents = true; # Only in HM 25.05 +
     # focusEvents = true; # Only in HM 25.05 +
     escapeTime = 200;
     mouse = true;
     shortcut = "a";
-    terminal = "screen-256color";
     plugins = with pkgs.tmuxPlugins; [
       vim-tmux-navigator
     ];
@@ -100,6 +103,7 @@ in {
       unbind '"'
       unbind %
       set-option -g display-time 0
+      set-option -g default-command "${pkgs.zsh}/bin/zsh -l"
     '';
   };
 

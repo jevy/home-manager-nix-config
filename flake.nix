@@ -168,24 +168,18 @@
           }
         )
 
-        ./home-mac.nix
-        inputs.sops-nix.homeManagerModules.sops
-        ./zsh-spellbook.nix
-        ./zsh.nix
-        ./cli-common.nix
-        ./desktop-mac.nix
-        stylix.homeManagerModules.stylix
-        ./stylix-common.nix
-        ./taskwarrior-work.nix
-        inputs.nixvim.homeModules.default
-        ./nixvim.nix
-        {
-          home = {
-            username = "jevin";
-            homeDirectory = "/Users/jevin";
-          };
-        }
-      ];
+      ./home-mac.nix
+      inputs.sops-nix.homeManagerModules.sops
+      ./zsh-spellbook.nix
+      ./zsh.nix
+      ./cli-common.nix
+      ./desktop-mac.nix
+      stylix.homeManagerModules.stylix
+      ./stylix-common.nix
+      ./taskwarrior-work.nix
+      inputs.nixvim.homeModules.default
+      ./nixvim.nix
+    ];
 
       linuxModules = [
         (
@@ -239,24 +233,30 @@
                       # First, create the settings directory
                       home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/.keep".text = "";
 
-                      # Then, place the file inside it
-                      home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json".source =
-                        mcpConfig;
-                    }
-                  )
-                ];
-              };
+                    # Then, place the file inside it
+                    home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json".source =
+                      mcpConfig;
+                  }
+                )
+              ];
             };
           };
-        }
-        home-manager.nixosModules.home-manager
-      ];
-    in
-    {
-      # Linux system
-      nixosConfigurations = {
-        x86_64-linux = mkSystemConfiguration "x86_64-linux" linuxModules;
+        };
+      }
+      home-manager.nixosModules.home-manager
+    ];
+  in {
+    packages = {
+      # macOS (Apple Silicon)
+      aarch64-darwin = {
+        nvim-vscode = nixvim.legacyPackages.aarch64-darwin.makeNixvim (import ./nixvim-vscode.nix);
       };
+    };
+
+    # Linux system
+    nixosConfigurations = {
+      x86_64-linux = mkSystemConfiguration "x86_64-linux" linuxModules;
+    };
 
       # macOS Home Manager
       homeConfigurations = {
