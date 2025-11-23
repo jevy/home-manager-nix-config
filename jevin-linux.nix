@@ -114,6 +114,9 @@
           ]
         ];
       };
+      clock = {
+        format = "%a %d %b %l:%M %p";
+      };
       CustomModule = [
         {
           name = "CustomWeather";
