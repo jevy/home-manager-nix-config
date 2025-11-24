@@ -85,7 +85,6 @@
         bind = [
           # Window management
           "$mod, Q, hy3:killactive"
-          "$mod SHIFT, Q, exit"
           "$mod SHIFT, R, exec, hyprctl reload"
 
           # Workspace navigation
