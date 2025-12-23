@@ -20,11 +20,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprland = {
-      url = "git+https://github.com/hyprwm/Hyprland";
+      url = "github:hyprwm/Hyprland/v0.52.0";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hy3 = {
-      url = "github:outfoxxed/hy3";
+      url = "github:outfoxxed/hy3/hl0.52.0";
       inputs.hyprland.follows = "hyprland";
     };
   };
@@ -50,10 +50,20 @@
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
 
-      mcpConfig = import ./mcp/config.nix {
+      mcpConfigVSCode = import ./mcp/config.nix {
         unstablePkgsInput = inputs.unstable;
         mcpServersNixInput = inputs.mcp-servers-nix;
         inherit system;
+        flavor = "vscode";
+        fileName = "mcp_settings.json";
+      };
+
+      mcpConfigClaudeCode = import ./mcp/config.nix {
+        unstablePkgsInput = inputs.unstable;
+        mcpServersNixInput = inputs.mcp-servers-nix;
+        inherit system;
+        flavor = "claude";
+        fileName = ".mcp.json";
       };
 
       mkSystemConfiguration =
@@ -218,6 +228,8 @@
                 stylix
                 muttdown
                 hy3
+                mcpConfigVSCode
+                mcpConfigClaudeCode
                 ;
             };
             users = {
@@ -228,16 +240,17 @@
                   inputs.nixvim.homeModules.default
                   ./nixvim.nix
                   (
-                    { ... }:
+                    { mcpConfigVSCode, mcpConfigClaudeCode, ... }:
                     {
-                      # First, create the settings directory
+                      # VSCode Cline MCP settings
                       home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/.keep".text = "";
+                      home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json".source =
+                        mcpConfigVSCode;
 
-                    # Then, place the file inside it
-                    home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json".source =
-                      mcpConfig;
-                  }
-                )
+                      # Claude Code MCP settings (global config)
+                      home.file.".mcp.json".source = mcpConfigClaudeCode;
+                    }
+                  )
               ];
             };
           };
