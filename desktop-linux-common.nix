@@ -70,6 +70,8 @@
     psst
     unstable.repomix
     nethogs
+    marktext
+    wl-screenrec
   ];
 
   services.wlsunset = {
