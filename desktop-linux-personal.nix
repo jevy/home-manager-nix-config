@@ -16,6 +16,7 @@
         ps.llm-cmd
         ps.llm-openrouter
       ]);
+    claude-code-router = pkgs.callPackage ./claude-code-router.nix {};
   in [
     llmWithPlugins
     synology-drive-client
@@ -28,7 +29,6 @@
     dropbox
     # arduino
     hugo
-    steam
     gcalcli
 
     # unstable.bambu-studio
@@ -46,7 +46,6 @@
     vulkan-tools
 
     protonup-qt
-    steamtinkerlaunch
     fluxcd
     unstable.fluxcd-operator
     kustomize
@@ -70,6 +69,8 @@
     mpv
     mixxx
     spotdl
+    claude-code
+    claude-code-router
   ];
 
   programs.radio-active.enable = true;
