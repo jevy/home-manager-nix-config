@@ -3,6 +3,8 @@
   unstablePkgsInput,
   mcpServersNixInput,
   system ? "x86_64-linux",
+  flavor ? "claude",
+  fileName ? "mcp_settings.json",
 }: let
   # Single pkgs instance with mcp-servers-nix overlay
   pkgs = import unstablePkgsInput {
@@ -26,15 +28,13 @@ in
   # Just generate the configuration file
   mcpServersNixInput.lib.mkConfig pkgs {
     programs = {
-      # fetch.enable = true;  # Disabled due to build issues
+      fetch.enable = true;  # Disabled due to build issues
       context7.enable = true;
       time.enable = true;
       git.enable = true;
       nixos.enable = true;
-      serena.enable = true;
     };
-    flavor = "claude";
-    fileName = "mcp_settings.json";
+    inherit flavor fileName;
     settings = {
       servers = {
         "mcp-server-kubernetes" = {
