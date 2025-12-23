@@ -39,8 +39,10 @@
           };
         };
         monitor = [
-          "desc:BOE 0x095F, preferred, auto, 1.5666"
-          "desc:Dell Inc. Dell U4924DW 3KWV0S3,5120x1440@60,5320x2880,1"
+          "eDP-1, 2256x1504, 0x0, 1.57"
+          "DP-1, 2560x1600, 1440x0, 1.6"
+          # "desc:BOE 0x095F, preferred, auto, 1.5666"
+          # "desc:Dell Inc. Dell U4924DW 3KWV0S3,5120x1440@60,5320x2880,1"
         ];
 
         # workspace = [
