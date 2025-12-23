@@ -150,6 +150,13 @@
       27123 # Obsidian REST for MCP
     ];
 
+    extraCommands = ''
+      # Allow Docker containers to reach TypeStream server
+      iptables -A nixos-fw -s 172.19.0.0/16 -p tcp --dport 4242 -j ACCEPT
+      iptables -A nixos-fw -s 172.17.0.0/16 -p tcp --dport 4242 -j ACCEPT
+    '';
+
+
     # interfaces = {
     #   docker0 = {
     #     allowedTCPPorts = [
@@ -386,6 +393,13 @@
   # programs.dconf.enable = true;
   # environment.systemPackages = with pkgs; [ virt-manager ];
   # environment.systemPackages = with pkgs; [ cntr ];
+
+  zramSwap = {
+    enable = true;
+    algorithm = "zstd";
+    memoryPercent = 30;
+  };
+  services.thermald.enable = true;
 
   # boot.kernelModules = [ "v4l2loopback" ];
 
