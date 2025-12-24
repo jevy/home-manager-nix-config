@@ -47,7 +47,7 @@
 
     protonup-qt
     fluxcd
-    unstable.fluxcd-operator
+    fluxcd-operator
     kustomize
     mqttx
     mqttui
@@ -71,6 +71,7 @@
     spotdl
     claude-code
     claude-code-router
+    nmap
   ];
 
   programs.radio-active.enable = true;

@@ -89,43 +89,6 @@
           ];
           overlays = [
             (final: prev: {
-              fluxcd-operator = prev.fluxcd-operator.overrideAttrs (oldAttrs: {
-                version = "0.20.0";
-                src = prev.fetchFromGitHub {
-                  owner = "controlplaneio-fluxcd";
-                  repo = "flux-operator";
-                  rev = "v0.20.0";
-                  hash = "sha256-GGHufHUqTylgynK19aaj4KAawlzzuz3iSEHa+vVVPMM=";
-                };
-
-                vendorHash = "sha256-5uT/pcfXrinyJ1hXmQ+vmWNuyO33c6d5PAjm6kwOZmY=";
-
-                subPackages = [
-                  "cmd/cli"
-                  "cmd/mcp"
-                ];
-
-                ldflags = [
-                  "-s"
-                  "-w"
-                  "-X main.VERSION=0.20.0"
-                ];
-
-                env.CGO_ENABLED = "0";
-
-                doCheck = false;
-
-                postInstall = ''
-                  # Rename the CLI binary to flux-operator (keeping original behavior)
-                  mv $out/bin/cli $out/bin/flux-operator
-                  # Rename the MCP binary to flux-operator-mcp
-                  mv $out/bin/mcp $out/bin/flux-operator-mcp
-                '';
-
-                meta = oldAttrs.meta // {
-                  description = "Kubernetes CRD controller that manages the lifecycle of CNCF Flux CD with MCP server support";
-                };
-              });
               volsync = prev.buildGoModule rec {
                 pname = "volsync";
                 version = "latest";
