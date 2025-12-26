@@ -97,7 +97,6 @@
           vim.api.nvim_set_keymap("n", "<C-g>", ":Telescope live_grep<CR>", { noremap = true, silent = true })
         '';
       };
-      tmux-navigator.enable = true;
       todo-comments.enable = true;
       trouble.enable = true;
       which-key.enable = true;
