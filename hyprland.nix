@@ -165,6 +165,9 @@
           ", 164, exec, ${pkgs.playerctl}/bin/playerctl play-pause"
           ", 232, exec, ${pkgs.brightnessctl}/bin/brightnessctl set 5%-"
           ", 233, exec, ${pkgs.brightnessctl}/bin/brightnessctl set 5%+"
+
+          # Notifications
+          "$mod, N, exec, ${pkgs.mako}/bin/makoctl dismiss"
         ];
       };
   };
