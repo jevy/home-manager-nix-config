@@ -72,6 +72,7 @@
     claude-code
     claude-code-router
     nmap
+    immich-go
   ];
 
   programs.radio-active.enable = true;
