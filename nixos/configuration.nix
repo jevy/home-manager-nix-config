@@ -79,14 +79,14 @@
            hold-time 200
           )
           (defalias
-           a (tap-hold $tap-time $hold-time a lctl)
-           s (tap-hold $tap-time $hold-time s lalt)
+           a (tap-hold $tap-time $hold-time a lalt)
+           s (tap-hold $tap-time $hold-time s lmet)
            d (tap-hold $tap-time $hold-time d lsft)
            f (tap-hold $tap-time $hold-time f lctl)
            j (tap-hold $tap-time $hold-time j rctl)
            k (tap-hold $tap-time $hold-time k rsft)
-           l (tap-hold $tap-time $hold-time l ralt)
-           ; (tap-hold $tap-time $hold-time ; rmet)
+           l (tap-hold $tap-time $hold-time l rmet)
+           ; (tap-hold $tap-time $hold-time ; ralt)
           )
           (deflayer base
            @a  @s  @d  @f  @j  @k  @l  @;
