@@ -82,30 +82,30 @@ in {
     enable = true;
   };
 
-  programs.tmux = {
-    enable = true;
-    sensibleOnTop = false;
-    keyMode = "vi";
-    customPaneNavigationAndResize = true;
-    historyLimit = 10000;
-    shell = "${pkgs.zsh}/bin/zsh";
-    # focusEvents = true; # Only in HM 25.05 +
-    # focusEvents = true; # Only in HM 25.05 +
-    escapeTime = 200;
-    mouse = true;
-    shortcut = "a";
-    plugins = with pkgs.tmuxPlugins; [
-      vim-tmux-navigator
-    ];
-    extraConfig = ''
-      bind | split-window -h
-      bind - split-window -v
-      unbind '"'
-      unbind %
-      set-option -g display-time 0
-      set-option -g default-command "${pkgs.zsh}/bin/zsh -l"
-    '';
-  };
+  # programs.tmux = {
+  #   enable = true;
+  #   sensibleOnTop = false;
+  #   keyMode = "vi";
+  #   customPaneNavigationAndResize = true;
+  #   historyLimit = 10000;
+  #   shell = "${pkgs.zsh}/bin/zsh";
+  #   # focusEvents = true; # Only in HM 25.05 +
+  #   # focusEvents = true; # Only in HM 25.05 +
+  #   escapeTime = 200;
+  #   mouse = true;
+  #   shortcut = "a";
+  #   plugins = with pkgs.tmuxPlugins; [
+  #     vim-tmux-navigator
+  #   ];
+  #   extraConfig = ''
+  #     bind | split-window -h
+  #     bind - split-window -v
+  #     unbind '"'
+  #     unbind %
+  #     set-option -g display-time 0
+  #     set-option -g default-command "${pkgs.zsh}/bin/zsh -l"
+  #   '';
+  # };
 
   home.sessionVariables = {
     VAGRANT_DEFAULT_PROVIDER = "libvirt";
