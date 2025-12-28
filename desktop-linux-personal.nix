@@ -73,6 +73,7 @@
     claude-code-router
     nmap
     immich-go
+    orca-slicer
   ];
 
   programs.radio-active.enable = true;
