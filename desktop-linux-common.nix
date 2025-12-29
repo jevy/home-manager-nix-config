@@ -79,6 +79,7 @@
     nethogs
     marktext
     wl-screenrec
+    hyprland-monitor-attached
   ];
 
   services.wlsunset = {
