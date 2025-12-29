@@ -38,6 +38,14 @@
             };
           };
         };
+
+        master = {
+          orientation = "center";
+          mfact = 0.45; # Master window takes 45% of screen width
+          slave_count_for_center_master = 0; # Always center master (even with no slaves)
+          new_status = "slave"; # New windows go to slave stack
+          smart_resizing = true;
+        };
         monitor = [
           "eDP-1, 2256x1504, 0x0, 1.57"
           "DP-1, 2560x1600, 1440x0, 1.6"
@@ -139,8 +147,8 @@
           "$mod, L, ${layoutAware "movefocus" "r"}"
           "$mod, K, ${layoutAware "movefocus" "u"}"
           "$mod, J, ${layoutAware "movefocus" "d"}"
-          "$mod, Y, exec, sh -c 'cur=$(hyprctl -j getoption general:layout | ${pkgs.jq}/bin/jq -r .str); [ \"$cur\" = \"hy3\" ] && hyprctl keyword general:layout dwindle || hyprctl keyword general:layout hy3'"
-          "$mod, D, exec, hyprctl keyword general:layout dwindle"
+          "$mod, Y, exec, sh -c 'cur=$(hyprctl -j getoption general:layout | ${pkgs.jq}/bin/jq -r .str); [ \"$cur\" = \"hy3\" ] && hyprctl keyword general:layout master || hyprctl keyword general:layout hy3'"
+          "$mod, D, exec, hyprctl keyword general:layout master"
           "$mod SHIFT, F, fullscreen"
           "$mod SHIFT, L, ${layoutAware "movewindow" "r"}"
           "$mod SHIFT, H, ${layoutAware "movewindow" "l"}"
