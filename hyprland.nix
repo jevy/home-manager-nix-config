@@ -53,8 +53,9 @@
           hyprctl dispatch workspace 1
           # Use master layout for ultrawide
           hyprctl keyword general:layout master
-          # Set laptop monitor scale for docked mode
-          hyprctl keyword monitor "eDP-1,2256x1504@60,0x0,1.5666667"
+          # Position external monitor at origin and laptop below it
+          hyprctl keyword monitor "$MONITOR,preferred,0x0,1"
+          hyprctl keyword monitor "eDP-1,2256x1504@60,0x1440,1.5666667"
           # Reload hyprpaper to apply wallpaper to new monitor
           killall hyprpaper; sleep 0.5; ${pkgs.hyprpaper}/bin/hyprpaper &
         '';
