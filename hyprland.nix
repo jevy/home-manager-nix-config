@@ -8,7 +8,7 @@
 {
   wayland.windowManager.hyprland = {
     enable = true;
-    systemd.enable = true;  # Required for hyprland-session.target (ashell depends on it)
+    systemd.enable = true; # Required for hyprland-session.target (ashell depends on it)
     # xwayland.enable = true;
     plugins = [ hy3.packages.x86_64-linux.hy3 ];
 
@@ -42,6 +42,31 @@
               ;;
           esac
         '';
+
+        monitorAttached = pkgs.writeShellScript "monitor-attached" ''
+          MONITOR="$1"
+          # Move workspaces 1-6 to the newly attached monitor
+          for ws in 1 2 3 4 5 6; do
+            hyprctl dispatch moveworkspacetomonitor "$ws" "$MONITOR"
+          done
+          # Switch to workspace 1 on the new monitor
+          hyprctl dispatch workspace 1
+          # Use master layout for ultrawide
+          hyprctl keyword general:layout master
+          # Set laptop monitor scale for docked mode
+          hyprctl keyword monitor "eDP-1,2256x1504@60,0x0,1.5666667"
+          # Reload hyprpaper to apply wallpaper to new monitor
+          killall hyprpaper; sleep 0.5; ${pkgs.hyprpaper}/bin/hyprpaper &
+        '';
+
+        monitorDetached = pkgs.writeShellScript "monitor-detached" ''
+          # Switch back to hy3 layout for laptop-only mode
+          hyprctl keyword general:layout hy3
+          # Reset laptop monitor position and scale for undocked mode
+          hyprctl keyword monitor "eDP-1,2256x1504@60,0x0,1"
+          # Reload hyprpaper to apply wallpaper
+          killall hyprpaper; sleep 0.5; ${pkgs.hyprpaper}/bin/hyprpaper &
+        '';
       in
       {
         general = {
@@ -71,12 +96,6 @@
           new_status = "slave"; # New windows go to slave stack
           smart_resizing = true;
         };
-        monitor = [
-          # Dell ultrawide at top-left origin
-          "DP-4, 5120x1440, 0x0, 1"
-          # Laptop centered below the ultrawide: (5120-2256)/2 = 1432
-          "eDP-1, 2256x1504, 1432x1440, 1"
-        ];
 
         # workspace = [
         #   "1, monitor:Dell Inc. Dell U4924DW 3KWV0S3"
@@ -115,7 +134,10 @@
 
         "$mod" = "SUPER";
 
-        exec-once = "${pkgs.hyprpaper}/bin/hyprpaper";
+        exec-once = [
+          "${pkgs.hyprpaper}/bin/hyprpaper"
+          "${pkgs.hyprland-monitor-attached}/bin/hyprland-monitor-attached ${monitorAttached} ${monitorDetached}"
+        ];
 
         bind = [
           # Window management
