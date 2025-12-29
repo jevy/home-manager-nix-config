@@ -8,7 +8,7 @@
 {
   wayland.windowManager.hyprland = {
     enable = true;
-    systemd.enable = true;
+    systemd.enable = true;  # Required for hyprland-session.target (ashell depends on it)
     # xwayland.enable = true;
     plugins = [ hy3.packages.x86_64-linux.hy3 ];
 
@@ -17,6 +17,31 @@
         layoutAware =
           dispatcher: direction:
           ''exec, sh -c 'cur=$(hyprctl -j getoption general:layout | ${pkgs.jq}/bin/jq -r .str); if [ "$cur" = "hy3" ]; then hyprctl dispatch hy3:${dispatcher} ${direction}; else hyprctl dispatch ${dispatcher} ${direction}; fi' '';
+
+        brightnessAdjust = pkgs.writeShellScript "brightness-adjust" ''
+          CHANGE=$1
+          MONITOR=$(hyprctl monitors -j | ${pkgs.jq}/bin/jq -r '.[] | select(.focused == true) | .name')
+
+          case $MONITOR in
+            eDP-1)
+              if [ $CHANGE -lt 0 ]; then
+                ${pkgs.brightnessctl}/bin/brightnessctl set "''${CHANGE#-}%-"
+              else
+                ${pkgs.brightnessctl}/bin/brightnessctl set "''${CHANGE}%+"
+              fi
+              ;;
+            DP-*)
+              # Dell U4924DW on bus 17 - adjust if monitor changes
+              BUS=17
+              CURRENT=$(${pkgs.ddcutil}/bin/ddcutil --bus $BUS getvcp 10 --terse 2>/dev/null | cut -d' ' -f4)
+              [ -z "$CURRENT" ] && exit 1
+              NEW=$((CURRENT + CHANGE))
+              [ $NEW -lt 0 ] && NEW=0
+              [ $NEW -gt 100 ] && NEW=100
+              ${pkgs.ddcutil}/bin/ddcutil --bus $BUS --noverify setvcp 10 $NEW
+              ;;
+          esac
+        '';
       in
       {
         general = {
@@ -47,10 +72,10 @@
           smart_resizing = true;
         };
         monitor = [
-          "eDP-1, 2256x1504, 0x0, 1.57"
-          "DP-1, 2560x1600, 1440x0, 1.6"
-          # "desc:BOE 0x095F, preferred, auto, 1.5666"
-          # "desc:Dell Inc. Dell U4924DW 3KWV0S3,5120x1440@60,5320x2880,1"
+          # Dell ultrawide at top-left origin
+          "DP-4, 5120x1440, 0x0, 1"
+          # Laptop centered below the ultrawide: (5120-2256)/2 = 1432
+          "eDP-1, 2256x1504, 1432x1440, 1"
         ];
 
         # workspace = [
@@ -171,8 +196,8 @@
           ", XF86AudioPrev, exec, ${pkgs.playerctl}/bin/playerctl previous"
           ", Print, exec, ${pkgs.grim}/bin/grim -g \"$(${pkgs.slurp}/bin/slurp)\" - | ${pkgs.swappy}/bin/swappy -f -"
           ", 164, exec, ${pkgs.playerctl}/bin/playerctl play-pause"
-          ", 232, exec, ${pkgs.brightnessctl}/bin/brightnessctl set 5%-"
-          ", 233, exec, ${pkgs.brightnessctl}/bin/brightnessctl set 5%+"
+          ", 232, exec, ${brightnessAdjust} -5"
+          ", 233, exec, ${brightnessAdjust} +5"
 
           # Notifications
           "$mod, N, exec, ${pkgs.mako}/bin/makoctl dismiss"

@@ -19,6 +19,7 @@
 
   # https://nixos.wiki/wiki/Intel_Graphics
   boot.kernelParams = [ "i915.force_probe=4626" ];
+  boot.kernelModules = [ "i2c-dev" ];
 
   # services.xserver.videoDrivers =  [
   #   "intel-media-driver"
@@ -41,6 +42,10 @@
   services.fwupd.enable = true;
   services.upower.enable = true;
   services.ddccontrol.enable = true;
+  hardware.i2c.enable = true;
+  services.udev.extraRules = ''
+    KERNEL=="i2c-[0-9]*", GROUP="i2c", MODE="0660"
+  '';
   # services.ratbagd.enable = true;
 
   nix = {
@@ -313,6 +318,7 @@
       "video"
       "adbusers"
       "uinput"
+      "i2c"
     ]; # Dialout if for usb/serial access for arduino
 
     # `nix-shell -p mkpasswd --run 'mkpasswd -m sha-512'`
