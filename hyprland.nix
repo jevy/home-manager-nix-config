@@ -71,6 +71,7 @@
       {
         general = {
           layout = "hy3";
+          border_size = 4;
         };
 
         plugin = {
@@ -223,6 +224,11 @@
 
           # Notifications
           "$mod, N, exec, ${pkgs.mako}/bin/makoctl dismiss"
+        ];
+
+        bindm = [
+          "$mod, mouse:272, movewindow"
+          "$mod, mouse:273, resizewindow"
         ];
       };
   };
