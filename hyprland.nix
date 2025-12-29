@@ -141,7 +141,7 @@
 
         bind = [
           # Window management
-          "$mod, Q, hy3:killactive"
+          "$mod, Q, exec, sh -c 'cur=$(hyprctl -j getoption general:layout | ${pkgs.jq}/bin/jq -r .str); [ \"$cur\" = \"hy3\" ] && hyprctl dispatch hy3:killactive || hyprctl dispatch killactive'"
           "$mod SHIFT, R, exec, hyprctl reload"
 
           # Workspace navigation
