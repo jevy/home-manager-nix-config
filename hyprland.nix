@@ -139,6 +139,8 @@
         exec-once = [
           "${pkgs.hyprpaper}/bin/hyprpaper"
           "${pkgs.hyprland-monitor-attached}/bin/hyprland-monitor-attached ${monitorAttached} ${monitorDetached}"
+          # Run initial setup based on current monitor state (hyprland-monitor-attached only handles events)
+          "sh -c 'sleep 1; ext=$(hyprctl monitors -j | ${pkgs.jq}/bin/jq -r \".[] | select(.name != \\\"eDP-1\\\") | .name\" | head -1); if [ -n \"$ext\" ]; then ${monitorAttached} \"$ext\"; else ${monitorDetached}; fi'"
         ];
 
         bind = [
