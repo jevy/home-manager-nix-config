@@ -14,7 +14,7 @@
     extraConfigLua =
       # lua
       ''
-        local leap = require("leap")
+        require("leap").set_default_mappings()
       '';
     extraConfigVim = ''
       " vim-rooter configuration
@@ -169,7 +169,6 @@
             goto_next_start = {
               "]m" = "@function.outer";
               "]im" = "@function.inner";
-              ")" = "@parameter.inner";
               "]c" = "@call.outer";
               "]ic" = "@call.inner";
             };
@@ -183,7 +182,6 @@
             goto_previous_start = {
               "[m" = "@function.outer";
               "[im" = "@function.inner";
-              "(" = "@parameter.inner";
               "[c" = "@call.outer";
               "[ic" = "@call.inner";
             };
