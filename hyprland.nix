@@ -70,6 +70,9 @@
         '';
       in
       {
+        # Default monitor config for undocked state (applies on Hyprland start/restart)
+        monitor = "eDP-1,2256x1504@60,0x0,1";
+
         general = {
           layout = "hy3";
           border_size = 4;
@@ -140,7 +143,7 @@
           "${pkgs.hyprpaper}/bin/hyprpaper"
           "${pkgs.hyprland-monitor-attached}/bin/hyprland-monitor-attached ${monitorAttached} ${monitorDetached}"
           # Run initial setup based on current monitor state (hyprland-monitor-attached only handles events)
-          "sh -c 'sleep 1; ext=$(hyprctl monitors -j | ${pkgs.jq}/bin/jq -r \".[] | select(.name != \\\"eDP-1\\\") | .name\" | head -1); if [ -n \"$ext\" ]; then ${monitorAttached} \"$ext\"; else ${monitorDetached}; fi'"
+          "sh -c 'sleep 3; ext=$(hyprctl monitors -j | ${pkgs.jq}/bin/jq -r \".[] | select(.name != \\\"eDP-1\\\") | .name\" | head -1); if [ -n \"$ext\" ]; then ${monitorAttached} \"$ext\"; else ${monitorDetached}; fi'"
         ];
 
         bind = [
@@ -187,6 +190,7 @@
           "$mod, R, exec, rofi -modes run -show run"
           "$mod, C, exec, rofi -modes calc -show calc"
           "$mod, B, exec, firefox"
+          "$mod, A, exec, firefox https://claude.ai"
           "$mod, T, exec, kitty -- ${pkgs.ranger}/bin/ranger ~/Downloads"
           "$mod, I, exec, ${pkgs.blueberry}/bin/blueberry"
           "$mod, P, exec, ${pkgs.hyprlock}/bin/hyprlock"
