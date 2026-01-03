@@ -148,4 +148,10 @@
     __GLX_VENDOR_LIBRARY_NAME = "mesa";
     WLR_NO_HARDWARE_CURSORS = "1";
   };
+
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-generations +8";
+  };
 }
