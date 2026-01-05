@@ -31,7 +31,7 @@ in {
     httpie
     kubectx
     pandoc
-    texlive.combined.scheme-full
+    texlive.combined.scheme-small
     zip
     fd
     feh
