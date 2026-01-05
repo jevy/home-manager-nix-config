@@ -51,6 +51,7 @@ in {
     unstable.devenv
     repomix
     poppler-utils
+  ] ++ (if pkgs.stdenv.isLinux then [
     (let
       ask-script = pkgs.stdenv.mkDerivation {
         name = "ask-unwrapped";
@@ -75,6 +76,7 @@ in {
           exec ask "$@"
         '';
       })
+  ] else []) ++ [
     bc
   ];
 
