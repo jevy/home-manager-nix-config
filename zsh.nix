@@ -55,7 +55,6 @@
     enable = true;
     enableCompletion = true;
     shellAliases = {
-      f = "fzf --bind 'enter:become(nvim {})'";
     };
     # autosuggestion.enable = true;
     initContent = lib.mkMerge [
@@ -66,6 +65,10 @@
       '')
       # Regular init content
       (lib.mkOrder 1000 ''
+        f() {
+          fzf --query="$*" --bind 'enter:become(nvim {})'
+        }
+
         if [ -f "${config.home.homeDirectory}/.config/zsh/api_keys.zsh" ]; then
           source "${config.home.homeDirectory}/.config/zsh/api_keys.zsh"
         fi
