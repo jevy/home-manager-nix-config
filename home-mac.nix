@@ -14,7 +14,7 @@
       name = "jevin";
       email = "jevin@quickjack.ca";
     };
-    aliases = { st = "status"; };
+    settings.alias = { st = "status"; };
   };
   programs.difftastic = {
     enable = true;

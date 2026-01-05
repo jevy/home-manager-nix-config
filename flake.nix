@@ -147,7 +147,7 @@
       ./zsh.nix
       ./cli-common.nix
       ./desktop-mac.nix
-      stylix.homeManagerModules.stylix
+      stylix.homeModules.stylix
       ./stylix-common.nix
       ./taskwarrior-work.nix
       inputs.nixvim.homeModules.default
