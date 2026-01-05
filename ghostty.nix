@@ -2,6 +2,7 @@
 {
   programs.ghostty = {
     enable = true;
+    package = if pkgs.stdenv.isDarwin then pkgs.ghostty-bin else pkgs.ghostty;
     enableZshIntegration = true;
     systemd.enable = pkgs.stdenv.isLinux;
     installVimSyntax = true;
