@@ -2,6 +2,7 @@
 {
   imports = [
     ./nixvim-vscode-home.nix
+    ./ghostty.nix
   ];
 
   home.username = "jevin";
