@@ -59,6 +59,7 @@ in
       gemini_api_key = {};
       github_personal_access_token = {};
       restic_password = {};
+      grafana_homelab_secret = {};
     };
   };
 
