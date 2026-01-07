@@ -58,7 +58,8 @@ let
     runtimeInputs = [ grafanaMcpServer ];
     text = ''
       # Read token from sops secret file (created by sops-nix in home.nix)
-      SOPS_SECRET_PATH="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/secrets"
+      # sops-nix for home-manager puts secrets at ~/.config/sops-nix/secrets/
+      SOPS_SECRET_PATH="$HOME/.config/sops-nix/secrets"
       if [ -f "$SOPS_SECRET_PATH/grafana_homelab_secret" ]; then
         GRAFANA_SERVICE_ACCOUNT_TOKEN=$(cat "$SOPS_SECRET_PATH/grafana_homelab_secret")
         export GRAFANA_SERVICE_ACCOUNT_TOKEN
