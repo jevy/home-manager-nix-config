@@ -5,14 +5,13 @@
   nodejs,
   makeWrapper,
 }:
-
 stdenv.mkDerivation rec {
   pname = "claude-code-router";
-  version = "1.0.71";
+  version = "1.0.73";
 
   src = fetchurl {
     url = "https://registry.npmjs.org/@musistudio/claude-code-router/-/claude-code-router-${version}.tgz";
-    hash = "sha256-MOp3FuztBB5XDxFEze5yjMAdsQuo0nXK1vgHdW3OSCE=";
+    hash = "sha256-TAh+qdmY6bcFRhEnpVYmrygs5OPmrob0SWGBch7P2Wg=";
   };
 
   nativeBuildInputs = [ makeWrapper ];
