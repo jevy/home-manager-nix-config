@@ -27,6 +27,45 @@ let
           --add-flags "mcp-server-kubernetes" \
           --prefix PATH : ${pkgs.nodejs}/bin
       '';
+
+  # Grafana MCP server (build from source with Go 1.24)
+  grafanaMcpServer = pkgs.buildGo124Module rec {
+    pname = "mcp-grafana";
+    version = "0.7.10";
+
+    src = pkgs.fetchFromGitHub {
+      owner = "grafana";
+      repo = "mcp-grafana";
+      rev = "v${version}";
+      hash = "sha256-DDkIWCJneL7l59CThzPkHzcB/lcUZrcVDZO/nWsZ2ss=";
+    };
+
+    vendorHash = "sha256-4dOsXrwUk+muYLIec9hBdMl/W3lk/pMvliEWeYrU5zQ=";
+
+    subPackages = [ "cmd/mcp-grafana" ];
+
+    meta = {
+      description = "Model Context Protocol server for Grafana";
+      homepage = "https://github.com/grafana/mcp-grafana";
+      mainProgram = "mcp-grafana";
+    };
+  };
+
+  # Wrapper that reads token from sops secret at runtime
+  # The secret path matches what sops-nix creates in home.nix
+  grafanaMcpWrapper = pkgs.writeShellApplication {
+    name = "run-grafana-mcp";
+    runtimeInputs = [ grafanaMcpServer ];
+    text = ''
+      # Read token from sops secret file (created by sops-nix in home.nix)
+      SOPS_SECRET_PATH="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/secrets"
+      if [ -f "$SOPS_SECRET_PATH/grafana_homelab_secret" ]; then
+        GRAFANA_SERVICE_ACCOUNT_TOKEN=$(cat "$SOPS_SECRET_PATH/grafana_homelab_secret")
+        export GRAFANA_SERVICE_ACCOUNT_TOKEN
+      fi
+      exec mcp-grafana "$@"
+    '';
+  };
 in
 # Just generate the configuration file
 mcpServersNixInput.lib.mkConfig pkgs {
@@ -44,6 +83,14 @@ mcpServersNixInput.lib.mkConfig pkgs {
       "mcp-server-kubernetes" = {
         command = "${kubernetesWrapper}/bin/run-mcp-kubernetes";
         args = [ "--verbose" ];
+      };
+      "grafana" = {
+        command = "${grafanaMcpWrapper}/bin/run-grafana-mcp";
+        args = [ "--disable-write" ];
+        env = {
+          GRAFANA_URL = "https://grafana.jevy.org";
+          # Token is read from sops secret at runtime by the wrapper
+        };
       };
     };
   };
