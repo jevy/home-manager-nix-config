@@ -75,7 +75,7 @@ mcpServersNixInput.lib.mkConfig pkgs {
     context7.enable = true;
     time.enable = true;
     git.enable = true;
-    nixos.enable = true;
+    # nixos.enable = true; # Disabled: fastmcp version conflict with mcp 1.25.0 (needs <1.17.0)
     playwright.enable = true;
   };
   inherit flavor fileName;

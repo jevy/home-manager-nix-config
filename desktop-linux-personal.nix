@@ -56,8 +56,6 @@
     # unstable.qdmr
     calibre
     unstable.talosctl
-    kicad
-    unstable.renovate
     esptool
     freecad-wayland
     img2pdf

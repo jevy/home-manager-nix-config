@@ -67,7 +67,6 @@
     warpd
     keybase-gui
     chromedriver
-    bottles
     ollama
     docker-compose
     diff-pdf
