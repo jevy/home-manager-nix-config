@@ -37,7 +37,6 @@
   ];
 
   hardware.keyboard.zsa.enable = true;
-  programs.adb.enable = true;
   services.hardware.bolt.enable = true;
   services.fwupd.enable = true;
   services.upower.enable = true;
@@ -283,6 +282,7 @@
   environment.systemPackages = [
     pkgs.adwaita-icon-theme
     pkgs.shared-mime-info
+    pkgs.android-tools
   ];
 
   environment.pathsToLink = [
