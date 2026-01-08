@@ -54,6 +54,7 @@
   programs.zsh = {
     enable = true;
     enableCompletion = true;
+    dotDir = "${config.xdg.configHome}/zsh";
     shellAliases = {
     };
     # autosuggestion.enable = true;
@@ -69,8 +70,8 @@
           fzf --query="$*" --bind 'enter:become(nvim {})'
         }
 
-        if [ -f "${config.home.homeDirectory}/.config/zsh/api_keys.zsh" ]; then
-          source "${config.home.homeDirectory}/.config/zsh/api_keys.zsh"
+        if [ -f "${config.xdg.configHome}/zsh/api_keys.zsh" ]; then
+          source "${config.xdg.configHome}/zsh/api_keys.zsh"
         fi
 
         # Ensure Nix paths are at the front of $PATH (some plugins reorder it)
