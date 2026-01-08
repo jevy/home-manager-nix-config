@@ -29,17 +29,44 @@
     vimAlias = true;
     viAlias = true;
     keymaps = [
-      # Sneak-style: Single-character search forward
-      { mode = "n"; key = "s"; action = "<Plug>(leap-forward)"; options.silent = true; }
-      # Sneak-style: Single-character search backward
-      { mode = "n"; key = "S"; action = "<Plug>(leap-backward)"; options.silent = true; }
+      # Flash: jump
+      { mode = ["n" "x" "o"]; key = "s"; action.__raw = "function() require('flash').jump() end"; options = { silent = true; desc = "Flash"; }; }
+      # Flash: treesitter selection (use ; and , or <C-space>/<BS> to grow/shrink)
+      { mode = ["n" "x" "o"]; key = "S"; action.__raw = "function() require('flash').treesitter() end"; options = { silent = true; desc = "Flash Treesitter"; }; }
+      # Flash: remote (operator pending)
+      { mode = "o"; key = "r"; action.__raw = "function() require('flash').remote() end"; options = { silent = true; desc = "Remote Flash"; }; }
+      # Flash: treesitter search
+      { mode = ["o" "x"]; key = "R"; action.__raw = "function() require('flash').treesitter_search() end"; options = { silent = true; desc = "Treesitter Search"; }; }
+      # Flash: toggle in search mode
+      { mode = "c"; key = "<C-s>"; action.__raw = "function() require('flash').toggle() end"; options = { silent = true; desc = "Toggle Flash Search"; }; }
+      # Treesitter incremental selection with grow/shrink
+      { mode = ["n" "x" "o"]; key = "<C-space>"; action.__raw = ''
+        function()
+          require('flash').treesitter({
+            actions = {
+              ["<C-space>"] = "next",
+              ["<BS>"] = "prev"
+            }
+          })
+        end
+      ''; options = { silent = true; desc = "Treesitter incremental selection"; }; }
     ];
     plugins = {
       gitgutter.enable = true;
       lualine.enable = true;
-      leap = {
+      flash = {
         enable = true;
-        autoLoad = true;
+        settings = {
+          # Show labels after just 1 character (like leap/sneak)
+          label.min_pattern_length = 1;
+          # Jump after 2 chars if unique match (sneak-style)
+          jump.autojump = true;
+          modes = {
+            char = {
+              jump_labels = true;
+            };
+          };
+        };
       };
       project-nvim = {
         enable = true;
@@ -77,9 +104,6 @@
       none-ls = {
         enable = true;
         sources = {
-          completion = {
-            luasnip.enable = true;
-          };
           formatting = {
             alejandra.enable = true;
           };
@@ -102,6 +126,16 @@
       trouble.enable = true;
       which-key.enable = true;
       web-devicons.enable = true;
+      mini = {
+        enable = true;
+        modules = {
+          ai = {
+            n_lines = 500;
+            search_method = "cover_or_next";
+          };
+          bracketed = {};  # ]a/[a for arguments, ]f/[f for functions, etc.
+        };
+      };
       luasnip.enable = true;
       friendly-snippets.enable = true;
       cmp-nvim-lsp.enable = true;
@@ -221,8 +255,6 @@
       # };
     };
     extraConfigLua = ''
-      require("luasnip.loaders.from_vscode").lazy_load()
-
       -- Option 1: Use Java parser for Kotlin (better indent, but highlighting may be off)
       -- vim.treesitter.language.register('java', 'kotlin')
 
