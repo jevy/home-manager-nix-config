@@ -8,6 +8,11 @@
   programs.nixvim = {
     enable = true;
     defaultEditor = true;
+    # Symlink ecma/jsx query files needed for tsx/typescript treesitter inheritance
+    extraFiles = {
+      "queries/ecma".source = "${pkgs.vimPlugins.nvim-treesitter}/runtime/queries/ecma";
+      "queries/jsx".source = "${pkgs.vimPlugins.nvim-treesitter}/runtime/queries/jsx";
+    };
     opts = {
       relativenumber = true;
       expandtab = true;
@@ -97,44 +102,58 @@
       trouble.enable = true;
       which-key.enable = true;
       web-devicons.enable = true;
-      treesitter = {
+      luasnip.enable = true;
+      friendly-snippets.enable = true;
+      cmp-nvim-lsp.enable = true;
+      cmp-buffer.enable = true;
+      cmp-path.enable = true;
+      cmp-luasnip.enable = true;
+      cmp = {
         enable = true;
+        autoEnableSources = true;
         settings = {
-          indent.enable = true;
-          highlight.enable = true;
-          incremental_selection = {
-            enable = true;
-            keymaps = {
-              init_selection = false;
-              node_decremental = "grl"; # less
-              node_incremental = "grm"; # more
-              scope_incremental = "grc";
-            };
+          sources = [
+            { name = "nvim_lsp"; }
+            { name = "luasnip"; }
+            { name = "buffer"; }
+            { name = "path"; }
+          ];
+          mapping = {
+            "<C-Space>" = "cmp.mapping.complete()";
+            "<C-e>" = "cmp.mapping.abort()";
+            "<CR>" = "cmp.mapping.confirm({ select = true })";
+            "<Tab>" = ''
+              cmp.mapping(function(fallback)
+                local luasnip = require('luasnip')
+                if cmp.visible() then
+                  cmp.select_next_item()
+                elseif luasnip.expand_or_jumpable() then
+                  luasnip.expand_or_jump()
+                else
+                  fallback()
+                end
+              end, { 'i', 's' })
+            '';
+            "<S-Tab>" = ''
+              cmp.mapping(function(fallback)
+                local luasnip = require('luasnip')
+                if cmp.visible() then
+                  cmp.select_prev_item()
+                elseif luasnip.jumpable(-1) then
+                  luasnip.jump(-1)
+                else
+                  fallback()
+                end
+              end, { 'i', 's' })
+            '';
           };
         };
-        grammarPackages = with pkgs.vimPlugins.nvim-treesitter.builtGrammars; [
-          bash
-          csv
-          dockerfile
-          json
-          lua
-          kotlin
-          make
-          markdown
-          nix
-          gitcommit
-          gitignore
-          javascript
-          json
-          ruby
-          regex
-          toml
-          typescript
-          tsx
-          vim
-          vimdoc
-          yaml
-        ];
+      };
+      treesitter = {
+        enable = true;
+        highlight.enable = true;
+        indent.enable = true;
+        # Using default allGrammars - remove this comment and add grammarPackages back if you want to limit parsers
       };
       treesitter-context.enable = true;
       # treesitter-textobjects = {
@@ -201,5 +220,19 @@
       #   };
       # };
     };
+    extraConfigLua = ''
+      require("luasnip.loaders.from_vscode").lazy_load()
+
+      -- Option 1: Use Java parser for Kotlin (better indent, but highlighting may be off)
+      -- vim.treesitter.language.register('java', 'kotlin')
+
+      -- Option 2: Use cindent for Kotlin (keeps kotlin highlighting, decent indent)
+      vim.api.nvim_create_autocmd('FileType', {
+        pattern = 'kotlin',
+        callback = function()
+          vim.bo.cindent = true
+        end,
+      })
+    '';
   };
 }
