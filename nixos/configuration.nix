@@ -181,7 +181,7 @@
   programs._1password-gui = {
     enable = true;
     polkitPolicyOwners = [ "jevin" ];
-    package = pkgs.unstable._1password-gui;
+    package = pkgs._1password-gui;
   };
 
   # services.xserver.enable = true;

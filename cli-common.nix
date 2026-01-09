@@ -15,7 +15,7 @@ in {
     ranger
     git
     speedtest-cli
-    unstable.k9s
+    k9s
     kubectl
     ripgrep
     ripgrep-all
@@ -26,7 +26,7 @@ in {
     ldns # drill
     unzip
     fzf # For ranger
-    unstable.yt-dlp
+    yt-dlp
     termdown
     httpie
     kubectx
@@ -44,11 +44,11 @@ in {
     jq
     doggo
     tre-command
-    unstable.aichat
+    aichat
     sops # Encryption
     age # Encryption
     awscli2
-    unstable.devenv
+    devenv
     repomix
     poppler-utils
   ] ++ (if pkgs.stdenv.isLinux then [

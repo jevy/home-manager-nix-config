@@ -3,7 +3,6 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.url = "github:nix-community/home-manager/master";
     nixos-hardware.url = "github:NixOS/nixos-hardware";
     stylix.url = "github:danth/stylix";
@@ -35,7 +34,6 @@
       home-manager,
       stylix,
       nixpkgs,
-      unstable,
       muttdown,
       nixos-hardware,
       sops-nix,
@@ -80,18 +78,6 @@
         });
       };
 
-      # Creates the unstable overlay for a given system
-      mkUnstableOverlay = system: final: super: {
-        unstable = import inputs.nixpkgs {
-          inherit system;
-          config = {
-            allowUnfree = true;
-            inherit permittedInsecurePackages;
-          };
-          overlays = [ volsyncOverlay ];
-        };
-      };
-
       # ============================================
       # Linux Configuration
       # ============================================
@@ -107,13 +93,13 @@
           inherit permittedInsecurePackages;
         };
         overlays = [
-          (mkUnstableOverlay linuxSystem)
+          volsyncOverlay
           tailscaleOverlay
         ];
       };
 
       mcpConfigVSCode = import ./mcp/config.nix {
-        unstablePkgsInput = inputs.unstable;
+        nixpkgsInput = inputs.nixpkgs;
         mcpServersNixInput = inputs.mcp-servers-nix;
         system = linuxSystem;
         flavor = "vscode";
@@ -121,7 +107,7 @@
       };
 
       mcpConfigClaudeCode = import ./mcp/config.nix {
-        unstablePkgsInput = inputs.unstable;
+        nixpkgsInput = inputs.nixpkgs;
         mcpServersNixInput = inputs.mcp-servers-nix;
         system = linuxSystem;
         flavor = "claude";
@@ -192,7 +178,7 @@
       macModules = [
         {
           nixpkgs.overlays = [
-            (mkUnstableOverlay darwinSystem)
+            volsyncOverlay
             tailscaleOverlay
           ];
         }
