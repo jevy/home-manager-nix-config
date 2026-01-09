@@ -1,6 +1,6 @@
 # Simple MCP configuration using mcp-servers-nix framework
 {
-  unstablePkgsInput,
+  nixpkgsInput,
   mcpServersNixInput,
   system ? "x86_64-linux",
   flavor ? "claude",
@@ -8,7 +8,7 @@
 }:
 let
   # Single pkgs instance with mcp-servers-nix overlay
-  pkgs = import unstablePkgsInput {
+  pkgs = import nixpkgsInput {
     inherit system;
     config.allowUnfree = true;
     overlays = [ mcpServersNixInput.overlays.default ];

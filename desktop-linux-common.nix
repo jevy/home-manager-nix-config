@@ -16,7 +16,7 @@
     libreoffice
     gimp
     discord
-    unstable.obsidian
+    obsidian
     pavucontrol
     slack
     # google-chrome
@@ -75,7 +75,7 @@
     ddcutil
     ddcui
     psst
-    unstable.repomix
+    repomix
     nethogs
     marktext
     wl-screenrec

@@ -11,7 +11,7 @@
 
   home.packages = with pkgs; let
     llmWithPlugins =
-      unstable.python313.withPackages (ps: [
+      python313.withPackages (ps: [
         ps.llm
         ps.llm-cmd
         ps.llm-openrouter
@@ -51,10 +51,10 @@
     kustomize
     mqttx
     mqttui
-    unstable.aider-chat
+    aider-chat
     hypnotix
     # unstable.qdmr
-    unstable.talosctl
+    talosctl
     esptool
     freecad-wayland
     img2pdf

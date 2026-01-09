@@ -21,7 +21,7 @@
     ncdu
     grpcurl
     dysk
-    unstable.volsync
+    volsync
   ];
 
   programs.kitty = {
