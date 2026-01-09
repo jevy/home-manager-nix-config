@@ -54,7 +54,6 @@
     unstable.aider-chat
     hypnotix
     # unstable.qdmr
-    calibre
     unstable.talosctl
     esptool
     freecad-wayland
