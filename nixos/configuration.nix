@@ -342,19 +342,8 @@
   #   extraGroups = [ "wheel" "networkmanager" "docker" "dialout" "audio"]; # Dialout if for usb/serial access for arduino
   # };
 
-  # Add unstable packages: https://nixos.wiki/wiki/FAQ/Pinning_Nixpkgs
-  # Be sure to change the added channel to match the actually channel below
-  nixpkgs.config = {
-    allowBroken = true;
-    allowUnfree = true;
-    segger-jlink.acceptLicense = true; # For B-Parasite Proj
-
-    permittedInsecurePackages = [
-      "electron-25.9.0"
-      "libsoup-2.74.3"
-      "qtwebengine-5.15.19"
-    ];
-  };
+  # nixpkgs.pkgs is set in flake.nix with pkgsWithUnfree
+  # (includes allowUnfree, allowBroken, permittedInsecurePackages, segger-jlink.acceptLicense, overlays)
 
   # Automount drives
   services.devmon.enable = true;

@@ -1,6 +1,7 @@
 {
   config,
   pkgs,
+  pkgsWithUnfree ? pkgs,
   ...
 }:
 {
@@ -28,7 +29,13 @@
     };
     vimAlias = true;
     viAlias = true;
+    # Use extraPlugins with pkgsWithUnfree to handle unfree license
+    extraPlugins = [
+      pkgsWithUnfree.vimPlugins.claude-code-nvim
+    ];
     keymaps = [
+      # Escape insert mode with jj
+      { mode = "i"; key = "jj"; action = "<Esc>"; options = { silent = true; desc = "Escape insert mode"; }; }
       # Flash: jump (using f instead of s, giving up native f)
       { mode = ["n" "x" "o"]; key = "f"; action.__raw = "function() require('flash').jump() end"; options = { silent = true; desc = "Flash"; }; }
       # Flash: treesitter selection
@@ -46,6 +53,12 @@
           })
         end
       ''; options = { silent = true; desc = "Treesitter incremental selection"; }; }
+      # Claude Code keymaps
+      { mode = "n"; key = "<leader>ac"; action = "<cmd>ClaudeCode<cr>"; options = { silent = true; desc = "Toggle Claude"; }; }
+      { mode = "n"; key = "<leader>af"; action = "<cmd>ClaudeCodeFocus<cr>"; options = { silent = true; desc = "Focus Claude"; }; }
+      { mode = "n"; key = "<leader>ar"; action = "<cmd>ClaudeCode --resume<cr>"; options = { silent = true; desc = "Resume Claude"; }; }
+      { mode = "n"; key = "<leader>am"; action = "<cmd>ClaudeCodeSelectModel<cr>"; options = { silent = true; desc = "Select Claude model"; }; }
+      { mode = "v"; key = "<leader>as"; action = "<cmd>ClaudeCodeSend<cr>"; options = { silent = true; desc = "Send to Claude"; }; }
     ];
     plugins = {
       gitgutter.enable = true;
@@ -129,6 +142,20 @@
           surround = {};  # sa/sd/sr (s is free now)
         };
       };
+      snacks = {
+        enable = true;
+        # Required by claude-code for terminal support
+      };
+      # claude-code: using extraPlugins due to unfree license issues with nixvim's built-in plugin
+      # claude-code = {
+      #   enable = true;
+      #   settings = {
+      #     terminal = {
+      #       split_side = "right";
+      #       split_width_percentage = 0.35;
+      #     };
+      #   };
+      # };
       luasnip.enable = true;
       friendly-snippets.enable = true;
       cmp-nvim-lsp.enable = true;
@@ -257,6 +284,14 @@
         callback = function()
           vim.bo.cindent = true
         end,
+      })
+
+      -- Claude Code setup (via extraPlugins)
+      require('claude-code').setup({
+        terminal = {
+          split_side = "right",
+          split_width_percentage = 0.35,
+        },
       })
     '';
   };

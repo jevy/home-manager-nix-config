@@ -50,34 +50,7 @@
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
 
-      mcpConfigVSCode = import ./mcp/config.nix {
-        unstablePkgsInput = inputs.unstable;
-        mcpServersNixInput = inputs.mcp-servers-nix;
-        inherit system;
-        flavor = "vscode";
-        fileName = "mcp_settings.json";
-      };
-
-      mcpConfigClaudeCode = import ./mcp/config.nix {
-        unstablePkgsInput = inputs.unstable;
-        mcpServersNixInput = inputs.mcp-servers-nix;
-        inherit system;
-        flavor = "claude";
-        fileName = ".mcp.json";
-      };
-
-      mkSystemConfiguration =
-        system: modules:
-        nixpkgs.lib.nixosSystem {
-          inherit system;
-          specialArgs = {
-            inherit inputs;
-            user = "jevin";
-          };
-          modules = modules;
-        };
-
-      # Overlay for Linux
+      # Overlay for Linux (moved up for use in pkgsWithUnfree)
       unstableOverlayLinux = self: super: {
         unstable = import inputs.nixpkgs {
           system = "x86_64-linux";
@@ -107,6 +80,58 @@
         };
       };
 
+      tailscaleOverlay = self: prev: {
+        tailscale = prev.tailscale.overrideAttrs (old: {
+          doCheck = false;
+        });
+      };
+
+      # Single source of truth for pkgs config - used by NixOS and nixvim
+      pkgsWithUnfree = import nixpkgs {
+        inherit system;
+        config = {
+          allowUnfree = true;
+          allowBroken = true;
+          segger-jlink.acceptLicense = true;
+          permittedInsecurePackages = [
+            "electron-25.9.0"
+            "libsoup-2.74.3"
+            "qtwebengine-5.15.19"
+          ];
+        };
+        overlays = [
+          unstableOverlayLinux
+          tailscaleOverlay
+        ];
+      };
+
+      mcpConfigVSCode = import ./mcp/config.nix {
+        unstablePkgsInput = inputs.unstable;
+        mcpServersNixInput = inputs.mcp-servers-nix;
+        inherit system;
+        flavor = "vscode";
+        fileName = "mcp_settings.json";
+      };
+
+      mcpConfigClaudeCode = import ./mcp/config.nix {
+        unstablePkgsInput = inputs.unstable;
+        mcpServersNixInput = inputs.mcp-servers-nix;
+        inherit system;
+        flavor = "claude";
+        fileName = ".mcp.json";
+      };
+
+      mkSystemConfiguration =
+        system: modules:
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = {
+            inherit inputs;
+            user = "jevin";
+          };
+          modules = modules;
+        };
+
       # Overlay for macOS (change "aarch64-darwin" to "x86_64-darwin" if you are on Intel)
       unstableOverlayDarwin = self: super: {
         unstable = import inputs.nixpkgs {
@@ -117,12 +142,6 @@
             "qtwebengine-5.15.19"
           ];
         };
-      };
-
-      tailscaleOverlay = self: prev: {
-        tailscale = prev.tailscale.overrideAttrs (old: {
-          doCheck = false;
-        });
       };
 
       macModules = [
@@ -155,19 +174,8 @@
     ];
 
       linuxModules = [
-        (
-          {
-            config,
-            pkgs,
-            ...
-          }:
-          {
-            nixpkgs.overlays = [
-              unstableOverlayLinux
-              tailscaleOverlay
-            ];
-          }
-        )
+        # Use pre-configured pkgs with allowUnfree and overlays
+        { nixpkgs.pkgs = pkgsWithUnfree; }
 
         ./nixos/configuration.nix
         ./nixos/hardware-configuration.nix
@@ -182,7 +190,7 @@
         }
         {
           home-manager = {
-            useGlobalPkgs = true;
+            useGlobalPkgs = true; # Inherit pkgsWithUnfree from NixOS
             useUserPackages = true;
             backupFileExtension = "backup";
             extraSpecialArgs = {
@@ -193,6 +201,7 @@
                 hy3
                 mcpConfigVSCode
                 mcpConfigClaudeCode
+                pkgsWithUnfree
                 ;
             };
             users = {
