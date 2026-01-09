@@ -29,9 +29,9 @@
     };
     vimAlias = true;
     viAlias = true;
-    # Use extraPlugins with pkgsWithUnfree to handle unfree license
+    # Use extraPlugins - claudecode-nvim is the newer package (Dec 2025)
     extraPlugins = [
-      pkgsWithUnfree.vimPlugins.claude-code-nvim
+      pkgs.vimPlugins.claudecode-nvim
     ];
     keymaps = [
       # Escape insert mode with jj
@@ -54,11 +54,13 @@
         end
       ''; options = { silent = true; desc = "Treesitter incremental selection"; }; }
       # Claude Code keymaps
+      { mode = "n"; key = "<C-.>"; action = "<cmd>ClaudeCodeFocus<cr>"; options = { silent = true; desc = "Toggle Claude"; }; }
+      { mode = "v"; key = "<C-.>"; action = "<cmd>ClaudeCodeSend<cr>"; options = { silent = true; desc = "Send to Claude"; }; }
       { mode = "n"; key = "<leader>ac"; action = "<cmd>ClaudeCode<cr>"; options = { silent = true; desc = "Toggle Claude"; }; }
       { mode = "n"; key = "<leader>af"; action = "<cmd>ClaudeCodeFocus<cr>"; options = { silent = true; desc = "Focus Claude"; }; }
-      { mode = "n"; key = "<leader>ar"; action = "<cmd>ClaudeCode --resume<cr>"; options = { silent = true; desc = "Resume Claude"; }; }
-      { mode = "n"; key = "<leader>am"; action = "<cmd>ClaudeCodeSelectModel<cr>"; options = { silent = true; desc = "Select Claude model"; }; }
-      { mode = "v"; key = "<leader>as"; action = "<cmd>ClaudeCodeSend<cr>"; options = { silent = true; desc = "Send to Claude"; }; }
+      { mode = "n"; key = "<leader>am"; action = "<cmd>ClaudeCodeSelectModel<cr>"; options = { silent = true; desc = "Select model"; }; }
+      { mode = "n"; key = "<leader>aa"; action = "<cmd>ClaudeCodeDiffAccept<cr>"; options = { silent = true; desc = "Accept diff"; }; }
+      { mode = "n"; key = "<leader>ad"; action = "<cmd>ClaudeCodeDiffDeny<cr>"; options = { silent = true; desc = "Deny diff"; }; }
     ];
     plugins = {
       gitgutter.enable = true;
@@ -130,7 +132,12 @@
       };
       todo-comments.enable = true;
       trouble.enable = true;
-      which-key.enable = true;
+      which-key = {
+        enable = true;
+        settings.spec = [
+          { __unkeyed-1 = "<leader>a"; group = "AI/Claude"; }
+        ];
+      };
       web-devicons.enable = true;
       mini = {
         enable = true;
@@ -144,7 +151,9 @@
       };
       snacks = {
         enable = true;
-        # Required by claude-code for terminal support
+        settings = {
+          terminal = { enabled = true; };
+        };
       };
       # claude-code: using extraPlugins due to unfree license issues with nixvim's built-in plugin
       # claude-code = {
@@ -287,10 +296,22 @@
       })
 
       -- Claude Code setup (via extraPlugins)
-      require('claude-code').setup({
+      require('claudecode').setup({
         terminal = {
           split_side = "right",
           split_width_percentage = 0.35,
+          provider = "snacks",
+          snacks_win_opts = {
+            position = "right",
+            keys = {
+              claude_hide = {
+                "<C-.>",
+                function(self) self:hide() end,
+                mode = "t",
+                desc = "Hide Claude",
+              },
+            },
+          },
         },
       })
     '';
