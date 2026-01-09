@@ -12,6 +12,7 @@
       font-size = 11;
       keybind =
         [
+          "ctrl+,=unbind"
           "ctrl+a>c=new_tab"
           "ctrl+a>ctrl+c=new_tab"
           "ctrl+h=goto_split:left"
