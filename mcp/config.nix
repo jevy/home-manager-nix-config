@@ -14,6 +14,9 @@ let
     overlays = [ mcpServersNixInput.overlays.default ];
   };
 
+  # Container-use MCP server (containerized environments for coding agents)
+  containerUse = pkgs.callPackage ../pkgs/container-use.nix { };
+
   # Kubernetes MCP server wrapper
   kubernetesWrapper =
     pkgs.runCommand "run-mcp-kubernetes"
@@ -92,6 +95,10 @@ mcpServersNixInput.lib.mkConfig pkgs {
           GRAFANA_URL = "https://grafana.jevy.org";
           # Token is read from sops secret at runtime by the wrapper
         };
+      };
+      "container-use" = {
+        command = "${containerUse}/bin/container-use";
+        args = [ "mcp" ];
       };
     };
   };
