@@ -61,6 +61,11 @@
       { mode = "n"; key = "<leader>am"; action = "<cmd>ClaudeCodeSelectModel<cr>"; options = { silent = true; desc = "Select model"; }; }
       { mode = "n"; key = "<leader>aa"; action = "<cmd>ClaudeCodeDiffAccept<cr>"; options = { silent = true; desc = "Accept diff"; }; }
       { mode = "n"; key = "<leader>ad"; action = "<cmd>ClaudeCodeDiffDeny<cr>"; options = { silent = true; desc = "Deny diff"; }; }
+      # File tree
+      { mode = "n"; key = "<C-n>"; action = "<cmd>NvimTreeToggle<CR>"; options = { silent = true; desc = "Toggle file tree"; }; }
+      # Telescope
+      { mode = "n"; key = "<C-f>"; action = "<cmd>Telescope find_files<CR>"; options = { silent = true; desc = "Find files"; }; }
+      { mode = "n"; key = "<C-g>"; action = "<cmd>Telescope live_grep<CR>"; options = { silent = true; desc = "Live grep"; }; }
     ];
     plugins = {
       gitgutter.enable = true;
@@ -99,11 +104,6 @@
           filters = {
             dotfiles = true;
           };
-          on_attach = {
-            __raw = ''
-              vim.api.nvim_set_keymap("n", "<C-n>", ":NvimTreeToggle<CR>", { noremap = true, silent = true })
-            '';
-          };
           update_focused_file = {
             enable = true;
           };
@@ -125,10 +125,6 @@
           fzy-native.enable = true;
           fzf-native.enable = true;
         };
-        luaConfig.post = ''
-          vim.api.nvim_set_keymap("n", "<C-f>", ":Telescope find_files<CR>", { noremap = true, silent = true })
-          vim.api.nvim_set_keymap("n", "<C-g>", ":Telescope live_grep<CR>", { noremap = true, silent = true })
-        '';
       };
       todo-comments.enable = true;
       trouble.enable = true;
@@ -155,22 +151,8 @@
           terminal = { enabled = true; };
         };
       };
-      # claude-code: using extraPlugins due to unfree license issues with nixvim's built-in plugin
-      # claude-code = {
-      #   enable = true;
-      #   settings = {
-      #     terminal = {
-      #       split_side = "right";
-      #       split_width_percentage = 0.35;
-      #     };
-      #   };
-      # };
       luasnip.enable = true;
       friendly-snippets.enable = true;
-      cmp-nvim-lsp.enable = true;
-      cmp-buffer.enable = true;
-      cmp-path.enable = true;
-      cmp-luasnip.enable = true;
       cmp = {
         enable = true;
         autoEnableSources = true;
@@ -219,69 +201,6 @@
         # Using default allGrammars - remove this comment and add grammarPackages back if you want to limit parsers
       };
       treesitter-context.enable = true;
-      # treesitter-textobjects = {
-      #   enable = true;
-      #   settings = {
-      #     select = {
-      #       enable = true;
-      #       lookahead = false;
-      #       keymaps = {
-      #         "af" = "@function.outer";
-      #         "if" = "@function.inner";
-      #         "il" = "@loop.inner";
-      #         "al" = "@loop.outer";
-      #         "icd" = "@conditional.inner";
-      #         "acd" = "@conditional.outer";
-      #         "acm" = "@comment.outer";
-      #         "ast" = "@statement.outer";
-      #         "isc" = "@scopename.inner";
-      #         "iB" = "@block.inner"; # Mini uses this for brackets
-      #         "aB" = "@block.outer";
-      #         "ia" = "@parameter.inner";
-      #         "aa" = "@parameter.outer";
-      #       };
-      #     };
-      #     move = {
-      #       enable = true;
-      #       set_jumps = true;
-      #       goto_next_start = {
-      #         "]m" = "@function.outer";
-      #         "]im" = "@function.inner";
-      #         "]c" = "@call.outer";
-      #         "]ic" = "@call.inner";
-      #       };
-      #       goto_next_end = {
-      #         "]M" = "@function.outer";
-      #         "]iM" = "@function.inner";
-      #         "g)" = "@parameter.inner";
-      #         "]C" = "@call.outer";
-      #         "]iC" = "@call.inner";
-      #       };
-      #       goto_previous_start = {
-      #         "[m" = "@function.outer";
-      #         "[im" = "@function.inner";
-      #         "[c" = "@call.outer";
-      #         "[ic" = "@call.inner";
-      #       };
-      #       goto_previous_end = {
-      #         "[M" = "@function.outer";
-      #         "[iM" = "@function.inner";
-      #         "g(" = "@parameter.inner";
-      #         "[C" = "@call.outer";
-      #         "[iC" = "@call.inner";
-      #       };
-      #     };
-      #     lsp_interop = {
-      #       enable = true;
-      #       border = "none";
-      #       floating_preview_opts = { };
-      #       peek_definition_code = {
-      #         "<leader>df" = "@function.outer";
-      #         "<leader>dF" = "@class.outer";
-      #       };
-      #     };
-      #   };
-      # };
     };
     extraConfigLua = ''
       -- Option 1: Use Java parser for Kotlin (better indent, but highlighting may be off)
