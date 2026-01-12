@@ -100,16 +100,6 @@
 
   programs.qutebrowser.enable = true;
 
-
-  programs.zed-editor = {
-    enable = true;
-    extensions = [
-      "nix"
-      "kotlin"
-      "gruvbox-material"
-    ];
-  };
-
   programs.rofi = {
     enable = true;
     # package = pkgs.rofi-wayland.override { plugins = [ pkgs.rofi-emoji pkgs.rofi-calc pkgs.rofi-power-menu]; };
