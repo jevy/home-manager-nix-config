@@ -15,6 +15,7 @@
       "queries/jsx".source = "${pkgs.vimPlugins.nvim-treesitter}/runtime/queries/jsx";
     };
     opts = {
+      autoread = true;
       relativenumber = true;
       expandtab = true;
       shiftwidth = 2;
@@ -29,6 +30,24 @@
     };
     vimAlias = true;
     viAlias = true;
+    autoGroups = {
+      "auto-reload" = { clear = true; };
+    };
+    autoCmd = [
+      {
+        event = ["FocusGained" "TermLeave" "BufEnter" "CursorHold" "CursorHoldI"];
+        group = "auto-reload";
+        callback = {
+          __raw = ''
+            function()
+              if vim.fn.mode() ~= 'c' then
+                vim.cmd('checktime')
+              end
+            end
+          '';
+        };
+      }
+    ];
     # Use extraPlugins - claudecode-nvim is the newer package (Dec 2025)
     extraPlugins = [
       pkgs.vimPlugins.claudecode-nvim
