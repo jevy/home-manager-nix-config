@@ -53,9 +53,9 @@
           hyprctl dispatch workspace 1
           # Use master layout for ultrawide
           hyprctl keyword general:layout master
-          # Position external monitor at origin and laptop below it
-          hyprctl keyword monitor "$MONITOR,preferred,0x0,1.5"
-          hyprctl keyword monitor "eDP-1,2256x1504@60,0x1440,1.5"
+          # Position laptop on left, external monitor on right
+          hyprctl keyword monitor "eDP-1,2256x1504@60,0x0,1.5666667"
+          hyprctl keyword monitor "$MONITOR,preferred,1504x0,1.5666667"
           # Reload hyprpaper to apply wallpaper to new monitor
           killall hyprpaper; sleep 0.5; ${pkgs.hyprpaper}/bin/hyprpaper &
         '';
@@ -64,14 +64,14 @@
           # Switch back to hy3 layout for laptop-only mode
           hyprctl keyword general:layout hy3
           # Reset laptop monitor position and scale for undocked mode
-          hyprctl keyword monitor "eDP-1,2256x1504@60,0x0,1.5"
+          hyprctl keyword monitor "eDP-1,2256x1504@60,0x0,1.5666667"
           # Reload hyprpaper to apply wallpaper
           killall hyprpaper; sleep 0.5; ${pkgs.hyprpaper}/bin/hyprpaper &
         '';
       in
       {
         # Default monitor config for undocked state (applies on Hyprland start/restart)
-        monitor = "eDP-1,2256x1504@60,0x0,1.5";
+        monitor = "eDP-1,2256x1504@60,0x0,1.5666667";
 
         general = {
           layout = "hy3";
@@ -176,10 +176,10 @@
           "$mod SHIFT, 0, movetoworkspace, 10"
 
           # Workspace movement
-          "$mod CTRL SHIFT, L, moveworkspacetomonitor, r"
-          "$mod CTRL SHIFT, H, moveworkspacetomonitor, l"
-          "$mod CTRL SHIFT, J, moveworkspacetomonitor, d"
-          "$mod CTRL SHIFT, K, moveworkspacetomonitor, u"
+          "$mod CTRL SHIFT, L, movecurrentworkspacetomonitor, r"
+          "$mod CTRL SHIFT, H, movecurrentworkspacetomonitor, l"
+          "$mod CTRL SHIFT, J, movecurrentworkspacetomonitor, d"
+          "$mod CTRL SHIFT, K, movecurrentworkspacetomonitor, u"
 
           # Launch programs
           "$mod, Return, exec, ghostty"
