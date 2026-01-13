@@ -74,7 +74,6 @@ in
 # Just generate the configuration file
 mcpServersNixInput.lib.mkConfig pkgs {
   programs = {
-    fetch.enable = true;
     context7.enable = true;
     time.enable = true;
     git.enable = true;
@@ -98,7 +97,7 @@ mcpServersNixInput.lib.mkConfig pkgs {
       };
       "container-use" = {
         command = "${containerUse}/bin/container-use";
-        args = [ "mcp" ];
+        args = [ "stdio" ];
       };
     };
   };
