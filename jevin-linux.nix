@@ -12,8 +12,11 @@
   ];
 
   xdg.configFile."hypr/hyprpaper.conf".text = ''
-    preload = ~/.config/nixpkgs/backgrounds/midevil.png
-    wallpaper = ,~/.config/nixpkgs/backgrounds/midevil.png
+    wallpaper {
+      monitor =
+      path = /home/jevin/.config/nixpkgs/backgrounds/midevil.png
+      fit_mode = cover
+    }
   '';
 
   imports = [
