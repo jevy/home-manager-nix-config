@@ -19,11 +19,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprland = {
-      url = "github:hyprwm/Hyprland/v0.52.0";
+      url = "github:hyprwm/Hyprland/v0.53.1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hy3 = {
-      url = "github:outfoxxed/hy3/hl0.52.0";
+      url = "github:outfoxxed/hy3/hl0.53.0";
       inputs.hyprland.follows = "hyprland";
     };
   };
@@ -84,6 +84,11 @@
 
       linuxSystem = "x86_64-linux";
 
+      # Overlay to use pinned hyprland from flake everywhere
+      hyprlandOverlay = final: prev: {
+        hyprland = hyprland.packages.${linuxSystem}.hyprland;
+      };
+
       pkgsLinux = import nixpkgs {
         system = linuxSystem;
         config = {
@@ -95,6 +100,7 @@
         overlays = [
           volsyncOverlay
           tailscaleOverlay
+          hyprlandOverlay
         ];
       };
 
