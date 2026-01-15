@@ -19,7 +19,7 @@
 
   # https://nixos.wiki/wiki/Intel_Graphics
   boot.kernelParams = [ "i915.force_probe=4626" ];
-  boot.kernelModules = [ "i2c-dev" ];
+  boot.kernelModules = [ "i2c-dev" "iptable_nat" "iptable_filter" ];
 
   # services.xserver.videoDrivers =  [
   #   "intel-media-driver"
