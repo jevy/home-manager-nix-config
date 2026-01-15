@@ -357,12 +357,12 @@
 
   programs.gnupg.agent.enable = true;
 
-  services.languagetool = {
-    enable = true;
-    settings = {
-      fasttextBinary = "${pkgs.fasttext}/bin/fasttext";
-    };
-  };
+  # services.languagetool = {
+  #   enable = true;
+  #   settings = {
+  #     fasttextBinary = "${pkgs.fasttext}/bin/fasttext";
+  #   };
+  # };
   # programs.zsh.enable = true;
 
   # environment.sessionVariables = {
