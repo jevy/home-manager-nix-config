@@ -17,6 +17,7 @@
         ps.llm-openrouter
       ]);
     claude-code-router = pkgs.callPackage ./claude-code-router.nix {};
+    container-use = pkgs.callPackage ./pkgs/container-use.nix {};
   in [
     llmWithPlugins
     synology-drive-client
@@ -68,6 +69,7 @@
     spotdl
     claude-code
     claude-code-router
+    container-use
     nmap
     immich-go
     orca-slicer
