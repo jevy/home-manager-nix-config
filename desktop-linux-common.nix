@@ -80,6 +80,7 @@
     marktext
     wl-screenrec
     hyprland-monitor-attached
+    beads
   ];
 
   services.wlsunset = {
