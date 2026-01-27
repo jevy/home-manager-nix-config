@@ -3,6 +3,7 @@
   pkgs,
   libs,
   inputs,
+  typing-analysis,
   ...
 }:
 {
@@ -49,7 +50,11 @@
     ./hyprland.nix
     ./sway.nix
     ./music-making.nix
+    typing-analysis.homeManagerModules.default
   ];
+
+  # Typing analysis - runs in background to capture keystrokes
+  services.typing-analysis.enable = true;
 
   programs.hyprlock = {
     enable = true;

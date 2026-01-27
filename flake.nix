@@ -26,6 +26,10 @@
       url = "github:outfoxxed/hy3/hl0.53.0";
       inputs.hyprland.follows = "hyprland";
     };
+    typing-analysis = {
+      url = "github:jevy/typing-analysis";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -42,6 +46,7 @@
       spicetify-nix,
       hyprland,
       hy3,
+      typing-analysis,
       ...
     }@inputs:
     let
@@ -59,15 +64,15 @@
       volsyncOverlay = final: prev: {
         volsync = prev.buildGoModule rec {
           pname = "volsync";
-          version = "latest";
+          version = "0.14.0";
           src = prev.fetchFromGitHub {
             owner = "backube";
             repo = "volsync";
-            rev = "ebdf7e9d66c22802ee4d5e24c897041adc17db90";
-            sha256 = "sha256-SLYVclFk2BsP9waYQHwNsWtLGt5fSRkIgWdeL8Lp1iA=";
+            rev = "v${version}";
+            sha256 = "sha256-vtJlrqbuZ01wo3HRwfSY4RzR5uEKOmNKAmiHIj0CDIU=";
           };
           proxyVendor = true;
-          vendorHash = "sha256-AuGRtQ2ItAsgDfF3uCAHQCK2lATMqXChxN8Dr98UmGo=";
+          vendorHash = "";  # Will be calculated on first build
           subPackages = [ "kubectl-volsync" ];
         };
       };
@@ -146,6 +151,7 @@
                 stylix
                 muttdown
                 hy3
+                typing-analysis
                 mcpConfigVSCode
                 mcpConfigClaudeCode
                 ;
