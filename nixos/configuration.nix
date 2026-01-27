@@ -19,7 +19,11 @@
 
   # https://nixos.wiki/wiki/Intel_Graphics
   boot.kernelParams = [ "i915.force_probe=4626" ];
-  boot.kernelModules = [ "i2c-dev" "iptable_nat" "iptable_filter" ];
+  boot.kernelModules = [
+    "i2c-dev"
+    "iptable_nat"
+    "iptable_filter"
+  ];
 
   # services.xserver.videoDrivers =  [
   #   "intel-media-driver"
@@ -79,19 +83,29 @@
            a s d e f h j k l ;
           )
           (defvar
-           tap-time 200
+           tap-time 150
            hold-time 250
+           left-hand-keys (
+             q w e r t
+             a s d f g
+             z x c v b
+           )
+           right-hand-keys (
+             y u i o p
+             h j k l ;
+             n m , . /
+           )
           )
           (defalias
-           a (tap-hold-release $tap-time $hold-time a lalt)
-           s (tap-hold-release $tap-time $hold-time s lmet)
-           d (tap-hold-release $tap-time $hold-time d lsft)
-           e (tap-hold-release $tap-time $hold-time e (layer-while-held nav))
-           f (tap-hold-release $tap-time $hold-time f lctl)
-           j (tap-hold-release $tap-time $hold-time j rctl)
-           k (tap-hold-release $tap-time $hold-time k rsft)
-           l (tap-hold-release $tap-time $hold-time l rmet)
-           ; (tap-hold-release $tap-time $hold-time ; ralt)
+           a (tap-hold-release-keys $tap-time $hold-time a lalt $left-hand-keys)
+           s (tap-hold-release-keys $tap-time $hold-time s lmet $left-hand-keys)
+           d (tap-hold-release-keys $tap-time $hold-time d lsft $left-hand-keys)
+           e (tap-hold-release-keys $tap-time $hold-time e (layer-while-held nav) $left-hand-keys)
+           f (tap-hold-release-keys $tap-time $hold-time f lctl $left-hand-keys)
+           j (tap-hold-release-keys $tap-time $hold-time j rctl $right-hand-keys)
+           k (tap-hold-release-keys $tap-time $hold-time k rsft $right-hand-keys)
+           l (tap-hold-release-keys $tap-time $hold-time l rmet $right-hand-keys)
+           ; (tap-hold-release-keys $tap-time $hold-time ; ralt $right-hand-keys)
           )
           (deflayer base
            @a  @s  @d  @e  @f  h   @j  @k  @l  @;
@@ -163,7 +177,6 @@
       iptables -A nixos-fw -s 172.19.0.0/16 -p tcp --dport 4242 -j ACCEPT
       iptables -A nixos-fw -s 172.17.0.0/16 -p tcp --dport 4242 -j ACCEPT
     '';
-
 
     # interfaces = {
     #   docker0 = {
@@ -323,6 +336,7 @@
       "adbusers"
       "uinput"
       "i2c"
+      "input" # For typing-analysis keystroke logger
     ]; # Dialout if for usb/serial access for arduino
 
     # `nix-shell -p mkpasswd --run 'mkpasswd -m sha-512'`
