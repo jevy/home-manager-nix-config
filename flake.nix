@@ -72,7 +72,7 @@
             sha256 = "sha256-vtJlrqbuZ01wo3HRwfSY4RzR5uEKOmNKAmiHIj0CDIU=";
           };
           proxyVendor = true;
-          vendorHash = "";  # Will be calculated on first build
+          vendorHash = "sha256-kv1HhjZYErO8aLmkMkrhOgEXFKijuc4Lj30UUZhatV8=";
           subPackages = [ "kubectl-volsync" ];
         };
       };
