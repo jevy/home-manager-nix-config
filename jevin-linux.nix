@@ -133,7 +133,10 @@
           listen_cmd = "/home/jevin/.config/nixpkgs/waybar/polybar/ashell-weather.sh";
         }
       ];
-      workspaces.visibility_mode = "MonitorSpecific";
+      workspaces = {
+        visibility_mode = "MonitorSpecificExclusive";
+        enable_workspace_filling = false;
+      };
     };
   };
 
