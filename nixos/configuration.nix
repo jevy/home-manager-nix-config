@@ -89,11 +89,13 @@
              q w e r t
              a s d f g
              z x c v b
+             spc ret  ;; letter + space/enter always taps
            )
            right-hand-keys (
              y u i o p
              h j k l ;
              n m , . /
+             spc ret  ;; letter + space/enter always taps
            )
           )
           (defalias
