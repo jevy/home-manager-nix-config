@@ -70,6 +70,21 @@ let
       exec mcp-grafana "$@"
     '';
   };
+
+  # n8n MCP server wrapper (reads API key from sops secret)
+  n8nMcpWrapper = pkgs.writeShellApplication {
+    name = "run-n8n-mcp";
+    runtimeInputs = [ pkgs.nodejs ];
+    text = ''
+      # Read API key from sops secret file
+      SOPS_SECRET_PATH="$HOME/.config/sops-nix/secrets"
+      if [ -f "$SOPS_SECRET_PATH/n8n_api_key" ]; then
+        N8N_API_KEY=$(cat "$SOPS_SECRET_PATH/n8n_api_key")
+        export N8N_API_KEY
+      fi
+      exec npx n8n-mcp "$@"
+    '';
+  };
 in
 # Just generate the configuration file
 mcpServersNixInput.lib.mkConfig pkgs {
@@ -98,6 +113,16 @@ mcpServersNixInput.lib.mkConfig pkgs {
       "container-use" = {
         command = "${containerUse}/bin/container-use";
         args = [ "stdio" ];
+      };
+      "n8n" = {
+        command = "${n8nMcpWrapper}/bin/run-n8n-mcp";
+        env = {
+          MCP_MODE = "stdio";
+          N8N_API_URL = "https://n8n.jevy.org";
+          LOG_LEVEL = "error";
+          DISABLE_CONSOLE_OUTPUT = "true";
+          # API key is read from sops secret at runtime by the wrapper
+        };
       };
     };
   };

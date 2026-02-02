@@ -60,6 +60,7 @@ in
       github_personal_access_token = {};
       restic_password = {};
       grafana_homelab_secret = {};
+      n8n_api_key = {};
     };
   };
 
