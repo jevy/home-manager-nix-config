@@ -61,6 +61,7 @@ in
       restic_password = {};
       grafana_homelab_secret = {};
       n8n_api_key = {};
+      obsidian_api_key = {};
     };
   };
 
