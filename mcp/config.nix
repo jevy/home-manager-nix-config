@@ -71,6 +71,21 @@ let
     '';
   };
 
+  # Obsidian MCP server wrapper (reads API key from sops secret)
+  obsidianMcpWrapper = pkgs.writeShellApplication {
+    name = "run-obsidian-mcp";
+    runtimeInputs = [ pkgs.uv ];
+    text = ''
+      # Read API key from sops secret file
+      SOPS_SECRET_PATH="$HOME/.config/sops-nix/secrets"
+      if [ -f "$SOPS_SECRET_PATH/obsidian_api_key" ]; then
+        OBSIDIAN_API_KEY=$(cat "$SOPS_SECRET_PATH/obsidian_api_key")
+        export OBSIDIAN_API_KEY
+      fi
+      exec uvx mcp-obsidian "$@"
+    '';
+  };
+
   # n8n MCP server wrapper (reads API key from sops secret)
   n8nMcpWrapper = pkgs.writeShellApplication {
     name = "run-n8n-mcp";
@@ -113,6 +128,10 @@ mcpServersNixInput.lib.mkConfig pkgs {
       "container-use" = {
         command = "${containerUse}/bin/container-use";
         args = [ "stdio" ];
+      };
+      "obsidian" = {
+        command = "${obsidianMcpWrapper}/bin/run-obsidian-mcp";
+        # API key is read from sops secret at runtime by the wrapper
       };
       "n8n" = {
         command = "${n8nMcpWrapper}/bin/run-n8n-mcp";
