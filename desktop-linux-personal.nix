@@ -78,11 +78,4 @@
   programs.radio-active.enable = true;
   programs.radio-cli.enable = true;
 
-  wayland.windowManager.sway = {
-    config = {
-      startup = [
-        { command = "${pkgs.synology-drive-client}/bin/synology-drive"; }
-      ];
-    };
-  };
 }

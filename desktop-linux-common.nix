@@ -44,7 +44,12 @@
     slurp
     brightnessctl
     wdisplays
-    kooha
+    (kooha.overrideAttrs (old: {
+      preFixup = (old.preFixup or "") + ''
+        gappsWrapperArgs+=(--prefix GST_PLUGIN_SYSTEM_PATH_1_0 : "${gst_all_1.gst-plugins-bad}/lib/gstreamer-1.0")
+        gappsWrapperArgs+=(--prefix GST_PLUGIN_SYSTEM_PATH_1_0 : "${gst_all_1.gst-vaapi}/lib/gstreamer-1.0")
+      '';
+    }))
     wl-clipboard
     wf-recorder
     simple-scan
@@ -57,8 +62,6 @@
     # gnome3.gnome-tweaks
     nvd
     pulseaudio
-    swayidle
-    swaylock
     alsa-utils
     velero
     restic
@@ -87,7 +90,7 @@
     enable = true;
     latitude = "45.42";
     longitude = "-75.69";
-    systemdTarget = "sway-session.target";
+    systemdTarget = "hyprland-session.target";
   };
 
   programs.spotify-player.enable = true;
