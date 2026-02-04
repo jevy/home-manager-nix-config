@@ -208,7 +208,6 @@
   #   gdm.enable = true;
   #   defaultSession = "sway";
   # };
-  programs.sway.enable = true;
   programs.regreet.enable = true;
   services.greetd.enable = true;
   # programs.sway.package = config.home-manager.users.jevin.wayland.windowManager.sway.package;
@@ -281,19 +280,9 @@
     jack.enable = true;
   };
 
-  # TODO: Try enabling extra portals: https://nixos.wiki/wiki/Sway
-  # For Chrome sharing and stuff
   xdg.portal = {
     enable = true;
-    wlr = {
-      enable = true;
-      settings = {
-        screencast = {
-          chooser_type = "simple";
-          chooser_cmd = "${pkgs.slurp}/bin/slurp -f %o -ro";
-        };
-      };
-    };
+    extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
   };
 
   # For xournaljj fix
