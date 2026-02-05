@@ -51,7 +51,7 @@
       '';
     }))
     wl-clipboard
-    wf-recorder
+
     simple-scan
     dragon-drop # Ranger drag drop
     xdg-utils
@@ -82,6 +82,7 @@
     nethogs
     marktext
     wl-screenrec
+    hyprpicker
     hyprland-monitor-attached
     beads
   ];
@@ -115,6 +116,13 @@
   };
 
   xdg.enable = true;
+  xdg.portal = {
+    enable = true;
+    extraPortals = [
+      pkgs.xdg-desktop-portal-hyprland
+      pkgs.xdg-desktop-portal-gtk
+    ];
+  };
   xdg.mimeApps.enable = true;
   xdg.mimeApps.defaultApplications = {
     "application/pdf" = [ "zathura.desktop" ];
@@ -138,7 +146,6 @@
   programs.obs-studio = {
     enable = true;
     plugins = [
-      pkgs.obs-studio-plugins.wlrobs
       pkgs.obs-studio-plugins.obs-pipewire-audio-capture
       pkgs.obs-studio-plugins.obs-backgroundremoval
     ];
@@ -231,8 +238,8 @@
 
   home.shellAliases = {
     v = "${pkgs.neovide}/bin/neovide";
-    screen-record = "${pkgs.wf-recorder}/bin/wf-recorder -g \"$(${pkgs.slurp}/bin/slurp)\" --file=$HOME/Screenshots/latest-recording.mp4";
-    screen-record-with-audio = "${pkgs.wf-recorder}/bin/wf-recorder -a -g \"$(${pkgs.slurp}/bin/slurp)\" --file=$HOME/Screenshots/latest-recording.mp4";
+    screen-record = "${pkgs.wl-screenrec}/bin/wl-screenrec -g \"$(${pkgs.slurp}/bin/slurp)\" --filename=$HOME/Screenshots/latest-recording.mp4";
+    screen-record-with-audio = "${pkgs.wl-screenrec}/bin/wl-screenrec --audio -g \"$(${pkgs.slurp}/bin/slurp)\" --filename=$HOME/Screenshots/latest-recording.mp4";
     tailscale-us = "sudo tailscale up --accept-routes --exit-node \"us-tailscale\" --accept-dns";
     tailscale-home = "sudo tailscale up --accept-routes --exit-node \"octoprint\" --accept-dns";
     pomodoro = "termdown 25m -s -b && ${pkgs.libnotify}/bin/notify-send 'Pomodoro complete. Take a break!'";

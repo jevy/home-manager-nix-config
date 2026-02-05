@@ -83,6 +83,20 @@
         });
       };
 
+      # Workaround: ffmpeg-full is built with --enable-libshaderc but
+      # kdenlive's build doesn't link against libshaderc, causing
+      # undefined reference errors for shaderc_* symbols.
+      kdenliveOverlay = final: prev: {
+        kdePackages = prev.kdePackages // {
+          kdenlive = prev.kdePackages.kdenlive.overrideAttrs (old: {
+            buildInputs = (old.buildInputs or []) ++ [ prev.shaderc ];
+            env = (old.env or {}) // {
+              NIX_LDFLAGS = ((old.env or {}).NIX_LDFLAGS or "") + " -lshaderc_shared";
+            };
+          });
+        };
+      };
+
       # ============================================
       # Linux Configuration
       # ============================================
@@ -106,6 +120,7 @@
           volsyncOverlay
           tailscaleOverlay
           hyprlandOverlay
+          kdenliveOverlay
         ];
       };
 

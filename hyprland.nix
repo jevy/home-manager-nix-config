@@ -55,7 +55,7 @@
           hyprctl keyword general:layout master
           # Position laptop on left, external monitor on right
           hyprctl keyword monitor "eDP-1,2256x1504@60,0x0,1.5666667"
-          hyprctl keyword monitor "$MONITOR,preferred,1504x0,1.5666667"
+          hyprctl keyword monitor "$MONITOR,preferred,auto,1.5666667"
           # Reload hyprpaper to apply wallpaper to new monitor
           killall hyprpaper; sleep 0.5; ${pkgs.hyprpaper}/bin/hyprpaper &
         '';
@@ -67,6 +67,15 @@
           hyprctl keyword monitor "eDP-1,2256x1504@60,0x0,1.5666667"
           # Reload hyprpaper to apply wallpaper
           killall hyprpaper; sleep 0.5; ${pkgs.hyprpaper}/bin/hyprpaper &
+        '';
+        screenRecord = pkgs.writeShellScript "screen-record-toggle" ''
+          if ${pkgs.procps}/bin/pkill -INT wl-screenrec 2>/dev/null; then
+            ${pkgs.libnotify}/bin/notify-send "Recording saved"
+          else
+            GEOM=$(${pkgs.slurp}/bin/slurp) || exit 0
+            ${pkgs.wl-screenrec}/bin/wl-screenrec -g "$GEOM" --filename="$HOME/Screenshots/$(date +%Y-%m-%d-%H%M%S).mp4" &
+            ${pkgs.libnotify}/bin/notify-send "Recording started"
+          fi
         '';
       in
       {
@@ -226,6 +235,7 @@
           ", XF86AudioNext, exec, ${pkgs.playerctl}/bin/playerctl next"
           ", XF86AudioPrev, exec, ${pkgs.playerctl}/bin/playerctl previous"
           ", Print, exec, ${pkgs.grim}/bin/grim -g \"$(${pkgs.slurp}/bin/slurp)\" - | ${pkgs.swappy}/bin/swappy -f -"
+          "SHIFT, Print, exec, ${screenRecord}"
           ", 164, exec, ${pkgs.playerctl}/bin/playerctl play-pause"
           ", 232, exec, ${brightnessAdjust} -5"
           ", 233, exec, ${brightnessAdjust} +5"
