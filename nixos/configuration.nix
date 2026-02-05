@@ -280,10 +280,6 @@
     jack.enable = true;
   };
 
-  xdg.portal = {
-    enable = true;
-    extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
-  };
 
   # For xournaljj fix
   # https://github.com/NixOS/nixpkgs/issues/163107#issuecomment-1100569484

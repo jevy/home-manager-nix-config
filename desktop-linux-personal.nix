@@ -73,6 +73,7 @@
     nmap
     immich-go
     orca-slicer
+    kdePackages.kdenlive
   ];
 
   programs.radio-active.enable = true;
