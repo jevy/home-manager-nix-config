@@ -45,17 +45,39 @@
 
         monitorAttached = pkgs.writeShellScript "monitor-attached" ''
           MONITOR="$1"
+
+          # Get monitor info to identify the type
+          MONITOR_INFO=$(hyprctl monitors -j | ${pkgs.jq}/bin/jq -r ".[] | select(.name == \"$MONITOR\")")
+          MONITOR_DESC=$(echo "$MONITOR_INFO" | ${pkgs.jq}/bin/jq -r ".description")
+          MONITOR_WIDTH=$(echo "$MONITOR_INFO" | ${pkgs.jq}/bin/jq -r ".width")
+
           # Move workspaces 1-6 to the newly attached monitor
           for ws in 1 2 3 4 5 6; do
             hyprctl dispatch moveworkspacetomonitor "$ws" "$MONITOR"
           done
           # Switch to workspace 1 on the new monitor
           hyprctl dispatch workspace 1
-          # Use master layout for ultrawide
-          hyprctl keyword general:layout master
-          # Position laptop on left, external monitor on right
-          hyprctl keyword monitor "eDP-1,2256x1504@60,0x0,1.5666667"
-          hyprctl keyword monitor "$MONITOR,preferred,auto,1.5666667"
+
+          # Detect ultrawide: Dell U4924DW or any 5120-width monitor
+          if echo "$MONITOR_DESC" | grep -qi "U4924DW" || [ "$MONITOR_WIDTH" = "5120" ]; then
+            ${pkgs.libnotify}/bin/notify-send "Monitor: Ultrawide" "Layout: master, ultrawide on top"
+            # Home setup: Ultrawide (5120x1440) on TOP of laptop
+            # Use master layout for ultrawide (centered master works well)
+            hyprctl keyword general:layout master
+            # Ultrawide at scale 1, laptop at scale 1.57
+            # Laptop centered below: x = (5120 - 1437) / 2 = 1842, y = 1440
+            hyprctl keyword monitor "$MONITOR,5120x1440@60,0x0,1"
+            hyprctl keyword monitor "eDP-1,2256x1504@60,1842x1440,1.5666667"
+          else
+            ${pkgs.libnotify}/bin/notify-send "Monitor: Portable" "Layout: hy3, external on right"
+            # Portable monitor setup: external on RIGHT of laptop
+            # Keep hy3 layout for portable monitor (good for smaller screens)
+            hyprctl keyword general:layout hy3
+            # Laptop (1440 logical width) on left, portable on right
+            hyprctl keyword monitor "eDP-1,2256x1504@60,0x0,1.5666667"
+            hyprctl keyword monitor "$MONITOR,preferred,1440x0,1"
+          fi
+
           # Reload hyprpaper to apply wallpaper to new monitor
           killall hyprpaper; sleep 0.5; ${pkgs.hyprpaper}/bin/hyprpaper &
         '';
@@ -68,6 +90,29 @@
           # Reload hyprpaper to apply wallpaper
           killall hyprpaper; sleep 0.5; ${pkgs.hyprpaper}/bin/hyprpaper &
         '';
+        scaleToggle = pkgs.writeShellScript "scale-toggle" ''
+          MONITORS=$(hyprctl monitors -j)
+          CURRENT=$(echo "$MONITORS" | ${pkgs.jq}/bin/jq -r '.[] | select(.name == "eDP-1") | .scale')
+          EXT=$(echo "$MONITORS" | ${pkgs.jq}/bin/jq -r '.[] | select(.name != "eDP-1") | .name' | head -1)
+
+          if [ "$(echo "$CURRENT > 1.1" | ${pkgs.bc}/bin/bc -l)" = "1" ]; then
+            NEW_SCALE=1
+            LABEL="scale 1.0 (native)"
+          else
+            NEW_SCALE=1.5666667
+            LABEL="scale 1.567"
+          fi
+
+          # Build a batch of monitor commands to apply atomically
+          BATCH="keyword monitor eDP-1,2256x1504@60,0x0,$NEW_SCALE;"
+          if [ -n "$EXT" ]; then
+            BATCH="$BATCH keyword monitor $EXT,preferred,auto,$NEW_SCALE;"
+          fi
+          hyprctl --batch "$BATCH"
+
+          ${pkgs.libnotify}/bin/notify-send "eDP-1: $LABEL"
+        '';
+
         screenRecord = pkgs.writeShellScript "screen-record-toggle" ''
           if ${pkgs.procps}/bin/pkill -INT wl-screenrec 2>/dev/null; then
             ${pkgs.libnotify}/bin/notify-send "Recording saved"
@@ -239,6 +284,9 @@
           ", 164, exec, ${pkgs.playerctl}/bin/playerctl play-pause"
           ", 232, exec, ${brightnessAdjust} -5"
           ", 233, exec, ${brightnessAdjust} +5"
+
+          # Display
+          "$mod, S, exec, ${scaleToggle}"
 
           # Notifications
           "$mod, N, exec, ${pkgs.mako}/bin/makoctl dismiss"
