@@ -97,6 +97,19 @@
         };
       };
 
+      # Pin claude-code to 2.1.37 (from nixpkgs PR #488208)
+      # Remove this overlay once merged to nixos-unstable
+      claudeCodeOverlay = final: prev: {
+        claude-code = prev.claude-code.overrideAttrs (old: rec {
+          version = "2.1.37";
+          src = prev.fetchzip {
+            url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${version}.tgz";
+            hash = "sha256-ijyZCT4LEEtXWOBds8WzizcfED9hVgaJByygJ4P4Yss=";
+          };
+          npmDepsHash = "sha256-2if3LsTEnC2OQjEgojqgzs8YOXdpoqJijEmVlxmEfzw=";
+        });
+      };
+
       # ============================================
       # Linux Configuration
       # ============================================
@@ -121,6 +134,7 @@
           tailscaleOverlay
           hyprlandOverlay
           kdenliveOverlay
+          claudeCodeOverlay
         ];
       };
 
