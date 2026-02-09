@@ -72,8 +72,8 @@
     container-use
     nmap
     immich-go
-    orca-slicer
-    kdePackages.kdenlive
+    # orca-slicer # FIXME: temporarily disabled - NIX_LDFLAGS conflict with shaderc (upstream bug)
+    # kdePackages.kdenlive # FIXME: temporarily disabled - NIX_LDFLAGS conflict with shaderc (upstream bug)
   ];
 
   programs.radio-active.enable = true;

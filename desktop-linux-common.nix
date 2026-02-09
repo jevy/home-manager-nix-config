@@ -147,7 +147,7 @@
     enable = true;
     plugins = [
       pkgs.obs-studio-plugins.obs-pipewire-audio-capture
-      pkgs.obs-studio-plugins.obs-backgroundremoval
+      # pkgs.obs-studio-plugins.obs-backgroundremoval # FIXME: temporarily disabled - NIX_LDFLAGS conflict with shaderc (upstream bug)
     ];
   };
 
