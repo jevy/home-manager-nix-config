@@ -148,6 +148,27 @@
                 ${pkgs.libnotify}/bin/notify-send "Recording started"
               fi
             '';
+            whichKeyConfig = (pkgs.formats.yaml { }).generate "wlr-which-key-config.yaml" {
+              font = "JetBrainsMono Nerd Font 14";
+              background = "#1e1e2eee";
+              color = "#cdd6f4";
+              border = "#89b4fa";
+              separator = " → ";
+              border_width = 2;
+              corner_r = 10;
+              padding = 15;
+              anchor = "center";
+              menu = [
+                { key = "f"; desc = "Firefox"; cmd = "firefox"; }
+                { key = "s"; desc = "Sound"; cmd = "${pkgs.pavucontrol}/bin/pavucontrol"; }
+                { key = "b"; desc = "Bluetooth"; cmd = "${pkgs.blueberry}/bin/blueberry"; }
+                { key = "t"; desc = "Files"; cmd = "kitty -- ${pkgs.ranger}/bin/ranger ~/Downloads"; }
+                { key = "a"; desc = "Claude"; cmd = "firefox https://claude.ai"; }
+              ];
+            };
+            myMenu = pkgs.writeShellScriptBin "my-menu" ''
+              exec ${lib.getExe pkgs.wlr-which-key} ${whichKeyConfig}
+            '';
           in
           {
             # Default monitor config for undocked state (applies on Hyprland start/restart)
@@ -284,7 +305,7 @@
               "$mod, K, ${layoutAware "movefocus" "u"}"
               "$mod, J, ${layoutAware "movefocus" "d"}"
               "$mod, Y, exec, sh -c 'cur=$(hyprctl -j getoption general:layout | ${pkgs.jq}/bin/jq -r .str); [ \"$cur\" = \"hy3\" ] && hyprctl keyword general:layout master || hyprctl keyword general:layout hy3'"
-              "$mod, D, exec, hyprctl keyword general:layout master"
+              "$mod, D, exec, ${myMenu}/bin/my-menu"
               "$mod SHIFT, F, fullscreen"
               "$mod SHIFT, L, ${layoutAware "movewindow" "r"}"
               "$mod SHIFT, H, ${layoutAware "movewindow" "l"}"
