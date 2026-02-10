@@ -6,16 +6,16 @@
 
 buildGo124Module rec {
   pname = "container-use";
-  version = "0.4.2";
+  version = "0-unstable-2025-10-07";
 
   src = fetchFromGitHub {
     owner = "dagger";
     repo = "container-use";
-    rev = "v${version}";
-    hash = "sha256-YKgS142a9SL1ZEjS+VArxwUzQX961zwlGuHW43AMxQA=";
+    rev = "725081899774b5e0ee82a56bf704afc0cb39e0ec";
+    hash = "sha256-Liq457BxRa8Wo3xtD0mmDjUHV9PPkQhCmnHPWQomiMw=";
   };
 
-  vendorHash = "sha256-M7YhEm9Gmjv2gxB2r7AS5JLLThEkvtJfLBrB+cvsN5c=";
+  vendorHash = "sha256-Xh2BKTbSvjfrsKDZy5mea6t6sQIRMTDEqrdDY45nky4=";
 
   subPackages = [ "cmd/container-use" ];
 
