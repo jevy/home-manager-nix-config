@@ -3,7 +3,15 @@
 {
   # Base CLI tools (all platforms)
   flake.modules.homeManager.cliBase =
-    { config, pkgs, ... }:
+    { config, pkgs, lib, ... }:
+    let
+      rangerArchives = pkgs.fetchFromGitHub {
+        owner = "maximtrp";
+        repo = "ranger-archives";
+        rev = "4085d338b87c3e6cb5f90b532740bff3a18f68ac";
+        sha256 = "sha256-D1w+RsorEoZx91r8Wb8RvNMgLhikflA4uG2jgcRZhGc=";
+      };
+    in
     {
       home.packages = with pkgs; [
         wget
@@ -67,6 +75,14 @@
         lg = "lazygit";
         lhead = "ls --sort created -r | head";
       };
+
+      home.activation.rangerArchivesPlugin = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        PLUGIN_DIR="${config.home.homeDirectory}/.config/nixpkgs/ranger/plugins/ranger-archives"
+        if [ -L "$PLUGIN_DIR" ]; then
+          rm "$PLUGIN_DIR"
+        fi
+        ln -sf "${rangerArchives}" "$PLUGIN_DIR"
+      '';
     };
 
   # Linux-specific CLI tools
