@@ -36,7 +36,10 @@
         enable = true;
         systemd.enable = true; # Required for hyprland-session.target (ashell depends on it)
         # xwayland.enable = true;
-        plugins = [ inputs.hy3.packages.${pkgs.system}.hy3 ];
+        plugins = [
+          inputs.hy3.packages.${pkgs.system}.hy3
+          inputs.hyprland-plugins.packages.${pkgs.system}.hyprfocus
+        ];
 
         settings =
           let
@@ -161,11 +164,36 @@
               menu = [
                 { key = "f"; desc = "Firefox"; cmd = "firefox"; }
                 { key = "s"; desc = "Sound"; cmd = "${pkgs.pavucontrol}/bin/pavucontrol"; }
+                { key = "o"; desc = "Toggle Audio Output"; cmd = "${toggleAudioOutput}"; }
                 { key = "b"; desc = "Bluetooth"; cmd = "${pkgs.blueberry}/bin/blueberry"; }
                 { key = "t"; desc = "Files"; cmd = "kitty -- ${pkgs.ranger}/bin/ranger ~/Downloads"; }
                 { key = "a"; desc = "Claude"; cmd = "firefox https://claude.ai"; }
               ];
             };
+            toggleAudioOutput = pkgs.writeShellScript "toggle-audio-output" ''
+              wpctl="${pkgs.wireplumber}/bin/wpctl"
+              notify="${pkgs.libnotify}/bin/notify-send"
+
+              # Get audio sink IDs from wpctl status
+              ids=($($wpctl status | ${pkgs.gawk}/bin/awk '/Audio/,/Video/{if(/Sinks/,/Sources/){if(/[0-9]+\./ && !/Sinks|Sources/)print}}' | ${pkgs.gnugrep}/bin/grep -oP '\s\K[0-9]+(?=\.)'))
+
+              # Get current default sink ID
+              current_id=$($wpctl status | ${pkgs.gawk}/bin/awk '/Audio/,/Video/{if(/Sinks/,/Sources/){if(/\*/)print}}' | ${pkgs.gnugrep}/bin/grep -oP '\s\K[0-9]+(?=\.)')
+
+              # Find next sink (cycle)
+              next_id="''${ids[0]}"
+              for i in "''${!ids[@]}"; do
+                if [ "''${ids[$i]}" = "$current_id" ]; then
+                  next_idx=$(( (i + 1) % ''${#ids[@]} ))
+                  next_id="''${ids[$next_idx]}"
+                  break
+                fi
+              done
+
+              $wpctl set-default "$next_id"
+              new_name=$($wpctl inspect "$next_id" 2>/dev/null | ${pkgs.gnugrep}/bin/grep 'node.description' | ${pkgs.gnused}/bin/sed 's/.*= "\(.*\)"/\1/')
+              $notify "Audio Output" "$new_name"
+            '';
             myMenu = pkgs.writeShellScriptBin "my-menu" ''
               exec ${lib.getExe pkgs.wlr-which-key} ${whichKeyConfig}
             '';
@@ -180,6 +208,11 @@
             };
 
             plugin = {
+              hyprfocus = {
+                enabled = "yes";
+                mode = "bounce";
+                bounce_strength = 0.9;
+              };
               hy3 = {
                 no_gaps_when_only = 1;
                 node_collapse_policy = 2;
@@ -229,6 +262,11 @@
 
             animations = {
               enabled = true;
+              bezier = "hyprfocusCurve, 0.0, 0.8, 0.2, 1.0";
+              animation = [
+                "hyprfocusIn, 1, 2, hyprfocusCurve"
+                "hyprfocusOut, 1, 2, hyprfocusCurve"
+              ];
             };
 
             dwindle = {
