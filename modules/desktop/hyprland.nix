@@ -171,16 +171,17 @@
               ];
             };
             toggleAudioOutput = pkgs.writeShellScript "toggle-audio-output" ''
-              wpctl="${pkgs.wireplumber}/bin/wpctl"
+              pactl="${pkgs.pulseaudio}/bin/pactl"
               notify="${pkgs.libnotify}/bin/notify-send"
+              grep="${pkgs.gnugrep}/bin/grep"
+              awk="${pkgs.gawk}/bin/awk"
 
-              # Get audio sink IDs from wpctl status
-              ids=($($wpctl status | ${pkgs.gawk}/bin/awk '/Audio/,/Video/{if(/Sinks/,/Sources/){if(/[0-9]+\./ && !/Sinks|Sources/)print}}' | ${pkgs.gnugrep}/bin/grep -oP '\s\K[0-9]+(?=\.)'))
+              # Get all sink IDs and current default
+              ids=($($pactl list sinks short | $awk '{print $1}'))
+              default_name=$($pactl get-default-sink)
+              current_id=$($pactl list sinks short | $grep "$default_name" | $awk '{print $1}')
 
-              # Get current default sink ID
-              current_id=$($wpctl status | ${pkgs.gawk}/bin/awk '/Audio/,/Video/{if(/Sinks/,/Sources/){if(/\*/)print}}' | ${pkgs.gnugrep}/bin/grep -oP '\s\K[0-9]+(?=\.)')
-
-              # Find next sink (cycle)
+              # Cycle to next sink
               next_id="''${ids[0]}"
               for i in "''${!ids[@]}"; do
                 if [ "''${ids[$i]}" = "$current_id" ]; then
@@ -190,8 +191,13 @@
                 fi
               done
 
-              $wpctl set-default "$next_id"
-              new_name=$($wpctl inspect "$next_id" 2>/dev/null | ${pkgs.gnugrep}/bin/grep 'node.description' | ${pkgs.gnused}/bin/sed 's/.*= "\(.*\)"/\1/')
+              # Set new default and move all playing streams
+              $pactl set-default-sink "$next_id"
+              for input in $($pactl list sink-inputs short | $awk '{print $1}'); do
+                $pactl move-sink-input "$input" "$next_id"
+              done
+
+              new_name=$($pactl list sinks | $grep -A1 "Sink #$next_id" | $grep Description | sed 's/.*: //')
               $notify "Audio Output" "$new_name"
             '';
             myMenu = pkgs.writeShellScriptBin "my-menu" ''
