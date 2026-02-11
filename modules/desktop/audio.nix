@@ -22,6 +22,24 @@
         jack.enable = true;
       };
 
+      # Set Intel HDA card to expose both HDMI and analog outputs
+      # This makes the Dell U4924DW monitor speakers available as a sink
+      services.pipewire.wireplumber.extraConfig."50-hdmi-profile" = {
+        "monitor.alsa.rules" = [
+          {
+            matches = [
+              { "device.name" = "alsa_card.pci-0000_00_1f.3"; }
+            ];
+            actions = {
+              update-props = {
+                "api.acp.auto-profile" = false;
+                "device.profile" = "output:hdmi-stereo+input:analog-stereo";
+              };
+            };
+          }
+        ];
+      };
+
       # Audio device priority configuration
       # Scarlett > QC35 Bluetooth > Laptop speakers (fallback)
       services.pipewire.wireplumber.extraConfig."51-device-priorities" = {

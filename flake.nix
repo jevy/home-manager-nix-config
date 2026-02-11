@@ -34,6 +34,10 @@
       url = "github:outfoxxed/hy3/hl0.53.0";
       inputs.hyprland.follows = "hyprland";
     };
+    hyprland-plugins = {
+      url = "github:hyprwm/hyprland-plugins";
+      inputs.hyprland.follows = "hyprland";
+    };
     typing-analysis = {
       url = "github:jevy/typing-analysis";
       inputs.nixpkgs.follows = "nixpkgs";
