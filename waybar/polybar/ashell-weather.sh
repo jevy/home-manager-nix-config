@@ -5,9 +5,9 @@ while true; do
 
     if [ -n "$weather_output" ]; then
         echo "{\"text\": \"$weather_output\", \"alt\": \"weather\"}"
+        sleep 600
     else
         echo "{\"text\": \"Weather unavailable\", \"alt\": \"error\"}"
+        sleep 15
     fi
-
-    sleep 600
 done
