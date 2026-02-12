@@ -59,7 +59,7 @@
         restic
         masterpdfeditor
         gparted
-        warpd
+        wl-kbptr
         keybase-gui
         chromedriver
         ollama

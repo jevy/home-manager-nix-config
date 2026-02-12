@@ -114,15 +114,6 @@ in
             options = [ "ctrl:nocaps" ];
           };
 
-          # Wallpaper (host-specific)
-          xdg.configFile."hypr/hyprpaper.conf".text = ''
-            wallpaper {
-              monitor =
-              path = /home/jevin/.config/nixpkgs/backgrounds/midevil.png
-              fit_mode = cover
-            }
-          '';
-
           # Typing analysis
           services.typing-analysis.enable = true;
 
