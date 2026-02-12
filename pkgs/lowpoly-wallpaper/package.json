@@ -1,0 +1,9 @@
+{
+  "name": "lowpoly-wallpaper",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "trianglify": "^4.1.1"
+  }
+}

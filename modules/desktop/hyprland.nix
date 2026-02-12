@@ -340,7 +340,7 @@
               "$mod, T, exec, kitty -- ${pkgs.ranger}/bin/ranger ~/Downloads"
               "$mod, I, exec, ${pkgs.blueberry}/bin/blueberry"
               "$mod, P, exec, ${pkgs.hyprlock}/bin/hyprlock"
-              "$mod, M, exec, ${pkgs.warpd}/bin/warpd --hint"
+              "$mod, M, exec, ${pkgs.wl-kbptr}/bin/wl-kbptr -o modes=floating,bisect,click -o mode_floating.source=detect"
 
               # Window and group management
               "$mod, F, togglefloating"
@@ -397,7 +397,7 @@
 
   # Hyprlock and hypridle session management
   flake.modules.homeManager.hyprSession =
-    { lib, ... }:
+    { lib, config, ... }:
     {
       programs.hyprlock = {
         enable = true;
@@ -408,7 +408,7 @@
           };
           background = lib.mkForce [
             {
-              path = "~/.config/nixpkgs/backgrounds/midevil.png";
+              path = "${config.stylix.image}";
               blur_passes = 3;
               blur_size = 8;
             }
