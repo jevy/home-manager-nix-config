@@ -31,6 +31,8 @@
               "ctrl+a>ctrl+n=next_tab"
               "ctrl+a>p=previous_tab"
               "ctrl+a>ctrl+p=previous_tab"
+              "alt+k=scroll_page_up"
+              "alt+j=scroll_page_down"
             ]
             ++ (lib.optionals pkgs.stdenv.isDarwin [
               "super+a>c=new_tab"
