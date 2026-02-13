@@ -42,6 +42,7 @@
       url = "github:jevy/typing-analysis";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    beads.url = "github:steveyegge/beads";
   };
 
   outputs = inputs:

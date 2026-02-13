@@ -102,6 +102,7 @@ in
             homeManager.linuxDesktop
             homeManager.ashell
             homeManager.hyprSession
+            homeManager.beads
 
             inputs.typing-analysis.homeManagerModules.default
           ];

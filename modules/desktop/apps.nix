@@ -76,7 +76,6 @@
         wl-screenrec
         hyprpicker
         hyprland-monitor-attached
-        beads
       ];
 
       services.wlsunset = {
