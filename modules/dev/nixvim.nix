@@ -12,11 +12,7 @@
       programs.nixvim = {
         enable = true;
         defaultEditor = true;
-        # Symlink ecma/jsx query files needed for tsx/typescript treesitter inheritance
-        extraFiles = {
-          "queries/ecma".source = "${pkgs.vimPlugins.nvim-treesitter}/runtime/queries/ecma";
-          "queries/jsx".source = "${pkgs.vimPlugins.nvim-treesitter}/runtime/queries/jsx";
-        };
+
         opts = {
           autoread = true;
           relativenumber = true;
@@ -30,6 +26,8 @@
           incsearch = true;
           writebackup = false;
           backup = false;
+          timeout = true;
+          timeoutlen = 500;
         };
         vimAlias = true;
         viAlias = true;
@@ -88,9 +86,16 @@
           # Telescope
           { mode = "n"; key = "<C-f>"; action = "<cmd>Telescope find_files<CR>"; options = { silent = true; desc = "Find files"; }; }
           { mode = "n"; key = "<C-g>"; action = "<cmd>Telescope live_grep<CR>"; options = { silent = true; desc = "Live grep"; }; }
+          # Trouble
+          { mode = "n"; key = "<leader>xx"; action = "<cmd>Trouble diagnostics toggle<CR>"; options = { silent = true; desc = "Toggle diagnostics"; }; }
+          { mode = "n"; key = "<leader>xw"; action = "<cmd>Trouble workspace_diagnostics toggle<CR>"; options = { silent = true; desc = "Workspace diagnostics"; }; }
+          { mode = "n"; key = "<leader>xd"; action = "<cmd>Trouble document_diagnostics toggle<CR>"; options = { silent = true; desc = "Document diagnostics"; }; }
+          { mode = "n"; key = "<leader>xq"; action = "<cmd>Trouble quickfix toggle<CR>"; options = { silent = true; desc = "Quickfix list"; }; }
+          { mode = "n"; key = "]d"; action = "<cmd>Trouble diagnostic next<CR>"; options = { silent = true; desc = "Next diagnostic"; }; }
+          { mode = "n"; key = "[d"; action = "<cmd>Trouble diagnostic prev<CR>"; options = { silent = true; desc = "Previous diagnostic"; }; }
         ];
         plugins = {
-          gitgutter.enable = true;
+          gitsigns.enable = true;
           lualine.enable = true;
           flash = {
             enable = true;
@@ -110,14 +115,13 @@
           lsp = {
             enable = true;
             servers = {
-              nil_ls.enable = true; # nix
-              # ts_ls.enable = true;
+              nixd.enable = true; # nix
+              vtsls.enable = true; # TypeScript (modern replacement for ts_ls)
               kotlin_language_server.enable = true;
               marksman.enable = true;
               gopls.enable = true;
             };
           };
-          lsp-format.enable = true;
           nvim-tree = {
             enable = true;
             settings = {
@@ -131,20 +135,19 @@
               };
             };
           };
-          none-ls = {
+          conform-nvim = {
             enable = true;
-            sources = {
-              formatting = {
-                alejandra.enable = true;
+            settings = {
+              formatters_by_ft = {
+                nix = ["alejandra"];
               };
             };
           };
-          markview.enable = false;
-          rainbow-delimiters.enable = false;
+          markview.enable = true;
+          rainbow-delimiters.enable = true;
           telescope = {
             enable = true;
             extensions = {
-              fzy-native.enable = true;
               fzf-native.enable = true;
             };
           };
@@ -152,9 +155,16 @@
           trouble.enable = true;
           which-key = {
             enable = true;
-            settings.spec = [
-              { __unkeyed-1 = "<leader>a"; group = "AI/Claude"; }
-            ];
+            settings = {
+              preset = "modern";
+              triggers = [
+                { __unkeyed-1 = "<auto>"; mode = "nxso"; }
+              ];
+              spec = [
+                { __unkeyed-1 = "<leader>a"; group = "AI/Claude"; }
+                { __unkeyed-1 = "<leader>x"; group = "Trouble"; }
+              ];
+            };
           };
           web-devicons.enable = true;
           mini = {
@@ -170,49 +180,24 @@
           snacks = {
             enable = true;
             settings = {
+              bigfile = { enabled = true; };
+              notifier = { enabled = true; timeout = 3000; };
+              quickfile = { enabled = true; };
               terminal = { enabled = true; };
             };
           };
-          luasnip.enable = true;
-          friendly-snippets.enable = true;
-          cmp = {
+          blink-cmp = {
             enable = true;
-            autoEnableSources = true;
             settings = {
-              sources = [
-                { name = "nvim_lsp"; }
-                { name = "luasnip"; }
-                { name = "buffer"; }
-                { name = "path"; }
-              ];
-              mapping = {
-                "<C-Space>" = "cmp.mapping.complete()";
-                "<C-e>" = "cmp.mapping.abort()";
-                "<CR>" = "cmp.mapping.confirm({ select = true })";
-                "<Tab>" = ''
-                  cmp.mapping(function(fallback)
-                    local luasnip = require('luasnip')
-                    if cmp.visible() then
-                      cmp.select_next_item()
-                    elseif luasnip.expand_or_jumpable() then
-                      luasnip.expand_or_jump()
-                    else
-                      fallback()
-                    end
-                  end, { 'i', 's' })
-                '';
-                "<S-Tab>" = ''
-                  cmp.mapping(function(fallback)
-                    local luasnip = require('luasnip')
-                    if cmp.visible() then
-                      cmp.select_prev_item()
-                    elseif luasnip.jumpable(-1) then
-                      luasnip.jump(-1)
-                    else
-                      fallback()
-                    end
-                  end, { 'i', 's' })
-                '';
+              sources = {
+                default = ["lsp" "snippets" "buffer" "path"];
+              };
+              keymap = {
+                "<C-space>" = ["show" "show_documentation" "hide_documentation"];
+                "<C-e>" = ["hide" "fallback"];
+                "<CR>" = ["accept" "fallback"];
+                "<Tab>" = ["select_next" "fallback"];
+                "<S-Tab>" = ["select_prev" "fallback"];
               };
             };
           };
