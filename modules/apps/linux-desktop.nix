@@ -9,8 +9,6 @@
         ps.llm-cmd
         ps.llm-openrouter
       ]);
-      claude-code-router = pkgs.callPackage ../../pkgs/claude-code-router.nix {};
-      container-use = pkgs.callPackage ../../pkgs/container-use.nix {};
     in
     {
       home.packages = with pkgs; [
@@ -48,9 +46,6 @@
         mpv
         mixxx
         spotdl
-        claude-code
-        claude-code-router
-        container-use
         nmap
         immich-go
         orca-slicer
