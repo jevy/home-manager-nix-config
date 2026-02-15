@@ -2,6 +2,9 @@
 { inputs, config, ... }:
 {
   flake.overlays = {
+    # MCP server packages from mcp-servers-nix
+    mcpServers = inputs.mcp-servers-nix.overlays.default;
+
     # Build volsync kubectl plugin from source
     volsync = final: prev: {
       volsync = prev.buildGoModule rec {
@@ -33,18 +36,6 @@
           buildInputs = (old.buildInputs or [ ]) ++ [ prev.shaderc ];
         });
       };
-    };
-
-    # Pin claude-code to specific version
-    claudeCode = final: prev: {
-      claude-code = prev.claude-code.overrideAttrs (old: rec {
-        version = "2.1.37";
-        src = prev.fetchzip {
-          url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${version}.tgz";
-          hash = "sha256-ijyZCT4LEEtXWOBds8WzizcfED9hVgaJByygJ4P4Yss=";
-        };
-        npmDepsHash = "sha256-2if3LsTEnC2OQjEgojqgzs8YOXdpoqJijEmVlxmEfzw=";
-      });
     };
   };
 }

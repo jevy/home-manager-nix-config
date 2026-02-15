@@ -1,24 +1,92 @@
 # MCP (Model Context Protocol) server configuration
-# Wraps mcp/config.nix and provides home-manager module for MCP configs
+# Uses programs.mcp as the single source of truth for all MCP server configs
 { inputs, ... }:
 {
   flake.modules.homeManager.mcp =
-    { config, pkgs, ... }:
+    { config, pkgs, lib, ... }:
     let
-      mcpConfigVSCode = import ../../mcp/config.nix {
-        nixpkgsInput = inputs.nixpkgs;
-        mcpServersNixInput = inputs.mcp-servers-nix;
-        system = pkgs.system;
-        flavor = "vscode";
-        fileName = "mcp_settings.json";
+      # Container-use MCP server (containerized environments for coding agents)
+      containerUse = pkgs.callPackage ../../pkgs/container-use.nix { };
+
+      # Kubernetes MCP server wrapper
+      kubernetesWrapper =
+        pkgs.runCommand "run-mcp-kubernetes"
+          {
+            buildInputs = [ pkgs.makeWrapper ];
+          }
+          ''
+            mkdir -p $out/bin
+            makeWrapper ${lib.getExe' pkgs.nodejs "npx"} $out/bin/run-mcp-kubernetes \
+              --add-flags "-y" \
+              --add-flags "mcp-server-kubernetes" \
+              --prefix PATH : ${pkgs.nodejs}/bin
+          '';
+
+      # Grafana MCP server (build from source with Go 1.24)
+      grafanaMcpServer = pkgs.buildGo124Module rec {
+        pname = "mcp-grafana";
+        version = "0.7.10";
+
+        src = pkgs.fetchFromGitHub {
+          owner = "grafana";
+          repo = "mcp-grafana";
+          rev = "v${version}";
+          hash = "sha256-DDkIWCJneL7l59CThzPkHzcB/lcUZrcVDZO/nWsZ2ss=";
+        };
+
+        vendorHash = "sha256-4dOsXrwUk+muYLIec9hBdMl/W3lk/pMvliEWeYrU5zQ=";
+
+        subPackages = [ "cmd/mcp-grafana" ];
+
+        meta = {
+          description = "Model Context Protocol server for Grafana";
+          homepage = "https://github.com/grafana/mcp-grafana";
+          mainProgram = "mcp-grafana";
+        };
       };
-      mcpConfigClaudeCode = import ../../mcp/config.nix {
-        nixpkgsInput = inputs.nixpkgs;
-        mcpServersNixInput = inputs.mcp-servers-nix;
-        system = pkgs.system;
-        flavor = "claude";
-        fileName = ".mcp.json";
+
+      # Wrapper that reads token from sops secret at runtime
+      grafanaMcpWrapper = pkgs.writeShellApplication {
+        name = "run-grafana-mcp";
+        runtimeInputs = [ grafanaMcpServer ];
+        text = ''
+          SOPS_SECRET_PATH="$HOME/.config/sops-nix/secrets"
+          if [ -f "$SOPS_SECRET_PATH/grafana_homelab_secret" ]; then
+            GRAFANA_SERVICE_ACCOUNT_TOKEN=$(cat "$SOPS_SECRET_PATH/grafana_homelab_secret")
+            export GRAFANA_SERVICE_ACCOUNT_TOKEN
+          fi
+          exec mcp-grafana "$@"
+        '';
       };
+
+      # Obsidian MCP server wrapper (reads API key from sops secret)
+      obsidianMcpWrapper = pkgs.writeShellApplication {
+        name = "run-obsidian-mcp";
+        runtimeInputs = [ pkgs.uv ];
+        text = ''
+          SOPS_SECRET_PATH="$HOME/.config/sops-nix/secrets"
+          if [ -f "$SOPS_SECRET_PATH/obsidian_api_key" ]; then
+            OBSIDIAN_API_KEY=$(cat "$SOPS_SECRET_PATH/obsidian_api_key")
+            export OBSIDIAN_API_KEY
+          fi
+          exec uvx mcp-obsidian "$@"
+        '';
+      };
+
+      # n8n MCP server wrapper (reads API key from sops secret)
+      n8nMcpWrapper = pkgs.writeShellApplication {
+        name = "run-n8n-mcp";
+        runtimeInputs = [ pkgs.nodejs ];
+        text = ''
+          SOPS_SECRET_PATH="$HOME/.config/sops-nix/secrets"
+          if [ -f "$SOPS_SECRET_PATH/n8n_api_key" ]; then
+            N8N_API_KEY=$(cat "$SOPS_SECRET_PATH/n8n_api_key")
+            export N8N_API_KEY
+          fi
+          exec npx n8n-mcp "$@"
+        '';
+      };
+
       # GitHub MCP server wrapper (reads token from sops secret at runtime)
       run-github-mcp-server = pkgs.writeShellApplication {
         name = "run-github-mcp-server";
@@ -28,17 +96,67 @@
           exec github-mcp-server "$@"
         '';
       };
+
+      # Server definitions shared across all tools
+      servers = {
+        context7 = {
+          command = lib.getExe pkgs.context7-mcp;
+        };
+        git = {
+          command = lib.getExe pkgs.mcp-server-git;
+        };
+        time = {
+          command = lib.getExe pkgs.mcp-server-time;
+        };
+        playwright = {
+          command = lib.getExe pkgs.playwright-mcp;
+          args = [ "--executable-path" (lib.getExe pkgs.chromium) ];
+        };
+        mcp-server-kubernetes = {
+          command = "${kubernetesWrapper}/bin/run-mcp-kubernetes";
+          args = [ "--verbose" ];
+        };
+        grafana = {
+          command = "${grafanaMcpWrapper}/bin/run-grafana-mcp";
+          args = [ "--disable-write" ];
+          env = {
+            GRAFANA_URL = "https://grafana.jevy.org";
+          };
+        };
+        container-use = {
+          command = "${containerUse}/bin/container-use";
+          args = [ "stdio" ];
+        };
+        obsidian = {
+          command = "${obsidianMcpWrapper}/bin/run-obsidian-mcp";
+        };
+        n8n = {
+          command = "${n8nMcpWrapper}/bin/run-n8n-mcp";
+          env = {
+            MCP_MODE = "stdio";
+            N8N_API_URL = "https://n8n.jevy.org";
+            LOG_LEVEL = "error";
+            DISABLE_CONSOLE_OUTPUT = "true";
+          };
+        };
+      };
     in
     {
-      # Claude Code config
-      home.file.".mcp.json".source = mcpConfigClaudeCode;
+      # Central MCP config (generates ~/.config/mcp/mcp.json)
+      programs.mcp.enable = true;
+      programs.mcp.servers = servers;
 
-      # VSCode Cline config
+      # Claude Code: symlink to programs.mcp output
+      home.file.".mcp.json".source =
+        config.lib.file.mkOutOfStoreSymlink
+          "${config.xdg.configHome}/mcp/mcp.json";
+
+      # VSCode Cline: needs { mcp: { servers: {...} } } format
       home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/.keep".text = "";
-      home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json".source =
-        mcpConfigVSCode;
+      home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json".text =
+        builtins.toJSON { mcp.servers = servers; };
 
-      # GitHub MCP server wrapper
+      # GitHub MCP server wrapper (standalone, not an MCP config entry)
       home.packages = [ run-github-mcp-server ];
     };
 }

@@ -60,6 +60,7 @@ in
         overlays.claudeCode
         overlays.hyprland
         overlays.kdenlive
+        overlays.mcpServers
       ];
 
       # NFS mount (host-specific)
@@ -103,6 +104,8 @@ in
             homeManager.ashell
             homeManager.hyprSession
             homeManager.beads
+            homeManager.claudeCode
+            homeManager.opencode
 
             inputs.typing-analysis.homeManagerModules.default
           ];
