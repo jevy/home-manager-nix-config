@@ -99,6 +99,7 @@ in
             homeManager.music
             homeManager.spicetify
             homeManager.nixvimVscode
+            homeManager.clipboard
             homeManager.desktopApps
             homeManager.linuxDesktop
             homeManager.ashell
