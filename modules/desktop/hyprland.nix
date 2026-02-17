@@ -49,7 +49,12 @@
 
             brightnessAdjust = pkgs.writeShellScript "brightness-adjust" ''
               CHANGE=$1
-              MONITOR=$(hyprctl monitors -j | ${pkgs.jq}/bin/jq -r '.[] | select(.focused == true) | .name')
+              # Determine monitor by cursor position, not window focus
+              CURSOR_X=$(hyprctl cursorpos -j | ${pkgs.jq}/bin/jq '.x')
+              CURSOR_Y=$(hyprctl cursorpos -j | ${pkgs.jq}/bin/jq '.y')
+              MONITOR=$(hyprctl monitors -j | ${pkgs.jq}/bin/jq -r \
+                --argjson cx "$CURSOR_X" --argjson cy "$CURSOR_Y" \
+                '.[] | select(.x <= $cx and $cx < (.x + .width / .scale) and .y <= $cy and $cy < (.y + .height / .scale)) | .name')
 
               case $MONITOR in
                 eDP-1)
@@ -373,8 +378,8 @@
               ", Print, exec, ${pkgs.grim}/bin/grim -g \"$(${pkgs.slurp}/bin/slurp)\" - | ${pkgs.swappy}/bin/swappy -f -"
               "SHIFT, Print, exec, ${screenRecord}"
               ", 164, exec, ${pkgs.playerctl}/bin/playerctl play-pause"
-              ", 232, exec, ${brightnessAdjust} -5"
-              ", 233, exec, ${brightnessAdjust} +5"
+              ", 232, exec, ${brightnessAdjust} -15"
+              ", 233, exec, ${brightnessAdjust} +15"
 
               # Display
               "$mod, S, exec, ${scaleToggle}"
