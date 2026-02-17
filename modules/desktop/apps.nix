@@ -42,7 +42,6 @@
             gappsWrapperArgs+=(--prefix GST_PLUGIN_SYSTEM_PATH_1_0 : "${gst_all_1.gst-vaapi}/lib/gstreamer-1.0")
           '';
         }))
-        wl-clipboard
 
         simple-scan
         dragon-drop # Ranger drag drop
@@ -96,15 +95,6 @@
 
       programs.qutebrowser.enable = true;
 
-      programs.rofi = {
-        enable = true;
-        # package = pkgs.rofi-wayland.override { plugins = [ pkgs.rofi-emoji pkgs.rofi-calc pkgs.rofi-power-menu]; };
-        plugins = [
-          pkgs.rofi-emoji
-          pkgs.rofi-calc
-          pkgs.rofi-power-menu
-        ];
-      };
 
       xdg.enable = true;
       xdg.portal = {
