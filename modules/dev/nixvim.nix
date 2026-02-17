@@ -22,6 +22,7 @@
           splitbelow = true;
           showmatch = true;
           ignorecase = true;
+          wrap = false;
           scrolloff = 5;
           incsearch = true;
           writebackup = false;
@@ -143,7 +144,7 @@
               };
             };
           };
-          markview.enable = true;
+          render-markdown.enable = true;
           rainbow-delimiters.enable = true;
           telescope = {
             enable = true;
