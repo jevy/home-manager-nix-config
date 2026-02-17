@@ -87,6 +87,20 @@
         '';
       };
 
+      # Brave Search MCP server wrapper (reads API key from sops secret)
+      braveSearchMcpWrapper = pkgs.writeShellApplication {
+        name = "run-brave-search-mcp";
+        runtimeInputs = [ pkgs.nodejs ];
+        text = ''
+          SOPS_SECRET_PATH="$HOME/.config/sops-nix/secrets"
+          if [ -f "$SOPS_SECRET_PATH/brave_api_key" ]; then
+            BRAVE_API_KEY=$(cat "$SOPS_SECRET_PATH/brave_api_key")
+            export BRAVE_API_KEY
+          fi
+          exec npx -y @brave/brave-search-mcp-server "$@"
+        '';
+      };
+
       # LinkedIn MCP server wrapper (Docker-based, requires profile volume mount)
       # Breaking change Feb 2026: LINKEDIN_COOKIE env var no longer supported.
       # Must create profile first with: uvx linkedin-scraper-mcp --login
@@ -213,6 +227,9 @@
             LOG_LEVEL = "error";
             DISABLE_CONSOLE_OUTPUT = "true";
           };
+        };
+        "brave-search" = {
+          command = "${braveSearchMcpWrapper}/bin/run-brave-search-mcp";
         };
         linkedin = {
           command = "${linkedinMcpWrapper}/bin/run-linkedin-mcp";
