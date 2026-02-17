@@ -87,6 +87,81 @@
         '';
       };
 
+      # LinkedIn MCP server wrapper (Docker-based, requires profile volume mount)
+      # Breaking change Feb 2026: LINKEDIN_COOKIE env var no longer supported.
+      # Must create profile first with: uvx linkedin-scraper-mcp --login
+      # Profile stored at ~/.linkedin-mcp/profile/
+      linkedinMcpWrapper = pkgs.writeShellApplication {
+        name = "run-linkedin-mcp";
+        runtimeInputs = [ pkgs.docker ];
+        text = ''
+          # Check if profile exists, warn if not
+          if [ ! -d "$HOME/.linkedin-mcp/profile" ]; then
+            echo "Warning: LinkedIn profile not found at ~/.linkedin-mcp/profile/" >&2
+            echo "Run 'linkedin-login' to create a profile first" >&2
+            exit 1
+          fi
+          exec docker run --rm -i \
+            -v "$HOME/.linkedin-mcp:/home/pwuser/.linkedin-mcp" \
+            stickerdaniel/linkedin-mcp-server:latest
+        '';
+      };
+
+      # FHS environment for running linkedin-scraper-mcp --login
+      # Needed because patchright contains dynamically linked binaries
+      linkedinMcpFHSEnv = pkgs.buildFHSEnv {
+        name = "linkedin-mcp-fhs";
+        targetPkgs = pkgs: with pkgs; [
+          uv
+          gcc.cc.lib
+          stdenv.cc.cc.lib
+          glib
+          libGL
+          libgbm
+          libxkbcommon
+          fontconfig
+          freetype
+          xorg.libX11
+          xorg.libXcomposite
+          xorg.libXdamage
+          xorg.libXext
+          xorg.libXfixes
+          xorg.libXrandr
+          xorg.libxcb
+          xorg.libXi
+          xorg.libXtst
+          xorg.libXcursor
+          xorg.libXScrnSaver
+          nss
+          nspr
+          dbus
+          cups
+          mesa
+          libdrm
+          alsa-lib
+          at-spi2-atk
+          at-spi2-core
+          gtk3
+          gdk-pixbuf
+          pango
+          cairo
+          expat
+          libuuid
+          systemd
+        ];
+        runScript = "bash";
+      };
+
+      # Helper script to run linkedin-scraper-mcp --login in FHS environment
+      linkedinLogin = pkgs.writeShellApplication {
+        name = "linkedin-login";
+        runtimeInputs = [ linkedinMcpFHSEnv ];
+        text = ''
+          mkdir -p "$HOME/.linkedin-mcp"
+          exec linkedin-mcp-fhs -c "uvx linkedin-scraper-mcp --login"
+        '';
+      };
+
       # GitHub MCP server wrapper (reads token from sops secret at runtime)
       run-github-mcp-server = pkgs.writeShellApplication {
         name = "run-github-mcp-server";
@@ -139,6 +214,9 @@
             DISABLE_CONSOLE_OUTPUT = "true";
           };
         };
+        linkedin = {
+          command = "${linkedinMcpWrapper}/bin/run-linkedin-mcp";
+        };
       };
     in
     {
@@ -157,6 +235,7 @@
         builtins.toJSON { mcp.servers = servers; };
 
       # GitHub MCP server wrapper (standalone, not an MCP config entry)
-      home.packages = [ run-github-mcp-server ];
+      # LinkedIn login helper (for creating profile in FHS environment)
+      home.packages = [ run-github-mcp-server linkedinLogin ];
     };
 }

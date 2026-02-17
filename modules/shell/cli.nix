@@ -56,6 +56,7 @@
         repomix
         poppler-utils
         bc
+        uv # needed for linkedin-mcp profile creation
       ];
 
       programs.bat.enable = true;
