@@ -8,20 +8,6 @@
       # Container-use MCP server (containerized environments for coding agents)
       containerUse = pkgs.callPackage ../../pkgs/container-use.nix { };
 
-      # Kubernetes MCP server wrapper
-      kubernetesWrapper =
-        pkgs.runCommand "run-mcp-kubernetes"
-          {
-            buildInputs = [ pkgs.makeWrapper ];
-          }
-          ''
-            mkdir -p $out/bin
-            makeWrapper ${lib.getExe' pkgs.nodejs "npx"} $out/bin/run-mcp-kubernetes \
-              --add-flags "-y" \
-              --add-flags "mcp-server-kubernetes" \
-              --prefix PATH : ${pkgs.nodejs}/bin
-          '';
-
       # Grafana MCP server (build from source with Go 1.24)
       grafanaMcpServer = pkgs.buildGo124Module rec {
         pname = "mcp-grafana";
@@ -98,6 +84,20 @@
             export BRAVE_API_KEY
           fi
           exec npx -y @brave/brave-search-mcp-server "$@"
+        '';
+      };
+
+      # Home Assistant MCP server wrapper (SSE-to-stdio proxy, reads token from sops)
+      homeAssistantMcpWrapper = pkgs.writeShellApplication {
+        name = "run-homeassistant-mcp";
+        runtimeInputs = [ pkgs.nodejs ];
+        text = ''
+          SOPS_SECRET_PATH="$HOME/.config/sops-nix/secrets"
+          if [ -f "$SOPS_SECRET_PATH/homeassistant_token" ]; then
+            HA_TOKEN=$(cat "$SOPS_SECRET_PATH/homeassistant_token")
+          fi
+          exec npx -y mcp-remote "https://homeassistant.jevy.org/api/mcp" \
+            --header "Authorization: Bearer $HA_TOKEN"
         '';
       };
 
@@ -186,6 +186,19 @@
         '';
       };
 
+      # QMD MCP wrapper (stdio-to-HTTP bridge via mcp-remote)
+      # Avoids Claude Code's broken OAuth discovery on type: "http"
+      # Must use /sse endpoint — mcp-proxy only supports SSE transport,
+      # not Streamable HTTP. With /mcp, mcp-remote uses StreamableHTTP
+      # which silently hangs (server returns 400 but mcp-remote doesn't fall back).
+      qmdMcpWrapper = pkgs.writeShellApplication {
+        name = "run-qmd-mcp";
+        runtimeInputs = [ pkgs.nodejs ];
+        text = ''
+          exec npx -y mcp-remote "https://qmd.cloudforest-pike.ts.net/sse"
+        '';
+      };
+
       # Server definitions shared across all tools
       servers = {
         context7 = {
@@ -201,9 +214,9 @@
           command = lib.getExe pkgs.playwright-mcp;
           args = [ "--executable-path" (lib.getExe pkgs.chromium) ];
         };
-        mcp-server-kubernetes = {
-          command = "${kubernetesWrapper}/bin/run-mcp-kubernetes";
-          args = [ "--verbose" ];
+        kubernetes = {
+          type = "sse";
+          url = "https://k8s-mcp.cloudforest-pike.ts.net/sse";
         };
         grafana = {
           command = "${grafanaMcpWrapper}/bin/run-grafana-mcp";
@@ -233,6 +246,12 @@
         };
         linkedin = {
           command = "${linkedinMcpWrapper}/bin/run-linkedin-mcp";
+        };
+        homeassistant = {
+          command = "${homeAssistantMcpWrapper}/bin/run-homeassistant-mcp";
+        };
+        qmd = {
+          command = "${qmdMcpWrapper}/bin/run-qmd-mcp";
         };
       };
     in
