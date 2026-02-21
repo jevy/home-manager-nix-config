@@ -23,6 +23,7 @@
           grafana_homelab_secret = { };
           n8n_api_key = { };
           obsidian_api_key = { };
+          homeassistant_token = { };
           linkedin_cookie = { };
 
           # Backup
