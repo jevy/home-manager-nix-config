@@ -56,6 +56,7 @@
         repomix
         poppler-utils
         bc
+        sqlite
         uv # needed for linkedin-mcp profile creation
       ];
 
@@ -119,6 +120,7 @@
           grpcurl
           dysk
           volsync
+          (pkgs.callPackage ../../pkgs/sms-backup-md.nix { })
         ]
         ++ [
           (pkgs.writeShellApplication {
