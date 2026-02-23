@@ -220,9 +220,7 @@
 
             plugin = {
               hyprfocus = {
-                enabled = "yes";
-                mode = "bounce";
-                bounce_strength = 0.9;
+                enabled = "no";
               };
               hy3 = {
                 no_gaps_when_only = 1;
