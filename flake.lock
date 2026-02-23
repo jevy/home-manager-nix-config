@@ -107,11 +107,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1771701428,
-        "narHash": "sha256-EZQgLbSAVZdaX7JsxZICjD/tD5sGybam+n4T551dCnA=",
+        "lastModified": 1771705113,
+        "narHash": "sha256-UJjpBjW0bb0ixHre0WLKY3rAxJ/heIxe8M+aZBHs6g8=",
         "owner": "steveyegge",
         "repo": "beads",
-        "rev": "62715d8d4160e31553cf07320e780a9dc62ab011",
+        "rev": "c210d421fad5074f129ef5418a997a963d940a4f",
         "type": "github"
       },
       "original": {
