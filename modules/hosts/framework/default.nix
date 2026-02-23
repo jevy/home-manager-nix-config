@@ -107,6 +107,8 @@ in
             homeManager.beads
             homeManager.claudeCode
             homeManager.opencode
+            homeManager.qmd
+            homeManager.timetagger
 
             inputs.typing-analysis.homeManagerModules.default
           ];
