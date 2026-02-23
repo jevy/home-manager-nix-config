@@ -135,17 +135,17 @@
           libxkbcommon
           fontconfig
           freetype
-          xorg.libX11
-          xorg.libXcomposite
-          xorg.libXdamage
-          xorg.libXext
-          xorg.libXfixes
-          xorg.libXrandr
-          xorg.libxcb
-          xorg.libXi
-          xorg.libXtst
-          xorg.libXcursor
-          xorg.libXScrnSaver
+          libx11
+          libxcomposite
+          libxdamage
+          libxext
+          libxfixes
+          libxrandr
+          libxcb
+          libxi
+          libxtst
+          libxcursor
+          libxscrnsaver
           nss
           nspr
           dbus
@@ -186,18 +186,8 @@
         '';
       };
 
-      # QMD MCP wrapper (stdio-to-HTTP bridge via mcp-remote)
-      # Avoids Claude Code's broken OAuth discovery on type: "http"
-      # Must use /sse endpoint — mcp-proxy only supports SSE transport,
-      # not Streamable HTTP. With /mcp, mcp-remote uses StreamableHTTP
-      # which silently hangs (server returns 400 but mcp-remote doesn't fall back).
-      qmdMcpWrapper = pkgs.writeShellApplication {
-        name = "run-qmd-mcp";
-        runtimeInputs = [ pkgs.nodejs ];
-        text = ''
-          exec npx -y mcp-remote "https://qmd.cloudforest-pike.ts.net/sse"
-        '';
-      };
+      # QMD package for local MCP server (stdio mode)
+      qmd = pkgs.callPackage ../../pkgs/qmd.nix { };
 
       # Server definitions shared across all tools
       servers = {
@@ -251,7 +241,8 @@
           command = "${homeAssistantMcpWrapper}/bin/run-homeassistant-mcp";
         };
         qmd = {
-          command = "${qmdMcpWrapper}/bin/run-qmd-mcp";
+          command = "${qmd}/bin/qmd";
+          args = [ "mcp" ];
         };
       };
     in
