@@ -96,7 +96,7 @@ in
             homeManager.hyprland
             homeManager.sway
             homeManager.mutt
-            homeManager.music
+            # homeManager.music  # disabled: yabridge broken upstream (32-bit Wine linking)
             homeManager.spicetify
             homeManager.nixvimVscode
             homeManager.clipboard
