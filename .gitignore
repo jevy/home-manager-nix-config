@@ -1,4 +1,5 @@
 /result
+.beads/
 .aider*
 __pycache__/
 ranger/plugins/ranger-archives

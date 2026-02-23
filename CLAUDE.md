@@ -90,7 +90,3 @@ Package derivations live in `pkgs/`. Reference from modules via relative path: `
 ### Secrets
 
 Managed by sops-nix (`modules/secrets/sops.nix`). Secrets in `secrets.yaml`, age key at `~/.config/sops/age/keys.txt`.
-
-## Issue Tracking
-
-Uses **bd** (beads) — see AGENTS.md for workflow. Key commands: `bd ready`, `bd show <id>`, `bd close <id>`, `bd sync`.
