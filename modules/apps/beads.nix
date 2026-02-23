@@ -10,7 +10,7 @@
         src = inputs.beads;
         subPackages = [ "cmd/bd" ];
         doCheck = false;
-        vendorHash = "sha256-yiKBBUqR28wFr+QvVfluzUoNl6Gdkt9KN8X+hFY+2I0=";
+        vendorHash = "sha256-PO/L/TeP9G7VUZpT5AMijMkw+gLm49pkVfxdGkPGbmM=";
         # The go-modules FOD has network access, so GOTOOLCHAIN=auto lets Go
         # download the toolchain version that dependencies require (1.25.6).
         overrideModAttrs = _: {
@@ -18,6 +18,9 @@
           env.HOME = "/tmp";
           # Remove test files referencing non-existent internal/rpc package
           postPatch = "find . -name '*_test.go' -delete";
+          # Prevent main derivation's preBuild (which expects vendor/) from leaking
+          # into the go-modules FOD where vendor doesn't exist yet
+          preBuild = "";
         };
         postPatch = ''
           goVer="$(go env GOVERSION | sed 's/^go//')"
