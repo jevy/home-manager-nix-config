@@ -3,6 +3,26 @@
 {
   flake.modules.homeManager.ashell =
     { pkgs, ... }:
+    let
+      timetagger-listen = pkgs.writeShellScript "ashell-timetagger.sh" ''
+        while true; do
+          running_line=$(${pkgs.timetagger_cli}/bin/timetagger status 2>/dev/null | grep '^Running:')
+
+          if echo "$running_line" | grep -q 'N/A'; then
+            echo '{"text": "", "alt": "idle"}'
+          elif [ -n "$running_line" ]; then
+            # Format: "Running: 0:48 - task description #tags"
+            duration=$(echo "$running_line" | sed 's/^Running: *\([^ ]*\) - .*/\1/')
+            description=$(echo "$running_line" | sed 's/^Running: *[^ ]* - //')
+            echo "{\"text\": \"$description ($duration)\", \"alt\": \"running\"}"
+          else
+            echo '{"text": "", "alt": "error"}'
+          fi
+
+          sleep 30
+        done
+      '';
+    in
     {
       home.packages = [ pkgs.libnotify ];
       programs.ashell = {
@@ -14,6 +34,7 @@
             left = [ "Workspaces" ];
             center = [ "CalendarMeetings" ];
             right = [
+              "TimeTagger"
               "CustomWeather"
               "MediaPlayer"
               "Tray"
@@ -41,6 +62,12 @@
               command = "xdg-open https://calendar.google.com";
               listen_cmd = "/home/jevin/.config/nixpkgs/waybar/polybar/ashell-calendar.sh";
               alert = "urgent";
+            }
+            {
+              name = "TimeTagger";
+              icon = "󱎫";
+              command = "xdg-open https://timetagger.jevy.org";
+              listen_cmd = "${timetagger-listen}";
             }
           ];
           workspaces = {
