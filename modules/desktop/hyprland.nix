@@ -32,6 +32,8 @@
   flake.modules.homeManager.hyprland =
     { config, pkgs, lib, ... }:
     {
+      services.hyprpolkitagent.enable = true;
+
       wayland.windowManager.hyprland = {
         enable = true;
         systemd.enable = true; # Required for hyprland-session.target (ashell depends on it)
