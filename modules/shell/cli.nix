@@ -58,6 +58,8 @@
         bc
         sqlite
         uv # needed for linkedin-mcp profile creation
+        jiratui
+        google-cloud-sdk
       ];
 
       programs.bat.enable = true;
