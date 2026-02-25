@@ -44,7 +44,7 @@
         }))
 
         simple-scan
-        dragon-drop # Ranger drag drop
+        ripdrag # Ranger drag drop
         xdg-utils
         ocrmypdf
         via
