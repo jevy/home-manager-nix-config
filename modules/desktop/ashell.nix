@@ -101,7 +101,7 @@
         };
         Service = {
           Type = "simple";
-          ExecStart = "${pkgs.bash}/bin/bash -c 'while true; do ${pkgs.gcalcli}/bin/gcalcli remind --use-reminders 60 \"${pkgs.libnotify}/bin/notify-send -u critical -i appointment-soon -a gcalcli %s\"; sleep 60; done'";
+          ExecStart = "${pkgs.bash}/bin/bash -c 'while true; do ${pkgs.gcalcli}/bin/gcalcli --nocache --calendar=\"jevin@quickjack.ca\" --calendar=\"jmaltais@covenant.co\" remind --use-reminders 60 \"${pkgs.libnotify}/bin/notify-send -u critical -i appointment-soon -a gcalcli %s\"; sleep 60; done'";
           Restart = "always";
           RestartSec = "10s";
         };

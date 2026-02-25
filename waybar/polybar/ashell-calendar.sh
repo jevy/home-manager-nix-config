@@ -23,9 +23,9 @@ while true; do
     # Get all meetings - strip ANSI codes
     # Use explicit calendars from config
     if [ ${#CALENDARS[@]} -gt 0 ]; then
-        agenda=$(gcalcli "${CALENDARS[@]}" agenda "now" "24 hours" --nocolor 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g')
+        agenda=$(gcalcli --nocache "${CALENDARS[@]}" agenda "now" "24 hours" --nocolor 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g')
     else
-        agenda=$(gcalcli agenda "now" "24 hours" --nocolor 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g')
+        agenda=$(gcalcli --nocache agenda "now" "24 hours" --nocolor 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g')
     fi
     
     if [ -z "$agenda" ] || [[ "$agenda" == *"No Events Found"* ]]; then
