@@ -8,6 +8,20 @@
       # Container-use MCP server (containerized environments for coding agents)
       containerUse = pkgs.callPackage ../../pkgs/container-use.nix { };
 
+      # Kubernetes MCP server wrapper
+      kubernetesWrapper =
+        pkgs.runCommand "run-mcp-kubernetes"
+          {
+            buildInputs = [ pkgs.makeWrapper ];
+          }
+          ''
+            mkdir -p $out/bin
+            makeWrapper ${lib.getExe' pkgs.nodejs "npx"} $out/bin/run-mcp-kubernetes \
+              --add-flags "-y" \
+              --add-flags "mcp-server-kubernetes" \
+              --prefix PATH : ${pkgs.nodejs}/bin
+          '';
+
       # Grafana MCP server (build from source with Go 1.24)
       grafanaMcpServer = pkgs.buildGo124Module rec {
         pname = "mcp-grafana";
@@ -205,8 +219,7 @@
           args = [ "--executable-path" (lib.getExe pkgs.chromium) ];
         };
         kubernetes = {
-          type = "sse";
-          url = "https://k8s-mcp.cloudforest-pike.ts.net/sse";
+          command = "${kubernetesWrapper}/bin/run-mcp-kubernetes";
         };
         grafana = {
           command = "${grafanaMcpWrapper}/bin/run-grafana-mcp";
