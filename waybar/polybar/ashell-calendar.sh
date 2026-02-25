@@ -41,9 +41,10 @@ while true; do
     current_date=""
     
     while IFS= read -r line; do
-        # Skip empty lines and reminder lines
+        # Skip empty lines, reminder lines, and Reclaim synced events
         [ -z "$line" ] && continue
         [[ "$line" == *"Reminder:"* ]] && continue
+        [[ "$line" == *"Personal Commitment"* ]] && continue
 
         # Check if line starts with a date header (e.g., "Tue Feb 17  ...")
         # gcalcli puts date + first event/all-day title on the same line
