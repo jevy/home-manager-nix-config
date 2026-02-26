@@ -16,6 +16,9 @@
 
         ${pkgs.findutils}/bin/find "$TASKS_DIR" -maxdepth 1 -name '*.md' -mtime +14 -print0 | \
           while IFS= read -r -d "" file; do
+            if ${pkgs.gnugrep}/bin/grep -q '^category: Inbox' "$file"; then
+              continue
+            fi
             if ${pkgs.gnugrep}/bin/grep -q '^completed: true' "$file"; then
               mv "$file" "$ARCHIVE_DIR/"
               echo "Archived: $(basename "$file")"
