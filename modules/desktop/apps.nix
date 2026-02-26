@@ -215,6 +215,7 @@
         tailscale-us = "sudo tailscale up --accept-routes --exit-node \"us-tailscale\" --accept-dns";
         tailscale-home = "sudo tailscale up --accept-routes --exit-node \"octoprint\" --accept-dns";
         pomodoro = "termdown 25m -s -b && ${pkgs.libnotify}/bin/notify-send 'Pomodoro complete. Take a break!'";
+        sb = ''cd "$HOME/Second Brain/Second Brain 2025/Second Brain"'';
         s = "kitty +kitten ssh";
         colordropper = "grim -g \"$(slurp -p)\" -t ppm - | convert - -format '%[pixel:p{0,0}]' txt:-";
       };
