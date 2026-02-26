@@ -109,6 +109,7 @@ in
             homeManager.opencode
             homeManager.qmd
             homeManager.timetagger
+            homeManager.taskArchiver
 
             inputs.typing-analysis.homeManagerModules.default
           ];
