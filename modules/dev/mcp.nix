@@ -200,8 +200,6 @@
         '';
       };
 
-      # QMD package for local MCP server (stdio mode)
-      qmd = pkgs.callPackage ../../pkgs/qmd.nix { };
 
       # Server definitions shared across all tools
       servers = {
@@ -252,10 +250,6 @@
         };
         homeassistant = {
           command = "${homeAssistantMcpWrapper}/bin/run-homeassistant-mcp";
-        };
-        qmd = {
-          command = "${qmd}/bin/qmd";
-          args = [ "mcp" ];
         };
       };
     in
