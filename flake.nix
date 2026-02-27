@@ -43,6 +43,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     beads.url = "github:steveyegge/beads";
+    typestream = {
+      url = "github:typestreamio/typestream";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs:

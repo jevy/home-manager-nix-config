@@ -1,5 +1,5 @@
 # CLI tools (cross-platform)
-{ ... }:
+{ inputs, ... }:
 {
   # Base CLI tools (all platforms)
   flake.modules.homeManager.cliBase =
@@ -121,6 +121,7 @@
           ncdu
           grpcurl
           dysk
+          inputs.typestream.packages.${pkgs.system}.typestream
           volsync
           (pkgs.callPackage ../../pkgs/sms-backup-md.nix { })
         ]
