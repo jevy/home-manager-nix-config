@@ -10,7 +10,7 @@
         src = inputs.beads;
         subPackages = [ "cmd/bd" ];
         doCheck = false;
-        vendorHash = "sha256-PO/L/TeP9G7VUZpT5AMijMkw+gLm49pkVfxdGkPGbmM=";
+        vendorHash = "sha256-9mNjxRc0AP9ldExsNyEZHn9pseII0v+ssAPHVw7ZIhE=";
         # The go-modules FOD has network access, so GOTOOLCHAIN=auto lets Go
         # download the toolchain version that dependencies require (1.25.6).
         overrideModAttrs = _: {
