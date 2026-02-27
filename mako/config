@@ -6,3 +6,6 @@ invisible=1
 
 [app-name="Obsidian"]
 invisible=1
+
+[app-name="cloud-drive-ui"]
+invisible=1
