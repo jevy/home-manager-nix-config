@@ -91,22 +91,28 @@
         };
       };
 
-      # Calendar notification service - uses gcalcli remind with --use-reminders
-      # to honor per-event notification times from Google Calendar
+      # Calendar notification service - checks gcalcli agenda every minute
+      # with file-based dedup and tiered urgency (18m, 15m, 10m, 5m, now)
       systemd.user.services.gcal-notify = {
         Unit = {
-          Description = "Google Calendar notification daemon";
+          Description = "Google Calendar notification check";
           After = [ "graphical-session.target" ];
-          PartOf = [ "graphical-session.target" ];
         };
         Service = {
-          Type = "simple";
-          ExecStart = "${pkgs.bash}/bin/bash -c 'while true; do ${pkgs.gcalcli}/bin/gcalcli --nocache --calendar=\"jevin@quickjack.ca\" --calendar=\"jmaltais@covenant.co\" remind --use-reminders 60 \"${pkgs.libnotify}/bin/notify-send -u critical -i appointment-soon -a gcalcli %s\"; sleep 60; done'";
-          Restart = "always";
-          RestartSec = "10s";
+          Type = "oneshot";
+          Environment = "PATH=${pkgs.gcalcli}/bin:${pkgs.libnotify}/bin:${pkgs.coreutils}/bin:${pkgs.gnused}/bin:${pkgs.gawk}/bin:${pkgs.findutils}/bin";
+          ExecStart = "${pkgs.bash}/bin/bash /home/jevin/.config/nixpkgs/waybar/polybar/gcal-notify.sh";
+        };
+      };
+
+      systemd.user.timers.gcal-notify = {
+        Unit.Description = "Run Google Calendar notifications every minute";
+        Timer = {
+          OnCalendar = "minutely";
+          Persistent = true;
         };
         Install = {
-          WantedBy = [ "graphical-session.target" ];
+          WantedBy = [ "timers.target" ];
         };
       };
     };

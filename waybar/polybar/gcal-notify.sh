@@ -11,7 +11,7 @@ now_epoch=$(date +%s)
 today=$(date "+%a %b %-d")
 
 # Get events - strip ANSI codes first
-events=$(gcalcli agenda --nostarted --nocolor 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g')
+events=$(gcalcli --nocache --calendar="jevin@quickjack.ca" --calendar="jmaltais@covenant.co" agenda --nostarted --nocolor 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g')
 
 if [ -z "$events" ]; then
     exit 0
@@ -93,11 +93,11 @@ while IFS= read -r line; do
         
         if [ "$should_notify" = true ]; then
             if [ "$notify_time" = "now" ]; then
-                notify-send -u critical "📅 Meeting Starting Now" "$event_title at $event_time"
+                notify-send -u critical -i appointment-soon -a gcalcli "Meeting Starting Now" "$event_title at $event_time"
                 touch "$notified_file"
                 echo "Notification sent: $event_title starting now"
             else
-                notify-send -u normal "📅 Upcoming Meeting" "$event_title in ${notify_time%m} minutes at $event_time"
+                notify-send -u normal -i appointment-soon -a gcalcli "Upcoming Meeting" "$event_title in ${notify_time%m} minutes at $event_time"
                 echo "Notification sent: $event_title in ${notify_time%m} minutes"
             fi
         fi
