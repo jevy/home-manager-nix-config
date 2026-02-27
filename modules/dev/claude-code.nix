@@ -4,10 +4,10 @@
   # Pin claude-code to specific version (nixpkgs lags behind)
   flake.overlays.claudeCode = final: prev: {
     claude-code = prev.claude-code.overrideAttrs (old: rec {
-      version = "2.1.50";
+      version = "2.1.62";
       src = prev.fetchzip {
         url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${version}.tgz";
-        hash = "sha256-pSPZzbLhFsE8zwlp+CHB5MqS1gT3CeIlkoAtswmxCZs=";
+        hash = "sha256-pPOmZSRq44SU5QySWNmIvUovEOg7q9lcLFyHkkngN5Y=";
       };
       # Replace nixpkgs lockfile with one matching this version
       postPatch = ''
@@ -15,7 +15,7 @@
         substituteInPlace cli.js \
           --replace-fail '#!/bin/sh' '#!/usr/bin/env sh'
       '';
-      npmDepsHash = "sha256-/oQxdQjMVS8r7e1DUPEjhWOLOD/hhVCx8gjEWb3ipZQ=";
+      npmDepsHash = "sha256-b8lv/rduKqgq3lZ5zL3sax9PP3afe4pFpUJHg1K9N5M=";
       # overrideAttrs doesn't re-derive npmDeps from the new src because
       # buildNpmPackage computes npmDeps from the original function's args,
       # not from finalAttrs. We must override it explicitly.
