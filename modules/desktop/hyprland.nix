@@ -213,7 +213,7 @@
           in
           {
             # Default monitor config for undocked state (applies on Hyprland start/restart)
-            monitor = "eDP-1,2256x1504@60,0x0,1.5666667";
+            monitor = lib.mkDefault "eDP-1,2256x1504@60,0x0,1.5666667";
 
             general = {
               layout = "hy3";
