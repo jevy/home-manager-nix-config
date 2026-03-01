@@ -2,7 +2,7 @@
 { ... }:
 {
   flake.modules.nixos.boot =
-    { pkgs, ... }:
+    { pkgs, lib, ... }:
     {
       # Location for services like redshift/wlsunset
       location = {
@@ -16,14 +16,7 @@
         configurationLimit = 20;
       };
       boot.loader.efi.canTouchEfiVariables = true;
-      boot.supportedFilesystems = [ "zfs" "nfs" ];
-      boot.initrd.luks.devices = {
-        root = {
-          device = "/dev/nvme0n1p1";
-          preLVM = true;
-        };
-      };
-      boot.kernelPackages = pkgs.linuxPackages_6_12;
+      boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_6_12;
 
       # Time
       time.timeZone = "America/Toronto";

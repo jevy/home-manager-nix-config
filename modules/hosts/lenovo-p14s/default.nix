@@ -1,17 +1,17 @@
-# Framework laptop host definition (fully dendritic)
+# Lenovo ThinkPad P14s Gen 6 AMD host definition
 { config, inputs, ... }:
 let
   inherit (config.flake.modules) nixos homeManager;
   inherit (config.flake) overlays;
 in
 {
-  configurations.nixos.framework.module =
+  configurations.nixos."lenovo-p14s".module =
     { pkgs, lib, ... }:
     {
       imports = [
         # Hardware
-        ../../../nixos/hardware-configuration.nix
-        inputs.nixos-hardware.nixosModules.framework-12th-gen-intel
+        ../../../nixos/lenovo-p14s-hardware-configuration.nix
+        inputs.nixos-hardware.nixosModules.lenovo-thinkpad-p14s-amd-gen5
 
         # Feature modules (dendritic)
         nixos.zsh
@@ -24,37 +24,29 @@ in
         nixos.tailscale
         nixos.kanata
         nixos.docker
-        nixos.frameworkHardware
+        nixos.lenovoP14sHardware
         nixos.boot
         nixos.network
         nixos.printing
         nixos.onepassword
 
         # External modules
-        inputs.musnix.nixosModules.musnix
         inputs.home-manager.nixosModules.home-manager
       ];
 
       nixpkgs.hostPlatform = "x86_64-linux";
-      networking.hostName = "framework";
-      networking.hostId = "6a7f48db";
+      networking.hostName = "lenovo-p14s";
 
-      # LUKS + ZFS (framework-specific)
-      boot.supportedFilesystems = [ "zfs" "nfs" ];
+      # LUKS + Btrfs
       boot.initrd.luks.devices.root = {
         device = "/dev/nvme0n1p1";
         preLVM = true;
       };
 
-      # Musnix for audio
-      musnix.enable = true;
-      users.users.jevin.extraGroups = [ "audio" ];
-
       # Nixpkgs configuration
       nixpkgs.config = {
         allowUnfree = true;
         allowBroken = true;
-        segger-jlink.acceptLicense = true;
         permittedInsecurePackages = [
           "electron-25.9.0"
           "libsoup-2.74.3"
@@ -69,17 +61,6 @@ in
         overlays.kdenlive
         overlays.mcpServers
       ];
-
-      # NFS mount (host-specific)
-      fileSystems."/mnt/synology-backup" = {
-        device = "192.168.1.187:/volume1/proxmox";
-        fsType = "nfs";
-        options = [
-          "x-systemd.automount"
-          "noauto"
-          "x-systemd.idle-timeout=600"
-        ];
-      };
 
       system.stateVersion = "24.11";
 
@@ -103,7 +84,6 @@ in
             homeManager.hyprland
             homeManager.sway
             homeManager.mutt
-            # homeManager.music  # disabled: yabridge broken upstream (32-bit Wine linking)
             homeManager.spicetify
             homeManager.nixvimVscode
             homeManager.clipboard
@@ -132,11 +112,13 @@ in
           # Typing analysis
           services.typing-analysis.enable = true;
 
-          # Framework Intel iGPU specific
+          # P14s OLED monitor (2880x1800 at 120Hz, scale 2)
+          wayland.windowManager.hyprland.settings.monitor = lib.mkForce "eDP-1,2880x1800@120,0x0,2";
+
+          # AMD GPU session variables
           home.sessionVariables = {
-            LIBVA_DRIVER_NAME = "iHD";
+            LIBVA_DRIVER_NAME = "radeonsi";
             __GLX_VENDOR_LIBRARY_NAME = "mesa";
-            WLR_NO_HARDWARE_CURSORS = "1";
           };
         };
       };
