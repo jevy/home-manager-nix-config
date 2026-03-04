@@ -43,6 +43,6 @@
       };
     in
     {
-      home.packages = [ beads ];
+      home.packages = [ beads pkgs.dolt ];
     };
 }
