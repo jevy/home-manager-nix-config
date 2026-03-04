@@ -1,5 +1,5 @@
 # qmd: On-device hybrid search (BM25 + vector) for markdown files
-# https://github.com/tobi/qmd
+# https://github.com/jevy/qmd (fork of tobi/qmd with community fixes)
 #
 # The upstream repo has no package-lock.json, so we generate one from the
 # published npm tarball and inject it at build time.
@@ -23,13 +23,13 @@
 
 buildNpmPackage rec {
   pname = "qmd";
-  version = "1.0.7";
+  version = "1.0.7-jevy-2026-03-04";
 
   src = fetchFromGitHub {
-    owner = "tobi";
+    owner = "jevy";
     repo = "qmd";
-    rev = "v${version}";
-    hash = "sha256-QOdiLji06g6VntkcGVIEsHrAc6eVCVAXWXXCKCsc6cI=";
+    rev = "0230d657c9bd9543c0c8182f594a7e1e631f57e9"; # main with 7 community PRs merged
+    hash = "sha256-rqRKA98Tn/1t0WrYKGghIc4ywtUnLtmqJYaVEnpTa6Y=";
   };
 
   # Upstream has no lockfile; inject the one we generated
@@ -59,14 +59,6 @@ buildNpmPackage rec {
     ${nodejs_22}/bin/node ${nodejs_22}/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js rebuild --release --nodedir=${nodejs_22}
     popd
 
-    # Fix QMD GPU detection: getLlamaGpuTypes() without args returns all valid
-    # types for the platform (always includes "cuda" on Linux x64), not just
-    # actually supported ones. QMD then tries CUDA first, fails, and falls
-    # back to CPU — skipping Vulkan. Patch to use "supported" which checks
-    # for real library presence via detectAvailableComputeLayers.
-    substituteInPlace $out/lib/node_modules/@tobilu/qmd/dist/llm.js \
-      --replace-fail 'await getLlamaGpuTypes()' 'await getLlamaGpuTypes("supported")'
-
     rm $out/bin/qmd
     cat > $out/bin/qmd <<'WRAPPER'
     #!/bin/sh
@@ -82,7 +74,7 @@ buildNpmPackage rec {
 
   meta = {
     description = "On-device hybrid search for markdown files with BM25, vector search, and LLM reranking";
-    homepage = "https://github.com/tobi/qmd";
+    homepage = "https://github.com/jevy/qmd";
     license = lib.licenses.mit;
     mainProgram = "qmd";
   };
