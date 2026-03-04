@@ -50,6 +50,7 @@
         immich-go
         orca-slicer
         kdePackages.kdenlive
+        qbittorrent
       ];
 
       programs.radio-active.enable = true;
