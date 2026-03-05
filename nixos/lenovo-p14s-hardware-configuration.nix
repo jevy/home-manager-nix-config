@@ -24,6 +24,7 @@
     device = "/dev/mapper/cryptroot";
     fsType = "btrfs";
     options = [ "subvol=@nix" "compress=zstd" "noatime" ];
+    neededForBoot = true;
   };
 
   fileSystems."/boot" = {
