@@ -27,13 +27,10 @@ in
       boot.supportedFilesystems = lib.mkForce [ "btrfs" ];
 
       # === TEMPORARY: disable services to isolate boot issue ===
-      virtualisation.docker.enable = lib.mkForce false;
-      virtualisation.libvirtd.enable = lib.mkForce false;
+      # Batch 1 re-enabled: docker, libvirtd, tailscale, fprintd
       programs.hyprland.enable = lib.mkForce false;
       services.greetd.enable = lib.mkForce false;
       programs.regreet.enable = lib.mkForce false;
-      services.tailscale.enable = lib.mkForce false;
-      services.fprintd.enable = lib.mkForce false;
 
       home-manager.users.jevin = {
         # P14s OLED monitor (2880x1800 at 120Hz, scale 2)
