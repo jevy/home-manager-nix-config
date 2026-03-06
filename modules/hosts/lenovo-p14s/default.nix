@@ -22,8 +22,8 @@ in
       # LUKS
       boot.initrd.luks.devices."cryptroot".device = "/dev/disk/by-uuid/93f39771-d83e-4b78-baa2-13c6f7f921f1";
 
-      # Btrfs, not ZFS (override shared docker module)
-      virtualisation.docker.storageDriver = lib.mkForce "btrfs";
+      # Btrfs, not ZFS
+      virtualisation.docker.storageDriver = "btrfs";
       boot.supportedFilesystems = lib.mkForce [ "btrfs" ];
 
       # === TEMPORARY: disable services to isolate boot issue ===
