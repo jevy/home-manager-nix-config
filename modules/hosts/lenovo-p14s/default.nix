@@ -22,6 +22,10 @@ in
       # LUKS
       boot.initrd.luks.devices."cryptroot".device = "/dev/disk/by-uuid/93f39771-d83e-4b78-baa2-13c6f7f921f1";
 
+      # Btrfs, not ZFS (override shared docker module)
+      virtualisation.docker.storageDriver = lib.mkForce "btrfs";
+      boot.supportedFilesystems = lib.mkForce [ "btrfs" ];
+
       home-manager.users.jevin = {
         # P14s OLED monitor (2880x1800 at 120Hz, scale 2)
         wayland.windowManager.hyprland.settings.monitor = lib.mkForce "eDP-1,2880x1800@120,0x0,2";
