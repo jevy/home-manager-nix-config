@@ -63,6 +63,13 @@
               fzf --query="$*" --bind 'enter:become(nvim {})'
             }
 
+            # Fuzzy-pick a git worktree and cd into it
+            gwtf() {
+              local dir
+              dir=$(git worktree list | fzf --height 40% --reverse | awk '{print $1}')
+              [ -n "$dir" ] && cd "$dir"
+            }
+
             if [ -f "${config.xdg.configHome}/zsh/api_keys.zsh" ]; then
               source "${config.xdg.configHome}/zsh/api_keys.zsh"
             fi
