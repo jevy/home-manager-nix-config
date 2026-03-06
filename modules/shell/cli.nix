@@ -41,7 +41,6 @@
         feh
         curl
         tree
-        gh
         csvlens
         superfile
         lazygit
