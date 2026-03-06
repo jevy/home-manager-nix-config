@@ -28,7 +28,6 @@
         };
       };
 
-      home.packages = [ pkgs.gitinspector ];
 
       programs.difftastic = {
         enable = true;
