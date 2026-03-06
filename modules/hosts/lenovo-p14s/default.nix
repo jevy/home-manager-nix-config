@@ -26,18 +26,15 @@ in
       virtualisation.docker.storageDriver = "btrfs";
       boot.supportedFilesystems = lib.mkForce [ "btrfs" ];
 
-      # === TEMPORARY: disable services to isolate boot issue ===
-      # Batch 1 re-enabled: docker, libvirtd, tailscale, fprintd
-      programs.hyprland.enable = lib.mkForce false;
-      services.greetd.enable = lib.mkForce false;
-      programs.regreet.enable = lib.mkForce false;
+      # === TEMPORARY: disable hy3 plugin to isolate boot issue ===
 
       home-manager.users.jevin = {
         # P14s OLED monitor (2880x1800 at 120Hz, scale 2)
         wayland.windowManager.hyprland.settings.monitor = lib.mkForce "eDP-1,2880x1800@120,0x0,2";
 
-        # Disable Hyprland in home-manager too
-        wayland.windowManager.hyprland.enable = lib.mkForce false;
+        # Disable hy3 plugin (version mismatch causes errors)
+        wayland.windowManager.hyprland.plugins = lib.mkForce [];
+        wayland.windowManager.hyprland.settings.general.layout = lib.mkForce "master";
 
         # AMD GPU session variables
         home.sessionVariables = {
