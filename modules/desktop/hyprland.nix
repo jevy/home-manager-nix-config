@@ -13,7 +13,7 @@
     {
       programs.hyprland = {
         enable = lib.mkDefault true;
-        package = lib.mkDefault inputs.hyprland.packages.${pkgs.system}.hyprland;
+        package = lib.mkDefault inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
         withUWSM = lib.mkDefault true;
       };
 
@@ -39,8 +39,8 @@
         systemd.enable = true; # Required for hyprland-session.target (ashell depends on it)
         # xwayland.enable = true;
         plugins = [
-          inputs.hy3.packages.${pkgs.system}.hy3
-          inputs.hyprland-plugins.packages.${pkgs.system}.hyprfocus
+          inputs.hy3.packages.${pkgs.stdenv.hostPlatform.system}.hy3
+          inputs.hyprland-plugins.packages.${pkgs.stdenv.hostPlatform.system}.hyprfocus
         ];
 
         settings =
