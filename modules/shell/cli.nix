@@ -151,7 +151,7 @@
       };
 
       home.shellAliases = {
-        rebuildhm = "cd ~/.config/nixpkgs && sudo nixos-rebuild switch --flake '.#framework'";
+        rebuildhm = "cd ~/.config/nixpkgs && sudo nixos-rebuild switch --flake \".#$(hostname)\"";
         weather = "${pkgs.curl}/bin/curl https://v2.wttr.in/ottawa";
         fdt = "f(){ fd $1 -t file -X ls -tr -l; };f";
       };
