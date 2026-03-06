@@ -46,6 +46,6 @@
         pkgs.shared-mime-info
         pkgs.android-tools
       ];
-      environment.pathsToLink = [ "/share/icons" "/share/mime" ];
+      environment.pathsToLink = [ "/share/icons" "/share/mime" "/share/applications" "/share/xdg-desktop-portal" ];
     };
 }
