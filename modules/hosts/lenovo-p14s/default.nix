@@ -32,9 +32,6 @@ in
         # P14s OLED monitor (2880x1800 at 120Hz, scale 2)
         wayland.windowManager.hyprland.settings.monitor = lib.mkForce "eDP-1,2880x1800@120,0x0,2";
 
-        # Disable hy3 plugin (version mismatch causes errors)
-        wayland.windowManager.hyprland.plugins = lib.mkForce [];
-        wayland.windowManager.hyprland.settings.general.layout = lib.mkForce "master";
 
         # AMD GPU session variables
         home.sessionVariables = {
