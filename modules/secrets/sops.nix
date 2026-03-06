@@ -26,6 +26,9 @@
           homeassistant_token = { };
           linkedin_cookie = { };
 
+          # Weather
+          weather_api_key = { };
+
           # Backup
           restic_password = { };
         };

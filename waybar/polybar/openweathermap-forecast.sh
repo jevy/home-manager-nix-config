@@ -21,7 +21,7 @@ get_icon() {
     echo $icon
 }
 
-source ~/secrets/weather_api_for_polybar
+KEY="$(cat ~/.config/sops-nix/secrets/weather_api_key 2>/dev/null)"
 CITY="6094817"
 UNITS="metric"
 SYMBOL="°"
