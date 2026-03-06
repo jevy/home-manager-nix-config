@@ -78,7 +78,7 @@ in
             homeManager.linuxDesktop
             homeManager.ashell
             homeManager.hyprSession
-            homeManager.beads
+            # homeManager.beads  # disabled: vendorHash mismatch with upstream
             homeManager.claudeCode
             homeManager.opencode
             homeManager.qmd
