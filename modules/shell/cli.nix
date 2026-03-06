@@ -41,7 +41,6 @@
         feh
         curl
         tree
-        gh
         csvlens
         superfile
         lazygit
@@ -98,8 +97,8 @@
         src = pkgs.fetchFromGitHub {
           owner = "kagisearch";
           repo = "ask";
-          rev = "master";
-          sha256 = "sha256-3q9WWhDXmdDouLRHKp14F+FeSPG1IoCL4jVbcHJdtnk=";
+          rev = "f9c79b668f457183f8278ebf93aab5c1391575e3";
+          sha256 = "sha256-0RzJw3iQLig1BDszdstC7qyycQjVcE/FYC/N5jsUFIc=";
         };
         installPhase = ''
           mkdir -p $out/bin
@@ -151,7 +150,7 @@
       };
 
       home.shellAliases = {
-        rebuildhm = "cd ~/.config/nixpkgs && sudo nixos-rebuild switch --flake '.#framework'";
+        rebuildhm = "cd ~/.config/nixpkgs && sudo nixos-rebuild switch --flake \".#$(hostname)\"";
         weather = "${pkgs.curl}/bin/curl https://v2.wttr.in/ottawa";
         fdt = "f(){ fd $1 -t file -X ls -tr -l; };f";
       };

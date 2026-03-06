@@ -2,11 +2,11 @@
 { ... }:
 {
   flake.modules.nixos.docker =
-    { ... }:
+    { lib, ... }:
     {
       virtualisation.docker = {
         enable = true;
-        storageDriver = "zfs";
+        storageDriver = lib.mkDefault "zfs";
       };
 
       # Libvirtd for VMs
