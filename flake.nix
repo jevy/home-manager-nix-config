@@ -42,7 +42,7 @@
       url = "github:jevy/typing-analysis";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    beads.url = "github:steveyegge/beads";
+    beads.url = "github:steveyegge/beads/f710909589a95fc2bfe3cbc5f34a5d3265ea6c29";
     typestream = {
       url = "github:typestreamio/typestream";
       inputs.nixpkgs.follows = "nixpkgs";
