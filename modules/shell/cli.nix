@@ -57,7 +57,6 @@
         bc
         sqlite
         uv # needed for linkedin-mcp profile creation
-        jiratui
         google-cloud-sdk
       ];
 
@@ -120,7 +119,7 @@
           ncdu
           grpcurl
           dysk
-          inputs.typestream.packages.${pkgs.system}.typestream
+          inputs.typestream.packages.${pkgs.stdenv.hostPlatform.system}.typestream
           volsync
           (pkgs.callPackage ../../pkgs/sms-backup-md.nix { })
         ]
