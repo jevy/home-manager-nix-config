@@ -15,5 +15,9 @@
         enable = true;
         qemu.runAsRoot = true;
       };
+
+      # Mask virt-secret-init-encryption: it hardcodes /usr/bin/sh (broken on NixOS)
+      # and we don't use libvirt's secret encryption feature.
+      systemd.services.virt-secret-init-encryption.enable = false;
     };
 }
