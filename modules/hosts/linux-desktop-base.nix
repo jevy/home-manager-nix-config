@@ -24,6 +24,7 @@ in
         nixos.network
         nixos.printing
         nixos.onepassword
+        nixos.steam
 
         # External modules
         inputs.home-manager.nixosModules.home-manager
@@ -84,6 +85,7 @@ in
             homeManager.qmd
             homeManager.timetagger
             homeManager.taskArchiver
+
 
             inputs.typing-analysis.homeManagerModules.default
           ];
