@@ -71,7 +71,7 @@
         psst
         repomix
         nethogs
-        marktext
+        # marktext # Broken: node-gyp build failure
         wl-screenrec
         hyprpicker
         hyprland-monitor-attached
