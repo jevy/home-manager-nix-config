@@ -21,6 +21,11 @@
       programs.regreet.enable = lib.mkDefault true;
       services.greetd.enable = lib.mkDefault true;
 
+      # Disable fingerprint auth for greetd — fprintd blocks the PAM
+      # conversation, preventing password fallback in regreet.
+      # Fingerprint still works for sudo, hyprlock, etc.
+      security.pam.services.greetd.fprintAuth = false;
+
       services.logind.settings.Login = {
         HandleLidSwitch = lib.mkDefault "suspend";
         HandleLidSwitchDocked = lib.mkDefault "ignore";
@@ -40,7 +45,6 @@
         # xwayland.enable = true;
         plugins = [
           inputs.hy3.packages.${pkgs.stdenv.hostPlatform.system}.hy3
-          inputs.hyprland-plugins.packages.${pkgs.stdenv.hostPlatform.system}.hyprfocus
         ];
 
         settings =
@@ -80,12 +84,22 @@
             '';
 
             monitorAttached = pkgs.writeShellScript "monitor-attached" ''
+              JQ="${pkgs.jq}/bin/jq"
               MONITOR="$1"
 
-              # Get monitor info to identify the type
-              MONITOR_INFO=$(hyprctl monitors -j | ${pkgs.jq}/bin/jq -r ".[] | select(.name == \"$MONITOR\")")
-              MONITOR_DESC=$(echo "$MONITOR_INFO" | ${pkgs.jq}/bin/jq -r ".description")
-              MONITOR_WIDTH=$(echo "$MONITOR_INFO" | ${pkgs.jq}/bin/jq -r ".width")
+              # Get external monitor info
+              MONITOR_INFO=$(hyprctl monitors -j | $JQ -r ".[] | select(.name == \"$MONITOR\")")
+              MONITOR_DESC=$(echo "$MONITOR_INFO" | $JQ -r ".description")
+              MONITOR_WIDTH=$(echo "$MONITOR_INFO" | $JQ -r ".width")
+
+              # Get laptop panel info dynamically
+              LAPTOP=$(hyprctl monitors -j | $JQ '.[] | select(.name == "eDP-1")')
+              LAPTOP_W=$(echo "$LAPTOP" | $JQ -r '.width')
+              LAPTOP_H=$(echo "$LAPTOP" | $JQ -r '.height')
+              LAPTOP_RR=$(echo "$LAPTOP" | $JQ -r '.refreshRate' | cut -d. -f1)
+              LAPTOP_SCALE=$(echo "$LAPTOP" | $JQ -r '.scale')
+              LAPTOP_MODE="''${LAPTOP_W}x''${LAPTOP_H}@''${LAPTOP_RR}"
+              LAPTOP_LOGICAL=$(echo "$LAPTOP_W / $LAPTOP_SCALE" | ${pkgs.bc}/bin/bc -l | cut -d. -f1)
 
               # Move workspaces 1-6 to the newly attached monitor
               for ws in 1 2 3 4 5 6; do
@@ -97,21 +111,18 @@
               # Detect ultrawide: Dell U4924DW or any 5120-width monitor
               if echo "$MONITOR_DESC" | grep -qi "U4924DW" || [ "$MONITOR_WIDTH" = "5120" ]; then
                 ${pkgs.libnotify}/bin/notify-send "Monitor: Ultrawide" "Layout: master, ultrawide on top"
-                # Home setup: Ultrawide (5120x1440) on TOP of laptop
-                # Use master layout for ultrawide (centered master works well)
+                # Home setup: Ultrawide on TOP of laptop, master layout
                 hyprctl keyword general:layout master
-                # Ultrawide at scale 1, laptop at scale 1.57
-                # Laptop centered below: x = (5120 - 1437) / 2 = 1842, y = 1440
+                # Center laptop below ultrawide
+                LAPTOP_X=$(( (5120 - LAPTOP_LOGICAL) / 2 ))
                 hyprctl keyword monitor "$MONITOR,5120x1440@60,0x0,1"
-                hyprctl keyword monitor "eDP-1,2256x1504@60,1842x1440,1.5666667"
+                hyprctl keyword monitor "eDP-1,''${LAPTOP_MODE},''${LAPTOP_X}x1440,''${LAPTOP_SCALE}"
               else
                 ${pkgs.libnotify}/bin/notify-send "Monitor: Portable" "Layout: hy3, external on right"
                 # Portable monitor setup: external on RIGHT of laptop
-                # Keep hy3 layout for portable monitor (good for smaller screens)
                 hyprctl keyword general:layout hy3
-                # Laptop (1440 logical width) on left, portable on right
-                hyprctl keyword monitor "eDP-1,2256x1504@60,0x0,1.5666667"
-                hyprctl keyword monitor "$MONITOR,preferred,1440x0,1"
+                hyprctl keyword monitor "eDP-1,''${LAPTOP_MODE},0x0,''${LAPTOP_SCALE}"
+                hyprctl keyword monitor "$MONITOR,preferred,''${LAPTOP_LOGICAL}x0,1"
               fi
 
               # Reload hyprpaper to apply wallpaper to new monitor
@@ -119,28 +130,44 @@
             '';
 
             monitorDetached = pkgs.writeShellScript "monitor-detached" ''
+              JQ="${pkgs.jq}/bin/jq"
               # Switch back to hy3 layout for laptop-only mode
               hyprctl keyword general:layout hy3
-              # Reset laptop monitor position and scale for undocked mode
-              hyprctl keyword monitor "eDP-1,2256x1504@60,0x0,1.5666667"
+              # Reset laptop monitor position dynamically
+              LAPTOP=$(hyprctl monitors -j | $JQ '.[] | select(.name == "eDP-1")')
+              W=$(echo "$LAPTOP" | $JQ -r '.width')
+              H=$(echo "$LAPTOP" | $JQ -r '.height')
+              RR=$(echo "$LAPTOP" | $JQ -r '.refreshRate' | cut -d. -f1)
+              SCALE=$(echo "$LAPTOP" | $JQ -r '.scale')
+              hyprctl keyword monitor "eDP-1,''${W}x''${H}@''${RR},0x0,''${SCALE}"
               # Reload hyprpaper to apply wallpaper
               killall hyprpaper; sleep 0.5; ${pkgs.hyprpaper}/bin/hyprpaper &
             '';
             scaleToggle = pkgs.writeShellScript "scale-toggle" ''
+              JQ="${pkgs.jq}/bin/jq"
+              SCALE_FILE="/tmp/hypr-default-scale"
               MONITORS=$(hyprctl monitors -j)
-              CURRENT=$(echo "$MONITORS" | ${pkgs.jq}/bin/jq -r '.[] | select(.name == "eDP-1") | .scale')
-              EXT=$(echo "$MONITORS" | ${pkgs.jq}/bin/jq -r '.[] | select(.name != "eDP-1") | .name' | head -1)
+              LAPTOP=$(echo "$MONITORS" | $JQ '.[] | select(.name == "eDP-1")')
+              CURRENT=$(echo "$LAPTOP" | $JQ -r '.scale')
+              W=$(echo "$LAPTOP" | $JQ -r '.width')
+              H=$(echo "$LAPTOP" | $JQ -r '.height')
+              RR=$(echo "$LAPTOP" | $JQ -r '.refreshRate' | cut -d. -f1)
+              EXT=$(echo "$MONITORS" | $JQ -r '.[] | select(.name != "eDP-1") | .name' | head -1)
+
+              # Save default scale on first run
+              [ ! -f "$SCALE_FILE" ] && echo "$CURRENT" > "$SCALE_FILE"
+              DEFAULT_SCALE=$(cat "$SCALE_FILE")
 
               if [ "$(echo "$CURRENT > 1.1" | ${pkgs.bc}/bin/bc -l)" = "1" ]; then
                 NEW_SCALE=1
                 LABEL="scale 1.0 (native)"
               else
-                NEW_SCALE=1.5666667
-                LABEL="scale 1.567"
+                NEW_SCALE="$DEFAULT_SCALE"
+                LABEL="scale $DEFAULT_SCALE"
               fi
 
               # Build a batch of monitor commands to apply atomically
-              BATCH="keyword monitor eDP-1,2256x1504@60,0x0,$NEW_SCALE;"
+              BATCH="keyword monitor eDP-1,''${W}x''${H}@''${RR},0x0,$NEW_SCALE;"
               if [ -n "$EXT" ]; then
                 BATCH="$BATCH keyword monitor $EXT,preferred,auto,$NEW_SCALE;"
               fi
@@ -207,6 +234,37 @@
               new_name=$($pactl list sinks | $grep -A1 "Sink #$next_id" | $grep Description | sed 's/.*: //')
               $notify "Audio Output" "$new_name"
             '';
+            micMuteAll = pkgs.writeShellScript "mic-mute-all" ''
+              wpctl="${pkgs.wireplumber}/bin/wpctl"
+              notify="${pkgs.libnotify}/bin/notify-send"
+              grep="${pkgs.gnugrep}/bin/grep"
+
+              # Extract audio sources section from wpctl status
+              sources=$($wpctl status | sed -n '/Audio/,/Video/p' | sed -n '/Sources:/,/Filters:/p')
+
+              # Get all audio source node IDs (match "67." pattern, not "1.00" from volume)
+              ids=$(echo "$sources" | $grep -oP '\d+(?=\. )')
+
+              # Determine current state from the default source (marked with *)
+              default_id=$(echo "$sources" | $grep '\*' | $grep -oP '\d+(?=\. )' | head -1)
+              current=$($wpctl get-volume "$default_id" 2>/dev/null)
+
+              if echo "$current" | $grep -q MUTED; then
+                action=0  # unmute
+                msg="Microphones ON"
+                icon="microphone-sensitivity-high-symbolic"
+              else
+                action=1  # mute
+                msg="All Microphones MUTED"
+                icon="microphone-sensitivity-muted-symbolic"
+              fi
+
+              for id in $ids; do
+                $wpctl set-mute "$id" "$action"
+              done
+
+              $notify -i "$icon" -t 2000 -h string:x-canonical-private-synchronous:mic-mute "$msg"
+            '';
             myMenu = pkgs.writeShellScriptBin "my-menu" ''
               exec ${lib.getExe pkgs.wlr-which-key} ${whichKeyConfig}
             '';
@@ -221,9 +279,6 @@
             };
 
             plugin = {
-              hyprfocus = {
-                enabled = "no";
-              };
               hy3 = {
                 no_gaps_when_only = 1;
                 node_collapse_policy = 2;
@@ -273,11 +328,6 @@
 
             animations = {
               enabled = true;
-              bezier = "hyprfocusCurve, 0.0, 0.8, 0.2, 1.0";
-              animation = [
-                "hyprfocusIn, 1, 2, hyprfocusCurve"
-                "hyprfocusOut, 1, 2, hyprfocusCurve"
-              ];
             };
 
             dwindle = {
@@ -369,7 +419,7 @@
 
               # Media controls
               ", XF86AudioMute, exec, ${pkgs.pamixer}/bin/pamixer -t"
-              ", XF86AudioMicMute, exec, ${pkgs.pamixer}/bin/pamixer --default-source -t"
+              ", XF86AudioMicMute, exec, ${micMuteAll}"
               ", XF86AudioLowerVolume, exec, ${pkgs.pamixer}/bin/pamixer -d 10"
               ", XF86AudioRaiseVolume, exec, ${pkgs.pamixer}/bin/pamixer -i 10"
               ", XF86AudioPlay, exec, ${pkgs.playerctl}/bin/playerctl play-pause"
@@ -411,6 +461,13 @@
             hide_cursor = true;
             ignore_empty_input = true;
           };
+          auth = {
+            fingerprint = {
+              enabled = true;
+              ready_message = "Scan fingerprint to unlock";
+              present_message = "Scanning...";
+            };
+          };
           background = lib.mkForce [
             {
               path = "${config.stylix.image}";
@@ -438,6 +495,10 @@
             {
               timeout = 120;
               on-timeout = "pidof hyprlock || hyprlock";
+            }
+            {
+              timeout = 1800;
+              on-timeout = "1password --lock";
             }
             {
               timeout = 180;
