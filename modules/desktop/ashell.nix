@@ -2,8 +2,22 @@
 { ... }:
 {
   flake.modules.homeManager.ashell =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     let
+      weather-listen = pkgs.writeShellScript "ashell-weather.sh" ''
+        export KEY_FILE="${config.sops.secrets.openweathermap_api_key.path}"
+        while true; do
+            weather_output=$(/home/jevin/.config/nixpkgs/waybar/polybar/openweathermap-forecast.sh)
+            if [ -n "$weather_output" ]; then
+                echo "{\"text\": \"$weather_output\", \"alt\": \"weather\"}"
+                sleep 600
+            else
+                echo "{\"text\": \"Weather unavailable\", \"alt\": \"error\"}"
+                sleep 15
+            fi
+        done
+      '';
+
       timetagger-listen = pkgs.writeShellScript "ashell-timetagger.sh" ''
         while true; do
           running_line=$(${pkgs.timetagger_cli}/bin/timetagger status 2>/dev/null | grep '^Running:')
@@ -54,7 +68,7 @@
               name = "CustomWeather";
               icon = "";
               command = "wget -O - http://wttr.in/.png?m&format=v2 | feh - -Z";
-              listen_cmd = "/home/jevin/.config/nixpkgs/waybar/polybar/ashell-weather.sh";
+              listen_cmd = "${weather-listen}";
             }
             {
               name = "CalendarMeetings";
