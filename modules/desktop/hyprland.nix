@@ -273,6 +273,14 @@
             # Default monitor config for undocked state (applies on Hyprland start/restart)
             monitor = lib.mkDefault "eDP-1,2256x1504@60,0x0,1.5666667";
 
+            # Render XWayland apps at native resolution instead of blurry upscaling
+            xwayland.force_zero_scaling = true;
+
+            env = [
+              "GDK_SCALE,2"
+              "XCURSOR_SIZE,32"
+            ];
+
             general = {
               layout = "hy3";
               border_size = 4;
