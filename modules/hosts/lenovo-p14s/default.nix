@@ -15,6 +15,12 @@ in
 
         # Shared Linux desktop base
         nixos.linuxDesktopBase
+
+        # Auto-switch power profile (performance/balanced/power-saver)
+        nixos.powerProfileSwitcher
+
+        # IR camera facial recognition (disabled until set up)
+        # nixos.howdy
       ];
 
       networking.hostName = "lenovo-p14s";
@@ -30,7 +36,7 @@ in
 
       home-manager.users.jevin = {
         # P14s OLED monitor (2880x1800 at 120Hz, scale 2)
-        wayland.windowManager.hyprland.settings.monitor = lib.mkForce "eDP-1,2880x1800@120,0x0,2";
+        wayland.windowManager.hyprland.settings.monitor = lib.mkForce "eDP-1,2880x1800@120,0x0,1.5";
 
 
         # AMD GPU session variables
