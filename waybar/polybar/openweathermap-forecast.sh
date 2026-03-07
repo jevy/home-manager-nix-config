@@ -21,7 +21,7 @@ get_icon() {
     echo $icon
 }
 
-KEY="$(cat ~/.config/sops-nix/secrets/weather_api_key 2>/dev/null)"
+KEY=$(cat "$KEY_FILE")
 CITY="6094817"
 UNITS="metric"
 SYMBOL="°"

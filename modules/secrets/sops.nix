@@ -17,6 +17,9 @@
           anthropic_api_key = { };
           gemini_api_key = { };
 
+          # Weather
+          openweathermap_api_key = { };
+
           # Service tokens
           brave_api_key = { };
           github_personal_access_token = { };
