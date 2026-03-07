@@ -31,6 +31,7 @@
 
       # Power management (AMD PPD instead of Intel thermald)
       services.power-profiles-daemon.enable = true;
+      environment.systemPackages = [ pkgs.powertop ];
       zramSwap = {
         enable = true;
         algorithm = "zstd";
@@ -43,6 +44,22 @@
       services.udev.extraRules = ''
         KERNEL=="i2c-[0-9]*", GROUP="i2c", MODE="0660"
       '';
+
+      # Fix mic mute LED: attach the correct ALSA control (Mic ACP LED Capture Switch)
+      # instead of the generic Capture Switch which doesn't sync with PipeWire
+      systemd.services.fix-micmute-led = {
+        description = "Fix ThinkPad microphone mute LED sync";
+        after = [ "sound.target" ];
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = pkgs.writeShellScript "fix-micmute-led" ''
+            echo 'Capture Switch' > /sys/devices/virtual/sound/ctl-led/mic/card2/detach
+            echo 'Mic ACP LED Capture Switch' > /sys/devices/virtual/sound/ctl-led/mic/card2/attach
+          '';
+        };
+      };
 
       # Keyboard and peripheral support (ZSA, QMK — same as framework)
       hardware.keyboard.zsa.enable = true;
