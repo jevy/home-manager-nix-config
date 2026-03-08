@@ -55,8 +55,17 @@
           Type = "oneshot";
           RemainAfterExit = true;
           ExecStart = pkgs.writeShellScript "fix-micmute-led" ''
-            echo 'Capture Switch' > /sys/devices/virtual/sound/ctl-led/mic/card2/detach
-            echo 'Mic ACP LED Capture Switch' > /sys/devices/virtual/sound/ctl-led/mic/card2/attach
+            # Find the card that has the 'Mic ACP LED Capture Switch' control
+            for card in /sys/devices/virtual/sound/ctl-led/mic/card*/; do
+              num=$(basename "$card" | sed 's/card//')
+              if ${pkgs.alsa-utils}/bin/amixer -c "$num" controls 2>/dev/null | grep -q 'Mic ACP LED Capture Switch'; then
+                echo 'Capture Switch' > "$card/detach"
+                echo 'Mic ACP LED Capture Switch' > "$card/attach"
+                exit 0
+              fi
+            done
+            echo "No card with 'Mic ACP LED Capture Switch' found" >&2
+            exit 1
           '';
         };
       };
