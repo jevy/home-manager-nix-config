@@ -120,6 +120,7 @@
           grpcurl
           dysk
           inputs.typestream.packages.${pkgs.stdenv.hostPlatform.system}.typestream
+          inputs.llmfit.packages.${pkgs.stdenv.hostPlatform.system}.default
           volsync
           (pkgs.callPackage ../../pkgs/sms-backup-md.nix { })
         ]

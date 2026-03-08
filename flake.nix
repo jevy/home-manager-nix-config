@@ -47,6 +47,10 @@
       url = "github:typestreamio/typestream";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    llmfit = {
+      url = "github:AlexsJones/llmfit";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs:
