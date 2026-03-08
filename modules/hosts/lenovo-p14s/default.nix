@@ -19,6 +19,9 @@ in
         # Auto-switch power profile (performance/balanced/power-saver)
         nixos.powerProfileSwitcher
 
+        # Local LLM inference via llama-swap + llama.cpp (Vulkan)
+        nixos.llamaSwap
+
         # IR camera facial recognition (disabled until set up)
         # nixos.howdy
       ];

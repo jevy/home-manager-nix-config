@@ -47,6 +47,7 @@ in
         overlays.hyprland
         overlays.kdenlive
         overlays.mcpServers
+        overlays.llamaCpp
       ];
 
       system.stateVersion = "24.11";
