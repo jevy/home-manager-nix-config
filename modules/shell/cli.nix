@@ -113,7 +113,7 @@
           mlocate
           usbutils
           kitty
-          btop
+          (btop.override { rocmSupport = true; })
           xan
           bashmount
           ncdu
