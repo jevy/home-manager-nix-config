@@ -61,7 +61,7 @@
         wl-kbptr
         keybase-gui
         chromedriver
-        ollama
+        # ollama  # replaced by llama-swap + llama.cpp
         docker-compose
         diff-pdf
         numbat
