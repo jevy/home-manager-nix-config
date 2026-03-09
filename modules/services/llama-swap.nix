@@ -58,6 +58,8 @@
         # DynamicUser + PrivateUsers prevents group-based /dev/dri access
         PrivateUsers = lib.mkForce false;
         SupplementaryGroups = [ "render" "video" ];
+        # Vulkan shader compilation needs JIT (W^X pages)
+        MemoryDenyWriteExecute = lib.mkForce false;
         # Allow reading model files
         ReadOnlyPaths = [ modelsDir ];
       };
