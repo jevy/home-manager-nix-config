@@ -49,6 +49,18 @@
               '';
             };
           }
+          {
+            event = ["FileType"];
+            pattern = ["markdown"];
+            callback = {
+              __raw = ''
+                function()
+                  vim.wo.wrap = true
+                  vim.wo.linebreak = true
+                end
+              '';
+            };
+          }
         ];
         # Use extraPlugins - claudecode-nvim is the newer package (Dec 2025)
         extraPlugins = [
