@@ -24,11 +24,36 @@
           provider = {
             openrouter = {
               models = {
-                "anthropic/claude-sonnet-4-20250514" = { };
+                "minimax/minimax-m2.5" = { max_tokens = 32768; };
+                "google/gemini-2.0-flash-exp" = { max_tokens = 32768; };
+                "stepfun/step-3.5-flash:free" = { max_tokens = 32768; };
+              };
+            };
+            local = {
+              npm = "@ai-sdk/openai-compatible";
+              name = "llama-swap (local)";
+              options = {
+                baseURL = "http://127.0.0.1:9292/v1";
+              };
+              models = {
+                "qwen3-coder-30b" = {
+                  name = "Qwen3-Coder-30B";
+                  limit = {
+                    context = 32768;
+                    output = 32768;
+                  };
+                };
+                "qwen3.5-35b" = {
+                  name = "Qwen3.5-35B";
+                  limit = {
+                    context = 32768;
+                    output = 32768;
+                  };
+                };
               };
             };
           };
-          model = "openrouter/anthropic/claude-sonnet-4-20250514";
+          model = "openrouter/minimax/minimax-m2.5";
         };
       };
     };
