@@ -236,6 +236,7 @@
             '';
             micMuteAll = pkgs.writeShellScript "mic-mute-all" ''
               wpctl="${pkgs.wireplumber}/bin/wpctl"
+              amixer="${pkgs.alsa-utils}/bin/amixer"
               notify="${pkgs.libnotify}/bin/notify-send"
               grep="${pkgs.gnugrep}/bin/grep"
 
@@ -251,16 +252,27 @@
 
               if echo "$current" | $grep -q MUTED; then
                 action=0  # unmute
+                led_val=on
                 msg="Microphones ON"
                 icon="microphone-sensitivity-high-symbolic"
               else
                 action=1  # mute
+                led_val=off
                 msg="All Microphones MUTED"
                 icon="microphone-sensitivity-muted-symbolic"
               fi
 
               for id in $ids; do
                 $wpctl set-mute "$id" "$action"
+              done
+
+              # Sync the mic mute LED via the ALSA control
+              for card in /sys/devices/virtual/sound/ctl-led/mic/card*/; do
+                num=$(basename "$card" | sed 's/card//')
+                if $amixer -c "$num" controls 2>/dev/null | $grep -q 'Mic ACP LED Capture Switch'; then
+                  $amixer -c "$num" cset name='Mic ACP LED Capture Switch' "$led_val" >/dev/null 2>&1
+                  break
+                fi
               done
 
               $notify -i "$icon" -t 2000 -h string:x-canonical-private-synchronous:mic-mute "$msg"
