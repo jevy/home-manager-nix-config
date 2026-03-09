@@ -43,20 +43,19 @@
       hardware.i2c.enable = true;
       services.udev.extraRules = ''
         KERNEL=="i2c-[0-9]*", GROUP="i2c", MODE="0660"
+        SUBSYSTEM=="sound", KERNEL=="card[0-9]*", ACTION=="add|change", TAG+="systemd", ENV{SYSTEMD_WANTS}="fix-micmute-led.service"
       '';
 
-      # Fix mic mute LED: attach the correct ALSA control (Mic ACP LED Capture Switch)
-      # instead of the generic Capture Switch which doesn't sync with PipeWire
+      # Re-attach the correct ALSA control for the mic mute LED whenever
+      # sound cards appear (boot + hot-plug). The micMuteAll script toggles
+      # this ALSA control alongside wpctl to keep the LED in sync.
       systemd.services.fix-micmute-led = {
-        description = "Fix ThinkPad microphone mute LED sync";
-        after = [ "sound.target" ];
-        wantedBy = [ "multi-user.target" ];
+        description = "Attach mic mute LED to correct ALSA control";
         serviceConfig = {
           Type = "oneshot";
-          RemainAfterExit = true;
           ExecStart = pkgs.writeShellScript "fix-micmute-led" ''
-            # Find the card that has the 'Mic ACP LED Capture Switch' control
             for card in /sys/devices/virtual/sound/ctl-led/mic/card*/; do
+              [ -d "$card" ] || continue
               num=$(basename "$card" | sed 's/card//')
               if ${pkgs.alsa-utils}/bin/amixer -c "$num" controls 2>/dev/null | grep -q 'Mic ACP LED Capture Switch'; then
                 echo 'Capture Switch' > "$card/detach"
@@ -64,8 +63,6 @@
                 exit 0
               fi
             done
-            echo "No card with 'Mic ACP LED Capture Switch' found" >&2
-            exit 1
           '';
         };
       };
