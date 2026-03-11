@@ -44,7 +44,6 @@ in
       nixpkgs.overlays = [
         overlays.volsync
         overlays.tailscale
-        overlays.claudeCode
         overlays.hyprland
         overlays.kdenlive
         overlays.mcpServers
