@@ -71,8 +71,14 @@
                   fi
                   ;;
                 DP-*)
-                  # Dell U4924DW on bus 17 - adjust if monitor changes
-                  BUS=17
+                  # Auto-detect I2C bus for the DP connector (cached in /tmp)
+                  CACHE="/tmp/ddc-bus-$MONITOR"
+                  BUS=$(cat "$CACHE" 2>/dev/null)
+                  if [ -z "$BUS" ]; then
+                    BUS=$(${pkgs.ddcutil}/bin/ddcutil detect 2>/dev/null | ${pkgs.gawk}/bin/awk '/I2C bus:/{bus=$NF} /DRM_connector:.*card[0-9]+-'"$MONITOR"'/{gsub(/.*i2c-/,"",bus); print bus; exit}')
+                    [ -z "$BUS" ] && exit 1
+                    echo "$BUS" > "$CACHE"
+                  fi
                   CURRENT=$(${pkgs.ddcutil}/bin/ddcutil --bus $BUS getvcp 10 --terse 2>/dev/null | cut -d' ' -f4)
                   [ -z "$CURRENT" ] && exit 1
                   NEW=$((CURRENT + CHANGE))
@@ -86,6 +92,9 @@
             monitorAttached = pkgs.writeShellScript "monitor-attached" ''
               JQ="${pkgs.jq}/bin/jq"
               MONITOR="$1"
+
+              # Invalidate DDC bus cache on monitor change
+              rm -f /tmp/ddc-bus-*
 
               # Get external monitor info
               MONITOR_INFO=$(hyprctl monitors -j | $JQ -r ".[] | select(.name == \"$MONITOR\")")
@@ -131,6 +140,8 @@
 
             monitorDetached = pkgs.writeShellScript "monitor-detached" ''
               JQ="${pkgs.jq}/bin/jq"
+              # Invalidate DDC bus cache on monitor change
+              rm -f /tmp/ddc-bus-*
               # Switch back to hy3 layout for laptop-only mode
               hyprctl keyword general:layout hy3
               # Reset laptop monitor position dynamically
