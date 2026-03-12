@@ -29,7 +29,7 @@
       services.logind.settings.Login = {
         HandleLidSwitch = lib.mkDefault "suspend";
         HandleLidSwitchDocked = lib.mkDefault "ignore";
-        HandleLidSwitchExternalPower = lib.mkDefault "ignore";
+        HandleLidSwitchExternalPower = lib.mkDefault "suspend";
       };
     };
 
@@ -251,10 +251,12 @@
 
               if echo "$current" | $grep -q MUTED; then
                 action=0  # unmute
+                led=0     # LED off = mic active
                 msg="Microphones ON"
                 icon="microphone-sensitivity-high-symbolic"
               else
                 action=1  # mute
+                led=1     # LED on = mic muted
                 msg="All Microphones MUTED"
                 icon="microphone-sensitivity-muted-symbolic"
               fi
@@ -262,6 +264,9 @@
               for id in $ids; do
                 $wpctl set-mute "$id" "$action"
               done
+
+              # Sync the physical mic mute LED directly via sysfs
+              echo "$led" > /sys/class/leds/platform::micmute/brightness 2>/dev/null
 
               $notify -i "$icon" -t 2000 -h string:x-canonical-private-synchronous:mic-mute "$msg"
             '';
@@ -344,6 +349,15 @@
               single_window_aspect_ratio_tolerance = 0.1;
               split_width_multiplier = 1.15;
             };
+
+            # Prevent XWayland ghost windows (empty class+title) from stealing
+            # focus, which causes popups in apps like Zoom and Synology Drive
+            # to vanish when you try to mouse over them.
+            windowrulev2 = [
+              "nofocus,class:^$,title:^$,xwayland:1,floating:1,fullscreen:0,pinned:0"
+              "move onscreen cursor,class:^(cloud-drive-ui)$"
+              "move onscreen cursor,class:^(zoom)$,title:^(menu window)$"
+            ];
 
             "$mod" = "SUPER";
 
@@ -460,7 +474,18 @@
 
   # Hyprlock and hypridle session management
   flake.modules.homeManager.hyprSession =
-    { lib, config, ... }:
+    { lib, config, pkgs, ... }:
+    let
+      fprintDpmsWake = pkgs.writeShellScript "fprint-dpms-wake" ''
+        # Wake display when fingerprint reader is touched.
+        # fprintd emits VerifyStatus on scan (match, no-match, retry, etc.)
+        ${pkgs.dbus}/bin/dbus-monitor --system \
+          "type='signal',interface='net.reactivated.Fprint.Device',member='VerifyStatus'" |
+          while read -r _; do
+            hyprctl dispatch dpms on 2>/dev/null
+          done
+      '';
+    in
     {
       programs.hyprlock = {
         enable = true;
@@ -491,11 +516,26 @@
         };
       };
 
+      systemd.user.services.fprint-dpms-wake = {
+        Unit = {
+          Description = "Wake display on fingerprint reader activity";
+          After = [ "graphical-session.target" ];
+          PartOf = [ "graphical-session.target" ];
+        };
+        Service = {
+          ExecStart = "${fprintDpmsWake}";
+          Restart = "on-failure";
+          RestartSec = 5;
+        };
+        Install.WantedBy = [ "graphical-session.target" ];
+      };
+
       services.hypridle = {
         enable = true;
         settings = {
           general = {
             lock_cmd = "pidof hyprlock || hyprlock";
+            unlock_cmd = "hyprctl dispatch dpms on";
             before_sleep_cmd = "loginctl lock-session";
             after_sleep_cmd = "hyprctl dispatch dpms on && sleep 1 && hyprctl reload";
           };
@@ -512,6 +552,10 @@
               timeout = 180;
               on-timeout = "hyprctl dispatch dpms off";
               on-resume = "hyprctl dispatch dpms on";
+            }
+            {
+              timeout = 600;
+              on-timeout = "systemctl suspend";
             }
           ];
         };
