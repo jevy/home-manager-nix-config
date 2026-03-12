@@ -273,6 +273,31 @@
             myMenu = pkgs.writeShellScriptBin "my-menu" ''
               exec ${lib.getExe pkgs.wlr-which-key} ${whichKeyConfig}
             '';
+            # Daemon that warps the cursor to XWayland popups (Synology Drive,
+            # Zoom menus) when they open.  With follow_mouse=1, these popups
+            # spawn away from the cursor, immediately lose focus, and close.
+            # Warping the cursor keeps follow_mouse happy.
+            # Warp cursor to XWayland popups (Synology Drive, Zoom menus)
+            # when they open.  With follow_mouse=1, these popups spawn away
+            # from the cursor, immediately lose focus, and close.
+            popupFocusDaemon = pkgs.writeShellScript "popup-focus-daemon" ''
+              JQ="${pkgs.jq}/bin/jq"
+              SOCKET="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock"
+              ${pkgs.socat}/bin/socat -u UNIX-CONNECT:"$SOCKET" - | while IFS= read -r line; do
+                case "$line" in
+                  openwindow*cloud-drive-ui*|openwindow*menu\ window*)
+                    sleep 0.05
+                    ADDR="''${line#*>>}"
+                    ADDR="0x''${ADDR%%,*}"
+                    # Get window position and size, warp cursor to its center
+                    WIN=$(hyprctl clients -j | $JQ ".[] | select(.address == \"$ADDR\")")
+                    X=$(echo "$WIN" | $JQ '.at[0] + (.size[0] / 2) | floor')
+                    Y=$(echo "$WIN" | $JQ '.at[1] + (.size[1] / 2) | floor')
+                    [ "$X" != "null" ] && hyprctl dispatch movecursor "$X" "$Y"
+                    ;;
+                esac
+              done
+            '';
           in
           {
             # Default monitor config for undocked state (applies on Hyprland start/restart)
@@ -355,8 +380,6 @@
             # to vanish when you try to mouse over them.
             windowrulev2 = [
               "nofocus,class:^$,title:^$,xwayland:1,floating:1,fullscreen:0,pinned:0"
-              "move onscreen cursor,class:^(cloud-drive-ui)$"
-              "move onscreen cursor,class:^(zoom)$,title:^(menu window)$"
             ];
 
             "$mod" = "SUPER";
@@ -367,6 +390,7 @@
               # Run initial setup based on current monitor state (hyprland-monitor-attached only handles events)
               "sh -c 'sleep 3; ext=$(hyprctl monitors -j | ${pkgs.jq}/bin/jq -r \".[] | select(.name != \\\"eDP-1\\\") | .name\" | head -1); if [ -n \"$ext\" ]; then ${monitorAttached} \"$ext\"; else ${monitorDetached}; fi'"
               "${pkgs.synology-drive-client}/bin/synology-drive"
+              "${popupFocusDaemon}"
             ];
 
             bind = [
