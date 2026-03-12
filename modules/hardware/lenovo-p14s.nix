@@ -43,26 +43,21 @@
       hardware.i2c.enable = true;
       services.udev.extraRules = ''
         KERNEL=="i2c-[0-9]*", GROUP="i2c", MODE="0660"
-        SUBSYSTEM=="sound", KERNEL=="card[0-9]*", ACTION=="add|change", TAG+="systemd", ENV{SYSTEMD_WANTS}="fix-micmute-led.service"
       '';
 
-      # Re-attach the correct ALSA control for the mic mute LED whenever
-      # sound cards appear (boot + hot-plug). The micMuteAll script toggles
-      # this ALSA control alongside wpctl to keep the LED in sync.
+      # Allow the user's micMuteAll script to control the mic mute LED
+      # directly via sysfs, bypassing the ctl-led mechanism which gets
+      # reset by WirePlumber on startup.
       systemd.services.fix-micmute-led = {
-        description = "Attach mic mute LED to correct ALSA control";
+        description = "Set up mic mute LED for direct user control";
+        wantedBy = [ "multi-user.target" ];
         serviceConfig = {
           Type = "oneshot";
           ExecStart = pkgs.writeShellScript "fix-micmute-led" ''
-            for card in /sys/devices/virtual/sound/ctl-led/mic/card*/; do
-              [ -d "$card" ] || continue
-              num=$(basename "$card" | sed 's/card//')
-              if ${pkgs.alsa-utils}/bin/amixer -c "$num" controls 2>/dev/null | grep -q 'Mic ACP LED Capture Switch'; then
-                echo 'Capture Switch' > "$card/detach"
-                echo 'Mic ACP LED Capture Switch' > "$card/attach"
-                exit 0
-              fi
-            done
+            LED=/sys/class/leds/platform::micmute
+            [ -d "$LED" ] || exit 0
+            echo none > "$LED/trigger"
+            chmod 666 "$LED/brightness"
           '';
         };
       };
