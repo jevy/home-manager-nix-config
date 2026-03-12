@@ -51,6 +51,9 @@
       url = "github:AlexsJones/llmfit";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Temporary: pull linux-firmware 20260309 fix for AMD s2idle regression
+    nixpkgs-master.url = "github:NixOS/nixpkgs/master";
   };
 
   outputs = inputs:
