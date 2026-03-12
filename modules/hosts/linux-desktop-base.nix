@@ -48,6 +48,7 @@ in
         overlays.kdenlive
         overlays.mcpServers
         overlays.llamaCpp
+        overlays.linuxFirmware
       ];
 
       system.stateVersion = "24.11";
