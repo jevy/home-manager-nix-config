@@ -1,8 +1,8 @@
 # qmd: On-device hybrid search (BM25 + vector) for markdown files
-# https://github.com/jevy/qmd (fork of tobi/qmd with community fixes)
+# https://github.com/tobi/qmd
 #
-# The upstream repo has no package-lock.json, so we generate one from the
-# published npm tarball and inject it at build time.
+# The upstream repo has no package-lock.json, so we generate one and
+# inject it at build time.
 #
 # node-llama-cpp's postinstall tries to git-clone + cmake-build llama.cpp,
 # which fails in the nix sandbox. We skip all postinstall scripts and
@@ -10,7 +10,7 @@
 # ship in @node-llama-cpp/linux-x64 but node-llama-cpp's detectGlibc
 # checks standard paths (/lib, /usr/lib, $LD_LIBRARY_PATH). On NixOS we
 # set LD_LIBRARY_PATH so the detection passes and the .so files can find
-# libstdc++ and libvulkan (for GPU-accelerated inference on Intel iGPU).
+# libstdc++ and libvulkan (for GPU-accelerated inference).
 {
   lib,
   buildNpmPackage,
@@ -23,13 +23,13 @@
 
 buildNpmPackage rec {
   pname = "qmd";
-  version = "1.0.7-jevy-2026-03-04";
+  version = "2.0.1";
 
   src = fetchFromGitHub {
-    owner = "jevy";
+    owner = "tobi";
     repo = "qmd";
-    rev = "0230d657c9bd9543c0c8182f594a7e1e631f57e9"; # main with 7 community PRs merged
-    hash = "sha256-rqRKA98Tn/1t0WrYKGghIc4ywtUnLtmqJYaVEnpTa6Y=";
+    rev = "ae3604cb884be718696dfeefc4cec64a3dc84357";
+    hash = "sha256-NGrAPxNCUgZd3CDztXk2kGKQFMgewlDzKKZzkZnUhPM=";
   };
 
   # Upstream has no lockfile; inject the one we generated
@@ -37,7 +37,7 @@ buildNpmPackage rec {
     cp ${./qmd-package-lock.json} package-lock.json
   '';
 
-  npmDepsHash = "sha256-DQ8jJmiwrVae2/zSlG7iSxNnRmOjvEOpqqZuWBdZPnI=";
+  npmDepsHash = "sha256-eWu3NyZAmAOpoywOqHg5X6wFCYtbtn1CVMqpnLkGXmQ=";
 
   nodejs = nodejs_22;
 
@@ -63,7 +63,7 @@ buildNpmPackage rec {
     cat > $out/bin/qmd <<'WRAPPER'
     #!/bin/sh
     export LD_LIBRARY_PATH="@ldLibraryPath@''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-    exec @nodejs@/bin/node @out@/lib/node_modules/@tobilu/qmd/dist/qmd.js "$@"
+    exec @nodejs@/bin/node @out@/lib/node_modules/@tobilu/qmd/dist/cli/qmd.js "$@"
     WRAPPER
     substituteInPlace $out/bin/qmd \
       --replace-fail '@ldLibraryPath@' "${lib.makeLibraryPath [ stdenv.cc.cc.lib stdenv.cc.libc vulkan-loader ]}" \
