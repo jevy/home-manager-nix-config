@@ -3,9 +3,9 @@
 { ... }:
 {
   flake.modules.homeManager.taskSnapshot =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     let
-      tasksDir = "/home/jevin/Second Brain Obsidian/Second Brain/TasksBases/Tasks";
+      tasksDir = "${config.secondBrain.basePath}/TasksBases/Tasks";
 
       python = pkgs.python3.withPackages (ps: [ ps.python-frontmatter ]);
 

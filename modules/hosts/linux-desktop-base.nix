@@ -85,8 +85,10 @@ in
             homeManager.opencode
             homeManager.qmd
             homeManager.timetagger
+            homeManager.secondBrain
             homeManager.taskArchiver
-
+            homeManager.taskCompletedStamp
+            homeManager.taskSnapshot
 
             inputs.typing-analysis.homeManagerModules.default
           ];

@@ -1,10 +1,10 @@
 { ... }:
 {
   flake.modules.homeManager.taskArchiver =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     let
-      tasksDir = "/home/jevin/Second Brain Obsidian/Second Brain/TasksBases/Tasks";
-      archiveDir = "/home/jevin/Second Brain Obsidian/Second Brain/TasksBases/Archive";
+      tasksDir = "${config.secondBrain.basePath}/TasksBases/Tasks";
+      archiveDir = "${config.secondBrain.basePath}/TasksBases/Archive";
 
       script = pkgs.writeShellScript "archive-completed-tasks" ''
         set -euo pipefail

@@ -3,9 +3,9 @@
 { ... }:
 {
   flake.modules.homeManager.taskCompletedStamp =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     let
-      tasksDir = "/home/jevin/Second Brain Obsidian/Second Brain/TasksBases/Tasks";
+      tasksDir = "${config.secondBrain.basePath}/TasksBases/Tasks";
 
       grep = "${pkgs.gnugrep}/bin/grep";
       sed = "${pkgs.gnused}/bin/sed";
