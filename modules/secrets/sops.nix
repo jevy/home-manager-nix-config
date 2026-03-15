@@ -31,6 +31,10 @@
 
           # Backup
           restic_password = { };
+
+          # TimeTagger
+          timetagger_api_url = { };
+          timetagger_api_token = { };
         };
       };
     };
