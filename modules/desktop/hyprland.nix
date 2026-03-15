@@ -235,8 +235,8 @@
               grep="${pkgs.gnugrep}/bin/grep"
               awk="${pkgs.gawk}/bin/awk"
 
-              # Get all sink IDs and current default
-              ids=($($pactl list sinks short | $awk '{print $1}'))
+              # Get sink IDs, excluding HDMI outputs (unused on most setups)
+              ids=($($pactl list sinks short | $grep -v HDMI | $awk '{print $1}'))
               default_name=$($pactl get-default-sink)
               current_id=$($pactl list sinks short | $grep "$default_name" | $awk '{print $1}')
 
