@@ -26,6 +26,20 @@
       # Fingerprint still works for sudo, hyprlock, etc.
       security.pam.services.greetd.fprintAuth = false;
 
+      # Create PAM service for hyprlock (prevents "falling back to /etc/pam.d/su").
+      # Disable PAM-level fingerprint here because hyprlock uses fprintd's D-Bus
+      # API directly (auth.fingerprint.enabled) — having both causes double prompts.
+      # https://github.com/hyprwm/hyprlock/issues/953
+      security.pam.services.hyprlock.fprintAuth = false;
+
+      # Stop fprintd before suspend so it starts fresh on resume via D-Bus
+      # activation. Prevents stale device state that delays fingerprint verification.
+      # https://github.com/hyprwm/hyprlock/issues/577
+      # https://github.com/NixOS/nixpkgs/issues/432276
+      powerManagement.powerDownCommands = ''
+        ${pkgs.systemd}/bin/systemctl stop fprintd.service 2>/dev/null || true
+      '';
+
       services.logind.settings.Login = {
         HandleLidSwitch = lib.mkDefault "suspend";
         HandleLidSwitchDocked = lib.mkDefault "ignore";
@@ -514,6 +528,9 @@
       fprintDpmsWake = pkgs.writeShellScript "fprint-dpms-wake" ''
         # Wake display when fingerprint reader is touched.
         # fprintd emits VerifyStatus on scan (match, no-match, retry, etc.)
+        # Workaround: the touch that wakes DPMS is consumed as a failed scan
+        # (verify-no-match), requiring a second touch to unlock.
+        # https://github.com/hyprwm/hyprlock/issues/538
         ${pkgs.dbus}/bin/dbus-monitor --system \
           "type='signal',interface='net.reactivated.Fprint.Device',member='VerifyStatus'" |
           while read -r _; do
@@ -573,11 +590,18 @@
             unlock_cmd = "hyprctl dispatch dpms on";
             before_sleep_cmd = "loginctl lock-session";
             after_sleep_cmd = "hyprctl dispatch dpms on && sleep 1 && hyprctl reload";
+            # Wait for hyprlock to fully lock the session before allowing suspend.
+            # Prevents race where suspend interleaves with fprint verification.
+            # https://github.com/hyprwm/hyprlock/issues/577
+            inhibit_sleep = 3;
           };
           listener = [
             {
               timeout = 120;
-              on-timeout = "pidof hyprlock || hyprlock";
+              # Use loginctl lock-session instead of launching hyprlock directly.
+              # This triggers hypridle's lock_cmd via the systemd lock protocol,
+              # preventing duplicate instances more reliably.
+              on-timeout = "loginctl lock-session";
             }
             {
               timeout = 1800;
