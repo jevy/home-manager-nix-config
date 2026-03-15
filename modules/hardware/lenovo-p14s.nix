@@ -43,6 +43,10 @@
       hardware.i2c.enable = true;
       services.udev.extraRules = ''
         KERNEL=="i2c-[0-9]*", GROUP="i2c", MODE="0660"
+        # Prevent USB autosuspend for Synaptics fingerprint reader — avoids
+        # extra delay when the sensor is woken after long idle.
+        # https://github.com/hyprwm/hyprlock/issues/702
+        ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="06cb", ATTR{idProduct}=="00f9", ATTR{power/autosuspend}="-1"
       '';
 
       # Allow the user's micMuteAll script to control the mic mute LED
