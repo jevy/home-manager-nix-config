@@ -181,7 +181,9 @@
 
             # ── Up Next ──
             section("Up Next (score >= 40, not today)")
-            up_next = sorted([t for t in active if not t.today and t.score >= 40], key=lambda t: -t.score)
+            up_next = sorted([t for t in active if not t.today and t.score >= 40
+                              and (not t.earliest_start or t.earliest_start <= TODAY + timedelta(days=1))],
+                             key=lambda t: -t.score)
             or_none([
                 f"  {C.CYAN}[{t.domain}]{C.RESET} {t.name:<40s} {t.quadrant_color}{t.quadrant:<10s}{C.RESET} score:{t.score}"
                 for t in up_next
