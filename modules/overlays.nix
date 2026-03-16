@@ -26,20 +26,5 @@
       };
     };
 
-    # Disable tailscale tests (flaky in nixpkgs)
-    tailscale = final: prev: {
-      tailscale = prev.tailscale.overrideAttrs (old: {
-        doCheck = false;
-      });
-    };
-
-    # Fix kdenlive build (needs shaderc)
-    kdenlive = final: prev: {
-      kdePackages = prev.kdePackages // {
-        kdenlive = prev.kdePackages.kdenlive.overrideAttrs (old: {
-          buildInputs = (old.buildInputs or [ ]) ++ [ prev.shaderc ];
-        });
-      };
-    };
   };
 }

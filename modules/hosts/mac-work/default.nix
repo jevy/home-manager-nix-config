@@ -32,7 +32,6 @@ in
 
       nixpkgs.overlays = [
         overlays.volsync
-        overlays.tailscale
       ];
 
       home.stateVersion = "23.11";

@@ -43,9 +43,7 @@ in
       };
       nixpkgs.overlays = [
         overlays.volsync
-        overlays.tailscale
         overlays.hyprland
-        overlays.kdenlive
         overlays.mcpServers
         overlays.llamaCpp
         overlays.linuxFirmware
