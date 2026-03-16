@@ -121,7 +121,7 @@
     "bluetooth": {
 	"format": "",
 	"format-disabled": "",
-        "on-click": "blueberry",
+        "on-click": "blueman-manager",
 	"tooltip-format": "{}"
     },
     "pulseaudio": {

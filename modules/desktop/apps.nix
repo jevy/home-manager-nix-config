@@ -17,7 +17,7 @@
         vlc
         signal-desktop
         # nasc # Broken?
-        blueberry
+        blueman
         # calendar-cli
         vdirsyncer
         # khal
