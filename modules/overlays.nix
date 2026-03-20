@@ -2,10 +2,6 @@
 { inputs, config, ... }:
 {
   flake.overlays = {
-    # Temporary: linux-firmware 20260309 fixes AMD s2idle regression in 20260221
-    linuxFirmware = final: prev: {
-      linux-firmware = (import inputs.nixpkgs-master { system = prev.system; }).linux-firmware;
-    };
     # MCP server packages from mcp-servers-nix
     mcpServers = inputs.mcp-servers-nix.overlays.default;
 
