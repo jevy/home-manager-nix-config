@@ -14,7 +14,12 @@
       boot.kernelPackages = pkgs.linuxPackages_latest;
 
       # Fix OLED/PSR screen flickering on RDNA 3.5 (Strix Point)
-      boot.kernelParams = [ "amdgpu.dcdebugmask=0x10" ];
+      # Disable CWSR to prevent MES firmware hangs (hard lockups) on GFX11.
+      # Broken CWSR saturates the MES ring buffer → WAIT_REG_MEM timeout → full freeze.
+      # Regression in kernel 6.18+, no upstream fix as of 6.19.9.
+      # Track: https://gitlab.freedesktop.org/drm/amd/-/issues/5092
+      #        https://gitlab.freedesktop.org/drm/amd/-/issues/4941
+      boot.kernelParams = [ "amdgpu.dcdebugmask=0x10" "amdgpu.cwsr_enable=0" ];
 
       # AMD GPU and OLED/touch support
       boot.kernelModules = [ "i2c-dev" ];
