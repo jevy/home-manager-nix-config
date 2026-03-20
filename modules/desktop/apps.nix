@@ -18,6 +18,7 @@
         signal-desktop
         # nasc # Broken?
         blueman
+        solaar
         # calendar-cli
         vdirsyncer
         # khal
