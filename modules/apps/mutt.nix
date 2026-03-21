@@ -1,68 +1,45 @@
-# Mutt email configuration
+# Mutt email configuration via neomutt-for-gmail
 { inputs, ... }:
 {
   flake.modules.homeManager.mutt =
     { config, lib, pkgs, ... }:
     {
-      home.packages = with pkgs; [
-        # mutt-wizard
-        neomutt # mutt-wizard
-        curl # mutt-wizard
-        isync # mutt-wizard
-        msmtp # mutt-wizard
-        pass # mutt-wizard
-        gnupg # mutt-wizard
-        # pinentry # mutt-wizard
-        # notmuch # mutt-wizard
-        # lieer # mutt-wizard
-        w3m # mutt-wizard
-        abook # mutt-wizard
-        urlscan # mutt-wizard
-        poppler-utils # mutt-wizard
-        # python310Packages.goobook # mutt
-        inputs.muttdown.packages.${pkgs.stdenv.hostPlatform.system}.muttdown
+      imports = [ inputs.neomutt-gmail.homeManagerModules.default ];
+
+      accounts.email.accounts.quickjack = {
+        primary = true;
+        flavor = "gmail.com";
+        realName = "Jevin Maltais";
+        address = "jevin@quickjack.ca";
+        aliases = [
+          "jevin@buildingremoteteams.com"
+          "jevin@galasathome.com"
+          "jevyjevjevs@gmail.com"
+        ];
+        # Module defaults: Inbox, Starred, Sent, Drafts, Promotions, Social, Spam, Trash, Archive, All Mail
+        # Append personal mailboxes
+        notmuch.neomutt.virtualMailboxes = lib.mkAfter [
+          { name = "Personal"; query = "tag:personal"; }
+          { name = "Ashley"; query = "(from:ashley.maltais@gmail.com and to:jevin@quickjack.ca) or (from:jevin@quickjack.ca and to:ashley.maltais@gmail.com)"; }
+        ];
+      };
+
+      # Personal macros (module provides Gmail defaults)
+      programs.neomutt.macros = [
+        { map = ["index" "pager"]; key = "b"; action = "<resend-message>"; }
+        { map = ["index" "pager"]; key = "a"; action = "<pipe-message>goobook add<return>"; }
       ];
 
-      accounts.email = {
-        # maildirBasePath = "mail_quickjack";
-
-        accounts.quickjack = {
-          # maildir.path = "/";
-          primary = true;
-          flavor = "gmail.com";
-          realName = "Jevin Maltais";
-          address = "jevin@quickjack.ca";
-          aliases = [ "jevin@buildingremoteteams.com" "jevin@galasathome.com" "jevyjevjevs@gmail.com" ];
-
-          # maildir.path = "mail";
-          notmuch.enable = true;
-          lieer =
-            {
-              enable = true;
-              sync.enable = true;
-              settings.drop_non_existing_label = true;
-              settings.ignore_remote_labels = ["important"];
-            };
-          };
-        };
-
-      programs.notmuch = {
-        enable = true;
-        # new.ignore = [ "/.*[.](json|lock|bak)$/" ];
-        new.tags = [];
-        search.excludeTags = [ "deleted" "spam" ];
-        maildir.synchronizeFlags = false;
-      };
-
-      services.lieer.enable = true;
-      programs.lieer.enable = true;
-
-      home.file = {
-        ".config/mutt/muttrc".source = ../../mutt/quickjack.muttrc;
-        ".config/mutt/colors-gruvbox-shuber.muttrc".source = ../../mutt/colors-gruvbox-shuber.muttrc;
-        ".muttdown.yaml".text = "sendmail: gmi send -t -C ~/Maildir/quickjack";
-        ".config/mutt/common.muttrc".source = ../../mutt/common.muttrc;
-        ".config/mailcap".source = ../../mutt/mailcap;
-      };
+      # Personal overrides on top of module defaults
+      programs.neomutt.extraConfig = ''
+        set use_threads=threads sort=reverse-last-date sort_aux=date
+        set query_command="goobook query %s"
+        set index_format='%4C %Z %<[y?%<[m?%<[d?%[%l:%M%p ]&%[%a %d ]>&%[%b %d ]>&%[%m/%y ]> %-15.15L  %s %g'
+        set sidebar_format = "%D%* %n"
+        set mailcap_path = ~/.config/mailcap
+        auto_view application/pdf application/vnd.openxmlformats-officedocument.wordprocessingml.document
+        alternative_order text/enriched text/html text/plain
+        color body brightcyan default .*
+      '';
     };
 }
