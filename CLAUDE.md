@@ -4,12 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build Commands
 
-```bash
-# NixOS (framework laptop) — rebuilds system + home-manager
-rebuildhm   # alias for: cd ~/.config/nixpkgs && sudo nixos-rebuild switch --flake '.#framework'
+Always use `rebuildhm` to rebuild — it detects the current machine and runs the right command.
 
-# macOS (standalone home-manager)
-home-manager switch --flake '.#mac-work'
+```bash
+# Rebuild (works on any machine)
+rebuildhm
 
 # Check flake evaluates without building
 nix flake check
