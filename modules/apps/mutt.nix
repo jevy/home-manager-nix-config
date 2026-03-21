@@ -16,12 +16,7 @@
           "jevin@galasathome.com"
           "jevyjevjevs@gmail.com"
         ];
-        # Module defaults: Inbox, Starred, Sent, Drafts, Promotions, Social, Spam, Trash, Archive, All Mail
-        # Append personal mailboxes
-        notmuch.neomutt.virtualMailboxes = lib.mkAfter [
-          { name = "Personal"; query = "tag:personal"; }
-          { name = "Ashley"; query = "(from:ashley.maltais@gmail.com and to:jevin@quickjack.ca) or (from:jevin@quickjack.ca and to:ashley.maltais@gmail.com)"; }
-        ];
+
       };
 
       # Personal macros (module provides Gmail defaults)
