@@ -14,7 +14,11 @@
 
     nixos-hardware.url = "github:NixOS/nixos-hardware";
     stylix.url = "github:danth/stylix";
-    muttdown.url = "github:jevy/muttdown";
+    neomutt-gmail = {
+      url = "github:jevy/neomutt-for-gmail";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
     spicetify-nix.url = "github:Gerg-L/spicetify-nix";
     sops-nix.url = "github:Mic92/sops-nix";
     musnix.url = "github:musnix/musnix";
@@ -52,9 +56,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Temporary: pull linux-firmware 20260309 fix for AMD s2idle regression
-    nixpkgs-master.url = "github:NixOS/nixpkgs/master";
-  };
+};
 
   outputs = inputs:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
