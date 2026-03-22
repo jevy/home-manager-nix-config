@@ -841,11 +841,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1774117576,
-        "narHash": "sha256-jD9Ny7sq/6Xk1zKP4rARsu/mCaKS03UWADwZbTdCGVA=",
+        "lastModified": 1774181567,
+        "narHash": "sha256-J2sYA60P9+LL8CS8AmwV/iREJiv9Q4++g8zu63fzT4w=",
         "owner": "jevy",
         "repo": "neomutt-for-gmail",
-        "rev": "a15d066660f8f05955f747e8bdbf7c1e7086fdba",
+        "rev": "253a3e955e2c448ad17a8dbe1be8c198efa2ce30",
         "type": "github"
       },
       "original": {
