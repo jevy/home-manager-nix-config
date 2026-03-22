@@ -1,0 +1,94 @@
+# gruvbox dark (contrast dark):
+# Source: https://github.com/misaflo/neomutt-gruvbox
+
+# bg     = 235 <
+# bg0    = 234
+# bg1    = 237
+# bg2    = 239
+# bg3    = 241
+# bg4    = 243
+#
+# gray   = 245
+#
+# fg0    = 229
+# fg1    = 223 <
+# fg2    = 250
+# fg3    = 248
+# fg4    = 246
+#
+# red    = 167
+# green  = 142
+# yellow = 214
+# blue   = 109
+# purple = 175
+# aqua   = 108
+# orange = 208
+
+
+# See http://www.mutt.org/doc/manual/#color
+
+color attachment color109 color235
+color bold       color229 color215
+color error      color167 color235
+color hdrdefault color246 color235
+color indicator  color223 color238
+color markers    color243 color235
+color normal     color223 color235
+color quoted     color248 color235
+color quoted1    color108 color235
+color quoted2    color248 color235
+color quoted3    color108 color235
+color quoted4    color248 color235
+color quoted5    color108 color235
+color quoted6    color248 color235
+color quoted7    color108 color235
+color quoted8    color248 color235
+color quoted9    color108 color235
+color search     color235 color208
+color signature  color108 color235
+color status     color235 color246
+color tilde      color243 color235
+color tree       color246 color235
+color underline  color223 color239
+
+color sidebar_divider   color246 color235
+color sidebar_new       color142 color235
+color sidebar_unread    color142 color235
+color sidebar_highlight color208 color235
+
+color index_number       color240 color235
+color index_author       color214 color235 '.*'
+color index_subject      color142 color235 '.*'
+color index         bold color223 color235 '~N'
+color index_flags   bold color142 color235 '~N'
+color index_author  bold color214 color235 '~N'
+color index_subject bold color142 color235 '~N'
+color index              color240 color235 '~D'
+color index_flags        color167 color235 '~D'
+color index_author       color240 color235 '~D'
+color index_subject      color240 color235 '~D'
+
+color header color214 color235 "^From:"
+color header color208 color235 "^(To:|Cc:)"
+color header color142 color235 "^Subject:"
+color header color108 color235 "^X-Spam-Status:"
+color header color108 color235 "^Received:"
+
+color compose header           color223 color235
+color compose security_encrypt color175 color235
+color compose security_sign    color109 color235
+color compose security_both    color142 color235
+color compose security_none    color208 color235
+
+# URL
+color body color175 color235 "[a-z]{3,256}://[-a-zA-Z0-9@:%._\\+~#=/?&,]+"
+# email
+color body color208 color235 "[-a-z_0-9.%$]+@[-a-z_0-9.]+\\.[-a-z][-a-z]+"
+# mailto link
+color body color208 color235 "mailto:[-a-z_0-9.]+@[-a-z_0-9.]+"
+# smileys
+color body color235 color214 "[;:]-[)(pPsS\|D]"
+# *bold*
+color body bold color223 color235 "(^|[[:space:][:punct:]])\\*[^*]+\\*([[:space:][:punct:]]|$)"
+
+# vim: filetype=neomuttrc
