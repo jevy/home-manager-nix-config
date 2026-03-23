@@ -24,6 +24,16 @@
         { map = ["index" "pager"]; key = "b"; action = "<resend-message>"; }
       ];
 
+      home.packages = [ pkgs.w3m ];
+
+      xdg.configFile."mailcap".text = ''
+        text/html; w3m -dump -T text/html -cols 80 -o display_link_number=1; copiousoutput
+        application/*; xdg-open %s &; test=test -n "$DISPLAY"
+        image/*; xdg-open %s &; test=test -n "$DISPLAY"
+        video/*; xdg-open %s &; test=test -n "$DISPLAY"
+        audio/*; xdg-open %s &; test=test -n "$DISPLAY"
+      '';
+
       # Personal overrides on top of module defaults
       programs.neomutt.extraConfig =
         builtins.readFile ./gruvbox.neomuttrc
