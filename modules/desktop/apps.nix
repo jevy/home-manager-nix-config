@@ -107,7 +107,7 @@
       };
       xdg.mimeApps.enable = true;
       xdg.mimeApps.defaultApplications = {
-        "application/pdf" = [ "zathura.desktop" ];
+        "application/pdf" = [ "org.pwmt.zathura.desktop" ];
         "x-scheme-handler/http" = [ "firefox.desktop" ];
         "x-scheme-handler/https" = [ "firefox.desktop" ];
         "text/html" = [ "firefox.desktop" ];
