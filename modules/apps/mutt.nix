@@ -31,7 +31,6 @@
           set use_threads=threads sort=reverse-last-date sort_aux=date
           set index_format='%4C %Z %<[y?%<[m?%<[d?%[%l:%M%p ]&%[%a %d ]>&%[%b %d ]>&%[%m/%y ]> %-15.15L  %s %g'
           set sidebar_format = "%D%* %n"
-          auto_view application/pdf application/vnd.openxmlformats-officedocument.wordprocessingml.document
         '';
     };
 }
