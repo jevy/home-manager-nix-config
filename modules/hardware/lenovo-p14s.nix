@@ -19,6 +19,9 @@
       # Regression in kernel 6.18+, no upstream fix as of 6.19.9.
       # Track: https://gitlab.freedesktop.org/drm/amd/-/issues/5092
       #        https://gitlab.freedesktop.org/drm/amd/-/issues/4941
+      #        https://github.com/ROCm/ROCm/issues/5844  (gfx1152-specific, our exact GPU)
+      # Pending fix: TLB fence rework by Alex Deucher, targeting next kernel release:
+      #   https://lore.kernel.org/amd-gfx/20260316151636.1122226-1-alexander.deucher@amd.com/
       boot.kernelParams = [ "amdgpu.dcdebugmask=0x10" "amdgpu.cwsr_enable=0" ];
 
       # AMD GPU and OLED/touch support
