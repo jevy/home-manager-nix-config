@@ -13,7 +13,7 @@
     import-tree.url = "github:vic/import-tree";
 
     nixos-hardware.url = "github:NixOS/nixos-hardware";
-    stylix.url = "github:danth/stylix";
+    stylix.url = "github:mputz86/stylix/neomutt";
     neomutt-gmail = {
       url = "github:jevy/neomutt-for-gmail";
       inputs.nixpkgs.follows = "nixpkgs";

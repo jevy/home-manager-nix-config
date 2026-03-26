@@ -1192,15 +1192,16 @@
         "tinted-zed": "tinted-zed"
       },
       "locked": {
-        "lastModified": 1773792048,
-        "narHash": "sha256-Oy9PCLG3vtflFBWcJd8c/EB3h5RU7ABAIDWn6JrGf6o=",
-        "owner": "danth",
+        "lastModified": 1774258044,
+        "narHash": "sha256-I8y1p3YrZ9dodKt8pjA59YNtdIKwmmDPVqPZf8tkMyQ=",
+        "owner": "mputz86",
         "repo": "stylix",
-        "rev": "3f2f9d307fe58c6abe2a16eb9b62c42d53ef5ee1",
+        "rev": "b8442050b645eb956abb285400aaca6e59ab31e2",
         "type": "github"
       },
       "original": {
-        "owner": "danth",
+        "owner": "mputz86",
+        "ref": "neomutt",
         "repo": "stylix",
         "type": "github"
       }
