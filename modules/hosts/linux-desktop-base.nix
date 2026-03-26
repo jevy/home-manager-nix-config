@@ -71,6 +71,7 @@ in
             homeManager.sway
             homeManager.mutt
             homeManager.spicetify
+            homeManager.ncspot
             homeManager.nixvimVscode
             homeManager.clipboard
             homeManager.desktopApps
