@@ -45,6 +45,7 @@
         superfile
         lazygit
         jq
+        numr
         doggo
         tre-command
         aichat
