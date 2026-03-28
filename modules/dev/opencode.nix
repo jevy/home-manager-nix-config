@@ -43,8 +43,8 @@
                     output = 32768;
                   };
                 };
-                "qwen3.5-35b" = {
-                  name = "Qwen3.5-35B";
+                "qwen3-30b-uncensored" = {
+                  name = "Qwen3-30B-Uncensored";
                   limit = {
                     context = 32768;
                     output = 32768;

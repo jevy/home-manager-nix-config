@@ -2,19 +2,29 @@
 { inputs, ... }:
 {
   flake.modules.homeManager.linuxDesktop =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     let
       llmWithPlugins = pkgs.python313.withPackages (ps: [
         ps.llm
         ps.llm-cmd
         ps.llm-openrouter
       ]);
+      wrappedLlm = pkgs.symlinkJoin {
+        name = "llm-wrapped";
+        paths = [ llmWithPlugins ];
+        buildInputs = [ pkgs.makeWrapper ];
+        postBuild = ''
+          wrapProgram $out/bin/llm \
+            --run 'export OPENAI_API_KEY=$(cat ${config.sops.secrets.openai_api_key.path} 2>/dev/null || true)' \
+            --run 'export OPENROUTER_KEY=$(cat ${config.sops.secrets.openrouter_api_key.path} 2>/dev/null || true)'
+        '';
+      };
     in
     {
       home.packages = with pkgs; [
         hyprpaper
         upower
-        llmWithPlugins
+        wrappedLlm
         synology-drive-client
         kubernetes-helm
         dropbox
