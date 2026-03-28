@@ -34,14 +34,29 @@
           logLevel = "info";
 
           models = {
+            # Pure attention MoE (qwen3moe arch) — fully Vulkan compatible
             "qwen3-coder-30b" = {
-              cmd = "${llama-server} --port \${PORT} -m ${modelsDir}/Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf -ngl 99 -c 32768 -t 8 --no-webui";
+              cmd = "${llama-server} --port \${PORT} -m ${modelsDir}/Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf -ngl 99 -c 32768 -t 8 --jinja --reasoning-budget 0 --no-webui";
               ttl = 300;
             };
-            "qwen3.5-35b" = {
-              cmd = "${llama-server} --port \${PORT} -m ${modelsDir}/Qwen3.5-35B-A3B-Q4_K_M.gguf -ngl 99 -c 32768 -t 8 --no-webui";
+
+            # Uncensored general-purpose (abliterated Qwen3-30B-A3B, same qwen3moe arch)
+            # https://huggingface.co/Goekdeniz-Guelmez/Josiefied-Qwen3-30B-A3B-abliterated-v2
+            "qwen3-30b-uncensored" = {
+              cmd = "${llama-server} --port \${PORT} -m ${modelsDir}/Josiefied-Qwen3-30B-A3B-abliterated-v2.Q4_K_M.gguf -ngl 99 -c 32768 -t 8 --jinja --reasoning-budget 0 --no-webui";
               ttl = 300;
             };
+
+            # BLOCKED on Vulkan: hybrid MoE with DeltaNet SSM layers (qwen35moe arch)
+            # - Missing GATED_DELTA_NET Vulkan shader — SSM layers fall back to CPU
+            #   https://github.com/ggml-org/llama.cpp/issues/20354
+            # - SSM_CONV/SSM_SCAN shaders were added but fused GDN op is still missing
+            #   https://github.com/ggml-org/llama.cpp/issues/19957
+            # Uncomment once the Vulkan GDN shader lands in llama.cpp
+            # "qwen3.5-35b" = {
+            #   cmd = "${llama-server} --port \${PORT} -m ${modelsDir}/Qwen3.5-35B-A3B-Q4_K_M.gguf -ngl 99 -c 32768 -t 8 --no-webui";
+            #   ttl = 300;
+            # };
           };
         };
       };
