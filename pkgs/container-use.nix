@@ -1,10 +1,10 @@
 {
   lib,
-  buildGo124Module,
+  buildGo125Module,
   fetchFromGitHub,
 }:
 
-buildGo124Module rec {
+buildGo125Module rec {
   pname = "container-use";
   version = "0-unstable-2025-10-07";
 
