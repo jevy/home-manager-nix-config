@@ -48,10 +48,8 @@
                 self.urgent = meta.get("urgent", False) is True
                 self.important = meta.get("important", False) is True
                 self.today = meta.get("today", False) is True
-                self.domain = meta.get("domain", "") or ""
-                self.category = meta.get("category", "") or ""
+                self.area = meta.get("area", "") or ""
                 self.spoons = meta.get("spoons", 0) or 0
-                self.energy = meta.get("energy", "") or ""
 
                 raw_due = meta.get("due")
                 self.due = self._parse_date(raw_due)
@@ -89,9 +87,9 @@
                     return 0
                 diff = (self.due - TODAY).days
                 if diff < 0:
-                    return 30
+                    return 40
                 if diff <= 3:
-                    return 20
+                    return 30
                 if diff <= 7:
                     return 10
                 return 0
@@ -160,10 +158,10 @@
             print(f"  {C.YELLOW}Batch{C.RESET}    (urgent, not important):  {qcounts.get('Batch', 0)}")
             print(f"  {C.DIM}Defer{C.RESET}    (neither):                {qcounts.get('Defer', 0)}")
 
-            # ── Active by Domain ──
-            section("Active Tasks by Domain")
-            dcounts = Counter(t.domain or "(unset)" for t in active)
-            or_none([f"  {count:4d}  {domain}" for domain, count in dcounts.most_common()])
+            # ── Active by Area ──
+            section("Active Tasks by Area")
+            acounts = Counter(t.area or "(inbox)" for t in active)
+            or_none([f"  {count:4d}  {area}" for area, count in acounts.most_common()])
 
             # ── Today List (active today + completed today) ──
             section("Today List (sorted by score)")
@@ -174,8 +172,8 @@
                 key=lambda t: (t.completed, -t.score),
             )
             or_none([
-                f"  {C.DIM}[done]{C.RESET} [{t.domain}] {t.name}" if t.completed else
-                f"  {C.GREEN}[{t.domain}]{C.RESET} {t.name:<40s} {C.DIM}{t.spoons} spoons{C.RESET}  score:{t.score}"
+                f"  {C.DIM}[done]{C.RESET} [{t.area}] {t.name}" if t.completed else
+                f"  {C.GREEN}[{t.area}]{C.RESET} {t.name:<40s} {C.DIM}{t.spoons} spoons{C.RESET}  score:{t.score}"
                 for t in today_all
             ])
 
@@ -185,7 +183,7 @@
                               and (not t.earliest_start or t.earliest_start <= TODAY + timedelta(days=1))],
                              key=lambda t: -t.score)
             or_none([
-                f"  {C.CYAN}[{t.domain}]{C.RESET} {t.name:<40s} {t.quadrant_color}{t.quadrant:<10s}{C.RESET} score:{t.score}"
+                f"  {C.CYAN}[{t.area}]{C.RESET} {t.name:<40s} {t.quadrant_color}{t.quadrant:<10s}{C.RESET} score:{t.score}"
                 for t in up_next
             ])
 
@@ -213,31 +211,31 @@
 
             # ── Inbox ──
             section("Inbox (untriaged)")
-            inbox = [t for t in active if t.category == "Inbox"]
+            inbox = [t for t in active if not t.area]
             or_none([f"  {t.name}" for t in inbox])
 
-            # ── Domain group views ──
-            def domain_view(title, domains):
+            # ── Area group views ──
+            def area_view(title, areas):
                 section(title)
                 tasks = sorted(
-                    [t for t in active if t.domain in domains],
-                    key=lambda t: (-t.score, t.domain, t.name),
+                    [t for t in active if t.area in areas],
+                    key=lambda t: (-t.score, t.area, t.name),
                 )
                 or_none([
-                    f"  [{t.domain:<10s}] {t.name:<40s} {t.quadrant:<10s} {t.spoons} spoons  score:{t.score}"
+                    f"  [{t.area:<10s}] {t.name:<40s} {t.quadrant:<10s} {t.spoons} spoons  score:{t.score}"
                     for t in tasks
                 ])
 
-            domain_view("Business (biz-dev / consulting / typestream)",
-                         {"biz-dev", "consulting", "typestream"})
-            domain_view("Home Life (home-life / personal / rentals)",
-                         {"home-life", "personal", "rentals"})
-            domain_view("Fun", {"fun"})
+            area_view("Business (covenant / quickjack / typestream / biz-dev)",
+                       {"covenant", "quickjack", "typestream", "biz-dev"})
+            area_view("Home Life (finances / taxes / health / family / home / rentals)",
+                       {"finances", "taxes", "health", "family", "home", "rentals"})
+            area_view("Fun", {"fun"})
 
             # ── Completed Today ──
             section("Completed Today")
             or_none([
-                f"  {C.GREEN}[{t.domain or '?'}]{C.RESET} {t.name}"
+                f"  {C.GREEN}[{t.area or '?'}]{C.RESET} {t.name}"
                 for t in sorted(completed_today, key=lambda t: t.name)
             ])
 
