@@ -22,8 +22,8 @@
               --prefix PATH : ${pkgs.nodejs}/bin
           '';
 
-      # Grafana MCP server (build from source with Go 1.24)
-      grafanaMcpServer = pkgs.buildGo124Module rec {
+      # Grafana MCP server (build from source with Go 1.25)
+      grafanaMcpServer = pkgs.buildGo125Module rec {
         pname = "mcp-grafana";
         version = "0.7.10";
 
