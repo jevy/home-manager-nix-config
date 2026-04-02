@@ -103,9 +103,15 @@
               esac
             '';
 
+            # Dynamic monitor config file — sourced by Hyprland on reload.
+            # Lives in /tmp (cleared on reboot; recreated by exec-once startup script).
+            # Scripts write this file AND apply keywords for immediate effect.
+            monitorConf = "/tmp/hypr-monitors.conf";
+
             monitorAttached = pkgs.writeShellScript "monitor-attached" ''
               JQ="${pkgs.jq}/bin/jq"
               MONITOR="$1"
+              CONF="/tmp/hypr-monitors.conf"
 
               # Invalidate DDC bus cache on monitor change
               rm -f /tmp/ddc-bus-*
@@ -135,17 +141,25 @@
               if echo "$MONITOR_DESC" | grep -qi "U4924DW" || [ "$MONITOR_WIDTH" = "5120" ]; then
                 ${pkgs.libnotify}/bin/notify-send "Monitor: Ultrawide" "Layout: master, ultrawide on top"
                 # Home setup: Ultrawide on TOP of laptop, master layout
-                hyprctl keyword general:layout master
                 # Center laptop below ultrawide
                 LAPTOP_X=$(( (5120 - LAPTOP_LOGICAL) / 2 ))
-                hyprctl keyword monitor "$MONITOR,5120x1440@60,0x0,1"
-                hyprctl keyword monitor "eDP-1,''${LAPTOP_MODE},''${LAPTOP_X}x1440,''${LAPTOP_SCALE}"
+                # Write conf for reload persistence
+                cat > "$CONF" <<MONEOF
+general:layout = master
+monitor = $MONITOR,5120x1440@60,0x0,1
+monitor = eDP-1,''${LAPTOP_MODE},''${LAPTOP_X}x1440,''${LAPTOP_SCALE}
+MONEOF
+                # Apply immediately
+                hyprctl --batch "keyword general:layout master; keyword monitor $MONITOR,5120x1440@60,0x0,1; keyword monitor eDP-1,''${LAPTOP_MODE},''${LAPTOP_X}x1440,''${LAPTOP_SCALE}"
               else
                 ${pkgs.libnotify}/bin/notify-send "Monitor: Portable" "Layout: hy3, external on right"
                 # Portable monitor setup: external on RIGHT of laptop
-                hyprctl keyword general:layout hy3
-                hyprctl keyword monitor "eDP-1,''${LAPTOP_MODE},0x0,''${LAPTOP_SCALE}"
-                hyprctl keyword monitor "$MONITOR,preferred,''${LAPTOP_LOGICAL}x0,1"
+                cat > "$CONF" <<MONEOF
+general:layout = hy3
+monitor = eDP-1,''${LAPTOP_MODE},0x0,''${LAPTOP_SCALE}
+monitor = $MONITOR,preferred,''${LAPTOP_LOGICAL}x0,1
+MONEOF
+                hyprctl --batch "keyword general:layout hy3; keyword monitor eDP-1,''${LAPTOP_MODE},0x0,''${LAPTOP_SCALE}; keyword monitor $MONITOR,preferred,''${LAPTOP_LOGICAL}x0,1"
               fi
 
               # Reload hyprpaper to apply wallpaper to new monitor
@@ -154,17 +168,20 @@
 
             monitorDetached = pkgs.writeShellScript "monitor-detached" ''
               JQ="${pkgs.jq}/bin/jq"
+              CONF="/tmp/hypr-monitors.conf"
               # Invalidate DDC bus cache on monitor change
               rm -f /tmp/ddc-bus-*
-              # Switch back to hy3 layout for laptop-only mode
-              hyprctl keyword general:layout hy3
-              # Reset laptop monitor position dynamically
+              # Reset to laptop-only layout
               LAPTOP=$(hyprctl monitors -j | $JQ '.[] | select(.name == "eDP-1")')
               W=$(echo "$LAPTOP" | $JQ -r '.width')
               H=$(echo "$LAPTOP" | $JQ -r '.height')
               RR=$(echo "$LAPTOP" | $JQ -r '.refreshRate' | cut -d. -f1)
               SCALE=$(echo "$LAPTOP" | $JQ -r '.scale')
-              hyprctl keyword monitor "eDP-1,''${W}x''${H}@''${RR},0x0,''${SCALE}"
+              cat > "$CONF" <<MONEOF
+general:layout = hy3
+monitor = eDP-1,''${W}x''${H}@''${RR},0x0,''${SCALE}
+MONEOF
+              hyprctl --batch "keyword general:layout hy3; keyword monitor eDP-1,''${W}x''${H}@''${RR},0x0,''${SCALE}"
               # Reload hyprpaper to apply wallpaper
               killall hyprpaper; sleep 0.5; ${pkgs.hyprpaper}/bin/hyprpaper &
             '';
@@ -514,11 +531,18 @@
               "$mod, mouse:273, resizewindow"
             ];
           };
+
+        # Appended after settings — on reload, the sourced monitor rules
+        # override the default monitor line above.
+        extraConfig = ''
+          source = /tmp/hypr-monitors.conf
+        '';
       };
 
-      # UWSM environment configuration
-      # xdg.configFile."uwsm/env".source =
-      #   "${config.home.sessionVariablesPackage}/etc/profile.d/hm-session-vars.sh";
+      # Ensure the dynamic monitor config file exists before Hyprland sources it
+      home.activation.hyprMonitorConf = lib.hm.dag.entryBefore [ "reloadSystemd" ] ''
+        touch /tmp/hypr-monitors.conf
+      '';
     };
 
   # Hyprlock and hypridle session management
