@@ -63,8 +63,9 @@
               fzf --query="$*" --bind 'enter:become(nvim {})'
             }
 
-            # Fuzzy-pick a git worktree and cd into it
-            gwtf() {
+            # Fuzzy-pick a git worktree and cd into it (use `function` keyword to override oh-my-zsh alias)
+            unalias gwtls 2>/dev/null
+            function gwtls() {
               local dir
               dir=$(git worktree list | fzf --height 40% --reverse | awk '{print $1}')
               [ -n "$dir" ] && cd "$dir"
