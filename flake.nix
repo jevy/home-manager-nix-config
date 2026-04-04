@@ -55,6 +55,8 @@
       url = "github:AlexsJones/llmfit";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    lieer-src.url = "path:/home/jevin/src/lieer";
+    lieer-src.flake = false;
 
 };
 

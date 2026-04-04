@@ -22,5 +22,14 @@
       };
     };
 
+    # Patched lieer: save state after metadata phase so interrupted full pulls
+    # don't restart from scratch on large mailboxes
+    lieer = final: prev: {
+      lieer = prev.lieer.overrideAttrs (old: {
+        src = inputs.lieer-src;
+        patches = [];
+      });
+    };
+
   };
 }

@@ -46,6 +46,7 @@ in
         overlays.hyprland
         overlays.mcpServers
         overlays.llamaCpp
+        overlays.lieer
       ];
 
       system.stateVersion = "24.11";
