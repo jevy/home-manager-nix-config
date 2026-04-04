@@ -10,7 +10,7 @@ in
       imports = [
         # Hardware
         ../../../nixos/lenovo-p14s-hardware-configuration.nix
-        inputs.nixos-hardware.nixosModules.lenovo-thinkpad-p14s-amd-gen5
+        inputs.nixos-hardware.nixosModules.lenovo-thinkpad-p14s-amd-gen6
         nixos.lenovoP14sHardware
 
         # Shared Linux desktop base

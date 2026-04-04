@@ -4,12 +4,6 @@
   flake.modules.nixos.lenovoP14sHardware =
     { pkgs, ... }:
     {
-      # AMD graphics
-      hardware.graphics = {
-        enable = true;
-        enable32Bit = true;
-      };
-
       # Latest kernel for best Zen 5 / RDNA 3.5 / MT7925 WiFi 7 support
       boot.kernelPackages = pkgs.linuxPackages_latest;
 
