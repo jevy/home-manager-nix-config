@@ -203,7 +203,14 @@
             enable = true;
             settings = {
               sources = {
-                default = ["lsp" "snippets" "buffer" "path"];
+                default = ["lsp" "snippets" "path"];
+              };
+              enabled = {
+                __raw = ''
+                  function()
+                    return vim.bo.filetype ~= "mail"
+                  end
+                '';
               };
               keymap = {
                 "<C-space>" = ["show" "show_documentation" "hide_documentation"];
