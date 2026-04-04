@@ -87,6 +87,7 @@ in
             homeManager.taskArchiver
             homeManager.taskCompletedStamp
             homeManager.taskSnapshot
+            homeManager.music
 
             inputs.typing-analysis.homeManagerModules.default
           ];
