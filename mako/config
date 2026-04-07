@@ -1,3 +1,9 @@
+max-icon-size=64
+
+[app-name="frigate"]
+max-icon-size=256
+width=400
+
 [app-name="Spotify"]
 invisible=1
 
