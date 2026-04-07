@@ -30,9 +30,6 @@
         dropbox
         hugo
         gcalcli
-        rpi-imager
-        sunpaper
-        newsflash
         qFlipper
         zotero
         openscad
@@ -45,7 +42,6 @@
         kustomize
         mqttx
         mqttui
-        aider-chat
         hypnotix
         talosctl
         esptool
