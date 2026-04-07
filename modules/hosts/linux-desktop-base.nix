@@ -47,6 +47,7 @@ in
         overlays.mcpServers
         overlays.llamaCpp
         overlays.lieer
+        overlays.claudeCode
       ];
 
       system.stateVersion = "24.11";
