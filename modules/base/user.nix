@@ -27,6 +27,10 @@
 
         # `nix-shell -p mkpasswd --run 'mkpasswd -m sha-512'`
         hashedPassword = "$6$RQ3xn2S3O1RFFqiA$e725RMH8eJgw4JJ4UnSjuzJ1Pw5lNNaFRW.9M2XCrcCJsAbWPg5qs5hzRZARiK9uastNZN9XnUGBs8yM6kdMZ0";
+
+        openssh.authorizedKeys.keys = [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICLzgDQQ5nqhEmiNZwdU8+SXxbl0tC3LLNAa+kO4KKNw jevin@quickjack.ca"
+        ];
       };
 
       security.sudo.wheelNeedsPassword = false;
