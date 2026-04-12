@@ -28,6 +28,9 @@ in
 
         # Secrets
         homeManager.sops
+
+        # SSH
+        homeManager.ssh
       ];
 
       nixpkgs.overlays = [
