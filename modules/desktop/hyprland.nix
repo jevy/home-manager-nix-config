@@ -53,6 +53,13 @@
     {
       services.hyprpolkitagent.enable = true;
 
+      # Ensure the runtime monitor override file exists before Hyprland starts.
+      # Hyprland `source=`s it, and errors out loudly if the glob matches nothing
+      # (e.g. after a reboot that clears /tmp, or on a fresh install).
+      home.activation.ensureHyprMonitorsConf = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        touch /tmp/hypr-monitors.conf
+      '';
+
       wayland.windowManager.hyprland = {
         enable = true;
         systemd.enable = true; # Required for hyprland-session.target (ashell depends on it)
@@ -121,13 +128,11 @@
               MONITOR_DESC=$(echo "$MONITOR_INFO" | $JQ -r ".description")
               MONITOR_WIDTH=$(echo "$MONITOR_INFO" | $JQ -r ".width")
 
-              # Get laptop panel info dynamically
-              LAPTOP=$(hyprctl monitors -j | $JQ '.[] | select(.name == "eDP-1")')
-              LAPTOP_W=$(echo "$LAPTOP" | $JQ -r '.width')
-              LAPTOP_H=$(echo "$LAPTOP" | $JQ -r '.height')
-              LAPTOP_RR=$(echo "$LAPTOP" | $JQ -r '.refreshRate' | cut -d. -f1)
-              LAPTOP_SCALE=$(echo "$LAPTOP" | $JQ -r '.scale')
-              LAPTOP_MODE="''${LAPTOP_W}x''${LAPTOP_H}@''${LAPTOP_RR}"
+              # Laptop panel mode/scale come from Nix config via env (set in
+              # hyprland settings), so they survive stale runtime state.
+              LAPTOP_MODE="''${HYPR_LAPTOP_MODE}"
+              LAPTOP_SCALE="''${HYPR_LAPTOP_SCALE}"
+              LAPTOP_W="''${LAPTOP_MODE%x*}"
               LAPTOP_LOGICAL=$(echo "$LAPTOP_W / $LAPTOP_SCALE" | ${pkgs.bc}/bin/bc -l | cut -d. -f1)
 
               # Move workspaces 1-6 to the newly attached monitor
@@ -167,38 +172,28 @@ MONEOF
             '';
 
             monitorDetached = pkgs.writeShellScript "monitor-detached" ''
-              JQ="${pkgs.jq}/bin/jq"
               CONF="/tmp/hypr-monitors.conf"
               # Invalidate DDC bus cache on monitor change
               rm -f /tmp/ddc-bus-*
-              # Reset to laptop-only layout
-              LAPTOP=$(hyprctl monitors -j | $JQ '.[] | select(.name == "eDP-1")')
-              W=$(echo "$LAPTOP" | $JQ -r '.width')
-              H=$(echo "$LAPTOP" | $JQ -r '.height')
-              RR=$(echo "$LAPTOP" | $JQ -r '.refreshRate' | cut -d. -f1)
-              SCALE=$(echo "$LAPTOP" | $JQ -r '.scale')
+              # Reset to laptop-only layout using Nix-configured mode/scale
+              MODE="''${HYPR_LAPTOP_MODE}"
+              SCALE="''${HYPR_LAPTOP_SCALE}"
               cat > "$CONF" <<MONEOF
 general:layout = hy3
-monitor = eDP-1,''${W}x''${H}@''${RR},0x0,''${SCALE}
+monitor = eDP-1,''${MODE},0x0,''${SCALE}
 MONEOF
-              hyprctl --batch "keyword general:layout hy3; keyword monitor eDP-1,''${W}x''${H}@''${RR},0x0,''${SCALE}"
+              hyprctl --batch "keyword general:layout hy3; keyword monitor eDP-1,''${MODE},0x0,''${SCALE}"
               # Reload hyprpaper to apply wallpaper
               killall hyprpaper; sleep 0.5; ${pkgs.hyprpaper}/bin/hyprpaper &
             '';
             scaleToggle = pkgs.writeShellScript "scale-toggle" ''
               JQ="${pkgs.jq}/bin/jq"
-              SCALE_FILE="/tmp/hypr-default-scale"
+              MODE="''${HYPR_LAPTOP_MODE}"
+              DEFAULT_SCALE="''${HYPR_LAPTOP_SCALE}"
               MONITORS=$(hyprctl monitors -j)
               LAPTOP=$(echo "$MONITORS" | $JQ '.[] | select(.name == "eDP-1")')
               CURRENT=$(echo "$LAPTOP" | $JQ -r '.scale')
-              W=$(echo "$LAPTOP" | $JQ -r '.width')
-              H=$(echo "$LAPTOP" | $JQ -r '.height')
-              RR=$(echo "$LAPTOP" | $JQ -r '.refreshRate' | cut -d. -f1)
               EXT=$(echo "$MONITORS" | $JQ -r '.[] | select(.name != "eDP-1") | .name' | head -1)
-
-              # Save default scale on first run
-              [ ! -f "$SCALE_FILE" ] && echo "$CURRENT" > "$SCALE_FILE"
-              DEFAULT_SCALE=$(cat "$SCALE_FILE")
 
               if [ "$(echo "$CURRENT > 1.1" | ${pkgs.bc}/bin/bc -l)" = "1" ]; then
                 NEW_SCALE=1
@@ -209,7 +204,7 @@ MONEOF
               fi
 
               # Build a batch of monitor commands to apply atomically
-              BATCH="keyword monitor eDP-1,''${W}x''${H}@''${RR},0x0,$NEW_SCALE;"
+              BATCH="keyword monitor eDP-1,''${MODE},0x0,$NEW_SCALE;"
               if [ -n "$EXT" ]; then
                 BATCH="$BATCH keyword monitor $EXT,preferred,auto,$NEW_SCALE;"
               fi
@@ -351,6 +346,10 @@ MONEOF
             env = [
               "GDK_SCALE,2"
               "XCURSOR_SIZE,32"
+              # Default laptop panel mode/scale — read by monitor scripts.
+              # Override per-host (see lenovo-p14s) by appending later entries.
+              "HYPR_LAPTOP_MODE,2256x1504@60"
+              "HYPR_LAPTOP_SCALE,1.5666667"
             ];
 
             general = {
