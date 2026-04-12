@@ -48,7 +48,14 @@
         ripdrag # Ranger drag drop
         xdg-utils
         ocrmypdf
-        via
+        (symlinkJoin {
+          name = "via";
+          paths = [ via ];
+          nativeBuildInputs = [ makeWrapper ];
+          postBuild = ''
+            wrapProgram $out/bin/via --add-flags "--force-device-scale-factor=1"
+          '';
+        })
         qmk
         audacity
         # gnome3.gnome-tweaks
