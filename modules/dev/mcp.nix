@@ -176,6 +176,24 @@
         '';
       };
 
+      # Playwright MCP server wrapper (dedicated chromium profile for persistent logins)
+      # Runs headed by default — visible browser window, login state survives restarts
+      # Output dir is routed to XDG cache so auto-snapshots don't pollute the cwd
+      # (previously created `.playwright-mcp/` in whatever directory Claude Code started in)
+      playwrightMcpWrapper = pkgs.writeShellApplication {
+        name = "run-playwright-mcp";
+        text = ''
+          PROFILE_DIR="$HOME/.local/share/playwright-mcp/chromium"
+          OUTPUT_DIR="''${XDG_CACHE_HOME:-$HOME/.cache}/playwright-mcp/output"
+          mkdir -p "$PROFILE_DIR" "$OUTPUT_DIR"
+          exec ${lib.getExe pkgs.playwright-mcp} \
+            --executable-path ${lib.getExe pkgs.chromium} \
+            --user-data-dir "$PROFILE_DIR" \
+            --output-dir "$OUTPUT_DIR" \
+            "$@"
+        '';
+      };
+
       # GitHub MCP server wrapper (reads token from sops secret at runtime)
       run-github-mcp-server = pkgs.writeShellApplication {
         name = "run-github-mcp-server";
@@ -199,8 +217,7 @@
           command = lib.getExe pkgs.mcp-server-time;
         };
         playwright = {
-          command = lib.getExe pkgs.playwright-mcp;
-          args = [ "--executable-path" (lib.getExe pkgs.chromium) ];
+          command = "${playwrightMcpWrapper}/bin/run-playwright-mcp";
         };
         kubernetes = {
           command = "${kubernetesWrapper}/bin/run-mcp-kubernetes";
