@@ -335,6 +335,56 @@ MONEOF
                 esac
               done
             '';
+
+            timetaggerCtl = pkgs.writeShellApplication {
+              name = "timetagger-ctl";
+              runtimeInputs = with pkgs; [ curl jq coreutils gnused libnotify ];
+              text = ''
+                set -euo pipefail
+                CONFIG="$HOME/.config/timetagger_cli/config.txt"
+                API_URL=$(sed -n 's/^api_url *= *"\(.*\)"/\1/p' "$CONFIG")
+                TOKEN=$(sed -n 's/^api_token *= *"\(.*\)"/\1/p' "$CONFIG")
+                API_URL="''${API_URL%/}"
+                DESC="work #covenant"
+
+                auth() { curl -sS -H "authtoken: $TOKEN" "$@"; }
+                now() { date +%s; }
+
+                # A running record has t1 == t2. Fetch recent records and find it.
+                find_running() {
+                  local since
+                  since=$(( $(now) - 7 * 86400 ))
+                  auth "$API_URL/records?timerange=$since-$(now)" \
+                    | jq -c '.records[] | select(.t1 == .t2)' | tail -1
+                }
+
+                case "''${1:-}" in
+                  start)
+                    KEY=$(head -c 6 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | cut -c1-8)
+                    T=$(now)
+                    BODY=$(jq -nc --arg k "$KEY" --arg ds "$DESC" --argjson t "$T" \
+                      '[{key:$k, mt:$t, t1:$t, t2:$t, ds:$ds, st:0}]')
+                    auth -X PUT -H 'Content-Type: application/json' \
+                      -d "$BODY" "$API_URL/records" >/dev/null
+                    notify-send "TimeTagger" "Started: $DESC"
+                    ;;
+                  stop)
+                    REC=$(find_running || true)
+                    if [ -z "$REC" ]; then
+                      notify-send "TimeTagger" "No running record"
+                      exit 0
+                    fi
+                    T=$(now)
+                    BODY=$(echo "$REC" | jq -c --argjson t "$T" \
+                      '.t2=$t | .mt=$t | .st=0 | [.]')
+                    auth -X PUT -H 'Content-Type: application/json' \
+                      -d "$BODY" "$API_URL/records" >/dev/null
+                    notify-send "TimeTagger" "Stopped"
+                    ;;
+                  *) echo "usage: timetagger-ctl {start|stop}" >&2; exit 1 ;;
+                esac
+              '';
+            };
           in
           {
             # Default monitor config for undocked state (applies on Hyprland start/restart)
@@ -523,6 +573,10 @@ MONEOF
 
               # Notifications
               "$mod, N, exec, ${pkgs.mako}/bin/makoctl dismiss"
+
+              # TimeTagger (macropad buttons 8/9 → F15/F16)
+              ", XF86Launch6, exec, ${timetaggerCtl}/bin/timetagger-ctl start"
+              ", XF86Launch7, exec, ${timetaggerCtl}/bin/timetagger-ctl stop"
             ];
 
             bindm = [
