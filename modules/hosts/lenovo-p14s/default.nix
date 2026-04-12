@@ -38,8 +38,15 @@ in
       # === TEMPORARY: disable hy3 plugin to isolate boot issue ===
 
       home-manager.users.jevin = {
-        # P14s OLED monitor (2880x1800 at 120Hz, scale 2)
+        # P14s OLED monitor: 2880x1800 @ 120Hz, scale 1.5 (→ 1920x1200 logical)
         wayland.windowManager.hyprland.settings.monitor = lib.mkForce "eDP-1,2880x1800@120,0x0,1.5";
+        # Override the defaults from modules/desktop/hyprland.nix so the
+        # monitor-attach/detach/scale-toggle scripts use the right values.
+        # Hyprland applies env entries in order; later entries win.
+        wayland.windowManager.hyprland.settings.env = [
+          "HYPR_LAPTOP_MODE,2880x1800@120"
+          "HYPR_LAPTOP_SCALE,1.5"
+        ];
 
 
         # AMD GPU session variables
