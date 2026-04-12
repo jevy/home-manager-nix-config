@@ -21,7 +21,7 @@
     };
     spicetify-nix.url = "github:Gerg-L/spicetify-nix";
     sops-nix.url = "github:Mic92/sops-nix";
-    musnix.url = "github:musnix/musnix";
+
     nixvim = {
       url = "github:nix-community/nixvim";
       inputs.nixpkgs.follows = "nixpkgs";

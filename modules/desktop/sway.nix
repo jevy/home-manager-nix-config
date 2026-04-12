@@ -117,18 +117,7 @@
               resolution = "1920x1080";
               scale = "1";
             };
-            # Framework
-            "Unknown 0x095F 0x00000000" = {
-              pos = "3710 2880";
-              resolution = "2256x1504";
-              scale = "1";
-            };
-            # Framework (again?)
-            "BOE 0x095F Unknown" = {
-              pos = "7177 4320";
-              resolution = "2256x1504";
-              scale = "1.5";
-            };
+
             "Dell Inc. Dell U4924DW 3KWV0S3" = {
               pos = "5320 2880";
               resolution = "5120x1440";
