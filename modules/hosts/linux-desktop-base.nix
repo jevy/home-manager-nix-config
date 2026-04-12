@@ -81,14 +81,17 @@ in
             homeManager.ashell
             homeManager.hyprSession
             # homeManager.beads  # disabled: vendorHash mismatch with upstream
+            homeManager.ssh
             homeManager.claudeCode
             homeManager.opencode
             homeManager.qmd
             homeManager.timetagger
+            homeManager.steamPlaytime
             homeManager.secondBrain
             homeManager.taskArchiver
             homeManager.taskCompletedStamp
             homeManager.taskSnapshot
+            homeManager.frigateNotify
             homeManager.music
 
             inputs.typing-analysis.homeManagerModules.default

@@ -29,12 +29,19 @@
           homeassistant_token = { };
           linkedin_cookie = { };
 
+          # SSH
+          ssh_private_key = { };
+
           # Backup
           restic_password = { };
 
           # TimeTagger
           timetagger_api_url = { };
           timetagger_api_token = { };
+
+          # Steam Web API
+          steam_api_key = { };
+          steam_id = { };
         };
       };
     };
