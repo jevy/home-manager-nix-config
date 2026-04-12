@@ -67,8 +67,11 @@
         VAGRANT_DEFAULT_PROVIDER = "libvirt";
       };
 
-      home.file.".config/ranger".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.config/nixpkgs/ranger";
+      home.file.".config/ranger/rc.conf".source = ../../ranger/rc.conf;
+      home.file.".config/ranger/commands.py".source = ../../ranger/commands.py;
+      home.file.".config/ranger/rifle.conf".source = ../../ranger/rifle.conf;
+      home.file.".config/ranger/scope.sh".source = ../../ranger/scope.sh;
+      home.file.".config/ranger/plugins/ranger-archives".source = rangerArchives;
 
       home.shellAliases = {
         l = "ls -l";
@@ -79,13 +82,6 @@
         lhead = "ls --sort created -r | head";
       };
 
-      home.activation.rangerArchivesPlugin = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        PLUGIN_DIR="${config.home.homeDirectory}/.config/nixpkgs/ranger/plugins/ranger-archives"
-        if [ -L "$PLUGIN_DIR" ]; then
-          rm "$PLUGIN_DIR"
-        fi
-        ln -sf "${rangerArchives}" "$PLUGIN_DIR"
-      '';
     };
 
   # Linux-specific CLI tools
