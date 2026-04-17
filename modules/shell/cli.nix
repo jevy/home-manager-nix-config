@@ -4,19 +4,10 @@
   # Base CLI tools (all platforms)
   flake.modules.homeManager.cliBase =
     { config, pkgs, lib, ... }:
-    let
-      rangerArchives = pkgs.fetchFromGitHub {
-        owner = "maximtrp";
-        repo = "ranger-archives";
-        rev = "4085d338b87c3e6cb5f90b532740bff3a18f68ac";
-        sha256 = "sha256-D1w+RsorEoZx91r8Wb8RvNMgLhikflA4uG2jgcRZhGc=";
-      };
-    in
     {
       home.packages = with pkgs; [
         wget
         fastfetch
-        ranger
         git
         speedtest-cli
         k9s
@@ -66,12 +57,6 @@
       home.sessionVariables = {
         VAGRANT_DEFAULT_PROVIDER = "libvirt";
       };
-
-      home.file.".config/ranger/rc.conf".source = ../../ranger/rc.conf;
-      home.file.".config/ranger/commands.py".source = ../../ranger/commands.py;
-      home.file.".config/ranger/rifle.conf".source = ../../ranger/rifle.conf;
-      home.file.".config/ranger/scope.sh".source = ../../ranger/scope.sh;
-      home.file.".config/ranger/plugins/ranger-archives".source = rangerArchives;
 
       home.shellAliases = {
         l = "ls -l";

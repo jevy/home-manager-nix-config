@@ -1,1 +1,0 @@
-/nix/store/r7c3s7l7l39gfrpdjgamm5hz6y5145s8-home-manager-files/.config/ranger/commands.py

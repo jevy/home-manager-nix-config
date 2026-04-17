@@ -65,6 +65,7 @@ in
             homeManager.sops
             homeManager.git
             homeManager.backup
+            homeManager.ranger
             homeManager.cliBase
             homeManager.cliLinux
             homeManager.audio
