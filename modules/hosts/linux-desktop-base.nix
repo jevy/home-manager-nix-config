@@ -48,6 +48,7 @@ in
         overlays.llamaCpp
         overlays.lieer
         overlays.claudeCode
+        overlays.bambuStudio
       ];
 
       system.stateVersion = "24.11";
