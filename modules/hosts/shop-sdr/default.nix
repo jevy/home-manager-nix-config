@@ -1,23 +1,23 @@
-# Shop SDR station: DeskMini running IC-7300 + SDRplay RSPduo
+# Shop SDR station: Dell OptiPlex 5070 running IC-7300 + SDRplay RSPduo
 # WSPR beaconing, remote rig control via wfview over Tailscale
 #
 # ── Hardware ──────────────────────────────────────────────────────────
-#   - ASRock DeskMini (x86_64, 8GB RAM, 1TB SATA SSD at /dev/sda)
-#   - Icom IC-7300 (USB-B → DeskMini: CI-V serial + audio codec)
-#   - SDRplay RSPduo (USB → DeskMini: dual-tuner SDR)
+#   - Dell OptiPlex 5070 (i5-9500 Coffee Lake, 8GB RAM, 1TB SATA SSD at /dev/sda)
+#   - Icom IC-7300 (USB-B → OptiPlex: CI-V serial + audio codec)
+#   - SDRplay RSPduo (USB → OptiPlex: dual-tuner SDR)
 #   - Antenna via IC-7300 SDR mod
 #
 # ── Initial NixOS Install (nixos-anywhere) ───────────────────────────
 #
-#   1. Boot the Ubuntu live CD (or any Linux) on the DeskMini
+#   1. Boot the Ubuntu live CD (or any Linux) on the OptiPlex
 #   2. Get SSH running and note the IP:
 #        sudo systemctl start ssh
 #        ip a   # note the IP, e.g. 192.168.1.163
-#   3. Set a temporary root password on the DeskMini:
+#   3. Set a temporary root password on the OptiPlex:
 #        sudo passwd root
 #   4. From your laptop, run nixos-anywhere:
 #        nix run github:nix-community/nixos-anywhere -- \
-#          --flake '.#shop-sdr' root@<deskmini-ip> --build-on-remote
+#          --flake '.#shop-sdr' root@<optiplex-ip> --build-on-remote
 #
 #   nixos-anywhere will kexec into a NixOS installer, partition the disk
 #   via disko (/dev/sda → 512M ESP + ext4 root), and install the config
@@ -32,11 +32,12 @@
 #     # Copy the kernel module lines from /tmp/hw/hardware-configuration.nix
 #     # into nixos/shop-sdr-hardware-configuration.nix
 #     # (filesystems are managed by disko — don't copy those)
+#     # (CPU/GPU hardware profiles are handled by nixos-hardware imports below)
 #
 # ── Secrets ───────────────────────────────��───────────────────────────
 #
 #   Copy your age key to the DeskMini so sops-nix can decrypt secrets:
-#     scp ~/.config/sops/age/keys.txt jevin@shop-sdr:~/.config/sops/age/keys.txt
+#     scp ~/.config/sops/age/keys.txt jevin@shop-sdr:.config/sops/age/keys.txt
 #
 # ── Tailscale ─────────────────────────────────────────────────────────
 #
@@ -93,7 +94,10 @@ in
         # Disk partitioning (used by nixos-anywhere for initial install)
         inputs.disko.nixosModules.disko
 
-        # Hardware (replace placeholder after running nixos-generate-config on DeskMini)
+        # Hardware — nixos-hardware profiles for OptiPlex 5070 (Coffee Lake i5-9500)
+        inputs.nixos-hardware.nixosModules.common-cpu-intel
+        inputs.nixos-hardware.nixosModules.common-pc
+        inputs.nixos-hardware.nixosModules.common-pc-ssd
         ../../../nixos/shop-sdr-hardware-configuration.nix
 
         # Headless server base (nix, user, zsh, tailscale, network, ssh, home-manager)
@@ -102,6 +106,8 @@ in
         # Ham radio stack (SDRplay API, wfview, hamlib, WSJT-X, SparkSDR)
         nixos.hamRadio
       ];
+
+      nixpkgs.hostPlatform = "x86_64-linux";
 
       # Disk layout for nixos-anywhere — simple single-disk GPT + ext4
       # Change /dev/sda to match your actual disk (check with `lsblk`)

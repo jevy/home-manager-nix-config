@@ -1,4 +1,4 @@
-# PLACEHOLDER — Generate on the DeskMini with:
+# PLACEHOLDER — Generate on the OptiPlex 5070 with:
 #   nixos-generate-config --root / --dir /tmp/nixos-config
 # Then copy the hardware-configuration.nix contents here.
 { config, lib, modulesPath, ... }:
