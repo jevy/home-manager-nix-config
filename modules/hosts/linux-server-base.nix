@@ -17,7 +17,6 @@ in
         inputs.home-manager.nixosModules.home-manager
       ];
 
-      nixpkgs.hostPlatform = "x86_64-linux";
       nixpkgs.config.allowUnfree = true;
 
       system.stateVersion = "24.11";
