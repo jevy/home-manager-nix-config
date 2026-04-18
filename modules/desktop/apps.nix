@@ -171,8 +171,6 @@
 
       home.sessionPath = [ "$HOME/bin" ];
       home.file = {
-        ".config/waybar/config".source = ../../waybar/config;
-        ".config/waybar/style.css".source = ../../waybar/style.css;
         ".config/polybar-scripts/player-mpris-simple.sh".source = ../../waybar/polybar/player-mpris-simple.sh;
         ".config/polybar-scripts/openweathermap-forecast.sh".source =
           ../../waybar/polybar/openweathermap-forecast.sh;

@@ -72,7 +72,6 @@ in
             homeManager.nixvim
             homeManager.mcp
             homeManager.hyprland
-            homeManager.sway
             homeManager.mutt
             homeManager.spicetify
             homeManager.ncspot
