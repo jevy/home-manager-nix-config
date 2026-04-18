@@ -405,6 +405,22 @@ MONEOF
             general = {
               layout = "hy3";
               border_size = 4;
+              gaps_in = 4;
+              gaps_out = 8;
+            };
+
+            decoration = {
+              rounding = 10;
+              shadow = {
+                enabled = true;
+                range = 12;
+                render_power = 3;
+              };
+              blur = {
+                enabled = true;
+                size = 4;
+                passes = 2;
+              };
             };
 
             plugin = {

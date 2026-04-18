@@ -8,6 +8,7 @@ let
         enable = true;
         image = pkgs.callPackage ../../pkgs/lowpoly-wallpaper { };
         base16Scheme = "${pkgs.base16-schemes}/share/themes/gruvbox-material-dark-soft.yaml";
+        opacity.popups = 0.9;
 
         fonts = {
           serif = {

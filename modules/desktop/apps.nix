@@ -31,7 +31,6 @@
         zoom-us
         cht-sh
         cheat
-        mako
         grim
         swappy
         slurp
@@ -172,7 +171,6 @@
 
       home.sessionPath = [ "$HOME/bin" ];
       home.file = {
-        ".config/mako/config".source = ../../mako/config;
         ".config/waybar/config".source = ../../waybar/config;
         ".config/waybar/style.css".source = ../../waybar/style.css;
         ".config/polybar-scripts/player-mpris-simple.sh".source = ../../waybar/polybar/player-mpris-simple.sh;

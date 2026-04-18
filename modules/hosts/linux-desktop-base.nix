@@ -81,6 +81,7 @@ in
             homeManager.desktopApps
             homeManager.linuxDesktop
             homeManager.ashell
+            homeManager.mako
             homeManager.hyprSession
             # homeManager.beads  # disabled: vendorHash mismatch with upstream
             homeManager.ssh
