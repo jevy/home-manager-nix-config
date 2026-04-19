@@ -24,7 +24,7 @@
         # khal
         evince
         xournalpp
-        sxiv
+        imv
         playerctl
         doctl
         pdfarranger
@@ -75,7 +75,8 @@
         pdftk
         ddcutil
         ddcui
-        psst
+        rnote
+        papers
         repomix
         nethogs
         # marktext # Broken: node-gyp build failure
@@ -117,6 +118,17 @@
         "x-scheme-handler/http" = [ "firefox.desktop" ];
         "x-scheme-handler/https" = [ "firefox.desktop" ];
         "text/html" = [ "firefox.desktop" ];
+        "image/png" = [ "imv.desktop" ];
+        "image/jpeg" = [ "imv.desktop" ];
+        "image/gif" = [ "imv.desktop" ];
+        "image/webp" = [ "imv.desktop" ];
+        "image/bmp" = [ "imv.desktop" ];
+        "image/svg+xml" = [ "imv.desktop" ];
+        "text/plain" = [ "neovide.desktop" ];
+        "application/toml" = [ "neovide.desktop" ];
+        "application/json" = [ "neovide.desktop" ];
+        "application/yaml" = [ "neovide.desktop" ];
+        "application/x-shellscript" = [ "neovide.desktop" ];
       };
 
       home.pointerCursor = {

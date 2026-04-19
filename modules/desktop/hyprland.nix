@@ -237,7 +237,8 @@ MONEOF
                 { key = "s"; desc = "Sound"; cmd = "${pkgs.pavucontrol}/bin/pavucontrol"; }
                 { key = "o"; desc = "Toggle Audio Output"; cmd = "${toggleAudioOutput}"; }
                 { key = "b"; desc = "Bluetooth"; cmd = "${pkgs.blueman}/bin/blueman-manager"; }
-                { key = "t"; desc = "Files"; cmd = "kitty -- ${pkgs.ranger}/bin/ranger ~/Downloads"; }
+                { key = "t"; desc = "Files (Ranger)"; cmd = "kitty -- ${pkgs.ranger}/bin/ranger ~/Downloads"; }
+                { key = "g"; desc = "Files (Yazi)"; cmd = "kitty -- yazi ~/Downloads"; }
                 { key = "a"; desc = "Claude"; cmd = "firefox https://claude.ai"; }
               ];
             };
@@ -487,6 +488,8 @@ MONEOF
             # to vanish when you try to mouse over them.
             windowrulev2 = [
               "nofocus,class:^$,title:^$,xwayland:1,floating:1,fullscreen:0,pinned:0"
+              "suppressevent fullscreen,class:^org\\.gnome\\.Papers$"
+              "suppressevent fullscreen,class:^libreoffice.*$"
             ];
 
             "$mod" = "SUPER";
@@ -546,6 +549,7 @@ MONEOF
               "$mod, B, exec, firefox"
               "$mod, A, exec, firefox https://claude.ai"
               "$mod, T, exec, kitty -- ${pkgs.ranger}/bin/ranger ~/Downloads"
+              "$mod, G, exec, kitty -- yazi ~/Downloads"
               "$mod, I, exec, ${pkgs.blueman}/bin/blueman-manager"
               "$mod, P, exec, ${pkgs.hyprlock}/bin/hyprlock"
               "$mod, M, exec, ${pkgs.wl-kbptr}/bin/wl-kbptr -o modes=floating,bisect,click -o mode_floating.source=detect"
