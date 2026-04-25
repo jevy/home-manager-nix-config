@@ -55,6 +55,7 @@
               { run = ''firefox "$@"''; desc = "Firefox"; }
             ];
             text = [
+              { run = ''neovide "$@"''; desc = "Neovide"; }
               { run = ''$EDITOR "$@"''; block = true; desc = "Editor"; }
             ];
             fallback = [
@@ -83,6 +84,10 @@
             { on = [ "<C-f>" ]; run = ''shell 'result="$(fd -H | fzf)"; [ -n "$result" ] && ya emit reveal "$result"' --block''; desc = "fzf search"; }
             # Drag and drop (replaces ranger <C-d>)
             { on = [ "<C-d>" ]; run = "plugin drag"; desc = "Drag and drop"; }
+            # Open shell in current directory
+            { on = [ "w" ]; run = ''shell "ghostty"''; desc = "Open shell here"; }
+            # Go to ~/Documents
+            { on = [ "g" "D" ]; run = "cd ~/Documents"; desc = "Go to Documents"; }
           ];
         };
       };
