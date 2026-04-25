@@ -29,7 +29,6 @@
       # ── Packages ─────────────────────────────────────────────────────
       environment.systemPackages = with pkgs; [
         hamlib_4      # rigctld, rigctl
-        wfview        # wfview GUI + wfserver headless
         wsjtx         # WSJT-X for WSPR/FT8
         tqsl          # ARRL Logbook of the World
         sparksdr      # SparkSDR for RSPduo multi-band monitoring
