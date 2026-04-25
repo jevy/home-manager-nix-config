@@ -93,8 +93,9 @@ DESKTOP
 
         export DISPLAY=:42
         export QT_SCALE_FACTOR=2
-        export PATH="${lib.makeBinPath xfcePackages}:${pkgs.dbus}/bin:${pkgs.wsjtx}/bin:${pkgs.gridtracker}/bin:$PATH"
-        export XDG_DATA_DIRS="${lib.concatMapStringsSep ":" (p: "${p}/share") xfcePackages}:${pkgs.wsjtx}/share:${pkgs.gridtracker}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+        export PATH="${lib.makeBinPath xfcePackages}:${pkgs.dbus}/bin:${pkgs.wsjtx}/bin:${pkgs.gridtracker}/bin:${pkgs.wfview}/bin:$PATH"
+        export XDG_DATA_DIRS="${lib.concatMapStringsSep ":" (p: "${p}/share") xfcePackages}:${pkgs.wsjtx}/share:${pkgs.gridtracker}/share:${pkgs.wfview}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+        export XDG_CONFIG_DIRS="${lib.concatMapStringsSep ":" (p: "${p}/etc/xdg") xfcePackages}:''${XDG_CONFIG_DIRS:-/etc/xdg}"
 
         ${pkgs.tigervnc}/bin/Xvnc :42 -geometry 2880x1800 -depth 24 -SecurityTypes None -localhost 0 &
         sleep 1
