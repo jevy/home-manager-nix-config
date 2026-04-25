@@ -42,8 +42,12 @@ in
         settings = {
           PasswordAuthentication = false;
           PermitRootLogin = "no";
+          X11Forwarding = true;
         };
       };
+
+      # xauth is required for X11 forwarding over SSH
+      environment.systemPackages = [ pkgs.xorg.xauth ];
 
       # Prometheus node exporter — scrape at http://shop-sdr:9100/metrics
       services.prometheus.exporters.node = {
