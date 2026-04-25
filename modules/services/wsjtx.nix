@@ -1,6 +1,6 @@
 # Ham radio VNC desktop — xfce4 session with WSJT-X, GridTracker, etc.
 # Accessible via VNC on :5942
-# UDP decodes forwarded to WLGate (:2333) for Wavelog logging
+# UDP decodes sent to WLGate (:2333), which logs to Wavelog and relays to GridTracker (:2237)
 { inputs, ... }:
 {
   flake.modules.nixos.wsjtx =
@@ -24,7 +24,7 @@
         AudioOutputChannel=Mono
         UDPEnable=true
         UDPServer=127.0.0.1
-        UDPServerPort=2237
+        UDPServerPort=2333
         AcceptUDPRequests=true
         PSKReporter=true
         PSKReporterTCPIP=false
@@ -37,8 +37,6 @@
         TwoPass=true
         SingleDecode=false
         DecodedTextFont="Monospace, 9"
-        N1MMServerPort=2333
-        BroadcastToN1MM=true
 
         [Common]
         Mode=FT8
@@ -68,6 +66,16 @@
         thunar
       ];
 
+      hamPackages = with pkgs; [
+        dbus
+        wsjtx
+        gridtracker
+        grig
+        flrig
+      ];
+
+      allPackages = xfcePackages ++ hamPackages;
+
       hamDesktopWrapper = pkgs.writeShellScript "ham-desktop" ''
         CONFIG_DIR="$HOME/.config/WSJT-X"
         mkdir -p "$CONFIG_DIR"
@@ -89,9 +97,9 @@ DESKTOP
 
         export DISPLAY=:42
         export QT_SCALE_FACTOR=2
-        export PATH="${lib.makeBinPath xfcePackages}:${pkgs.dbus}/bin:${pkgs.wsjtx}/bin:${pkgs.gridtracker}/bin:${pkgs.wfview}/bin:$PATH"
-        export XDG_DATA_DIRS="${lib.concatMapStringsSep ":" (p: "${p}/share") xfcePackages}:${pkgs.wsjtx}/share:${pkgs.gridtracker}/share:${pkgs.wfview}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
-        export XDG_CONFIG_DIRS="${lib.concatMapStringsSep ":" (p: "${p}/etc/xdg") xfcePackages}:''${XDG_CONFIG_DIRS:-/etc/xdg}"
+        export PATH="${lib.makeBinPath allPackages}:$PATH"
+        export XDG_DATA_DIRS="${lib.concatMapStringsSep ":" (p: "${p}/share") allPackages}:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+        export XDG_CONFIG_DIRS="${lib.concatMapStringsSep ":" (p: "${p}/etc/xdg") allPackages}:''${XDG_CONFIG_DIRS:-/etc/xdg}"
 
         ${pkgs.tigervnc}/bin/Xvnc :42 -geometry 2880x1800 -depth 24 -SecurityTypes None -localhost 0 &
         sleep 1
@@ -100,10 +108,7 @@ DESKTOP
       '';
     in
     {
-      environment.systemPackages = xfcePackages ++ [
-        pkgs.wsjtx
-        pkgs.gridtracker
-      ];
+      environment.systemPackages = allPackages;
 
       systemd.services.wsjtx-wspr = {
         description = "Ham radio VNC desktop (xfce4)";
