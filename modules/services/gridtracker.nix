@@ -16,14 +16,6 @@
       '';
     in
     {
-      users.users.gridtracker = {
-        isSystemUser = true;
-        group = "gridtracker";
-        home = "/var/lib/gridtracker";
-        createHome = true;
-      };
-      users.groups.gridtracker = { };
-
       systemd.services.gridtracker = {
         description = "GridTracker — WSJT-X decode map";
         after = [ "network-online.target" "wlgate.service" ];
@@ -34,10 +26,8 @@
           ExecStart = gridtrackerWrapper;
           Restart = "on-failure";
           RestartSec = 10;
-          User = "gridtracker";
-          Group = "gridtracker";
-          StateDirectory = "gridtracker";
-          WorkingDirectory = "/var/lib/gridtracker";
+          User = "jevin";
+          Group = "users";
         };
       };
 
