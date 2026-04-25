@@ -22,29 +22,6 @@
       };
     };
 
-    # Bump claude-code past yanked 2.1.88 (pulled from npm, 404s)
-    claudeCode = final: prev: {
-      claude-code = prev.claude-code.overrideAttrs (old: rec {
-        version = "2.1.92";
-        src = prev.fetchzip {
-          url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${version}.tgz";
-          hash = "sha256-CLLCtVK3TeXFZ8wBnRRHNc2MoUt7lTdMJwz8sZHpkFM=";
-        };
-        postPatch = ''
-          cp ${../pkgs/claude-code/package-lock.json} package-lock.json
-          substituteInPlace cli.js --replace-fail '#!/bin/sh' '#!/usr/bin/env sh'
-        '';
-        npmDeps = prev.fetchNpmDeps {
-          inherit src;
-          name = "claude-code-${version}-npm-deps";
-          postPatch = ''
-            cp ${../pkgs/claude-code/package-lock.json} package-lock.json
-          '';
-          hash = "sha256-5LvH7fG5pti2SiXHQqgRxfFpxaXxzrmGxIoPR4dGE+8=";
-        };
-      });
-    };
-
     # Bambu Studio AppImage — the nixpkgs build crashes on cloud login (#440951)
     bambuStudio = final: prev: {
       bambu-studio = prev.appimageTools.wrapType2 rec {
