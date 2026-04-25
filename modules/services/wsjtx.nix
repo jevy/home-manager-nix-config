@@ -1,5 +1,5 @@
-# WSJT-X digital modes station (WSPR, FT8, etc.) on IC-7300
-# Runs headless under Xvnc, accessible via VNC on :5942
+# Ham radio VNC desktop — xfce4 session with WSJT-X, GridTracker, etc.
+# Accessible via VNC on :5942
 # UDP decodes forwarded to WLGate (:2333) for Wavelog logging
 { inputs, ... }:
 {
@@ -62,37 +62,61 @@
         Audio/InputBufferFrames=4800
       '';
 
-      # Xvnc replaces Xvfb + x11vnc in a single process and supports
-      # ExtendedDesktopSize so the client can dynamically resize the session
-      wsjtxWrapper = pkgs.writeShellScript "wsjtx-wspr" ''
+      xfcePackages = with pkgs.xfce; [
+        xfce4-session
+        xfwm4
+        xfce4-panel
+        xfce4-terminal
+        xfce4-settings
+        xfconf
+        thunar
+      ];
+
+      hamDesktopWrapper = pkgs.writeShellScript "ham-desktop" ''
         CONFIG_DIR="$HOME/.config/WSJT-X"
         mkdir -p "$CONFIG_DIR"
 
-        # Seed config on first run; runtime edits via VNC persist
+        # Seed WSJT-X config on first run; runtime edits via VNC persist
         if [ ! -f "$CONFIG_DIR/WSJT-X.ini" ]; then
           cp ${wsjtxConfig} "$CONFIG_DIR/WSJT-X.ini"
           chmod 644 "$CONFIG_DIR/WSJT-X.ini"
         fi
 
+        # Autostart WSJT-X inside xfce
+        mkdir -p "$HOME/.config/autostart"
+        cat > "$HOME/.config/autostart/wsjtx.desktop" <<'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=WSJT-X
+Exec=wsjtx
+DESKTOP
+
         export DISPLAY=:42
         export QT_SCALE_FACTOR=2
+        export PATH="${lib.makeBinPath xfcePackages}:${pkgs.wsjtx}/bin:${pkgs.gridtracker}/bin:$PATH"
+        export XDG_DATA_DIRS="${lib.concatMapStringsSep ":" (p: "${p}/share") xfcePackages}:${pkgs.wsjtx}/share:${pkgs.gridtracker}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+
         ${pkgs.tigervnc}/bin/Xvnc :42 -geometry 2880x1800 -depth 24 -SecurityTypes None -localhost 0 &
         sleep 1
 
-        ${pkgs.openbox}/bin/openbox &
-        exec ${pkgs.wsjtx}/bin/wsjtx
+        exec ${pkgs.xfce.xfce4-session}/bin/xfce4-session
       '';
     in
     {
+      environment.systemPackages = xfcePackages ++ [
+        pkgs.wsjtx
+        pkgs.gridtracker
+      ];
+
       systemd.services.wsjtx-wspr = {
-        description = "WSJT-X digital modes station (IC-7300)";
+        description = "Ham radio VNC desktop (xfce4)";
         after = [ "network-online.target" "rigctld.service" "pipewire.service" ];
         wants = [ "network-online.target" ];
         requires = [ "rigctld.service" ];
         wantedBy = [ "multi-user.target" ];
 
         serviceConfig = {
-          ExecStart = wsjtxWrapper;
+          ExecStart = hamDesktopWrapper;
           Restart = "on-failure";
           RestartSec = 30;
           User = "jevin";
