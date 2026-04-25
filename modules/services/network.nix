@@ -14,6 +14,9 @@
           27124 # Obsidian REST for MCP
           27123 # Obsidian REST for MCP
         ];
+        allowedUDPPorts = [
+          2237  # WSJT-X UDP reports → GridTracker
+        ];
         extraCommands = ''
           # Allow Docker containers to reach TypeStream server
           iptables -A nixos-fw -s 172.19.0.0/16 -p tcp --dport 4242 -j ACCEPT

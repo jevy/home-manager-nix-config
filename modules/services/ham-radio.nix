@@ -1,4 +1,6 @@
-# Ham radio services: SDRplay API, wfview/wfserver, hamlib/rigctld, WSJT-X, SparkSDR
+# Ham radio services: SDRplay API, hamlib/rigctld, WSJT-X, SparkSDR
+# rigctld owns /dev/ic7300 and exposes hamlib protocol on TCP :4532
+# Remote clients (flrig, grig) connect via hamlib NET rigctl (model 2)
 { inputs, ... }:
 {
   flake.modules.nixos.hamRadio =
@@ -21,7 +23,7 @@
         # Icom IC-7300 USB serial (Silicon Labs CP210x)
         SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="ic7300", MODE="0660", GROUP="dialout"
         # Icom IC-7300 USB audio codec
-        SUBSYSTEM=="sound", ATTRS{idVendor}=="08bb", ATTRS{idProduct}=="2904", ATTR{id}="IC7300"
+        SUBSYSTEM=="sound", ATTRS{idVendor}=="08bb", ATTRS{idProduct}=="2901", ATTR{id}="IC7300"
       '';
 
       # ── Packages ─────────────────────────────────────────────────────
@@ -29,50 +31,39 @@
         hamlib_4      # rigctld, rigctl
         wfview        # wfview GUI + wfserver headless
         wsjtx         # WSJT-X for WSPR/FT8
+        tqsl          # ARRL Logbook of the World
         sparksdr      # SparkSDR for RSPduo multi-band monitoring
         sdrplay       # SDRplay API libraries
+        vlc           # Media player for audio monitoring
       ];
 
       # ── rigctld — IC-7300 rig control daemon ─────────────────────────
-      # Exposes IC-7300 control on TCP :4532 for wfview/WSJT-X/SparkSDR
-      # Uncomment once hardware config is confirmed (serial device path)
-      # systemd.services.rigctld = {
-      #   description = "Hamlib rigctld for IC-7300";
-      #   after = [ "dev-ic7300.device" ];
-      #   bindsTo = [ "dev-ic7300.device" ];
-      #   wantedBy = [ "multi-user.target" ];
-      #   serviceConfig = {
-      #     ExecStart = "${pkgs.hamlib_4}/bin/rigctld --model=3073 --rig-file=/dev/ic7300 --serial-speed=115200 --port=4532 --set-conf=rts_state=OFF --set-conf=dtr_state=OFF";
-      #     Restart = "on-failure";
-      #     RestartSec = 5;
-      #     User = "jevin";
-      #     Group = "dialout";
-      #   };
-      # };
+      # Owns /dev/ic7300, exposes hamlib protocol on TCP :4532
+      # Supports multiple simultaneous clients (WSJT-X, remote grig/flrig)
+      systemd.services.rigctld = {
+        description = "Hamlib rigctld for IC-7300";
+        after = [ "dev-ic7300.device" ];
+        bindsTo = [ "dev-ic7300.device" ];
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = {
+          ExecStart = "${pkgs.hamlib_4}/bin/rigctld --model=3073 --rig-file=/dev/ic7300 --serial-speed=115200 --port=4532 --set-conf=rts_state=OFF --set-conf=dtr_state=OFF";
+          Restart = "on-failure";
+          RestartSec = 5;
+          User = "jevin";
+          Group = "dialout";
+        };
+      };
 
-      # ── wfserver — remote rig control + audio over network ──────────
-      # Provides full IC-7300 control + audio streaming over Tailscale
-      # Also emulates rigctld on :4533 so WSJT-X/SparkSDR can share the radio
-      # Uncomment once wfserver.ini is configured
-      # systemd.services.wfserver = {
-      #   description = "wfview headless server for IC-7300";
-      #   after = [ "network-online.target" "dev-ic7300.device" ];
-      #   wants = [ "network-online.target" ];
-      #   bindsTo = [ "dev-ic7300.device" ];
-      #   wantedBy = [ "multi-user.target" ];
-      #   serviceConfig = {
-      #     ExecStart = "${pkgs.wfview}/bin/wfserver";
-      #     Restart = "on-failure";
-      #     RestartSec = 10;
-      #     User = "jevin";
-      #     Group = "dialout";
-      #     SupplementaryGroups = [ "audio" ];
-      #   };
-      # };
+      # ── PipeWire network audio ──────────────────────────────────────
+      # Expose IC-7300 USB audio over the network for remote monitoring
+      services.pipewire.extraConfig.pipewire-pulse."30-network" = {
+        "pulse.cmd" = [
+          { cmd = "load-module"; args = "module-native-protocol-tcp auth-anonymous=1"; }
+          { cmd = "load-module"; args = "module-zeroconf-publish"; }
+        ];
+      };
 
       # ── SparkSDR — RSPduo multi-band WSPR/FT8 skimmer ──────────────
-      # Runs under xvfb (no display needed), spots uploaded to PSKReporter
-      # WebSocket control interface on :4649
       # Uncomment once SparkSDR profile is configured
       # systemd.services.sparksdr = {
       #   description = "SparkSDR WSPR/FT8 skimmer (RSPduo)";
@@ -91,8 +82,7 @@
 
       # ── Firewall ─────────────────────────────────────────────────────
       networking.firewall.allowedTCPPorts = [
-        4532  # rigctld
-        4533  # wfview rigctld emulation
+        4532  # rigctld (hamlib protocol)
         4649  # SparkSDR WebSocket
       ];
     };
