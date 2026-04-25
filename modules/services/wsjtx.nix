@@ -66,11 +66,21 @@
         thunar
       ];
 
+      # grig doesn't ship a .desktop file — create one
+      grigDesktop = pkgs.makeDesktopItem {
+        name = "grig";
+        desktopName = "Grig";
+        comment = "Hamlib rig control GUI";
+        exec = "${pkgs.grig}/bin/grig";
+        categories = [ "HamRadio" ];
+      };
+
       hamPackages = with pkgs; [
         dbus
         wsjtx
         gridtracker
         grig
+        grigDesktop
         flrig
       ];
 
