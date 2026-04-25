@@ -49,6 +49,11 @@
         # extra delay when the sensor is woken after long idle.
         # https://github.com/hyprwm/hyprlock/issues/702
         ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="06cb", ATTR{idProduct}=="00f9", ATTR{power/autosuspend}="-1"
+        # Prevent USB autosuspend for Focusrite Scarlett Solo and its parent
+        # Realtek hub — the hub's aggressive autosuspend (0ms) causes the
+        # Scarlett to disconnect on resume and WirePlumber fails to reconfigure it.
+        ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="1235", ATTR{idProduct}=="8205", ATTR{power/autosuspend}="-1"
+        ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0bda", ATTR{idProduct}=="5411", ATTR{power/autosuspend}="-1"
       '';
 
       # Allow the user's micMuteAll script to control the mic mute LED
