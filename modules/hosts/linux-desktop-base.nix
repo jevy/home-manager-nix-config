@@ -25,6 +25,7 @@ in
         nixos.printing
         nixos.onepassword
         nixos.steam
+        nixos.pi
 
         # External modules
         inputs.home-manager.nixosModules.home-manager
