@@ -686,7 +686,11 @@ MONEOF
             lock_cmd = "pidof hyprlock || hyprlock";
             unlock_cmd = "hyprctl dispatch dpms on";
             before_sleep_cmd = "loginctl lock-session";
-            after_sleep_cmd = "hyprctl dispatch dpms on && sleep 1 && hyprctl reload";
+            # Kill stale hyprlock on resume so a fresh instance gets a clean
+            # fprint D-Bus proxy.  ext-session-lock shows a solid color in the
+            # gap; loginctl lock-session re-triggers lock_cmd immediately.
+            # Upstream bug: hyprlock never clears m_sDBUSState.device on suspend.
+            after_sleep_cmd = "pkill -x hyprlock; sleep 0.5; loginctl lock-session; hyprctl dispatch dpms on && sleep 1 && hyprctl reload";
             # Wait for hyprlock to fully lock the session before allowing suspend.
             # Prevents race where suspend interleaves with fprint verification.
             # https://github.com/hyprwm/hyprlock/issues/577
