@@ -84,16 +84,8 @@
       '';
     in
     {
-      users.users.wspr = {
-        isSystemUser = true;
-        group = "wspr";
-        home = "/var/lib/wsjtx";
-        createHome = true;
-      };
-      users.groups.wspr = { };
-
       systemd.services.wsjtx-wspr = {
-        description = "WSJT-X WSPR beacon (IC-7300)";
+        description = "WSJT-X digital modes station (IC-7300)";
         after = [ "network-online.target" "rigctld.service" "pipewire.service" ];
         wants = [ "network-online.target" ];
         requires = [ "rigctld.service" ];
@@ -103,11 +95,9 @@
           ExecStart = wsjtxWrapper;
           Restart = "on-failure";
           RestartSec = 30;
-          User = "wspr";
-          Group = "wspr";
+          User = "jevin";
+          Group = "users";
           SupplementaryGroups = [ "dialout" "audio" ];
-          StateDirectory = "wsjtx";
-          WorkingDirectory = "/var/lib/wsjtx";
         };
       };
 
