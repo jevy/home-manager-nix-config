@@ -47,7 +47,6 @@ in
         overlays.mcpServers
         overlays.llamaCpp
         overlays.lieer
-        overlays.claudeCode
         overlays.bambuStudio
       ];
 
