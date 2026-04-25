@@ -61,6 +61,7 @@
     };
     lieer-src.url = "path:/home/jevin/src/lieer";
     lieer-src.flake = false;
+    pi-mono.url = "github:lukasl-dev/pi-mono.nix";
 
 };
 
