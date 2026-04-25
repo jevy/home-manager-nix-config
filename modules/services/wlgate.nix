@@ -1,5 +1,5 @@
 # WaveLogGate: pushes CAT data (freq, mode, power) from rigctld to Wavelog
-# Also listens for WSJT-X UDP packets on :2333 for automatic QSO logging
+# Receives WSJT-X N1MM broadcast on :2333 for automatic QSO logging
 # Runs headless under xvfb-run as a systemd service
 { inputs, ... }:
 {

@@ -1,42 +1,41 @@
 # Ham radio VNC desktop — xfce4 session with WSJT-X, GridTracker, etc.
 # Accessible via VNC on :5942
-# UDP decodes sent to WLGate (:2333), which logs to Wavelog and relays to GridTracker (:2237)
+#
+# UDP routing:
+#   WSJT-X primary UDP (:2237) → GridTracker (binary decode stream)
+#   WSJT-X N1MM broadcast (:2333) → WavelogGate (QSO log packets)
 { inputs, ... }:
 {
   flake.modules.nixos.wsjtx =
     { pkgs, lib, config, ... }:
     let
-      # WSJT-X stores config as Qt QSettings INI
+      # WSJT-X stores config as Qt QSettings INI at ~/.config/WSJT-X.ini
+      # (NOT ~/.config/WSJT-X/WSJT-X.ini — that path is never read)
       # Key names sourced from Configuration.cpp and mainwindow.cpp
       wsjtxConfig = pkgs.writeText "WSJT-X.ini" ''
         [Configuration]
         MyCall=VA3JEV
         MyGrid=FN25EK
         Rig=Hamlib NET rigctl
-        CATNetworkPort=localhost:4532
-        PTTMethod=1
-        SplitMode=2
-        DataMode=2
-        Polling=3
-        SoundInName=plughw:CARD=IC7300,DEV=0
-        SoundOutName=plughw:CARD=IC7300,DEV=0
+        CATNetworkPort=localhost
+        SoundInName="sysdefault:CARD=IC7300"
+        SoundOutName="sysdefault:CARD=IC7300"
         AudioInputChannel=Mono
         AudioOutputChannel=Mono
-        UDPEnable=true
         UDPServer=127.0.0.1
-        UDPServerPort=2333
+        UDPServerPort=2237
         AcceptUDPRequests=true
         PSKReporter=true
         PSKReporterTCPIP=false
         After73=false
         MonitorOFF=false
-        AutoLog=true
         PromptToLog=false
-        Region=2
+        N1MMServer=localhost
+        N1MMServerPort=2333
+        BroadcastToN1MM=true
         TxWatchdog=6
         TwoPass=true
         SingleDecode=false
-        DecodedTextFont="Monospace, 9"
 
         [Common]
         Mode=FT8
@@ -50,10 +49,6 @@
         SaveAll=false
         SaveNone=false
         AutoSeq=true
-
-        [Tune]
-        Audio/OutputBufferMs=0
-        Audio/InputBufferFrames=4800
       '';
 
       xfcePackages = with pkgs; [
@@ -87,13 +82,11 @@
       allPackages = xfcePackages ++ hamPackages;
 
       hamDesktopWrapper = pkgs.writeShellScript "ham-desktop" ''
-        CONFIG_DIR="$HOME/.config/WSJT-X"
-        mkdir -p "$CONFIG_DIR"
-
         # Seed WSJT-X config on first run; runtime edits via VNC persist
-        if [ ! -f "$CONFIG_DIR/WSJT-X.ini" ]; then
-          cp ${wsjtxConfig} "$CONFIG_DIR/WSJT-X.ini"
-          chmod 644 "$CONFIG_DIR/WSJT-X.ini"
+        # WSJT-X reads QSettings from ~/.config/WSJT-X.ini (not a subdirectory)
+        if [ ! -f "$HOME/.config/WSJT-X.ini" ]; then
+          cp ${wsjtxConfig} "$HOME/.config/WSJT-X.ini"
+          chmod 644 "$HOME/.config/WSJT-X.ini"
         fi
 
         # Autostart WSJT-X inside xfce
