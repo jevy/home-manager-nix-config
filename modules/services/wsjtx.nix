@@ -62,7 +62,7 @@
         Audio/InputBufferFrames=4800
       '';
 
-      xfcePackages = with pkgs.xfce; [
+      xfcePackages = with pkgs; [
         xfce4-session
         xfwm4
         xfce4-panel
@@ -93,13 +93,13 @@ DESKTOP
 
         export DISPLAY=:42
         export QT_SCALE_FACTOR=2
-        export PATH="${lib.makeBinPath xfcePackages}:${pkgs.wsjtx}/bin:${pkgs.gridtracker}/bin:$PATH"
+        export PATH="${lib.makeBinPath xfcePackages}:${pkgs.dbus}/bin:${pkgs.wsjtx}/bin:${pkgs.gridtracker}/bin:$PATH"
         export XDG_DATA_DIRS="${lib.concatMapStringsSep ":" (p: "${p}/share") xfcePackages}:${pkgs.wsjtx}/share:${pkgs.gridtracker}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 
         ${pkgs.tigervnc}/bin/Xvnc :42 -geometry 2880x1800 -depth 24 -SecurityTypes None -localhost 0 &
         sleep 1
 
-        exec ${pkgs.xfce.xfce4-session}/bin/xfce4-session
+        exec ${pkgs.xfce4-session}/bin/xfce4-session
       '';
     in
     {
