@@ -71,7 +71,7 @@
         name = "grig";
         desktopName = "Grig";
         comment = "Hamlib rig control GUI";
-        exec = "${pkgs.grig}/bin/grig";
+        exec = "${pkgs.grig}/bin/grig -m 2 -r localhost:4532";
         categories = [ "HamRadio" ];
       };
 
