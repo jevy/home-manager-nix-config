@@ -11,21 +11,21 @@
       wsjtxConfig = pkgs.writeText "WSJT-X.ini" ''
         [Configuration]
         MyCall=VA3JEV
-        MyGrid=FN25ek
+        MyGrid=FN25EK
         Rig=Hamlib NET rigctl
         CATNetworkPort=localhost:4532
         PTTMethod=1
         SplitMode=2
         DataMode=2
         Polling=3
-        SoundInName=sysdefault:CARD=IC7300
-        SoundOutName=sysdefault:CARD=IC7300
+        SoundInName=plughw:CARD=IC7300,DEV=0
+        SoundOutName=plughw:CARD=IC7300,DEV=0
         AudioInputChannel=Mono
         AudioOutputChannel=Mono
         UDPEnable=true
         UDPServer=127.0.0.1
-        UDPServerPort=2333
-        AcceptUDPRequests=false
+        UDPServerPort=2237
+        AcceptUDPRequests=true
         PSKReporter=true
         PSKReporterTCPIP=false
         After73=false
@@ -33,29 +33,25 @@
         AutoLog=true
         PromptToLog=false
         Region=2
-        TxWatchdog=0
+        TxWatchdog=6
         TwoPass=true
         SingleDecode=false
         DecodedTextFont="Monospace, 9"
+        N1MMServerPort=2333
+        BroadcastToN1MM=true
 
         [Common]
-        Mode=WSPR
-        ModeTx=WSPR
-        DialFreq=14095600
+        Mode=FT8
+        ModeTx=FT8
+        DialFreq=14074000
         TxFreq=1500
-        RxFreq=1500
-        WSPRfreq=1500
-        TRPeriod=120
-        PctTx=20
-        dBm=30
-        UploadSpots=true
-        BandHopping=true
-        WSPRPreferType1=true
-        NoOwnCall=false
+        RxFreq=729
         NDepth=3
+        NoOwnCall=false
         SaveDecoded=true
         SaveAll=false
         SaveNone=false
+        AutoSeq=true
 
         [Tune]
         Audio/OutputBufferMs=0
