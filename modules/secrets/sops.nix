@@ -42,6 +42,9 @@
           # Steam Web API
           steam_api_key = { };
           steam_id = { };
+
+          # Ham radio
+          wavelog_api_key = { };
         };
       };
     };

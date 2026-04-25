@@ -105,6 +105,15 @@ in
 
         # Ham radio stack (SDRplay API, wfview, hamlib, WSJT-X, SparkSDR)
         nixos.hamRadio
+
+        # WSJT-X digital modes station (WSPR, FT8, etc.)
+        nixos.wsjtx
+
+        # WaveLogGate — push CAT data from rigctld to Wavelog
+        nixos.wlgate
+
+        # GridTracker — live WSJT-X decode map
+        nixos.gridtracker
       ];
 
       nixpkgs.hostPlatform = "x86_64-linux";
