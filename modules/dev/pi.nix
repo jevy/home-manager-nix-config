@@ -1,14 +1,180 @@
-# Pi terminal coding agent
+# Pi terminal coding agent with OpenRouter and MCP proxy
 { inputs, ... }:
+let
+  # Curated cheap models for OpenRouter. Pi will ONLY see these (no auto/Opus).
+  # To browse available models: curl -s https://openrouter.ai/api/v1/models | python3 -m json.tool | less
+  piModelsJson = builtins.toJSON {
+    providers.openrouter = {
+      apiKey = "OPENROUTER_API_KEY";
+      models = [
+        {
+          id = "deepseek/deepseek-v4-pro";
+          name = "DeepSeek V4 Pro (OR)";
+          reasoning = true;
+          input = [ "text" ];
+          contextWindow = 1048576;
+          maxTokens = 384000;
+          cost = { input = 0.435; output = 0.87; cacheRead = 0; cacheWrite = 0; };
+        }
+        {
+          id = "deepseek/deepseek-v4-flash";
+          name = "DeepSeek V4 Flash (OR)";
+          reasoning = true;
+          input = [ "text" ];
+          contextWindow = 1048576;
+          maxTokens = 384000;
+          cost = { input = 0.14; output = 0.28; cacheRead = 0; cacheWrite = 0; };
+        }
+        {
+          id = "google/gemini-3.1-flash-lite-preview";
+          name = "Gemini 3.1 Flash Lite";
+          input = [ "text" "image" ];
+          contextWindow = 1048576;
+          maxTokens = 65536;
+          cost = { input = 0.25; output = 1.5; cacheRead = 0; cacheWrite = 0; };
+        }
+        {
+          id = "moonshotai/kimi-k2.6";
+          name = "Kimi K2.6";
+          reasoning = true;
+          input = [ "text" "image" ];
+          contextWindow = 256000;
+          maxTokens = 65536;
+          cost = { input = 0.74; output = 4.66; cacheRead = 0; cacheWrite = 0; };
+        }
+        {
+          id = "minimax/minimax-m2.7";
+          name = "MiniMax M2.7";
+          input = [ "text" ];
+          contextWindow = 196608;
+          maxTokens = 196608;
+          cost = { input = 0.3; output = 1.2; cacheRead = 0; cacheWrite = 0; };
+        }
+      ];
+    };
+    providers.deepseek = {
+      models = [
+        {
+          id = "deepseek-v4-pro";
+          name = "DeepSeek V4 Pro";
+          reasoning = true;
+          input = [ "text" ];
+          contextWindow = 1048576;
+          maxTokens = 384000;
+          cost = { input = 0.435; output = 0.87; cacheRead = 0; cacheWrite = 0; };
+        }
+        {
+          id = "deepseek-v4-flash";
+          name = "DeepSeek V4 Flash";
+          reasoning = true;
+          input = [ "text" ];
+          contextWindow = 1048576;
+          maxTokens = 384000;
+          cost = { input = 0.14; output = 0.28; cacheRead = 0; cacheWrite = 0; };
+        }
+      ];
+    };
+  };
+in
 {
   flake.modules.nixos.pi =
-    { ... }:
+    { pkgs, ... }:
+    let
+      # Redirect npm global prefix to writable dir (Nix store is read-only)
+      npmPrefixFile = pkgs.writeText "npm-prefix" "/home/jevin/.npm-global";
+      piFinderModelsFile = pkgs.writeText "pi-finder-models" "deepseek/deepseek-v4-flash:medium";
+      # Empty file to blank out API keys so pi doesn't auto-discover providers
+      emptyFile = pkgs.writeText "empty" "";
+    in
     {
       imports = [ inputs.pi-mono.nixosModules.default ];
+
+      environment.systemPackages = [ pkgs.nodejs ];
 
       programs.pi.coding-agent = {
         enable = true;
         users = [ "jevin" ];
+
+        rules = ''
+          # Shell Commands
+          - Use `fd` instead of `find` — `find` commands with `-exec`, `\;`, or `\|` can be problematic. `fd` is already installed.
+          - Avoid ANSI-C quoting (`$'...\n...'`) in shell commands.
+        '';
+
+        environment = {
+          NPM_CONFIG_PREFIX = npmPrefixFile;
+          PI_FINDER_MODELS = piFinderModelsFile;
+          # Blank out API keys to prevent pi auto-discovering unwanted providers
+          ANTHROPIC_API_KEY = emptyFile;
+          OPENAI_API_KEY = emptyFile;
+          AWS_ACCESS_KEY_ID = emptyFile;
+          AWS_SECRET_ACCESS_KEY = emptyFile;
+          AWS_PROFILE = emptyFile;
+        };
       };
+    };
+
+  # Home-manager: pi-mcp-adapter config and pi-lens toolchain
+  flake.modules.homeManager.pi =
+    { config, pkgs, ... }:
+    {
+      # pi-lens toolchain: LSP servers, formatters, and linters in PATH
+      # (nixvim bundles its own copies inside the neovim wrapper — these are
+      # for pi-lens auto-discovery. Nix store deduplicates, so zero extra disk cost.)
+      home.packages = with pkgs; [
+        # LSP servers
+        nixd
+        pyright
+        gopls
+        typescript-language-server
+        typescript
+        bash-language-server
+        yaml-language-server
+        vscode-langservers-extracted # JSON, CSS, HTML, ESLint
+        dockerfile-language-server
+
+        # Formatters
+        nixfmt
+        shfmt
+        ruff
+        prettier
+        taplo
+
+        # Linters & analysis
+        shellcheck
+        hadolint
+        markdownlint-cli2
+        golangci-lint
+      ];
+      # pi-mcp-adapter settings: proxy-only mode (~200 tokens in context)
+      # Servers inherited from ~/.config/mcp/mcp.json (generated by programs.mcp)
+      home.file.".pi/agent/mcp.json".text = builtins.toJSON {
+        settings = {
+          directTools = false;
+          idleTimeout = 10;
+        };
+      };
+
+      # Curated model list — only cheap models, no auto/Opus
+      home.file.".pi/agent/models.json".text = piModelsJson;
+
+      # Declarative pi packages (installed on startup)
+      home.file.".pi/agent/settings.json".text = builtins.toJSON {
+        defaultModel = "deepseek-v4-pro";
+        packages = [
+          "npm:pi-mcp-adapter"
+          "npm:pi-lens"
+          "npm:pi-secret-guard"
+          "npm:pi-ghostty-theme-sync"
+          "npm:pi-notify"
+          "npm:pi-finder-subagent"
+        ];
+      };
+
+      # Skills are opt-in per project. No global skills loaded by default.
+      # To add skills to a project, symlink individual files:
+      #   mkdir -p .pi/skills
+      #   ln -s ~/code/personal/skills/explaining-code.md .pi/skills/
+      #   ln -s ~/code/personal/skills/container-use.md .pi/skills/
     };
 }

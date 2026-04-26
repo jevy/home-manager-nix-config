@@ -89,3 +89,35 @@ Package derivations live in `pkgs/`. Reference from modules via relative path: `
 ### Secrets
 
 Managed by sops-nix (`modules/secrets/sops.nix`). Secrets in `secrets.yaml`, age key at `~/.config/sops/age/keys.txt`.
+
+## Hosts Quick Reference
+
+Three hosts, two base layers:
+
+| Host | Platform | Base | Purpose |
+|------|----------|------|---------|
+| `lenovo-p14s` | x86_64-linux | `linuxDesktopBase` | Daily driver laptop (OLED, Hyprland, llama-swap) |
+| `shop-sdr` | x86_64-linux | `linuxServerBase` | Headless ham radio station (IC-7300, SDRplay, WSPR) |
+| `mac-work` | aarch64-darwin | standalone HM | Work Mac (home-manager only, no NixOS) |
+
+**Base layers** (`modules/hosts/`):
+- `linuxDesktopBase` → pulls in ~20 nixos.* + ~30 homeManager.* modules (desktop, audio, Hyprland, dev tools, etc.)
+- `linuxServerBase` → minimal: nix, user, zsh, tailscale, network, SSH, node exporter
+
+## Module Categories
+
+All under `modules/`. Each file can define `flake.modules.nixos.*` and/or `flake.modules.homeManager.*`.
+
+| Category | What's there |
+|----------|-------------|
+| `apps/` | User apps: mutt, spicetify, ncspot, 1Password, timetagger, beads |
+| `base/` | Foundational: nix settings, user account, fonts |
+| `desktop/` | Hyprland, audio (PipeWire), stylix theming, ashell bar, mako, steam |
+| `dev/` | Dev tools: git, nixvim, claude-code, opencode, pi, mcp servers, qmd |
+| `hardware/` | Hardware-specific: lenovo-p14s quirks |
+| `hosts/` | Host definitions + base layers (composition entry points) |
+| `secrets/` | sops-nix setup |
+| `security/` | howdy (IR face auth) |
+| `services/` | Systemd services: backup, boot, docker, tailscale, kanata, llama-swap, ham radio, etc. |
+| `shell/` | Shell: zsh, ghostty, ranger, yazi, CLI tools, SSH config |
+| Infrastructure | `flake-parts.nix`, `nixos.nix`, `home.nix`, `systems.nix`, `overlays.nix`, `meta.nix`, `deploy.nix` |
