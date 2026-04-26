@@ -686,11 +686,14 @@ MONEOF
             lock_cmd = "pidof hyprlock || hyprlock";
             unlock_cmd = "hyprctl dispatch dpms on";
             before_sleep_cmd = "loginctl lock-session";
-            # Kill stale hyprlock on resume so a fresh instance gets a clean
-            # fprint D-Bus proxy.  ext-session-lock shows a solid color in the
-            # gap; loginctl lock-session re-triggers lock_cmd immediately.
-            # Upstream bug: hyprlock never clears m_sDBUSState.device on suspend.
-            after_sleep_cmd = "pkill -x hyprlock; sleep 0.5; loginctl lock-session; hyprctl dispatch dpms on && sleep 1 && hyprctl reload";
+            # NOTE: fingerprint auth silently fails after resume because hyprlock
+            # never re-inits its D-Bus fprint proxy. We tried:
+            #   pkill -x hyprlock; sleep 0.5; loginctl lock-session
+            # but hyprlock holds ext-session-lock and Hyprland crashes when the
+            # lock holder dies mid-lock (reverted in fd35aec).
+            # Needs an upstream hyprlock fix or a gentler approach (e.g. SIGUSR
+            # to reinit, or a wrapper that releases the lock before restarting).
+            after_sleep_cmd = "hyprctl dispatch dpms on && sleep 1 && hyprctl reload";
             # Wait for hyprlock to fully lock the session before allowing suspend.
             # Prevents race where suspend interleaves with fprint verification.
             # https://github.com/hyprwm/hyprlock/issues/577
