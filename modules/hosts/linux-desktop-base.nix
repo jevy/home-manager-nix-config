@@ -96,6 +96,7 @@ in
             homeManager.taskSnapshot
             homeManager.frigateNotify
             homeManager.music
+            homeManager.pi
 
             inputs.typing-analysis.homeManagerModules.default
           ];

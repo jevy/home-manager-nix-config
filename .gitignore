@@ -1,5 +1,7 @@
 /result
 .beads/
 .aider*
+.pi/
+.pi-lens/
 __pycache__/
 ranger/plugins/ranger-archives
