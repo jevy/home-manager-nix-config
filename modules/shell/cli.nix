@@ -131,6 +131,10 @@
         };
       };
 
+      programs.zsh.initContent = ''
+        export INNGEST_PROD_KEY=$(cat "${config.sops.secrets.inngest_prod_key.path}")
+      '';
+
       home.shellAliases = {
         rebuildhm = "cd ~/.config/nixpkgs && sudo nixos-rebuild switch --flake \".#$(hostname)\"";
         weather = "${pkgs.curl}/bin/curl https://v2.wttr.in/ottawa";

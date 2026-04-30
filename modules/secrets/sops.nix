@@ -46,6 +46,9 @@
           # Ham radio
           wavelog_api_key = { };
 
+          # Inngest
+          inngest_prod_key = { };
+
           # Email contacts
           wife_email = { };
           quickbooks_email = { };
