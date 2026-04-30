@@ -60,16 +60,18 @@
             ];
             fallback = [
               { run = ''xdg-open "$@"''; desc = "xdg-open"; }
+              { run = ''neovide "$@"''; desc = "Neovide"; }
+              { run = ''$EDITOR "$@"''; block = true; desc = "Editor"; }
             ];
           };
 
           open.rules = [
+            { name = "*.{toml,yaml,yml,json,nix,conf,cfg,ini,sh,bash,zsh,lua,py,rb,rs,go,js,ts,tsx,jsx,md,txt,log,env,css,html,xml,svg,sql,graphql,proto,tf,hcl,Makefile,Dockerfile}"; use = "text"; }
             { mime = "application/pdf"; use = "pdf"; }
             { mime = "image/*"; use = "image"; }
             { mime = "video/*"; use = "video"; }
             { mime = "audio/*"; use = "fallback"; }
             { mime = "text/*"; use = "text"; }
-            { name = "*.{toml,yaml,yml,json,nix,conf,cfg,ini,sh,bash,zsh,lua,py,rb,rs,go,js,ts,md,txt,log,env}"; use = "text"; }
             { mime = "*"; use = "fallback"; }
           ];
         };
@@ -88,6 +90,12 @@
             { on = [ "w" ]; run = ''shell "ghostty"''; desc = "Open shell here"; }
             # Go to ~/Documents
             { on = [ "g" "D" ]; run = "cd ~/Documents"; desc = "Go to Documents"; }
+            # Go to ~/code
+            { on = [ "g" "e" ]; run = "cd ~/code"; desc = "Go to code"; }
+            # Sorting
+            { on = [ "," "m" ]; run = "sort modified --reverse"; desc = "Sort by modified"; }
+            { on = [ "," "n" ]; run = "sort alphabetical"; desc = "Sort by name"; }
+            { on = [ "," "d" ]; run = "sort dir-first --reverse"; desc = "Toggle dirs first"; }
           ];
         };
       };
