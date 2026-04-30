@@ -71,6 +71,17 @@
               [ -n "$dir" ] && cd "$dir"
             }
 
+            # Create a new worktree branched off origin/main (works from any worktree)
+            function gwtnew() {
+              local branch="''${1:?Usage: gwtnew <branch-name>}"
+              local main_wt
+              main_wt=$(git worktree list --porcelain | head -1 | sed 's/^worktree //') || return 1
+              local wt_dir="''${main_wt}-wt-''${branch//\//-}"
+              git -C "$main_wt" fetch origin main &&
+              git -C "$main_wt" worktree add -b "$branch" "$wt_dir" origin/main &&
+              cd "$wt_dir"
+            }
+
             if [ -f "${config.xdg.configHome}/zsh/api_keys.zsh" ]; then
               source "${config.xdg.configHome}/zsh/api_keys.zsh"
             fi
