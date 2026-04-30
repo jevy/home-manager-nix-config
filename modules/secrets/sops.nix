@@ -45,6 +45,10 @@
 
           # Ham radio
           wavelog_api_key = { };
+
+          # Email contacts
+          wife_email = { };
+          quickbooks_email = { };
         };
       };
     };
