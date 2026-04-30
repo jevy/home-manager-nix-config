@@ -106,7 +106,7 @@ in
           home.keyboard = {
             layout = "us";
             variant = "qwerty";
-            options = [ "ctrl:nocaps" ];
+            options = [ ];  # caps2esc handled by kanata
           };
 
           # Typing analysis

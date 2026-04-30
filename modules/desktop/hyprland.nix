@@ -463,7 +463,7 @@ MONEOF
 
             input = {
               "kb_layout" = "us";
-              "kb_options" = "ctrl:nocaps";
+              "kb_options" = "";  # caps2esc handled by kanata
               "follow_mouse" = 1;
               "touchpad" = {
                 "tap-to-click" = true;

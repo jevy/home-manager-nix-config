@@ -1,5 +1,13 @@
 # Kanata keyboard remapping (home row mods)
 # Idea from https://github.com/dreamsofcode-io/home-row-mods
+#
+# Layout summary:
+#   CapsLock        → tap = Esc, hold = Ctrl  (caps2esc, replaces xkb ctrl:nocaps)
+#   Home row holds  → a=alt, s=meta, d=shift, e=nav-layer, f=ctrl
+#                     j=ctrl, k=shift, l=meta, ;=alt
+#   j+k chord       → Esc  (vim-friendly, works alongside home row mods)
+#   Nav layer (hold e):
+#     h = Left, j = Ctrl+Backspace (delete word), k = Backspace, l = Right
 { ... }:
 {
   flake.modules.nixos.kanata =
@@ -10,10 +18,10 @@
         keyboards = {
           internalKeyboard = {
             devices = [ "/dev/input/by-path/platform-i8042-serio-0-event-kbd" ];
-            extraDefCfg = "process-unmapped-keys yes";
+            extraDefCfg = "process-unmapped-keys yes\n  concurrent-tap-hold yes";
             config = ''
               (defsrc
-               a s d e f h j k l ;
+               caps a s d e f h j k l ;
               )
               (defvar
                tap-time 150
@@ -32,6 +40,10 @@
                )
               )
               (defalias
+               ;; CapsLock: tap=esc, hold=ctrl
+               cec (tap-hold 200 200 esc lctl)
+
+               ;; Home row mods
                a (tap-hold-release-keys $tap-time $hold-time a lalt $left-hand-keys)
                s (tap-hold-release-keys $tap-time $hold-time s lmet $left-hand-keys)
                d (tap-hold-release-keys $tap-time $hold-time d lsft $left-hand-keys)
@@ -42,11 +54,15 @@
                l (tap-hold-release-keys $tap-time $hold-time l rmet $right-hand-keys)
                ; (tap-hold-release-keys $tap-time $hold-time ; ralt $right-hand-keys)
               )
+              ;; j+k chord = esc
+              (defchordsv2
+               (j k) esc 75 first-release ()
+              )
               (deflayer base
-               @a  @s  @d  @e  @f  h   @j  @k  @l  @;
+               @cec @a  @s  @d  @e  @f  h   @j  @k  @l  @;
               )
               (deflayer nav
-               _   _   _   _   _   left down up right _
+               _   _   _   _   _   _   left C-bspc bspc right _
               )
             '';
           };
