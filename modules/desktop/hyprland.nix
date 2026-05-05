@@ -500,6 +500,7 @@ MONEOF
               # Run initial setup based on current monitor state (hyprland-monitor-attached only handles events)
               "sh -c 'sleep 3; ext=$(hyprctl monitors -j | ${pkgs.jq}/bin/jq -r \".[] | select(.name != \\\"eDP-1\\\") | .name\" | head -1); if [ -n \"$ext\" ]; then ${monitorAttached} \"$ext\"; else ${monitorDetached}; fi'"
               "${pkgs.synology-drive-client}/bin/synology-drive"
+              "${pkgs.blueman}/bin/blueman-applet"
               "${popupFocusDaemon}"
             ];
 
