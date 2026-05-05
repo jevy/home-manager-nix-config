@@ -59,5 +59,15 @@
       });
     };
 
+    # Bundle the SDRplay backend into SoapySDR so any SoapySDR-based GUI
+    # (CubicSDR, SDR++, SDRangel, gqrx, …) can drive the RSPdx via the
+    # always-on sdrplay_apiService. Per upstream nixos services.sdrplayApi
+    # docs.
+    soapysdrSdrplay = final: prev: {
+      soapysdr-with-plugins = prev.soapysdr.override {
+        extraPackages = [ prev.soapysdrplay ];
+      };
+    };
+
   };
 }

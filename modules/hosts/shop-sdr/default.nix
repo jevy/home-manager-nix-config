@@ -1,11 +1,11 @@
-# Shop SDR station: Dell OptiPlex 5070 running IC-7300 + SDRplay RSPduo
-# WSPR beaconing, remote rig control via wfview over Tailscale
+# Shop SDR station: Dell OptiPlex 5070 running IC-7300 + SDRplay RSPdx
+# WSPR beaconing, remote rig control over Tailscale
 #
 # ── Hardware ──────────────────────────────────────────────────────────
 #   - Dell OptiPlex 5070 (i5-9500 Coffee Lake, 8GB RAM, 1TB SATA SSD at /dev/sda)
 #   - Icom IC-7300 (USB-B → OptiPlex: CI-V serial + audio codec)
-#   - SDRplay RSPduo (USB → OptiPlex: dual-tuner SDR)
-#   - Antenna via IC-7300 SDR mod
+#   - SDRplay RSPdx (USB → OptiPlex: 1 kHz – 2 GHz wideband SDR, vendor:product 1df7:3030)
+#   - Antenna via IC-7300 SDR mod (RX-OUT → RSPdx ANT C)
 #
 # ── Initial NixOS Install (nixos-anywhere) ───────────────────────────
 #
@@ -58,33 +58,56 @@
 #   Alternatively, deploy from the DeskMini itself:
 #     sudo nixos-rebuild switch --flake "github:jevy/nixpkgs#shop-sdr"
 #
-# ── Enabling Services ────────────────────────────────────────────────
+# ── Services (modules/services/ham-radio.nix) ────────────────────────
 #
-#   Services in modules/services/ham-radio.nix are commented out until
-#   hardware is connected. Once the IC-7300 and RSPduo are plugged in:
+#   - sdrplayApi      system unit, always-on, owns the RSPdx over USB
+#   - rigctld         system unit, always-on, /dev/ic7300, hamlib on :4532
+#   - sdrpp-server    user unit, manual start (RSPdx single-tuner)
+#   - sdrangel-server user unit, manual start (RSPdx single-tuner)
 #
-#   1. Verify udev created the symlinks:
-#        ls -la /dev/ic7300       # IC-7300 serial
-#        arecord -l               # IC-7300 USB audio should appear
+#   Verify hardware:
+#     ls -la /dev/ic7300       # IC-7300 serial symlink
+#     arecord -l               # IC-7300 USB audio codec should appear
+#     systemctl status sdrplayApi
 #
-#   2. Uncomment services in ham-radio.nix one at a time:
-#        - rigctld (IC-7300 CAT control on :4532)
-#        - wfserver (remote rig control + audio on :4533)
-#        - sparksdr (RSPduo WSPR skimmer, WebSocket on :4649)
+# ── Operating SparkSDR ──────────────────────────────────────────────
 #
-#   3. Redeploy: nix run .#deploy -- .#shop-sdr
+#   SparkSDR is interactive-only — launched from the RDP session and
+#   left running there. xrdp-sesman keeps the X session alive across
+#   disconnect, so SparkSDR keeps spotting / WSPR-ing while the Remmina
+#   window is closed. Workflow:
 #
-# ── Remote Rig Control ───────────────────────────────────────────────
+#     1. Set jevin's Linux password (one-time, for RDP auth):
+#          ssh shop-sdr 'sudo passwd jevin'
+#     2. RDP in (Remmina / Microsoft Remote Desktop / FreeRDP):
+#          shop-sdr:3389  → log in as jevin, lands in XFCE
+#     3. Launch SparkSDR from the Applications menu (first run: pick
+#        the RSPdx, ANT C, enable WSPR/FT8 bands, set callsign + grid,
+#        enable PSKReporter upload — settings persist in
+#        ~/.config/m0nnb/SparkSDR2/).
+#     4. Close the Remmina window — session + SparkSDR stay running.
+#        Reconnect any time to peek at decodes.
 #
-#   Once wfserver is running, connect from your laptop:
-#     wfview → Settings → Server → shop-sdr:50740 (default wfserver port)
+# ── Playing with other SDR apps ──────────────────────────────────────
 #
-#   WSJT-X (remote): point rigctld at shop-sdr:4533 (wfview's rigctld emulation)
-#   SparkSDR WebSocket: ws://shop-sdr:4649
+#   The RSPdx is single-tuner — only one process can own it. To run
+#   sdrpp-server or sdrangel-server, quit SparkSDR first (in the RDP
+#   session) then:
+#
+#     systemctl --user start sdrpp-server    # then sdrpp on laptop → shop-sdr:5259
+#     systemctl --user start sdrangel-server # then http://shop-sdr:8091/
+#
+# ── Remote access ────────────────────────────────────────────────────
+#
+#   rigctld (CAT):       hamlib NET rigctl model 2 → shop-sdr:4532
+#   SparkSDR WebSocket:  ws://shop-sdr:4649
+#   SDR++ IQ server:     shop-sdr:5259  (sdrpp client on laptop)
+#   SDRangel web UI:     http://shop-sdr:8091/
 #
 { config, inputs, ... }:
 let
   inherit (config.flake.modules) nixos;
+  inherit (config.flake) overlays;
 in
 {
   configurations.nixos."shop-sdr".module =
@@ -94,8 +117,9 @@ in
         # Disk partitioning (used by nixos-anywhere for initial install)
         inputs.disko.nixosModules.disko
 
-        # Hardware — nixos-hardware profiles for OptiPlex 5070 (Coffee Lake i5-9500)
+        # Hardware — nixos-hardware profiles for OptiPlex 5070 (Coffee Lake i5-9500 + UHD 630 iGPU)
         inputs.nixos-hardware.nixosModules.common-cpu-intel
+        inputs.nixos-hardware.nixosModules.common-gpu-intel  # i915 + hardware.graphics + intel-media-driver
         inputs.nixos-hardware.nixosModules.common-pc
         inputs.nixos-hardware.nixosModules.common-pc-ssd
         ../../../nixos/shop-sdr-hardware-configuration.nix
@@ -106,8 +130,8 @@ in
         # Ham radio stack (SDRplay API, wfview, hamlib, WSJT-X, SparkSDR)
         nixos.hamRadio
 
-        # WSJT-X digital modes station (WSPR, FT8, etc.)
-        nixos.wsjtx
+        # XFCE auto-started at boot + xrdp on :3389 — RDP into shop-sdr
+        nixos.remoteDesktop
 
         # WaveLogGate — push CAT data from rigctld to Wavelog
         nixos.wlgate
@@ -117,6 +141,10 @@ in
       ];
 
       nixpkgs.hostPlatform = "x86_64-linux";
+
+      # Bundles SDRplay plugin into soapysdr-with-plugins so any
+      # SoapySDR-backed app (CubicSDR, SDR++, SDRangel, gqrx) sees the RSPdx.
+      nixpkgs.overlays = [ overlays.soapysdrSdrplay ];
 
       # Disk layout for nixos-anywhere — simple single-disk GPT + ext4
       # Change /dev/sda to match your actual disk (check with `lsblk`)
@@ -149,6 +177,16 @@ in
       };
 
       networking.hostName = "shop-sdr";
+
+      # Hardware OpenGL — paired with nixos-hardware.common-gpu-intel above.
+      # Provides /run/opengl-driver/lib/dri so SkiaSharp/Avalonia (SparkSDR,
+      # SDR++, SDRangel) and Xvnc GLX can find mesa drivers.
+      hardware.graphics.enable = true;
+
+      # Defer dbus-broker migration — nixpkgs flipped the default and the
+      # switch inhibitor blocks live activation. Stay on legacy dbus until
+      # we plan a reboot to flip to broker.
+      services.dbus.implementation = "dbus";
 
       # PipeWire for audio routing (IC-7300 USB audio codec + SparkSDR)
       services.pipewire = {
