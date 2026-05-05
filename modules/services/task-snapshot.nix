@@ -45,6 +45,7 @@
                 meta = post.metadata
                 self.name = path.stem
                 self.completed = meta.get("completed", False)
+                self.archived = meta.get("archived", False) is True
                 self.urgent = meta.get("urgent", False) is True
                 self.important = meta.get("important", False) is True
                 self.today = meta.get("today", False) is True
@@ -143,12 +144,13 @@
                 except Exception as e:
                     print(f"  {C.YELLOW}warning: skipping {p.name}: {e}{C.RESET}", file=sys.stderr)
 
-            active = [t for t in all_tasks if not t.completed]
-            completed_count = len(all_tasks) - len(active)
+            active = [t for t in all_tasks if not t.completed and not t.archived]
+            archived = [t for t in all_tasks if t.archived and not t.completed]
+            completed_count = sum(1 for t in all_tasks if t.completed)
 
             # ── Summary ──
             section(f"Task Snapshot ({TODAY})")
-            print(f"Total: {len(all_tasks)}  Active: {len(active)}  Completed: {completed_count}")
+            print(f"Total: {len(all_tasks)}  Active: {len(active)}  Completed: {completed_count}  Archived: {len(archived)}")
 
             # ── Eisenhower Quadrants ──
             section("Eisenhower Quadrants (active only)")
@@ -238,6 +240,10 @@
                 f"  {C.GREEN}[{t.area or '?'}]{C.RESET} {t.name}"
                 for t in sorted(completed_today, key=lambda t: t.name)
             ])
+
+            # ── Archived ──
+            section("Archived")
+            or_none([f"  {C.DIM}[{t.area or '?'}]{C.RESET} {t.name}" for t in sorted(archived, key=lambda t: t.name)])
 
             # ── Spoon Budget ──
             section("Spoon Budget (all active tasks)")
