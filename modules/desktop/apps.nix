@@ -89,6 +89,7 @@
         hamlib_4
         grig
         tigervnc
+        remmina
         xorg.xauth
         gridtracker
       ];
