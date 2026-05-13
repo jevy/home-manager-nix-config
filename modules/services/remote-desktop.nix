@@ -6,11 +6,16 @@
 #
 # One-time on the host: `sudo passwd jevin` to set a Linux password
 # (separate from your SSH key — RDP needs PAM auth).
-{ ... }:
+{ config, ... }:
+let
+  inherit (config.flake.modules) homeManager;
+in
 {
   flake.modules.nixos.remoteDesktop =
     { pkgs, ... }:
     {
+      home-manager.users.jevin.imports = [ homeManager.xrdpXfce ];
+
       services.xrdp = {
         enable = true;
         defaultWindowManager = "${pkgs.xfce.xfce4-session}/bin/xfce4-session";
@@ -69,4 +74,29 @@
         xterm
       ];
     };
+
+  # xfwm4 focus behaviour for the RDP session: make new windows and
+  # modal dialogs steal focus and raise to the top. Without these,
+  # apps like WSJT-X (Rig Control Error), GridTracker (nwjs renderer
+  # hangs), and CubicSDR (Set Center Frequency) pop modals that hold
+  # the keyboard/mouse grab while staying invisible behind other
+  # windows — the session feels frozen until the offending app is
+  # killed via SSH.
+  #
+  # Also empty out ~/.config/autostart so leftover .desktop files
+  # (e.g. the wsjtx.desktop that the old wsjtx.nix module seeded into
+  # $HOME) can't auto-launch and trap focus before you see the desktop.
+  flake.modules.homeManager.xrdpXfce = { lib, ... }: {
+    xfconf.settings.xfwm4 = {
+      "general/focus_new" = true;
+      "general/prevent_focus_stealing" = false;
+      "general/raise_on_focus" = true;
+      "general/raise_on_click" = true;
+      "general/click_to_focus" = true;
+    };
+
+    home.activation.cleanXfceAutostart = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      run rm -f $HOME/.config/autostart/wsjtx.desktop $HOME/.config/autostart/gridtracker.desktop
+    '';
+  };
 }
