@@ -72,6 +72,7 @@ in
             homeManager.audio
             homeManager.nixvim
             homeManager.mcp
+            homeManager.tsq
             homeManager.hyprland
             homeManager.mutt
             homeManager.spicetify
