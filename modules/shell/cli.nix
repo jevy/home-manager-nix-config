@@ -14,6 +14,7 @@
         kubectl
         ripgrep
         ripgrep-all
+        ast-grep
         file
         ffmpeg
         killall
