@@ -120,6 +120,27 @@
         };
       };
 
+      # The WebKit frontend in the Wails app wedges after ~2 days of uptime
+      # under xvfb-run — UDP recv keeps draining but HTTPS pushes stop.
+      # Restart daily at 06:00 local to keep it fresh.
+      systemd.timers.wlgate-restart = {
+        description = "Daily restart of WaveLogGate";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnCalendar = "*-*-* 06:00:00";
+          Persistent = true;
+          Unit = "wlgate-restart.service";
+        };
+      };
+
+      systemd.services.wlgate-restart = {
+        description = "Restart WaveLogGate";
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "/run/current-system/sw/bin/systemctl restart wlgate.service";
+        };
+      };
+
       # WaveLogGate listens on these ports:
       # 2333/udp  — WSJT-X QSO data
       # 54321/tcp — QSY requests from Wavelog
