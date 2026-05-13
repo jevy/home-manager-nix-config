@@ -204,7 +204,6 @@
         '';
       };
 
-
       # Server definitions shared across all tools
       servers = {
         context7 = {
@@ -250,6 +249,10 @@
         };
         homeassistant = {
           command = "${homeAssistantMcpWrapper}/bin/run-homeassistant-mcp";
+        };
+        linear = {
+          command = lib.getExe' pkgs.nodejs "npx";
+          args = [ "-y" "mcp-remote" "https://mcp.linear.app/sse" ];
         };
       };
     in
