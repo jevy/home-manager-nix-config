@@ -34,6 +34,8 @@
       environment.systemPackages = with pkgs; [
         hamlib_4              # rigctld, rigctl
         wsjtx                 # WSJT-X for WSPR/FT8
+        js8call               # JS8Call — keyboard chat over FT8-like protocol
+        fldigi                # Olivia, PSK31, MFSK, RTTY, Hellschreiber, etc.
         gridtracker           # Live WSJT-X decode map
         grig                  # Hamlib rig control GUI
         flrig                 # Rig control GUI used by fldigi/wsjtx
