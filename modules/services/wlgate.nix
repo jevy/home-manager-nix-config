@@ -1,6 +1,16 @@
-# WaveLogGate: pushes CAT data (freq, mode, power) from rigctld to Wavelog
-# Receives WSJT-X N1MM broadcast on :2333 for automatic QSO logging
-# Runs headless under xvfb-run as a systemd service
+# WaveLogGate: pushes CAT data (freq, mode, power) from rigctld to Wavelog,
+# and receives WSJT-X N1MM ADIF broadcasts on :2333 for automatic QSO logging.
+#
+# Architecture notes (v2.0.2, from upstream source):
+#   - QSO push is Go-side: net/http POST to <url>/api/qso. NO queue, NO retry,
+#     NO persistence. A failed POST drops the QSO; recovery means manually
+#     replaying from ~/.local/share/WSJT-X/wsjtx_log.adi.
+#   - HTTP client uses default Transport (no IdleConnTimeout) with a 5s
+#     timeout. Stale keep-alive TCP conns appear to wedge POSTs after long
+#     uptime — daily restart at 06:00 is our workaround.
+#   - The -debug flag is the only knob for logging; without it the binary is
+#     silent per-QSO. We enable it so journalctl -u wlgate shows POST activity.
+#   - Runs headless under xvfb-run because Wails always opens a webview.
 { inputs, ... }:
 {
   flake.modules.nixos.wlgate =
@@ -98,7 +108,7 @@
         }
         CONF
 
-        exec ${waveloggate}/bin/wavelog-gate-headless
+        exec ${waveloggate}/bin/wavelog-gate-headless -debug
       '';
     in
     {
@@ -120,9 +130,9 @@
         };
       };
 
-      # The WebKit frontend in the Wails app wedges after ~2 days of uptime
-      # under xvfb-run — UDP recv keeps draining but HTTPS pushes stop.
-      # Restart daily at 06:00 local to keep it fresh.
+      # POSTs to Wavelog silently stop after multi-day uptime (likely stale
+      # HTTP keep-alive — wlgate's http.Transport has no IdleConnTimeout).
+      # Daily restart at 06:00 local keeps the client fresh.
       systemd.timers.wlgate-restart = {
         description = "Daily restart of WaveLogGate";
         wantedBy = [ "timers.target" ];
