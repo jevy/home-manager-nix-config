@@ -5,9 +5,6 @@
   flake.modules.homeManager.mcp =
     { config, pkgs, lib, ... }:
     let
-      # Container-use MCP server (containerized environments for coding agents)
-      containerUse = pkgs.callPackage ../../pkgs/container-use.nix { };
-
       # Kubernetes MCP server wrapper
       kubernetesWrapper =
         pkgs.runCommand "run-mcp-kubernetes"
@@ -227,10 +224,6 @@
           env = {
             GRAFANA_URL = "https://grafana.jevy.org";
           };
-        };
-        container-use = {
-          command = "${containerUse}/bin/container-use";
-          args = [ "stdio" ];
         };
         n8n = {
           command = "${n8nMcpWrapper}/bin/run-n8n-mcp";
