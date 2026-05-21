@@ -58,6 +58,7 @@
         bambu-studio
         kdePackages.kdenlive
         qbittorrent
+        myfitnesspal
       ];
 
       programs.radio-active.enable = true;
