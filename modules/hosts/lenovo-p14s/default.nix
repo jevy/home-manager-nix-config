@@ -22,8 +22,8 @@ in
         # Local LLM inference via llama-swap + llama.cpp (Vulkan)
         nixos.llamaSwap
 
-        # IR camera facial recognition (disabled until set up)
-        # nixos.howdy
+        # NFS automount of navidrome music library (TrueNAS via democratic-csi PVC)
+        nixos.musicNfs
       ];
 
       networking.hostName = "lenovo-p14s";
@@ -31,9 +31,9 @@ in
       # LUKS
       boot.initrd.luks.devices."cryptroot".device = "/dev/disk/by-uuid/93f39771-d83e-4b78-baa2-13c6f7f921f1";
 
-      # Btrfs, not ZFS
+      # Btrfs, not ZFS (NFS for the music share — see nixos.musicNfs)
       virtualisation.docker.storageDriver = "btrfs";
-      boot.supportedFilesystems = lib.mkForce [ "btrfs" ];
+      boot.supportedFilesystems = lib.mkForce [ "btrfs" "nfs" ];
 
       # === TEMPORARY: disable hy3 plugin to isolate boot issue ===
 
