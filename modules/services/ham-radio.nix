@@ -47,6 +47,8 @@
         sdrplay               # SDRplay API libraries
         soapysdr-with-plugins # SoapyAPI + SDRplay plugin (overlay)
         vlc                   # Media player for audio monitoring
+        pavucontrol           # PulseAudio/PipeWire volume + stream routing
+        qpwgraph              # PipeWire graph patchbay (visual JACK-style routing)
       ];
 
       # ── rigctld — IC-7300 rig control daemon ─────────────────────────
