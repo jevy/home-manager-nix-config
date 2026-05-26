@@ -66,7 +66,7 @@
             N8N_API_KEY=$(cat "$SOPS_SECRET_PATH/n8n_api_key")
             export N8N_API_KEY
           fi
-          exec npx n8n-mcp "$@"
+          exec npx -y n8n-mcp "$@"
         '';
       };
 
