@@ -27,6 +27,7 @@
         httpie
         kubectx
         pandoc
+        ocrmypdf
         texlive.combined.scheme-small
         zip
         fd
