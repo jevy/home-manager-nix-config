@@ -101,6 +101,10 @@
           After = [ "hyprland-session.target" ];
         };
         Service = {
+          # Block startup until NetworkManager's D-Bus name is available —
+          # ashell's network service doesn't retry on ServiceUnknown, so a
+          # race during rebuild leaves WiFi/Bluetooth widgets missing.
+          ExecStartPre = "${pkgs.networkmanager}/bin/nm-online -s -q -t 30";
           RestartSec = "2s";
         };
       };
