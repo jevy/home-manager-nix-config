@@ -65,16 +65,14 @@ in
       nixvimPkgs = inputs.nixvim.legacyPackages.${pkgs.stdenv.hostPlatform.system};
       nvimVscode = nixvimPkgs.makeNixvim nixvimVscodeConfig;
       nvimWrapperText = builtins.readFile "${nvimVscode}/bin/nvim";
-      parts = pkgs.lib.strings.splitString " -u " nvimWrapperText;
+      # Nixvim wraps the init inside an ANSI-C bash string `VIMINIT=$'... dofile(\'/nix/store/...-init.lua\') ...'`
+      # so the single quotes around the path are backslash-escaped.
+      afterDofile = pkgs.lib.strings.splitString "dofile(\\'" nvimWrapperText;
       initVscodePath =
-        if (builtins.length parts) < 2 then
-          throw "Could not find -u path in wrapped nvim script"
+        if (builtins.length afterDofile) < 2 then
+          throw "Could not find dofile path in wrapped nvim script"
         else
-          let
-            tail = builtins.elemAt parts 1;
-            firstToken = builtins.head (pkgs.lib.strings.splitString " " tail);
-          in
-          firstToken;
+          builtins.head (pkgs.lib.strings.splitString "\\'" (builtins.elemAt afterDofile 1));
     in
     {
       home.file.".config/nvim/init-vscode.lua".source = initVscodePath;
