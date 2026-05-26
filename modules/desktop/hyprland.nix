@@ -505,6 +505,12 @@ MONEOF
             ];
 
             bind = [
+              # Swallow bare Super press so it doesn't leak into focused apps
+              # (e.g. Windows VMs treat bare Super as "open Start menu").
+              # Combos like $mod+1 still work — those binds take precedence.
+              ", Super_L, exec, true"
+              ", Super_R, exec, true"
+
               # Window management
               "$mod, Q, exec, sh -c 'cur=$(hyprctl -j getoption general:layout | ${pkgs.jq}/bin/jq -r .str); [ \"$cur\" = \"hy3\" ] && hyprctl dispatch hy3:killactive || hyprctl dispatch killactive'"
               "$mod SHIFT, R, exec, hyprctl reload"
