@@ -42,31 +42,31 @@
 
           opener = {
             pdf = [
-              { run = ''zathura "$@"''; desc = "Zathura"; }
-              { run = ''papers "$@"''; desc = "Papers"; }
-              { run = ''firefox "$@"''; desc = "Firefox"; }
+              { run = ''zathura "$@"''; orphan = true; desc = "Zathura"; }
+              { run = ''papers "$@"''; orphan = true; desc = "Papers"; }
+              { run = ''firefox "$@"''; orphan = true; desc = "Firefox"; }
             ];
             image = [
-              { run = ''imv "$@"''; desc = "imv"; }
-              { run = ''gimp "$@"''; desc = "GIMP"; }
+              { run = ''imv "$@"''; orphan = true; desc = "imv"; }
+              { run = ''gimp "$@"''; orphan = true; desc = "GIMP"; }
             ];
             video = [
-              { run = ''vlc "$@"''; desc = "VLC"; }
-              { run = ''firefox "$@"''; desc = "Firefox"; }
+              { run = ''vlc "$@"''; orphan = true; desc = "VLC"; }
+              { run = ''firefox "$@"''; orphan = true; desc = "Firefox"; }
             ];
             text = [
-              { run = ''neovide "$@"''; desc = "Neovide"; }
+              { run = ''neovide "$@"''; orphan = true; desc = "Neovide"; }
               { run = ''$EDITOR "$@"''; block = true; desc = "Editor"; }
             ];
             fallback = [
-              { run = ''xdg-open "$@"''; desc = "xdg-open"; }
-              { run = ''neovide "$@"''; desc = "Neovide"; }
+              { run = ''xdg-open "$@"''; orphan = true; desc = "xdg-open"; }
+              { run = ''neovide "$@"''; orphan = true; desc = "Neovide"; }
               { run = ''$EDITOR "$@"''; block = true; desc = "Editor"; }
             ];
           };
 
           open.rules = [
-            { name = "*.{toml,yaml,yml,json,nix,conf,cfg,ini,sh,bash,zsh,lua,py,rb,rs,go,js,ts,tsx,jsx,md,txt,log,env,css,html,xml,svg,sql,graphql,proto,tf,hcl,Makefile,Dockerfile}"; use = "text"; }
+            { url = "*.{toml,yaml,yml,json,nix,conf,cfg,ini,sh,bash,zsh,lua,py,rb,rs,go,js,ts,tsx,jsx,md,txt,log,env,css,html,xml,svg,sql,graphql,proto,tf,hcl,Makefile,Dockerfile}"; use = "text"; }
             { mime = "application/pdf"; use = "pdf"; }
             { mime = "image/*"; use = "image"; }
             { mime = "video/*"; use = "video"; }
@@ -86,8 +86,10 @@
             { on = [ "<C-f>" ]; run = ''shell 'result="$(fd -H | fzf)"; [ -n "$result" ] && ya emit reveal "$result"' --block''; desc = "fzf search"; }
             # Drag and drop (replaces ranger <C-d>)
             { on = [ "<C-d>" ]; run = "plugin drag"; desc = "Drag and drop"; }
-            # Open shell in current directory
-            { on = [ "w" ]; run = ''shell "ghostty"''; desc = "Open shell here"; }
+            # Open shell in current directory (detached — survives yazi exit)
+            { on = [ "w" ]; run = ''shell "ghostty" --orphan''; desc = "Open shell here"; }
+            # Refresh directory (useful for NFS/network mounts where inotify doesn't fire)
+            { on = [ "R" ]; run = "refresh"; desc = "Refresh directory"; }
             # Go to ~/Documents
             { on = [ "g" "D" ]; run = "cd ~/Documents"; desc = "Go to Documents"; }
             # Go to ~/code
