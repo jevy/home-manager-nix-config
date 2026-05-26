@@ -117,7 +117,6 @@ All under `modules/`. Each file can define `flake.modules.nixos.*` and/or `flake
 | `hardware/` | Hardware-specific: lenovo-p14s quirks |
 | `hosts/` | Host definitions + base layers (composition entry points) |
 | `secrets/` | sops-nix setup |
-| `security/` | howdy (IR face auth) |
 | `services/` | Systemd services: backup, boot, docker, tailscale, kanata, llama-swap, ham radio, etc. |
 | `shell/` | Shell: zsh, ghostty, ranger, yazi, CLI tools, SSH config |
 | Infrastructure | `flake-parts.nix`, `nixos.nix`, `home.nix`, `systems.nix`, `overlays.nix`, `meta.nix`, `deploy.nix` |
