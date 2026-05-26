@@ -188,11 +188,14 @@ in
       # we plan a reboot to flip to broker.
       services.dbus.implementation = "dbus";
 
-      # PipeWire for audio routing (IC-7300 USB audio codec + SparkSDR)
+      # PipeWire for audio routing (IC-7300 USB audio codec + SparkSDR).
+      # jack.enable provides the libjack shim so fldigi (and other JACK-first
+      # ham apps) connect to PipeWire instead of failing on a missing jackd.
       services.pipewire = {
         enable = true;
         alsa.enable = true;
         pulse.enable = true;
+        jack.enable = true;
       };
       # Disable PulseAudio (PipeWire replaces it)
       services.pulseaudio.enable = false;
