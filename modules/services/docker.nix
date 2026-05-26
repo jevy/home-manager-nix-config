@@ -18,6 +18,11 @@
       };
 
       programs.virt-manager.enable = true;
+      # Note: Windows 11 guests can't auto-resize the display with QXL video
+      # (QXL DOD driver on Win10/11 ignores ChangeDisplaySettings from spice-vdagent).
+      # To enable auto-resize, switch the VM's video model from `qxl` to `virtio`
+      # and install the vioGPU driver inside Windows from the virtio-win ISO
+      # (D:\vioGPU\w11\amd64\vioGpuDod.inf). Otherwise use View → Scale Display → Always.
 
       environment.systemPackages = [ pkgs.virtiofsd ];
 
