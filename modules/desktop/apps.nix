@@ -90,7 +90,7 @@
         grig
         tigervnc
         remmina
-        xorg.xauth
+        xauth
         gridtracker
       ];
 
@@ -164,6 +164,7 @@
 
       programs.firefox = {
         enable = true;
+        configPath = ".mozilla/firefox";
         profiles.default = { };
       };
 
@@ -194,6 +195,7 @@
           name = "adw-gtk3";
           package = pkgs.adw-gtk3;
         };
+        gtk4.theme = config.gtk.theme;
         iconTheme = {
           name = "Adwaita";
           package = pkgs.adwaita-icon-theme;

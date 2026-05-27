@@ -62,6 +62,7 @@
 
       wayland.windowManager.hyprland = {
         enable = true;
+        configType = "hyprlang";
         systemd.enable = true; # Required for hyprland-session.target (ashell depends on it)
         # xwayland.enable = true;
         plugins = [
