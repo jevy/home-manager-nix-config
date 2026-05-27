@@ -179,7 +179,30 @@
         vscode = {
           enable = false;
         };
+        # Stylix's GTK target overlays dark gruvbox values onto libadwaita's
+        # named color tokens (window_bg_color, view_bg_color, …), which makes
+        # every GTK4/libadwaita app — and any Electron/Firefox app inferring
+        # system appearance from the GTK palette — render dark. Disable it so
+        # those apps follow adw-gtk3 light below.
+        gtk.enable = false;
+        gnome.enable = false;
       };
+
+      gtk = {
+        enable = true;
+        theme = {
+          name = "adw-gtk3";
+          package = pkgs.adw-gtk3;
+        };
+        iconTheme = {
+          name = "Adwaita";
+          package = pkgs.adwaita-icon-theme;
+        };
+      };
+
+      # Tell xdg-desktop-portal (and thus Electron apps like Slack, plus
+      # Firefox's prefers-color-scheme) that the system prefers light.
+      dconf.settings."org/gnome/desktop/interface".color-scheme = "prefer-light";
 
       services.keybase.enable = true;
 
