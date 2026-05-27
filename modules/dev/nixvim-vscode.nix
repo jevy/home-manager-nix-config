@@ -2,6 +2,7 @@
 { inputs, ... }:
 let
   nixvimVscodeConfig = {
+    nixpkgs.source = inputs.nixpkgs;
     opts = {
       expandtab = true;
       shiftwidth = 2;

@@ -6,11 +6,9 @@
       enable = true;
       enableDefaultConfig = false;
       includes = [ "config.local" ];
-      matchBlocks = {
-        "*" = {
-          identityFile = "${config.sops.secrets.ssh_private_key.path}";
-          addKeysToAgent = "yes";
-        };
+      settings."*" = {
+        IdentityFile = "${config.sops.secrets.ssh_private_key.path}";
+        AddKeysToAgent = "yes";
       };
     };
 
