@@ -18,11 +18,18 @@
       };
 
       services.hypridle.enable = lib.mkDefault true;
-      programs.regreet.enable = lib.mkDefault true;
-      services.greetd.enable = lib.mkDefault true;
+
+      # tuigreet: terminal greeter, no compositor/GTK. Type password, Enter.
+      services.greetd = {
+        enable = lib.mkDefault true;
+        settings.default_session = {
+          command = "${pkgs.greetd.tuigreet}/bin/tuigreet --time --remember --remember-session --sessions /run/current-system/sw/share/wayland-sessions";
+          user = "greeter";
+        };
+      };
 
       # Disable fingerprint auth for greetd — fprintd blocks the PAM
-      # conversation, preventing password fallback in regreet.
+      # conversation, preventing password fallback.
       # Fingerprint still works for sudo, hyprlock, etc.
       security.pam.services.greetd.fprintAuth = false;
 
@@ -560,7 +567,7 @@ MONEOF
               "$mod, G, exec, kitty -- yazi ~/Downloads"
               "$mod, I, exec, ${pkgs.blueman}/bin/blueman-manager"
               "$mod, P, exec, ${pkgs.hyprlock}/bin/hyprlock"
-              "$mod, M, exec, ${pkgs.wl-kbptr}/bin/wl-kbptr -o modes=floating,bisect,click -o mode_floating.source=detect"
+              "$mod, M, exec, ${pkgs.wl-kbptr}/bin/wl-kbptr -o modes=floating,click -o mode_floating.source=detect"
 
               # Window and group management
               "$mod, F, togglefloating"
