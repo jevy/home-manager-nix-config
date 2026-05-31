@@ -74,6 +74,7 @@ in
             homeManager.mcp
             homeManager.tsq
             homeManager.hyprland
+            homeManager.kanata
             homeManager.mutt
             homeManager.spicetify
             homeManager.ncspot
