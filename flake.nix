@@ -5,6 +5,23 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.url = "github:nix-community/home-manager/master";
 
+    # Pinned to the last nixpkgs whose linuxPackages_latest is kernel 7.0.6 — the
+    # newest 7.0.x that dodges BOTH recent regressions:
+    #   - 7.0.7 regressed MT7925/MT7922 Bluetooth: btmtk rejects the chip's short
+    #     WMT FUNC_CTRL event ("Failed to send wmt func ctrl (-22)", no controller).
+    #     Introduced by 634a4408c061, fixed in 7.0.10 by e193447ac6c9.
+    #   - 7.0.9 regressed pidfd→/proc mapping, breaking xdg-desktop-portal app-info
+    #     resolution (all GTK4/portal file pickers fail: "Unable to open
+    #     /proc/<pid>/root" — Save As in Papers, file uploads in Slack, etc).
+    # 7.0.7/7.0.8 fix the portal but break BT; 7.0.10 fixes BT but breaks the
+    # portal. 7.0.6 predates both. Used only for boot.kernelPackages on lenovo-p14s.
+    # See modules/hardware/lenovo-p14s.nix.
+    # TODO: drop this input and restore linuxPackages_latest once a kernel ships
+    # with both the btmtk fix and the portal/pidfd fix. Track:
+    #   https://github.com/flatpak/xdg-desktop-portal/issues/1653
+    #   https://github.com/flatpak/xdg-desktop-portal/issues/1719
+    nixpkgs-kernel706.url = "github:NixOS/nixpkgs/ec5490bc79b6e20068bfb068d572a05678bed4f4";
+
     # Dendritic pattern infrastructure
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
