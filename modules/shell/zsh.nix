@@ -56,6 +56,10 @@
           (lib.mkOrder 550 ''
             # Re-source fzf keybindings after zsh-vi-mode initializes
             zvm_after_init_commands+=('source <(fzf --zsh)')
+            # Ghostty translates Ctrl+Backspace (kanata e+u) to ESC+DEL.
+            # Bind that in vi-insert mode to delete the previous word; otherwise
+            # zsh-vi-mode treats the ESC as "switch to normal mode".
+            zvm_after_init_commands+=('bindkey -M viins "^[^?" backward-kill-word')
           '')
           # Regular init content
           (lib.mkOrder 1000 ''
