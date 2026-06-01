@@ -33,6 +33,11 @@
               "ctrl+a>ctrl+p=previous_tab"
               "alt+k=scroll_page_up"
               "alt+j=scroll_page_down"
+              # Make Ctrl+Backspace (kanata nav: e+u) delete a word in the shell.
+              # Terminals can't distinguish C-bspc from bspc, so readline never
+              # sees it as delete-word. Translate it to ESC+DEL (what Alt+Bspc
+              # would emit), which readline binds to backward-kill-word.
+              "ctrl+backspace=text:\\x1b\\x7f"
             ]
             ++ (lib.optionals pkgs.stdenv.isDarwin [
               "super+a>c=new_tab"
