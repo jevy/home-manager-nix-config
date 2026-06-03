@@ -33,6 +33,18 @@
         secretsDir = "${config.sops.defaultSymlinkPath}";
       in ''
         set use_threads=threads sort=reverse-last-date sort_aux=date
+
+        # Esc cancels everywhere — prompts, searches, compose fields.
+        # Default is Ctrl+G; remap so behaviour matches the rest of the system.
+        set abort_key = "\e"
+
+        # Ctrl+o for reverse-sort prompt (O is taken by lieer sync)
+        # Avoiding \e (Alt) prefixes so Esc stays a clean cancel.
+        bind index \Co sort-reverse
+
+        # Ctrl+t / Ctrl+f toggle threaded vs flat view
+        macro index,pager \Ct "<enter-command>set use_threads=threads<enter>" "threaded view"
+        macro index,pager \Cf "<enter-command>set use_threads=flat<enter>" "flat view"
         set index_format='%4C %Z %<[y?%<[m?%<[d?%[%l:%M%p ]&%[%a %d ]>&%[%b %d ]>&%[%m/%y ]> %-15.15L  %s %g'
         set sidebar_format = "%D%* %n"
 
