@@ -13,6 +13,9 @@ in
         inputs.nixos-hardware.nixosModules.lenovo-thinkpad-p14s-amd-gen6
         nixos.lenovoP14sHardware
 
+        # Race fingerprint + password in polkit's PAM stack
+        nixos.pamFprintRace
+
         # Shared Linux desktop base
         nixos.linuxDesktopBase
 
