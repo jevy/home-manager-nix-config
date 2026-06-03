@@ -56,12 +56,12 @@
               { run = ''firefox "$@"''; orphan = true; desc = "Firefox"; }
             ];
             text = [
-              { run = ''neovide "$@"''; orphan = true; desc = "Neovide"; }
+              { run = ''setsid -f neovide "$@"''; orphan = true; desc = "Neovide"; }
               { run = ''$EDITOR "$@"''; block = true; desc = "Editor"; }
             ];
             fallback = [
               { run = ''xdg-open "$@"''; orphan = true; desc = "xdg-open"; }
-              { run = ''neovide "$@"''; orphan = true; desc = "Neovide"; }
+              { run = ''setsid -f neovide "$@"''; orphan = true; desc = "Neovide"; }
               { run = ''$EDITOR "$@"''; block = true; desc = "Editor"; }
             ];
           };
