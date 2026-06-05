@@ -27,6 +27,9 @@ in
 
         # NFS automount of navidrome music library (TrueNAS via democratic-csi PVC)
         nixos.musicNfs
+
+        # SANE + ScanSnap S1300 (epjitsu backend)
+        nixos.scanner
       ];
 
       networking.hostName = "lenovo-p14s";
