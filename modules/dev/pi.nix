@@ -93,7 +93,6 @@ in
 
       programs.pi.coding-agent = {
         enable = true;
-        users = [ "jevin" ];
 
         rules = ''
           # Shell Commands

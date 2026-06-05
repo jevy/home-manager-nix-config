@@ -85,7 +85,6 @@ in
             homeManager.ashell
             homeManager.mako
             homeManager.hyprSession
-            # homeManager.beads  # disabled: vendorHash mismatch with upstream
             homeManager.ssh
             homeManager.claudeCode
             homeManager.opencode

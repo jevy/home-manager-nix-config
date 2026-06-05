@@ -10,6 +10,11 @@ let
         base16Scheme = "${pkgs.base16-schemes}/share/themes/gruvbox-material-dark-soft.yaml";
         opacity.popups = 0.9;
 
+        # Stylix's kmscon target still sets services.kmscon.{extraConfig,fonts},
+        # which were removed in nixpkgs unstable. Disable until the pinned
+        # stylix fork (mputz86/stylix/neomutt) updates.
+        targets.kmscon.enable = false;
+
         fonts = {
           serif = {
             package = pkgs.dejavu_fonts;

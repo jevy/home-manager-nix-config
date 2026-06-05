@@ -16,7 +16,6 @@
         keymapp
         vlc
         signal-desktop
-        # nasc # Broken?
         blueman
         solaar
         # calendar-cli
@@ -79,7 +78,6 @@
         papers
         repomix
         nethogs
-        # marktext # Broken: node-gyp build failure
         wl-screenrec
         hyprpicker
         hyprland-monitor-attached
