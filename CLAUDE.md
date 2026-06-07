@@ -17,6 +17,14 @@ nix flake check
 nix flake update <input-name>
 ```
 
+## Reviewing a PR
+
+`flowgraph` maps a branch's diff as a FE→GraphQL→resolver→service→DB flow diagram
+(changed files highlighted). From the worktree: `flowgraph --open` → reads the
+working-tree diff, renders a PDF, opens it in zathura. Then drive into it from
+Neovim with `gd`/`gri`/`grr` (cross the gql→resolver wire) and `<leader>go`/`gi`
+(walk the call tree). Full playbook + flags + gotchas: **`pkgs/flowgraph/README.md`**.
+
 ## Architecture: Dendritic Pattern with flake-parts
 
 This config follows the **[dendritic pattern](https://github.com/mightyiam/dendritic)**. Every `.nix` file under `modules/` is a flake-parts top-level module, auto-imported via `import-tree`.
@@ -113,7 +121,7 @@ All under `modules/`. Each file can define `flake.modules.nixos.*` and/or `flake
 | `apps/` | User apps: mutt, spicetify, ncspot, 1Password, timetagger |
 | `base/` | Foundational: nix settings, user account, fonts |
 | `desktop/` | Hyprland, audio (PipeWire), stylix theming, ashell bar, mako, steam |
-| `dev/` | Dev tools: git, nixvim, claude-code, opencode, pi, mcp servers, qmd |
+| `dev/` | Dev tools: git, nixvim, claude-code, opencode, pi, mcp servers, qmd, tsq, flowgraph |
 | `hardware/` | Hardware-specific: lenovo-p14s quirks |
 | `hosts/` | Host definitions + base layers (composition entry points) |
 | `secrets/` | sops-nix setup |

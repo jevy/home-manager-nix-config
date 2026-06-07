@@ -73,6 +73,7 @@ in
             homeManager.nixvim
             homeManager.mcp
             homeManager.tsq
+            homeManager.flowgraph
             homeManager.hyprland
             homeManager.kanata
             homeManager.mutt
