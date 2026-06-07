@@ -42,9 +42,17 @@
         # Avoiding \e (Alt) prefixes so Esc stays a clean cancel.
         bind index \Co sort-reverse
 
-        # Ctrl+t / Ctrl+f toggle threaded vs flat view
-        macro index,pager \Ct "<enter-command>set use_threads=threads<enter>" "threaded view"
-        macro index,pager \Cf "<enter-command>set use_threads=flat<enter>" "flat view"
+        # Ctrl+t toggles threaded <-> flat. neomutt has no native toggle for the
+        # use_threads enum, so Ctrl+t replays one of two helper macros that each
+        # swap which one Ctrl+t points to next (doubled backslashes feed the
+        # rebind command as literal text rather than replaying the keys).
+        macro index,pager \e1 "<enter-command>set use_threads=threads sort=reverse-last-date sort_aux=date<enter><enter-command>macro index,pager \\Ct \\e2<enter>" "threaded view"
+        macro index,pager \e2 "<enter-command>set use_threads=flat sort=reverse-date<enter><enter-command>macro index,pager \\Ct \\e1<enter>" "flat view"
+        macro index,pager \Ct \e2 "toggle threaded/flat view"
+
+        # Ctrl+f: notmuch search across all mail (vfolder-from-query). Previously
+        # clobbered by the flat-view macro that used to live on this key.
+        macro index \Cf "<vfolder-from-query>" "notmuch search"
         set index_format='%4C %Z %<[y?%<[m?%<[d?%[%l:%M%p ]&%[%a %d ]>&%[%b %d ]>&%[%m/%y ]> %-15.15L  %s %g'
         set sidebar_format = "%D%* %n"
 
