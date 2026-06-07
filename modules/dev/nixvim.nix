@@ -2,7 +2,7 @@
 { inputs, ... }:
 {
   flake.modules.homeManager.nixvim =
-    { config, pkgs, lib, ... }:
+    { config, pkgs, ... }:
     {
       imports = [
         inputs.nixvim.homeModules.default
@@ -292,36 +292,7 @@
             # Using default allGrammars - remove this comment and add grammarPackages back if you want to limit parsers
           };
           treesitter-context.enable = true;
-          # Inline image rendering via Kitty graphics protocol (Ghostty supports it).
-          # Powers diagram rendering of ```mermaid blocks in markdown (e.g. flowgraph output).
-          image = {
-            enable = true;
-            settings = {
-              backend = "kitty";
-              max_width_window_percentage = 90;
-              max_height_window_percentage = 60;
-            };
-          };
-          diagram = {
-            enable = true;
-            # nixpkgs mislabels diagram.nvim as unfree; it's MIT. Correct the meta so
-            # it evaluates on hosts without allowUnfree (e.g. standalone mac-work HM).
-            package = pkgs.vimPlugins.diagram-nvim.overrideAttrs (old: {
-              meta = (old.meta or { }) // { license = lib.licenses.mit; };
-            });
-            settings = {
-              integrations = [
-                { __raw = "require('diagram.integrations.markdown')"; }
-              ];
-              renderer_options.mermaid = {
-                theme = "dark";
-                background = "transparent";
-              };
-            };
-          };
         };
-        # mmdc (mermaid-cli) must be on nvim's PATH for diagram.nvim to render mermaid.
-        extraPackages = [ pkgs.mermaid-cli ];
         extraConfigLua = ''
           -- Option 1: Use Java parser for Kotlin (better indent, but highlighting may be off)
           -- vim.treesitter.language.register('java', 'kotlin')
