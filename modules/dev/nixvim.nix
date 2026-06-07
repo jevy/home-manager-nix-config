@@ -17,6 +17,7 @@
         opts = {
           autoread = true;
           relativenumber = true;
+          signcolumn = "yes";
           expandtab = true;
           shiftwidth = 2;
           tabstop = 2;
@@ -141,15 +142,44 @@
           { mode = "n"; key = "gP"; action.__raw = "function() require('goto-preview').close_all_win() end"; options = { silent = true; desc = "Close all peeks"; }; }
           # Branch review — see what changed vs main without leaving the file.
           # <leader>gc lists changed files in Trouble; the <leader>h group drives the
-          # gutter: toggle signs vs main, expand a hunk inline, jump hunk-to-hunk.
+          # gutter: toggle signs vs main, expand a hunk inline. (Hunk-to-hunk: use
+          # diffview's native ]c/[c, or gitsigns nav if you ever want it back.)
           { mode = "n"; key = "<leader>gc"; action = "<cmd>ChangedFiles<cr>"; options = { silent = true; desc = "Changed files vs main → Trouble"; }; }
           { mode = "n"; key = "<leader>hb"; action = "<cmd>BranchSigns<cr>"; options = { silent = true; desc = "Toggle gutter signs vs main"; }; }
           { mode = "n"; key = "<leader>hp"; action.__raw = "function() require('gitsigns').preview_hunk_inline() end"; options = { silent = true; desc = "Expand hunk inline"; }; }
-          { mode = "n"; key = "]h"; action.__raw = "function() require('gitsigns').nav_hunk('next') end"; options = { silent = true; desc = "Next hunk"; }; }
-          { mode = "n"; key = "[h"; action.__raw = "function() require('gitsigns').nav_hunk('prev') end"; options = { silent = true; desc = "Previous hunk"; }; }
+          # Diffview — the full changeset in a panel (sidebar of changed files +
+          # real side-by-side diff), where gitsigns above is the inline gutter and
+          # <leader>gc is a flat file list. Args are git revision syntax: three-dot
+          # main...HEAD = merge-base "what this branch changed" (the PR view);
+          # bare :DiffviewOpen = working tree vs index (unstaged + staged). In the
+          # panel: <tab>/<s-tab> cycle files, - stages a hunk, g? for help.
+          { mode = "n"; key = "<leader>gd"; action = "<cmd>DiffviewOpen main...HEAD<cr>"; options = { silent = true; desc = "Diffview: branch vs main (PR)"; }; }
+          { mode = "n"; key = "<leader>gD"; action = "<cmd>DiffviewOpen<cr>"; options = { silent = true; desc = "Diffview: working tree vs HEAD"; }; }
+          { mode = "n"; key = "<leader>gh"; action = "<cmd>DiffviewFileHistory %<cr>"; options = { silent = true; desc = "Diffview: this file's history"; }; }
+          { mode = "n"; key = "<leader>gH"; action = "<cmd>DiffviewFileHistory<cr>"; options = { silent = true; desc = "Diffview: repo history"; }; }
+          { mode = "n"; key = "<leader>gx"; action = "<cmd>DiffviewClose<cr>"; options = { silent = true; desc = "Diffview: close"; }; }
         ];
         plugins = {
-          gitsigns.enable = true;
+          gitsigns = {
+            enable = true;
+            settings = {
+              # Explicit signs + always-on column so changed lines are visible even
+              # when the base is a branch merge-base (committed changes, not just
+              # uncommitted). numhl tints the line-number column too — prominent
+              # with relativenumber, and theme-robust if a colorscheme (stylix)
+              # leaves the sign-column highlights subtle.
+              signcolumn = true;
+              numhl = true;
+              signs = {
+                add = { text = "▎"; };
+                change = { text = "▎"; };
+                delete = { text = "_"; };
+                topdelete = { text = "‾"; };
+                changedelete = { text = "~"; };
+                untracked = { text = "┆"; };
+              };
+            };
+          };
           lualine.enable = true;
           # Peek a definition in a float (gp); press gp again inside it to stack
           # another level deeper. We own the keymaps, so disable the defaults.
@@ -228,6 +258,10 @@
           };
           todo-comments.enable = true;
           trouble.enable = true;
+          # Changeset browser: file panel (sidebar) + side-by-side diff for any
+          # ref pair. Driven by the <leader>g{d,D,h,H,x} maps above. Defaults are
+          # fine; setup() runs via the module's implicit settings.
+          diffview.enable = true;
           which-key = {
             enable = true;
             settings = {
