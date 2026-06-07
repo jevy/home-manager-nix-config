@@ -16,7 +16,7 @@
 
 import { spawn } from 'node:child_process';
 import { createServer, createConnection } from 'node:net';
-import { readFileSync, existsSync, mkdirSync, statSync, unlinkSync, chmodSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, statSync, unlinkSync, chmodSync } from 'node:fs';
 import { resolve, isAbsolute, join, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -24,7 +24,14 @@ import { createHash } from 'node:crypto';
 const VTSLS = '@vtsls@';
 const NODE = '@node@';
 const SCRIPT = '@script@';
-const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+// Each daemon holds a full vtsls/tsserver (~GBs of RSS for a large project),
+// and there is one daemon per project root — so every git worktree spawns its
+// own. Two knobs bound the blast radius:
+//   IDLE_TIMEOUT_MS — how long a daemon lingers with no requests before exiting.
+//   MAX_DAEMONS     — global LRU cap; spawning past it evicts the stalest daemon.
+// Both are env-overridable (TSQ_IDLE_TIMEOUT_MS, TSQ_MAX_DAEMONS).
+const IDLE_TIMEOUT_MS = Number(process.env.TSQ_IDLE_TIMEOUT_MS) || 5 * 60 * 1000;
+const MAX_DAEMONS = Number(process.env.TSQ_MAX_DAEMONS) || 3;
 const DAEMON_START_TIMEOUT_MS = 20_000;
 
 function findProjectRoot(start) {
@@ -51,6 +58,48 @@ function socketPath(root) {
   return join(socketDir(), `${hash}.sock`);
 }
 
+// Each daemon writes a sidecar `<hash>.json` alongside its socket recording
+// { root, pid, lastActivity }. The client reads these to enforce the LRU cap.
+function statePath(sock) {
+  return sock.replace(/\.sock$/, '.json');
+}
+
+function readDaemonStates() {
+  const dir = socketDir();
+  let names;
+  try { names = readdirSync(dir); } catch { return []; }
+  const out = [];
+  for (const name of names) {
+    if (!name.endsWith('.json')) continue;
+    const sp = join(dir, name);
+    try {
+      const s = JSON.parse(readFileSync(sp, 'utf8'));
+      out.push({ ...s, sock: sp.replace(/\.json$/, '.sock'), statePath: sp });
+    } catch {}
+  }
+  return out;
+}
+
+// Before spawning a daemon for `newRoot`, keep the live-daemon count within
+// MAX_DAEMONS by stopping the least-recently-used ones. Dead state files
+// (daemon gone but sidecar left behind) are pruned as we go.
+async function enforceDaemonCap(newRoot) {
+  if (MAX_DAEMONS <= 0) return;
+  const alive = [];
+  for (const s of readDaemonStates()) {
+    if (s.root === newRoot) continue; // about to (re)spawn this one; don't count it
+    if (await ping(s.sock)) alive.push(s);
+    else { try { unlinkSync(s.statePath); } catch {} }
+  }
+  // After we spawn newRoot the total becomes alive.length + 1; keep it <= cap.
+  const evict = alive.length + 1 - MAX_DAEMONS;
+  if (evict <= 0) return;
+  alive.sort((a, b) => (a.lastActivity || 0) - (b.lastActivity || 0)); // stalest first
+  for (const victim of alive.slice(0, evict)) {
+    try { await sendRequest(victim.sock, { op: 'stop' }); } catch {}
+  }
+}
+
 // ---------------- client ----------------
 
 async function clientMain(argv) {
@@ -75,6 +124,7 @@ async function clientMain(argv) {
   }
 
   if (!(await ping(sock))) {
+    await enforceDaemonCap(root);
     spawnDaemon(root);
     await waitForSocket(sock);
   }
@@ -324,8 +374,16 @@ async function daemonMain(root) {
     throw new Error(`unknown op: ${op}`);
   }
 
-  // Idle timeout.
+  // Activity tracking. `touch()` bumps the idle clock and refreshes the sidecar
+  // state file the client's LRU cap reads (lastActivity is the eviction key).
+  const sidecar = statePath(sock);
   let lastActivity = Date.now();
+  const writeState = () => {
+    try { writeFileSync(sidecar, JSON.stringify({ root: rootAbs, pid: process.pid, lastActivity })); } catch {}
+  };
+  const touch = () => { lastActivity = Date.now(); writeState(); };
+
+  // Idle timeout.
   setInterval(() => {
     if (Date.now() - lastActivity > IDLE_TIMEOUT_MS) {
       try { lsp.kill(); } catch {}
@@ -335,7 +393,7 @@ async function daemonMain(root) {
 
   // Socket server.
   const server = createServer((conn) => {
-    lastActivity = Date.now();
+    touch();
     let lineBuf = '';
     conn.on('data', (d) => {
       lineBuf += d.toString('utf8');
@@ -347,7 +405,7 @@ async function daemonMain(root) {
       try { req = JSON.parse(line); }
       catch { conn.end(JSON.stringify({ error: 'bad json' })); return; }
       handle(req).then((res) => {
-        lastActivity = Date.now();
+        touch();
         conn.end(JSON.stringify(res));
       }).catch((err) => {
         conn.end(JSON.stringify({ error: err.message || String(err) }));
@@ -357,10 +415,12 @@ async function daemonMain(root) {
   });
   server.listen(sock, () => {
     try { chmodSync(sock, 0o600); } catch {}
+    writeState();
   });
 
   const cleanup = () => {
     try { unlinkSync(sock); } catch {}
+    try { unlinkSync(sidecar); } catch {}
     try { lsp.kill(); } catch {}
   };
   process.on('SIGINT', () => { cleanup(); process.exit(0); });
