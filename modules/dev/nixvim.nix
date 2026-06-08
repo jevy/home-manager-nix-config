@@ -185,7 +185,20 @@
           # another level deeper. We own the keymaps, so disable the defaults.
           goto-preview = {
             enable = true;
-            settings.default_mappings = false;
+            settings = {
+              default_mappings = false;
+              # In diffview the source window has scrollbind/cursorbind/diff set,
+              # and Neovim copies window-local options into the new float — so the
+              # peek inherits them and scrolling it drags the parent diff windows.
+              # Clear them on the float so it scrolls independently.
+              post_open_hook.__raw = ''
+                function(_, win)
+                  vim.wo[win].scrollbind = false
+                  vim.wo[win].cursorbind = false
+                  vim.wo[win].diff = false
+                end
+              '';
+            };
           };
           flash = {
             enable = true;
@@ -206,7 +219,42 @@
             enable = true;
             servers = {
               nixd.enable = true; # nix
-              vtsls.enable = true; # TypeScript (modern replacement for ts_ls)
+              vtsls = {
+                enable = true; # TypeScript (modern replacement for ts_ls)
+                # covenant-web is ~2300 TS/TSX files under one tsconfig with
+                # allowJs + no `include` (so tsserver's graph is `**/*` over a
+                # 4.4G node_modules). vtsls spawns the tsserver child with its
+                # OWN heap cap — default 3072 MB — independent of the host
+                # node default, and it was OOMing (SIGABRT restart loop) on
+                # initial project load.
+                settings.typescript = {
+                  # Crash ceiling for the tsserver child (NOT a consumption
+                  # target — a session uses what its program needs). After the
+                  # root-tsconfig `files:[]` fix the working set is ~3 GB (a
+                  # single per-app project, ~10k files), so 5 GB gives margin
+                  # without letting one runaway session eat the box. The stock
+                  # 3072 was just under that working set → the SIGABRT loop.
+                  # Why not 8192: with ~40 covenant-web worktrees + Claude
+                  # agents each spawning their own tsserver, a high per-session
+                  # ceiling trades "tsserver crashes" for "kernel OOM-kills the
+                  # machine." 5 GB caps the blast radius.
+                  tsserver.maxTsServerMemory = 5120;
+                  # Stop tsserver recursing into node_modules to WATCH for
+                  # changes. (tsconfig `exclude` only drops node_modules from
+                  # the project's own files; it doesn't stop file watchers.)
+                  # Tradeoff: after `npm install` you must restart the LSP for
+                  # new packages to register — fine for an editor session.
+                  tsserver.watchOptions.excludeDirectories = [ "**/node_modules" ];
+                  # The real "stop descending into node_modules" knob: don't
+                  # eagerly index every package for auto-import suggestions —
+                  # the biggest memory/CPU sink in a big monorepo. Types for
+                  # things you actually `import` still resolve on demand.
+                  # Tradeoff: lose "auto-import from <npm pkg>" completions for
+                  # packages you haven't imported yet — flip to "auto" if you
+                  # miss them.
+                  preferences.includePackageJsonAutoImports = "off";
+                };
+              };
               kotlin_language_server.enable = true;
               marksman.enable = true;
               gopls.enable = true;
@@ -261,7 +309,21 @@
           # Changeset browser: file panel (sidebar) + side-by-side diff for any
           # ref pair. Driven by the <leader>g{d,D,h,H,x} maps above. Defaults are
           # fine; setup() runs via the module's implicit settings.
-          diffview.enable = true;
+          diffview = {
+            enable = true;
+            # Keep the two diff windows scrolling/cursoring together. Diffview
+            # already sets scrollbind/cursorbind, but the global scrolloff=5
+            # leaks into the diff windows and makes scrollbind drift out of sync
+            # near a buffer's top/bottom (each side keeps its own margin). Pin
+            # scrolloff=0 there and re-assert the binds.
+            settings.hooks.diff_buf_win_enter.__raw = ''
+              function(_, winid)
+                vim.wo[winid].scrolloff = 0
+                vim.wo[winid].scrollbind = true
+                vim.wo[winid].cursorbind = true
+              end
+            '';
+          };
           which-key = {
             enable = true;
             settings = {
