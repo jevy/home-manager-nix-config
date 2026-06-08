@@ -79,8 +79,11 @@
 
         keymap = {
           mgr.prepend_keymap = [
-            # Extract archive (replaces ranger `ex`)
-            { on = [ "e" "x" ]; run = "plugin extract"; desc = "Extract archive"; }
+            # Extract archive (replaces ranger `ex`).
+            # NOTE: must go through `ya pub extract`, not `plugin extract` —
+            # the native extract plugin is pub/sub based (ps.sub_remote), so a
+            # bare `plugin extract` just subscribes and blocks forever.
+            { on = [ "e" "x" ]; run = ''shell 'ya pub extract --list "$@"' ''; desc = "Extract archive"; }
             # Compress selection (replaces ranger `ec`)
             { on = [ "e" "c" ]; run = "plugin compress"; desc = "Compress selection"; }
             # Recursive fzf search across subdirs (like ranger <C-f>)
