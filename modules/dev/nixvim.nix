@@ -153,7 +153,15 @@
           # main...HEAD = merge-base "what this branch changed" (the PR view);
           # bare :DiffviewOpen = working tree vs index (unstaged + staged). In the
           # panel: <tab>/<s-tab> cycle files, - stages a hunk, g? for help.
-          { mode = "n"; key = "<leader>gd"; action = "<cmd>DiffviewOpen main...HEAD<cr>"; options = { silent = true; desc = "Diffview: branch vs main (PR)"; }; }
+          #
+          # --imply-local: without it both panes of main...HEAD are read-only
+          # `diffview://` git blobs (HEAD is a commit, not a file on disk), so no
+          # LSP client attaches and gp/gd/K silently no-op. The flag tells diffview
+          # that since the right endpoint *is* HEAD, render the right pane as the
+          # real working-tree file instead — a real file:// URI → vtsls attaches →
+          # gp peeks definitions in the new-code pane. Diff is identical when the
+          # tree is clean; if it isn't, the right side just shows your edits too.
+          { mode = "n"; key = "<leader>gd"; action = "<cmd>DiffviewOpen main...HEAD --imply-local<cr>"; options = { silent = true; desc = "Diffview: branch vs main (PR)"; }; }
           { mode = "n"; key = "<leader>gD"; action = "<cmd>DiffviewOpen<cr>"; options = { silent = true; desc = "Diffview: working tree vs HEAD"; }; }
           { mode = "n"; key = "<leader>gh"; action = "<cmd>DiffviewFileHistory %<cr>"; options = { silent = true; desc = "Diffview: this file's history"; }; }
           { mode = "n"; key = "<leader>gH"; action = "<cmd>DiffviewFileHistory<cr>"; options = { silent = true; desc = "Diffview: repo history"; }; }
