@@ -150,18 +150,22 @@
           # Diffview — the full changeset in a panel (sidebar of changed files +
           # real side-by-side diff), where gitsigns above is the inline gutter and
           # <leader>gc is a flat file list. Args are git revision syntax: three-dot
-          # main...HEAD = merge-base "what this branch changed" (the PR view);
+          # base...HEAD = merge-base "what this branch changed" (the PR view);
           # bare :DiffviewOpen = working tree vs index (unstaged + staged). In the
           # panel: <tab>/<s-tab> cycle files, - stages a hunk, g? for help.
           #
-          # --imply-local: without it both panes of main...HEAD are read-only
-          # `diffview://` git blobs (HEAD is a commit, not a file on disk), so no
-          # LSP client attaches and gp/gd/K silently no-op. The flag tells diffview
-          # that since the right endpoint *is* HEAD, render the right pane as the
-          # real working-tree file instead — a real file:// URI → vtsls attaches →
-          # gp peeks definitions in the new-code pane. Diff is identical when the
-          # tree is clean; if it isn't, the right side just shows your edits too.
-          { mode = "n"; key = "<leader>gd"; action = "<cmd>DiffviewOpen main...HEAD --imply-local<cr>"; options = { silent = true; desc = "Diffview: branch vs main (PR)"; }; }
+          # <leader>gd → :DiffviewPR (defined in extraConfigLua): resolves the base
+          # this branch actually targets via `gh pr view` — so stacked PRs diff
+          # against their parent branch, not main — and falls back to the repo's
+          # default branch when there's no PR. It appends --imply-local: without it
+          # both panes of base...HEAD are read-only `diffview://` git blobs (HEAD is
+          # a commit, not a file on disk), so no LSP client attaches and gp/gd/K
+          # silently no-op. The flag tells diffview that since the right endpoint
+          # *is* HEAD, render the right pane as the real working-tree file instead —
+          # a real file:// URI → vtsls attaches → gp peeks definitions in the
+          # new-code pane. Diff is identical when the tree is clean; if it isn't,
+          # the right side just shows your edits too.
+          { mode = "n"; key = "<leader>gd"; action = "<cmd>DiffviewPR<cr>"; options = { silent = true; desc = "Diffview: branch vs PR base (stacked-aware)"; }; }
           { mode = "n"; key = "<leader>gD"; action = "<cmd>DiffviewOpen<cr>"; options = { silent = true; desc = "Diffview: working tree vs HEAD"; }; }
           { mode = "n"; key = "<leader>gh"; action = "<cmd>DiffviewFileHistory %<cr>"; options = { silent = true; desc = "Diffview: this file's history"; }; }
           { mode = "n"; key = "<leader>gH"; action = "<cmd>DiffviewFileHistory<cr>"; options = { silent = true; desc = "Diffview: repo history"; }; }
@@ -535,6 +539,29 @@
           -- merge-base with main = whole-branch view (committed changes included,
           -- matching the three-dot `main...HEAD` the file list uses). On main itself
           -- the merge-base is HEAD, so setting it is a harmless no-op.
+          -- The base ref this branch targets. Stacked PRs target a parent
+          -- feature branch, not main — ask gh for the real base. Fallbacks when
+          -- there's no PR (or gh is absent): the remote's default branch
+          -- (origin/HEAD → e.g. main), then a bare 'main'. gh runs in the repo
+          -- root since it keys off the current branch's tracked PR.
+          local function pr_base_ref()
+            local root = flow_git_root()
+            local git = 'git ' .. (root and ('-C ' .. vim.fn.shellescape(root) .. ' ') or "")
+            local function first(t) local s = t and t[1]; if s and s ~= "" then return s end end
+            local gh = 'gh pr view --json baseRefName -q .baseRefName 2>/dev/null'
+            if root then gh = 'cd ' .. vim.fn.shellescape(root) .. ' && ' .. gh end
+            local base = first(vim.fn.systemlist(gh))
+            if not base then
+              local def = first(vim.fn.systemlist(git .. 'rev-parse --abbrev-ref origin/HEAD 2>/dev/null'))
+              base = def and def:gsub('^origin/', "") or 'main'
+            end
+            -- Prefer a local ref; fall back to origin/<base> if the parent only
+            -- exists on the remote (common right after fetching a stacked PR).
+            vim.fn.system(git .. 'rev-parse --verify --quiet ' .. vim.fn.shellescape(base))
+            if vim.v.shell_error ~= 0 then base = 'origin/' .. base end
+            return base
+          end
+
           local branch_base = nil
           local function set_branch_base(on)
             local gs = require('gitsigns')
@@ -590,6 +617,15 @@
               vim.notify('gitsigns: base = main (' .. branch_base:sub(1, 8) .. ')')
             end
           end, { desc = 'Toggle gitsigns base: index ↔ main merge-base' })
+
+          -- <leader>gd PR view: diff this branch against the base it targets
+          -- (stacked PRs → their parent branch, via pr_base_ref), with
+          -- --imply-local so the right pane is the real working-tree file and
+          -- LSP/gp attach. See the <leader>gd keymap comment for the full why.
+          vim.api.nvim_create_user_command('DiffviewPR', function()
+            local base = pr_base_ref()
+            vim.cmd('DiffviewOpen ' .. base .. '...HEAD --imply-local')
+          end, { desc = 'Diffview: branch vs PR base (gh baseRefName), stacked-aware' })
 
           -- Claude Code setup (via extraPlugins)
           require('claudecode').setup({
