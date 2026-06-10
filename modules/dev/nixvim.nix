@@ -324,10 +324,12 @@
           todo-comments.enable = true;
           trouble.enable = true;
           # Changeset browser: file panel (sidebar) + side-by-side diff for any
-          # ref pair. Driven by the <leader>g{d,D,h,H,x} maps above. Defaults are
-          # fine; setup() runs via the module's implicit settings.
+          # ref pair. Driven by the <leader>g{d,D,h,H,x} maps above.
           diffview = {
             enable = true;
+            # Wider file panel (default 35): deeply nested paths in the tree view
+            # indent off-screen otherwise.
+            settings.file_panel.win_config.width = 45;
             # Keep the two diff windows scrolling/cursoring together. Diffview
             # already sets scrollbind/cursorbind, but the global scrolloff=5
             # leaks into the diff windows and makes scrollbind drift out of sync
