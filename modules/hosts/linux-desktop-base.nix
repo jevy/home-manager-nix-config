@@ -98,6 +98,7 @@ in
             homeManager.taskSnapshot
             homeManager.frigateNotify
             homeManager.music
+            homeManager.navidrome
             homeManager.pi
 
             inputs.typing-analysis.homeManagerModules.default
