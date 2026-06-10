@@ -52,6 +52,9 @@
           # Email contacts
           wife_email = { };
           quickbooks_email = { };
+
+          # Navidrome (music streaming) — templated into ratune & ferrosonic configs
+          navidrome_password = { };
         };
       };
     };
