@@ -131,12 +131,17 @@
           { mode = "n"; key = "<leader>xq"; action = "<cmd>Trouble quickfix toggle<CR>"; options = { silent = true; desc = "Quickfix list"; }; }
           { mode = "n"; key = "]d"; action = "<cmd>Trouble diagnostic next<CR>"; options = { silent = true; desc = "Next diagnostic"; }; }
           { mode = "n"; key = "[d"; action = "<cmd>Trouble diagnostic prev<CR>"; options = { silent = true; desc = "Previous diagnostic"; }; }
-          # Window navigation — skip the <C-w> prefix. C-j/C-k = down/up to match
-          # j/k motion (so C-k hops up to code, C-j down to a Trouble list).
-          { mode = "n"; key = "<C-h>"; action = "<C-w>h"; options = { silent = true; desc = "Window left"; }; }
-          { mode = "n"; key = "<C-j>"; action = "<C-w>j"; options = { silent = true; desc = "Window down"; }; }
-          { mode = "n"; key = "<C-k>"; action = "<C-w>k"; options = { silent = true; desc = "Window up"; }; }
-          { mode = "n"; key = "<C-l>"; action = "<C-w>l"; options = { silent = true; desc = "Window right"; }; }
+          # Window navigation — skip the <C-w> prefix. Alt (not Ctrl): Ghostty
+          # owns ctrl+h/l for its own splits and won't forward them to Neovim
+          # (performable: passthrough is unreliable on 1.3.x), so window nav lives
+          # on Alt instead. A-j/A-k = down/up to match j/k motion (so A-k hops up
+          # to code, A-j down to a Trouble list). Requires Ghostty's alt+j/k
+          # page-scroll binds to move off (see ghostty.nix) and, on macOS,
+          # macos-option-as-alt so Option emits Meta.
+          { mode = "n"; key = "<A-h>"; action = "<C-w>h"; options = { silent = true; desc = "Window left"; }; }
+          { mode = "n"; key = "<A-j>"; action = "<C-w>j"; options = { silent = true; desc = "Window down"; }; }
+          { mode = "n"; key = "<A-k>"; action = "<C-w>k"; options = { silent = true; desc = "Window up"; }; }
+          { mode = "n"; key = "<A-l>"; action = "<C-w>l"; options = { silent = true; desc = "Window right"; }; }
           # goto-preview: peek definition in a float; press gp again inside it to descend.
           { mode = "n"; key = "gp"; action.__raw = "function() require('goto-preview').goto_preview_definition() end"; options = { silent = true; desc = "Peek definition"; }; }
           { mode = "n"; key = "gP"; action.__raw = "function() require('goto-preview').close_all_win() end"; options = { silent = true; desc = "Close all peeks"; }; }
