@@ -119,6 +119,12 @@
           pkgs.xdg-desktop-portal-hyprland
           pkgs.xdg-desktop-portal-gtk
         ];
+        # NOTE: on the lenovo-p14s, the CVE-2026-46333 kernel ptrace hardening
+        # breaks this portal's app-info resolution, killing every file-picker and
+        # screen-share popup. The fix (grant the portal CAP_SYS_PTRACE via a
+        # security.wrappers shim + service drop-in) lives in
+        # modules/hardware/lenovo-p14s.nix — security.wrappers is NixOS-only and
+        # can't live in this home-manager module.
       };
       xdg.mimeApps.enable = true;
       xdg.mimeApps.defaultApplications = {

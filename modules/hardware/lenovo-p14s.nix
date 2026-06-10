@@ -48,6 +48,50 @@
       # AMD GPU and OLED/touch support
       boot.kernelModules = [ "i2c-dev" ];
 
+      # ── xdg-desktop-portal vs the CVE-2026-46333 ptrace hardening ──────────────
+      # The kernel fix for CVE-2026-46333 ("ptrace: slightly saner get_dumpable()
+      # logic", commit 31e62c2ebbfd, ~2026-05) tightened ptrace_may_access(): opening
+      # another process's /proc/<pid>/root now requires CAP_SYS_PTRACE even for a
+      # same-uid, *dumpable* target. That fix is backported into the pinned 7.0.6 above
+      # (so 7.0.6 is NOT free of the "portal regression" the kernel comment hoped —
+      # it's a different, security-driven tightening, not the earlier pidfd bug).
+      #
+      # xdg-desktop-portal 1.20.4 resolves a caller's app-info by doing exactly that
+      # open, runs with no capabilities, and treats the resulting EACCES as fatal:
+      #     openat("/proc/<pid>/root", O_DIRECTORY) = -1 EACCES
+      #     → "Portal operation not allowed: Unable to open /proc/<pid>/root"
+      # so it denies EVERY interactive request — screen sharing AND the GTK file
+      # chooser silently do nothing in Slack, Firefox, etc. Confirmed by straceing the
+      # portal and reproducing the open from a cap-empty uid-1000 process (fails) vs a
+      # process holding any effective capability (succeeds). ptrace_scope is irrelevant.
+      #
+      # No clean escape exists yet: nixpkgs (incl. unstable) is still on portal 1.20.4,
+      # and no kernel carries both this CVE fix done right *and* the MT7925 BT fix.
+      # So: hand the portal exactly the capability the kernel now demands, and nothing
+      # more. A security.wrappers setcap shim raises CAP_SYS_PTRACE (ambient) then execs
+      # the real binary; the portal's user unit is pointed at the shim via a drop-in.
+      # Blast radius is one daemon — no system-wide hardening is relaxed (cf. the
+      # ptrace_scope=0 dead-end, which did nothing because this isn't the Yama gate).
+      # Remove this whole block once nixpkgs ships a portal that treats the failed
+      # /proc open as "host app" instead of fatal. See CVE: https://nvd.nist.gov/vuln/detail/CVE-2026-46333
+      security.wrappers.xdg-desktop-portal-ptrace = {
+        owner = "root";
+        group = "root";
+        capabilities = "cap_sys_ptrace+ep";
+        source = "${pkgs.xdg-desktop-portal}/libexec/xdg-desktop-portal";
+      };
+      # Point the portal's user service at the capability shim (the D-Bus service file
+      # activates via SystemdService=xdg-desktop-portal.service, so this override takes).
+      # Must be a real systemd drop-in (overrideStrategy = "asDropin"); environment.etc
+      # can't write under /etc/systemd/user, which NixOS manages as a read-only tree.
+      systemd.user.services.xdg-desktop-portal = {
+        overrideStrategy = "asDropin";
+        serviceConfig.ExecStart = [
+          "" # reset the package unit's ExecStart, then point at the cap shim
+          "/run/wrappers/bin/xdg-desktop-portal-ptrace"
+        ];
+      };
+
       # Ensure all firmware blobs available (MediaTek MT7925, AMD GPU, etc.)
       hardware.enableRedistributableFirmware = true;
 
