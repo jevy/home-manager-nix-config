@@ -56,6 +56,46 @@
         '';
       };
 
+      # TrueNAS MCP server (build from source — upstream ships no nixpkgs
+      # package, only Go binaries per release). Mirrors the homelab cluster
+      # deployment in home-infrastructure-flux (apps/sympozium/mcpservers.yaml).
+      truenasMcpServer = pkgs.buildGoModule {
+        pname = "truenas-mcp";
+        version = "0.0.4";
+
+        src = pkgs.fetchFromGitHub {
+          owner = "truenas";
+          repo = "truenas-mcp";
+          rev = "v0.0.4";
+          hash = "sha256-R+d6qiFM9mwrAXqA8X+m4/x7+pUTq0zN7jshScSgl0o=";
+        };
+
+        vendorHash = "sha256-0A+zS5N+LZ7yRabl6BvovpZPq9NErroW21sRfiMTA+c=";
+
+        subPackages = [ "cmd/truenas-mcp" ];
+
+        meta = {
+          description = "Model Context Protocol server for TrueNAS";
+          homepage = "https://github.com/truenas/truenas-mcp";
+          mainProgram = "truenas-mcp";
+        };
+      };
+
+      # Wrapper that reads the API key from a sops secret at runtime.
+      # TRUENAS_URL is supplied via the server env block below. Connects to
+      # the public ingress (truenas.jevy.org, valid LE cert) so no
+      # --insecure is needed; switch to the LAN IP + --insecure if running
+      # off-network is not desired.
+      truenasMcpWrapper = pkgs.writeShellApplication {
+        name = "run-truenas-mcp";
+        runtimeInputs = [ truenasMcpServer ];
+        text = ''
+          TRUENAS_API_KEY=$(cat ${config.sops.secrets.truenas_api_key.path})
+          export TRUENAS_API_KEY
+          exec truenas-mcp "$@"
+        '';
+      };
+
       # n8n MCP server wrapper (reads API key from sops secret)
       n8nMcpWrapper = pkgs.writeShellApplication {
         name = "run-n8n-mcp";
@@ -236,6 +276,12 @@
         };
         "brave-search" = {
           command = "${braveSearchMcpWrapper}/bin/run-brave-search-mcp";
+        };
+        truenas = {
+          command = "${truenasMcpWrapper}/bin/run-truenas-mcp";
+          env = {
+            TRUENAS_URL = "truenas.jevy.org";
+          };
         };
         linkedin = {
           command = "${linkedinMcpWrapper}/bin/run-linkedin-mcp";
