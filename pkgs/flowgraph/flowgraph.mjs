@@ -212,6 +212,29 @@ function changedRanges(root, base, head) {
   return map;
 }
 
+// Exported top-level symbols whose declaration line falls in a changed range.
+// Regex-based on PURPOSE: box-label annotations must work cold and under
+// --no-refs, so they can't depend on a warm vtsls index the way the tsq-based
+// changedSymbols() (blast-radius) does. Catches the shapes that carry meaning in
+// a PR — `export [default] [async] function f`, `export const/class/interface/
+// type/enum X`. Barrel re-exports (`export { x } from './y'`) match no keyword
+// and yield nothing, which is correct: a barrel has no symbols of its own, so it
+// stays an unannotated box and naturally recedes.
+function changedSymbolNames(content, ranges) {
+  if (!content || !ranges || !ranges.length) return [];
+  const inRange = (ln) => ranges.some(([a, b]) => ln >= a && ln <= b);
+  const re = /^export\s+(?:default\s+)?(?:async\s+)?(?:function\s+([A-Za-z0-9_]+)|(?:const|let|var|class|interface|type|enum)\s+([A-Za-z0-9_]+))/;
+  const names = [];
+  const lines = content.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(re);
+    if (!m) continue;
+    const name = m[1] || m[2];
+    if (name && inRange(i + 1)) names.push(name);
+  }
+  return [...new Set(names)];
+}
+
 // ---------------- layer classification ----------------
 
 // Order matters: more-specific directory roles win before the .tsx catch-all.
@@ -539,6 +562,24 @@ function nid(key) {
 }
 function esc(s) { return String(s).replace(/"/g, "'").replace(/[\[\]{}|]/g, ' '); }
 
+// A changed-file box label: filename + churn badge + the changed exported
+// symbols (capped, with "+N more"). This is what turns a box from "which file"
+// into "what changed inside it". `\n` line-breaks render in Mermaid node text
+// (same trick the resolver box already uses). Only changed files carry symbols/
+// churn; downstream-only nodes fall back to a bare basename via their own
+// addNode calls (which never overwrite this richer label, since the changed-file
+// loop runs first and addNode is set-once on label).
+const SYM_CAP = 4;
+function fileLabel(f) {
+  const head = f.churn ? `${basename(f.path)}  Δ${f.churn}` : basename(f.path);
+  const syms = f.symbols || [];
+  const shown = syms.slice(0, SYM_CAP);
+  let label = head;
+  if (shown.length) label += '\n' + shown.join('\n');
+  if (syms.length > shown.length) label += `\n+${syms.length - shown.length} more`;
+  return label;
+}
+
 function buildGraph(model) {
   const nodes = new Map(); // key -> {id, label, layer, changed}
   const edges = []; // {from, to, dashed, label}
@@ -576,7 +617,7 @@ function buildGraph(model) {
   // changed-file nodes
   for (const f of model.files) {
     const key = `file:${f.path}`;
-    addNode(key, basename(f.path), f.layer, true);
+    addNode(key, fileLabel(f), f.layer, true);
   }
 
   // operations + bridge
@@ -645,13 +686,48 @@ function buildGraph(model) {
   return { nodes, edges };
 }
 
-function emitMermaid(graph) {
+// Map a node key back to the repo-relative path it represents, so we can look up
+// its git status. `file:` nodes are the path; `res:file#field` resolver nodes
+// carry their file before the `#`. Everything else (op:/data:/job:/svc: logical
+// nodes) has no path → treated as a plain modified-bucket node.
+function pathFromKey(key) {
+  if (key.startsWith('file:')) return key.slice(5);
+  if (key.startsWith('res:')) return key.slice(4).split('#')[0];
+  return null;
+}
+
+// Status → bucket. The whole point of #1: since "changed" is constant across the
+// graph, spend the color channel on something that discriminates — new vs touched
+// vs renamed vs deleted.
+const STATUS_BUCKET = { A: 'added', M: 'modified', R: 'renamed', D: 'deleted' };
+const STATUS_LABEL = { added: 'new file', modified: 'modified', renamed: 'renamed', deleted: 'deleted' };
+const STATUS_DEF = {
+  added: 'fill:#66bb6a,stroke:#2e7d32,stroke-width:2px,color:#000',
+  modified: 'fill:#f9a825,stroke:#e65100,stroke-width:2px,color:#000',
+  renamed: 'fill:#42a5f5,stroke:#1565c0,stroke-width:2px,color:#000',
+  deleted: 'fill:#bdbdbd,stroke:#616161,stroke-width:2px,color:#000',
+};
+
+function emitMermaid(graph, meta = {}) {
   const { nodes, edges } = graph;
+  const statusByPath = meta.statusByPath || new Map();
   const byLayer = new Map();
   for (const [, n] of nodes) {
     if (!byLayer.has(n.layer)) byLayer.set(n.layer, []);
     byLayer.get(n.layer).push(n);
   }
+
+  // Bucket every changed node by git status (default: modified — covers op/res
+  // logical nodes with no on-disk path, which keep the familiar orange).
+  const buckets = { added: [], modified: [], renamed: [], deleted: [] };
+  for (const [key, n] of nodes) {
+    if (!n.changed) continue;
+    const path = pathFromKey(key);
+    const st = path ? statusByPath.get(path) : null;
+    buckets[STATUS_BUCKET[st] || 'modified'].push(n.id);
+  }
+  const presentStatuses = Object.keys(buckets).filter((s) => buckets[s].length);
+
   const out = ['flowchart LR'];
   for (const layer of LAYER_ORDER) {
     const ns = byLayer.get(layer);
@@ -660,6 +736,17 @@ function emitMermaid(graph) {
     for (const n of ns) out.push(`    ${n.id}["${esc(n.label)}"]`);
     out.push('  end');
   }
+
+  // Legend — one swatch per status actually present, so the colors are
+  // self-documenting in the rendered PDF. Legend nodes join the same status
+  // buckets below so they pick up the real fill.
+  if (presentStatuses.length) {
+    out.push('  subgraph legend["Legend"]');
+    for (const s of presentStatuses) out.push(`    lg_${s}["${STATUS_LABEL[s]}"]`);
+    out.push('  end');
+    for (const s of presentStatuses) buckets[s].push(`lg_${s}`);
+  }
+
   const seenEdge = new Set();
   for (const e of edges) {
     if (!e.from || !e.to) continue;
@@ -671,9 +758,9 @@ function emitMermaid(graph) {
     seenEdge.add(line);
     out.push(line);
   }
-  out.push('  classDef changed fill:#f9a825,stroke:#e65100,stroke-width:2px,color:#000;');
-  const changed = [...nodes.values()].filter(n => n.changed).map(n => n.id);
-  if (changed.length) out.push(`  class ${changed.join(',')} changed;`);
+
+  for (const s of presentStatuses) out.push(`  classDef ${s} ${STATUS_DEF[s]};`);
+  for (const s of presentStatuses) out.push(`  class ${buckets[s].join(',')} ${s};`);
   return out.join('\n');
 }
 
@@ -749,6 +836,8 @@ function main() {
     const abs = join(root, f.path);
     f.content = existsSync(abs) ? readFileSync(abs, 'utf8') : '';
     f.layer = classify(f.path, f.content);
+    f.churn = (ranges.get(f.path) || []).reduce((n, [a, b]) => n + (b - a + 1), 0);
+    f.symbols = changedSymbolNames(f.content, ranges.get(f.path));
   }
 
   // operations from changed gql/frontend files
@@ -834,7 +923,8 @@ function main() {
 
   const model = { root, files, ops, changedPaths, jobDownstream, blast, imports };
   const graph = buildGraph(model);
-  const mermaid = emitMermaid(graph);
+  const statusByPath = new Map(files.map((f) => [f.path, f.status]));
+  const mermaid = emitMermaid(graph, { statusByPath });
 
   // write markdown with a mermaid fence (renders inline in nvim)
   const outPath = a.out || join(root, '.flowgraph', 'pr-flow.md');
@@ -918,7 +1008,16 @@ function renderMarkdown({ root, base, head, files, ops, blast, mermaid }) {
   const lines = [];
   lines.push(`# PR flow — \`${basename(root)}\``);
   lines.push('');
-  lines.push(`Diff: \`${base.slice(0, 10)}..${head || 'working tree'}\` · ${files.length} changed files`);
+  const counts = files.reduce((acc, f) => { acc[f.status] = (acc[f.status] || 0) + 1; return acc; }, {});
+  const statusBits = [
+    counts.A ? `${counts.A} new` : null,
+    counts.M ? `${counts.M} modified` : null,
+    counts.R ? `${counts.R} renamed` : null,
+    counts.D ? `${counts.D} deleted` : null,
+  ].filter(Boolean).join(', ');
+  lines.push(`Diff: \`${base.slice(0, 10)}..${head || 'working tree'}\` · ${files.length} changed files${statusBits ? ` (${statusBits})` : ''}`);
+  lines.push('');
+  lines.push('> Box color = git status: 🟢 new · 🟠 modified · 🔵 renamed · ⚪ deleted. Box lists the changed exported symbols; `Δ` is changed-line count.');
   lines.push('');
   lines.push('```mermaid');
   lines.push(mermaid);
