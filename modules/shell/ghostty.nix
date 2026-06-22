@@ -11,6 +11,11 @@
         systemd.enable = pkgs.stdenv.isLinux;
         installVimSyntax = true;
         settings = {
+          # Draw window decorations from ghostty's own (stylix) theme instead of
+          # the GTK/libadwaita system theme, which otherwise renders a white
+          # titlebar on Linux even though the terminal colors are dark. No-op on
+          # macOS.
+          window-theme = "ghostty";
           shell-integration-features = "sudo,ssh-env,ssh-terminfo";
           font-family = "MesloLGS Nerd Font";
           font-size = 11;
