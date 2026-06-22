@@ -92,6 +92,7 @@ in
             homeManager.qmd
             homeManager.timetagger
             homeManager.steamPlaytime
+            homeManager.nosleep
             homeManager.secondBrain
             homeManager.taskArchiver
             homeManager.taskCompletedStamp
