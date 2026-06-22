@@ -322,7 +322,25 @@
             };
           };
           todo-comments.enable = true;
-          trouble.enable = true;
+          trouble = {
+            enable = true;
+            # Preview in a FLOAT, not the "main" window. Default preview.type =
+            # "main" loads each item under the cursor into the window you opened
+            # Trouble from — which, inside diffview, is one of the diff panes. So
+            # browsing a flow_go/<leader>gu list (or the <leader>go/gi call
+            # hierarchy) replaces a diff pane on every j/k and scrambles the
+            # layout. A float overlays instead and never clobbers a real window.
+            settings.preview = {
+              type = "float";
+              relative = "editor";
+              border = "rounded";
+              title = "Preview";
+              title_pos = "center";
+              position = [ 0 (-2) ];
+              size = { width = 0.6; height = 0.6; };
+              zindex = 200;
+            };
+          };
           # Changeset browser: file panel (sidebar) + side-by-side diff for any
           # ref pair. Driven by the <leader>g{d,D,h,H,x} maps above.
           diffview = {
