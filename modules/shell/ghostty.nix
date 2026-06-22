@@ -6,6 +6,17 @@
     {
       programs.ghostty = {
         enable = true;
+        # TODO: monitor for a ghostty release > 1.3.1 in nixpkgs, then bump.
+        # File drag-and-drop from GTK sources (ripdrag/Nautilus) silently fails
+        # into Ghostty on Hyprland: the compositor pre-selects the "move" DnD
+        # action, but Ghostty 1.3.1's drop target only accepts "copy", so GTK4
+        # rejects the drop before Ghostty sees it (works into kitty/Firefox).
+        # Fixed upstream by PR #11182 (commit c920a88, "add 'move' to the drop
+        # target actions") — merged to main 2026-03-05 but NOT in the v1.3.1 tag,
+        # so it's absent from nixos-unstable AND master (both build refs/tags/v1.3.1
+        # as of 2026-06). Not backporting; just bump once a tagged release carries
+        # it. Refs: https://github.com/ghostty-org/ghostty/issues/11175 (PR #11182).
+        # Workaround until then: hold Ctrl while dragging to force the copy action.
         package = if pkgs.stdenv.isDarwin then pkgs.ghostty-bin else pkgs.ghostty;
         enableZshIntegration = true;
         systemd.enable = pkgs.stdenv.isLinux;
