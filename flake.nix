@@ -30,7 +30,14 @@
     import-tree.url = "github:vic/import-tree";
 
     nixos-hardware.url = "github:NixOS/nixos-hardware";
-    stylix.url = "github:mputz86/stylix/neomutt";
+    # Upstream stylix (release 26.11, matches this system). The neomutt theming
+    # the old mputz86/neomutt fork provided is reimplemented in modules/apps/mutt.nix
+    # as a small home-manager module sourcing a base16-rendered muttrc, so no fork
+    # is needed — see that file and modules/apps/base16-stylix.muttrc.mustache.
+    stylix = {
+      url = "github:danth/stylix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     neomutt-gmail = {
       url = "github:jevy/neomutt-for-gmail";
       inputs.nixpkgs.follows = "nixpkgs";

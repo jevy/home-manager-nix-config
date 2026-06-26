@@ -28,8 +28,22 @@
       # (xterm-ghostty terminfo lacks the RGB flag that ncurses needs for hex colors)
       home.shellAliases.neomutt = "TERM=xterm-direct neomutt";
 
+      programs.neomutt.extraConfig = lib.mkMerge [
+        # Base colors from the active stylix scheme. This reimplements upstream
+        # stylix's neomutt target (which simply sources a base16-rendered muttrc
+        # via config.lib.stylix.colors); we vendor the template rather than depend
+        # on the old mputz86/neomutt stylix fork. mkBefore so the personal
+        # `color sidebar_*` overrides below take precedence.
+        (lib.mkBefore ''
+          set color_directcolor = yes
+          source "${config.lib.stylix.colors {
+            template = ./base16-stylix.muttrc.mustache;
+            extension = ".muttrc";
+          }}"
+        '')
+
       # Personal overrides on top of module defaults
-      programs.neomutt.extraConfig = let
+      (let
         secretsDir = "${config.sops.defaultSymlinkPath}";
       in ''
         set use_threads=threads sort=reverse-last-date sort_aux=date
@@ -72,6 +86,7 @@
         color sidebar_unread #ddc7a1 #32302f
         color sidebar_highlight #32302f #e78a4e
         color sidebar_indicator bold #e78a4e #32302f
-      '';
+      '')
+      ];
     };
 }
