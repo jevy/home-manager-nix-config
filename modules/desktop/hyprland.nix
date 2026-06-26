@@ -60,6 +60,10 @@
     {
       services.hyprpolkitagent.enable = true;
 
+      # wl-mirror: renders a wlroots output into a window. Used by the
+      # share-desktop toggle to preview the headless screenshare output.
+      home.packages = [ pkgs.wl-mirror ];
+
       # Ensure the runtime monitor override file exists before Hyprland starts.
       # Hyprland `source=`s it, and errors out loudly if the glob matches nothing
       # (e.g. after a reboot that clears /tmp, or on a fresh install).
@@ -394,6 +398,39 @@ MONEOF
                 esac
               '';
             };
+
+            # Screenshare scratch desktop: a headless (virtual) output you drag
+            # windows onto and share, so your physical ultrawide stays private.
+            # Windows land on the named workspace "share" (pinned to the output
+            # below). wl-mirror renders the otherwise-invisible output into a
+            # window so you can see what you're presenting.
+            #   $mod CTRL  S  → toggle the share desktop on/off
+            #   $mod SHIFT S  → throw the focused window onto it
+            # Share by picking the "share" monitor in the screenshare picker
+            # (or share the wl-mirror window itself if the app only does windows).
+            shareDesktop = pkgs.writeShellApplication {
+              name = "share-desktop";
+              runtimeInputs = with pkgs; [ jq wl-mirror libnotify procps coreutils ];
+              text = ''
+                exists() { hyprctl monitors -j | jq -e '.[] | select(.name == "share")' >/dev/null; }
+
+                if exists; then
+                  # Teardown: move the share workspace's windows back to a real
+                  # monitor BEFORE removing the output, so nothing gets closed.
+                  real=$(hyprctl monitors -j | jq -r '.[] | select(.name != "share") | .name' | head -1)
+                  [ -n "$real" ] && hyprctl dispatch moveworkspacetomonitor name:share "$real"
+                  pkill -f 'wl-mirror share' || true
+                  hyprctl output remove share
+                  notify-send "Share desktop" "Closed"
+                else
+                  hyprctl output create headless share
+                  # 1080p, parked to the right of your real screens.
+                  hyprctl keyword monitor "share,1920x1080@60,auto,1"
+                  notify-send "Share desktop" "Open — \$mod+Shift+S throws windows in"
+                  wl-mirror share &
+                fi
+              '';
+            };
           in
           {
             # Default monitor config for undocked state (applies on Hyprland start/restart)
@@ -498,6 +535,15 @@ MONEOF
               "nofocus,class:^$,title:^$,xwayland:1,floating:1,fullscreen:0,pinned:0"
               "suppressevent fullscreen,class:^org\\.gnome\\.Papers$"
               "suppressevent fullscreen,class:^libreoffice.*$"
+              # Keep the screenshare mirror floating so it's easy to place.
+              "float,class:^(wl-mirror)$"
+            ];
+
+            # Named workspace bound to the headless screenshare output (created
+            # on demand by share-desktop). The rule sits dormant until the
+            # "share" monitor exists, then windows moved here land on it.
+            workspace = [
+              "name:share, monitor:share, default:false"
             ];
 
             "$mod" = "SUPER";
@@ -605,6 +651,10 @@ MONEOF
 
               # Display
               "$mod, S, exec, ${scaleToggle}"
+
+              # Screenshare scratch desktop (headless output + mirror window)
+              "$mod CTRL, S, exec, ${shareDesktop}/bin/share-desktop"
+              "$mod SHIFT, S, movetoworkspacesilent, name:share"
 
               # Notifications
               "$mod, N, exec, ${pkgs.mako}/bin/makoctl dismiss"
