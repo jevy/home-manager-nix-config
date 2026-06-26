@@ -31,9 +31,12 @@
         description = "Kill GridTracker to reclaim leaked memory";
         serviceConfig = {
           Type = "oneshot";
-          # `|| true` so the unit doesn't report failure when GridTracker
-          # isn't running (pkill exits 1 on no match).
-          ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.procps}/bin/pkill -f gridtracker || true'";
+          # `[g]ridtracker` matches the running app but NOT this command's own
+          # argv. Plain `gridtracker` made `pkill -f` SIGTERM its own bash shell
+          # (whose argv contains the pattern) before `|| true` could run, so the
+          # unit died by signal and reported failure every night.
+          # `|| true` still absorbs pkill's exit 1 when GridTracker isn't running.
+          ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.procps}/bin/pkill -f [g]ridtracker || true'";
         };
       };
     };
