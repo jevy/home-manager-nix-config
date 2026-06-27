@@ -1,25 +1,12 @@
 # llama-swap + llama.cpp for local LLM inference (Vulkan)
 #
-# TODO(broken 2026-06-26): ALL models hang at Vulkan warmup → llama-swap's 120s
-# healthCheckTimeout kills llama-server → every request 502s. Stack is currently DOWN.
-#   Root cause: Mesa RADV regression on RDNA3/3.5 iGPUs (Krackan/Phoenix 7xx/8xx M),
-#   triggered by the default *f16* KV cache. Confirmed reproducible on this box
-#   (Radeon 860M, Mesa 26.1.1): warmup grinds the GPU at ~15% forever, never completes
-#   (waited 6+ min). Not flash-attn, not the shader cache, not the systemd sandbox.
-#   Upstream: https://gitlab.freedesktop.org/mesa/mesa/-/work_items/15550
-#   llama.cpp issues: #23755 (mesa regression), #24664, #24307, #23995
-#
-#   Fixes, in order of preference:
-#   1. PREFERRED — `nix flake update nixpkgs` to pull Mesa >= 26.1.3, which fixes it
-#      (confirmed in #24307, 2026-06-20). Bumps llama.cpp forward too (currently b9080,
-#      latest b9811). Rebuild, then verify both models actually generate.
-#   2. Workaround without bumping Mesa — quantized KV cache dodges the f16 trigger
-#      (#23995: "26.1.1 fails only with f16 kv cache; works with q8_0"). Add to each
-#      model cmd: `-fa on -ctk q8_0 -ctv q8_0`. Bonus: ~halves KV-cache memory.
-#   3. Fallback — pin Mesa back to 26.0.8 (also confirmed working in #23995).
-#
-#   NOTE: once fixed, drop `--flash-attn on` from qwen3-1.7b-uncensored below unless
-#   option 2 is used (it's only needed for quantized-V KV cache; otherwise omit it).
+# History: all models used to hang at Vulkan warmup on this box (Radeon 860M,
+# RDNA3.5 iGPU). Root cause was a Mesa RADV regression triggered by the default
+# f16 KV cache — warmup ground the GPU forever, so llama-swap's 120s
+# healthCheckTimeout killed llama-server and every request 502'd. Fixed upstream
+# in Mesa >= 26.1.3 (now running 26.1.3); all models verified to generate.
+#   Refs: https://gitlab.freedesktop.org/mesa/mesa/-/work_items/15550
+#         llama.cpp #23755 (mesa regression), #24307, #23995
 { inputs, ... }:
 {
   # Override llama-cpp for Vulkan + native CPU optimizations (Zen 5 AVX-512)
@@ -58,13 +45,6 @@
             # Pure attention MoE (qwen3moe arch) — fully Vulkan compatible
             "qwen3-coder-30b" = {
               cmd = "${llama-server} --port \${PORT} -m ${modelsDir}/Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf -ngl 99 -c 32768 -t 8 --jinja --reasoning-budget 0 --no-webui";
-              ttl = 300;
-            };
-
-            # Uncensored general-purpose (abliterated Qwen3-30B-A3B, same qwen3moe arch)
-            # https://huggingface.co/Goekdeniz-Guelmez/Josiefied-Qwen3-30B-A3B-abliterated-v2
-            "qwen3-30b-uncensored" = {
-              cmd = "${llama-server} --port \${PORT} -m ${modelsDir}/Josiefied-Qwen3-30B-A3B-abliterated-v2.Q4_K_M.gguf -ngl 99 -c 32768 -t 8 --jinja --reasoning-budget 0 --no-webui";
               ttl = 300;
             };
 
