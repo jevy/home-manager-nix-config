@@ -48,12 +48,30 @@
               ttl = 300;
             };
 
-            # Fast uncensored (abliterated Qwen3-1.7B dense, qwen3 arch — full Vulkan support).
-            # 1.7B active vs the 30B's 3B → ~half the per-token reads, so ~2x decode tok/s.
-            # Q4_0 quant + flash attention for max throughput on the bandwidth-bound iGPU.
-            # https://huggingface.co/bartowski/mlabonne_Qwen3-1.7B-abliterated-GGUF
-            "qwen3-1.7b-uncensored" = {
-              cmd = "${llama-server} --port \${PORT} -m ${modelsDir}/Qwen3-1.7B-abliterated-Q4_0.gguf -ngl 99 -c 32768 -t 8 --flash-attn on --jinja --reasoning-budget 0 --no-webui";
+            # Uncensored Dolphin fine-tunes (replacing the old abliterated 1.7B) for A/B.
+            # Fine-tuned, not abliterated → coherent at small sizes; Qwen2.5/Gemma2 bases
+            # have no <think> blocks (so no --reasoning-budget needed). All dense, qwen2/
+            # gemma2 arch → full Vulkan support.
+
+            # Dolphin 3.0 / Qwen2.5-1.5B. ~1.1GB Q4_K_M — closest match to the old 1.7B.
+            # https://huggingface.co/bartowski/Dolphin3.0-Qwen2.5-1.5B-GGUF
+            "dolphin3-qwen2.5-1.5b" = {
+              cmd = "${llama-server} --port \${PORT} -m ${modelsDir}/Dolphin3.0-Qwen2.5-1.5B-Q4_K_M.gguf -ngl 99 -c 32768 -t 8 --jinja --no-webui";
+              ttl = 300;
+            };
+
+            # Dolphin 3.0 / Qwen2.5-3B. ~2.0GB Q4_K_M — more coherent, still tiny/fast.
+            # https://huggingface.co/bartowski/Dolphin3.0-Qwen2.5-3b-GGUF
+            "dolphin3-qwen2.5-3b" = {
+              cmd = "${llama-server} --port \${PORT} -m ${modelsDir}/Dolphin3.0-Qwen2.5-3b-Q4_K_M.gguf -ngl 99 -c 32768 -t 8 --jinja --no-webui";
+              ttl = 300;
+            };
+
+            # Dolphin 2.9.4 / Gemma2-2B. ~1.7GB Q4_K_M, different lineage to compare.
+            # Gemma2 native context is 8K, so -c 8192 (do not over-extend).
+            # https://huggingface.co/bartowski/dolphin-2.9.4-gemma2-2b-GGUF
+            "dolphin-gemma2-2b" = {
+              cmd = "${llama-server} --port \${PORT} -m ${modelsDir}/dolphin-2.9.4-gemma2-2b-Q4_K_M.gguf -ngl 99 -c 8192 -t 8 --jinja --no-webui";
               ttl = 300;
             };
 
