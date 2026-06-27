@@ -1,25 +1,22 @@
 # Lenovo ThinkPad P14s Gen 6 AMD hardware configuration
-{ inputs, ... }:
+{ ... }:
 {
   flake.modules.nixos.lenovoP14sHardware =
     { pkgs, ... }:
     {
-      # Normally linuxPackages_latest for best Zen 5 / RDNA 3.5 / MT7925 WiFi 7
-      # support. TEMPORARILY pinned to kernel 7.0.6 (via a pinned nixpkgs input)
-      # because it's the newest 7.0.x free of both recent regressions:
-      #   - 7.0.7 broke MT7925 Bluetooth: btmtk rejects the chip's short WMT
-      #     FUNC_CTRL event ("Failed to send wmt func ctrl (-22)", no controller).
-      #     Introduced by 634a4408c061, fixed in 7.0.10 by e193447ac6c9.
-      #   - 7.0.9 broke xdg-desktop-portal app-info resolution (pidfd→/proc
-      #     regression): every GTK4/portal file picker fails ("Unable to open
-      #     /proc/<pid>/root" — Save As in Papers, file uploads in Slack, etc).
-      # 7.0.7/7.0.8 fix the portal but kill BT; 7.0.10 fixes BT but kills the
-      # portal. Confirmed by boot-log bisection on this machine.
-      # TODO: revert to pkgs.linuxPackages_latest (and drop the nixpkgs-kernel706
-      # flake input) once a kernel ships with both fixes. Track:
-      #   https://github.com/flatpak/xdg-desktop-portal/issues/1653
-      #   https://github.com/flatpak/xdg-desktop-portal/issues/1719
-      boot.kernelPackages = inputs.nixpkgs-kernel706.legacyPackages.${pkgs.stdenv.hostPlatform.system}.linuxPackages_latest;
+      # linuxPackages_latest (kernel 7.1.x) for best Zen 5 / RDNA 3.5 / MT7925
+      # WiFi 7 support. Previously pinned to 7.0.6 via a separate nixpkgs input to
+      # dodge two regressions; that pin is gone now that 7.1 carries the fixes:
+      #   - MT7925/MT7922 Bluetooth: btmtk rejected the chip's short WMT FUNC_CTRL
+      #     event ("Failed to send wmt func ctrl (-22)", no controller). Broken in
+      #     7.0.7 by 634a4408c061, fixed by e193447ac6c9 — merged into the 7.1 base
+      #     tree, so 7.1.x has working BT natively.
+      #   - The xdg-desktop-portal "/proc/<pid>/root" breakage is NOT a revertable
+      #     kernel regression: it's the permanent CVE-2026-46333 get_dumpable
+      #     tightening (31e62c2ebbfd), present in both 7.0.6 and 7.1.x. It's handled
+      #     by the security.wrappers CAP_SYS_PTRACE shim below, which stays in place
+      #     regardless of kernel version (see that block).
+      boot.kernelPackages = pkgs.linuxPackages_latest;
 
       # Fix OLED/PSR screen flickering on RDNA 3.5 (Strix Point)
       # Disable CWSR to prevent MES firmware hangs (hard lockups) on GFX11.
