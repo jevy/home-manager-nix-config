@@ -1,4 +1,4 @@
-# Pi terminal coding agent with OpenRouter and MCP proxy
+# Pi terminal coding agent with OpenRouter and local llama-swap models
 { inputs, ... }:
 let
   # Curated cheap models for OpenRouter. Pi will ONLY see these (no auto/Opus).
@@ -71,6 +71,41 @@ let
           contextWindow = 1048576;
           maxTokens = 384000;
           cost = { input = 0.14; output = 0.28; cacheRead = 0; cacheWrite = 0; };
+        }
+      ];
+    };
+    # Local llama-swap (llama.cpp, OpenAI-compatible) — see modules/services/llama-swap.nix.
+    # Custom provider: baseUrl + api="openai-completions". llama.cpp needs no auth,
+    # but pi's schema (>=0.80) rejects an empty apiKey, so use a non-empty placeholder
+    # (the value is sent but ignored by llama-server).
+    # compat.supportsDeveloperRole=false: llama.cpp's jinja chat templates don't
+    # understand the "developer" role, so pi must send the system prompt as a
+    # plain system message. Models run with --reasoning-budget 0, so reasoning=false.
+    # IDs must match the model keys in llama-swap's settings.models.
+    providers.local = {
+      name = "llama-swap (local)";
+      baseUrl = "http://127.0.0.1:9292/v1";
+      api = "openai-completions";
+      apiKey = "no-key";
+      compat.supportsDeveloperRole = false;
+      models = [
+        {
+          id = "qwen3-1.7b-uncensored";
+          name = "Qwen3-1.7B-Uncensored (local)";
+          reasoning = false;
+          input = [ "text" ];
+          contextWindow = 32768;
+          maxTokens = 32768;
+          cost = { input = 0; output = 0; cacheRead = 0; cacheWrite = 0; };
+        }
+        {
+          id = "qwen3-coder-30b";
+          name = "Qwen3-Coder-30B (local)";
+          reasoning = false;
+          input = [ "text" ];
+          contextWindow = 32768;
+          maxTokens = 32768;
+          cost = { input = 0; output = 0; cacheRead = 0; cacheWrite = 0; };
         }
       ];
     };
