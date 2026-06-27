@@ -523,20 +523,30 @@ MONEOF
 
             dwindle = {
               preserve_split = true;
-              single_window_aspect_ratio = "16 9";
-              single_window_aspect_ratio_tolerance = 0.1;
               split_width_multiplier = 1.15;
             };
 
+            # single_window_aspect_ratio moved from dwindle to the layout
+            # category in Hyprland 0.5x.
+            layout = {
+              single_window_aspect_ratio = "16 9";
+              single_window_aspect_ratio_tolerance = 0.1;
+            };
+
+            # Hyprland 0.5x replaced the windowrulev2 grammar: each comma field
+            # is "key value" (space-separated), matchers take a "match:" prefix
+            # (floating->float, pinned->pin), and effects were renamed
+            # (nofocus->no_focus, suppressevent->suppress_event).
+            #
             # Prevent XWayland ghost windows (empty class+title) from stealing
             # focus, which causes popups in apps like Zoom and Synology Drive
             # to vanish when you try to mouse over them.
-            windowrulev2 = [
-              "nofocus,class:^$,title:^$,xwayland:1,floating:1,fullscreen:0,pinned:0"
-              "suppressevent fullscreen,class:^org\\.gnome\\.Papers$"
-              "suppressevent fullscreen,class:^libreoffice.*$"
+            windowrule = [
+              "no_focus true, match:class ^$, match:title ^$, match:xwayland 1, match:float 1, match:fullscreen 0, match:pin 0"
+              "suppress_event fullscreen, match:class ^org\\.gnome\\.Papers$"
+              "suppress_event fullscreen, match:class ^libreoffice.*$"
               # Keep the screenshare mirror floating so it's easy to place.
-              "float,class:^(wl-mirror)$"
+              "float true, match:class ^(wl-mirror)$"
             ];
 
             # Named workspace bound to the headless screenshare output (created
@@ -636,16 +646,23 @@ MONEOF
               "$mod SHIFT, U, hy3:movewindow, l, once"
 
               # Media controls
-              ", XF86AudioMute, exec, ${pkgs.pamixer}/bin/pamixer -t"
+              # Volume keys route through ashell's IPC so its OSD overlay shows
+              # (ashell performs the PipeWire change itself). Step is set by
+              # settings.volume_step in modules/desktop/ashell.nix.
+              ", XF86AudioMute, exec, ${pkgs.ashell}/bin/ashell msg volume-toggle-mute"
+              # Mic mute keeps the custom mute-all-sources script (no OSD).
               ", XF86AudioMicMute, exec, ${micMuteAll}"
-              ", XF86AudioLowerVolume, exec, ${pkgs.pamixer}/bin/pamixer -d 10"
-              ", XF86AudioRaiseVolume, exec, ${pkgs.pamixer}/bin/pamixer -i 10"
+              ", XF86AudioLowerVolume, exec, ${pkgs.ashell}/bin/ashell msg volume-down"
+              ", XF86AudioRaiseVolume, exec, ${pkgs.ashell}/bin/ashell msg volume-up"
               ", XF86AudioPlay, exec, ${pkgs.playerctl}/bin/playerctl play-pause"
               ", XF86AudioNext, exec, ${pkgs.playerctl}/bin/playerctl next"
               ", XF86AudioPrev, exec, ${pkgs.playerctl}/bin/playerctl previous"
               ", Print, exec, ${pkgs.grim}/bin/grim -g \"$(${pkgs.slurp}/bin/slurp)\" - | ${pkgs.swappy}/bin/swappy -f -"
               "SHIFT, Print, exec, ${screenRecord}"
               ", 164, exec, ${pkgs.playerctl}/bin/playerctl play-pause"
+              # Brightness stays on brightnessAdjust: it's cursor-aware and drives
+              # external monitors via DDC/ddcutil, which ashell's brightness IPC
+              # can't do. Trade-off: no OSD for brightness (volume still gets it).
               ", 232, exec, ${brightnessAdjust} -15"
               ", 233, exec, ${brightnessAdjust} +15"
 
