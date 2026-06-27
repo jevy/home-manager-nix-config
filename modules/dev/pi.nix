@@ -80,7 +80,8 @@ let
     # (the value is sent but ignored by llama-server).
     # compat.supportsDeveloperRole=false: llama.cpp's jinja chat templates don't
     # understand the "developer" role, so pi must send the system prompt as a
-    # plain system message. Models run with --reasoning-budget 0, so reasoning=false.
+    # plain system message. None of these are reasoning models (the Dolphins are
+    # non-thinking; coder-30b runs --reasoning-budget 0), so reasoning=false.
     # IDs must match the model keys in llama-swap's settings.models.
     providers.local = {
       name = "llama-swap (local)";
@@ -90,12 +91,30 @@ let
       compat.supportsDeveloperRole = false;
       models = [
         {
-          id = "qwen3-1.7b-uncensored";
-          name = "Qwen3-1.7B-Uncensored (local)";
+          id = "dolphin3-qwen2.5-1.5b";
+          name = "Dolphin3 Qwen2.5-1.5B (local)";
           reasoning = false;
           input = [ "text" ];
           contextWindow = 32768;
           maxTokens = 32768;
+          cost = { input = 0; output = 0; cacheRead = 0; cacheWrite = 0; };
+        }
+        {
+          id = "dolphin3-qwen2.5-3b";
+          name = "Dolphin3 Qwen2.5-3B (local)";
+          reasoning = false;
+          input = [ "text" ];
+          contextWindow = 32768;
+          maxTokens = 32768;
+          cost = { input = 0; output = 0; cacheRead = 0; cacheWrite = 0; };
+        }
+        {
+          id = "dolphin-gemma2-2b";
+          name = "Dolphin2.9.4 Gemma2-2B (local)";
+          reasoning = false;
+          input = [ "text" ];
+          contextWindow = 8192;
+          maxTokens = 8192;
           cost = { input = 0; output = 0; cacheRead = 0; cacheWrite = 0; };
         }
         {

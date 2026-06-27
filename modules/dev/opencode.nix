@@ -63,11 +63,25 @@
                     output = 32768;
                   };
                 };
-                "qwen3-1.7b-uncensored" = {
-                  name = "Qwen3-1.7B-Uncensored";
+                "dolphin3-qwen2.5-1.5b" = {
+                  name = "Dolphin3 Qwen2.5-1.5B";
                   limit = {
                     context = 32768;
                     output = 32768;
+                  };
+                };
+                "dolphin3-qwen2.5-3b" = {
+                  name = "Dolphin3 Qwen2.5-3B";
+                  limit = {
+                    context = 32768;
+                    output = 32768;
+                  };
+                };
+                "dolphin-gemma2-2b" = {
+                  name = "Dolphin2.9.4 Gemma2-2B";
+                  limit = {
+                    context = 8192;
+                    output = 8192;
                   };
                 };
               };
