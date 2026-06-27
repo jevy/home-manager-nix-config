@@ -53,15 +53,19 @@
               "MediaPlayer"
               "Tray"
               [
-                "Clock"
                 "Volume"
                 "Privacy"
                 "Settings"
+                "Tempo"
               ]
             ];
           };
-          clock = {
-            format = "%a %d %b %l:%M %p";
+          # ashell 0.9.0 renamed the Clock module to Tempo: the module name is
+          # "Tempo", the [clock] section is now [tempo], and `format` is now
+          # `clock_format`. Weather stays in the separate CustomWeather module,
+          # so Tempo runs clock-only (no weather_location).
+          tempo = {
+            clock_format = "%a %d %b %l:%M %p";
           };
           CustomModule = [
             {
@@ -87,6 +91,21 @@
           workspaces = {
             visibility_mode = "MonitorSpecificExclusive";
             enable_workspace_filling = false;
+          };
+          # On-screen display for volume. ashell only shows the OSD for changes
+          # made through its IPC (`ashell msg volume-up` etc.), so the Hyprland
+          # volume keys are routed through `ashell msg` — see
+          # modules/desktop/hyprland.nix. Brightness intentionally stays on the
+          # cursor-aware/DDC brightnessAdjust script, so it gets no OSD.
+          osd = {
+            enabled = true;
+            timeout = 1500;
+            show_volume_percentage = true;
+          };
+          # ashell's [settings] table. volume_step matches the previous
+          # `pamixer -i/-d 10` increment.
+          settings = {
+            volume_step = 10;
           };
         };
       };
