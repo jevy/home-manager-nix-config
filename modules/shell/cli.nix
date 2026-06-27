@@ -139,6 +139,7 @@
 
       home.shellAliases = {
         rebuildhm = "cd ~/.config/nixpkgs && sudo nixos-rebuild switch --flake \".#$(hostname)\"";
+        tailscale-toronto = "sudo tailscale up --accept-routes --exit-node=ca-tor-wg-001.mullvad.ts.net";
         weather = "${pkgs.curl}/bin/curl https://v2.wttr.in/ottawa";
         fdt = "f(){ fd $1 -t file -X ls -tr -l; };f";
       };
