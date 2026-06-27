@@ -63,8 +63,8 @@
                     output = 32768;
                   };
                 };
-                "qwen3-30b-uncensored" = {
-                  name = "Qwen3-30B-Uncensored";
+                "qwen3-1.7b-uncensored" = {
+                  name = "Qwen3-1.7B-Uncensored";
                   limit = {
                     context = 32768;
                     output = 32768;
