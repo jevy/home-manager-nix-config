@@ -71,11 +71,6 @@ in
       home.shellAliases = {
         pomodoro = "termdown 25m -s -b";
       };
-
-      programs.difftastic = {
-        enable = true;
-        git.enable = true;
-      };
     };
   };
 }
