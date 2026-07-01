@@ -455,6 +455,15 @@ MONEOF
               gaps_out = 8;
             };
 
+            cursor = {
+              # Force software cursors so the pointer is composited into the
+              # framebuffer and shows up in screenshares/recordings. The default
+              # (no_hardware_cursors = 2, "auto") only switches to software while
+              # a screencast is detected, which doesn't reliably trigger for
+              # browser/meeting screenshare — so force it on always.
+              no_hardware_cursors = true;
+            };
+
             decoration = {
               rounding = 10;
               shadow = {
@@ -488,7 +497,13 @@ MONEOF
             master = {
               orientation = "center";
               mfact = 0.45; # Master window takes 45% of screen width
-              slave_count_for_center_master = 0; # Always center master (even with no slaves)
+              # Center master once a slave exists. A lone window is handled by
+              # layout.single_window_aspect_ratio (16:9 centered) instead.
+              # NOT 0 ("always center"): on Hyprland 0.55.x that path computes a
+              # negative width for a lone window on wide monitors (the 5120px
+              # ultrawide), so it renders nothing and "disappears" when you close
+              # the second-to-last window. See hyprwm/Hyprland#8866.
+              slave_count_for_center_master = 1;
               new_status = "slave"; # New windows go to slave stack
               smart_resizing = true;
             };
