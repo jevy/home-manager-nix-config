@@ -1,22 +1,50 @@
 # Lenovo ThinkPad P14s Gen 6 AMD hardware configuration
-{ ... }:
+{ inputs, ... }:
 {
   flake.modules.nixos.lenovoP14sHardware =
     { pkgs, ... }:
     {
-      # linuxPackages_latest (kernel 7.1.x) for best Zen 5 / RDNA 3.5 / MT7925
-      # WiFi 7 support. Previously pinned to 7.0.6 via a separate nixpkgs input to
-      # dodge two regressions; that pin is gone now that 7.1 carries the fixes:
-      #   - MT7925/MT7922 Bluetooth: btmtk rejected the chip's short WMT FUNC_CTRL
-      #     event ("Failed to send wmt func ctrl (-22)", no controller). Broken in
-      #     7.0.7 by 634a4408c061, fixed by e193447ac6c9 — merged into the 7.1 base
-      #     tree, so 7.1.x has working BT natively.
-      #   - The xdg-desktop-portal "/proc/<pid>/root" breakage is NOT a revertable
-      #     kernel regression: it's the permanent CVE-2026-46333 get_dumpable
-      #     tightening (31e62c2ebbfd), present in both 7.0.6 and 7.1.x. It's handled
-      #     by the security.wrappers CAP_SYS_PTRACE shim below, which stays in place
-      #     regardless of kernel version (see that block).
-      boot.kernelPackages = pkgs.linuxPackages_latest;
+      # Kernel PINNED to 7.0.6 (via the nixpkgs-kernel706 flake input) to stop
+      # MT7925 hard-locks under network load. NOT linuxPackages_latest — see below.
+      #
+      # ROOT CAUSE (confirmed against captured pstore dumps + upstream git, 2026-07):
+      # kernel 7.1's mt7925 MLO / station-teardown rework (RCU wcid lifetime, the
+      # 2026-03-06 series) races the NAPI RX poll. mt76_wcid_init re-initializes a
+      # wcid->poll_list that the RX path (mt7925_mac_add_txs → mt76_wcid_add_poll)
+      # may already have linked → "kernel BUG at lib/list_debug.c:32" (list_add
+      # corruption), Comm napi/phy0-0. Verified: the crash-site functions
+      # (mt7925_mac_add_txs, mt7925_mac_tx_free, mt7925_rx_check, mt76_tx_status_*)
+      # are byte-identical 7.0.6↔7.1.1 — the regression is the *teardown* churn that
+      # is NEW in 7.1, so 7.0.6 (which predates it) does not hit this. Empirically:
+      # 7.0.6 ran clean ~26 days on this machine (gens through Jun 26); 7.1.1 landed
+      # Jun 26 and produced 4 list_add BUG panics in 3 days (one 7 min after boot).
+      #
+      # The fix is upstream commit 20b126920a25 ("wifi: mt76: add wcid publish check
+      # in mt76_sta_add") but it is ONLY in mainline v7.2-rc1 — unreleased, no
+      # Cc: stable, so no 7.1.x/7.0.x release carries it. Downgrading is therefore
+      # the only *released* crash-free path; going forward within 7.1 does not help.
+      # TODO: drop this pin + restore pkgs.linuxPackages_latest once a release ships
+      # 20b126920a25 (v7.2, est. late Aug 2026); alternatively cherry-pick it via
+      # boot.kernelPatches to stay current. Track the upstream/stable-backport status.
+      #
+      # Bonus: 7.0.6 also predates the 7.0.7 MT7925 Bluetooth break (btmtk rejecting
+      # the short WMT FUNC_CTRL event, "-22"; broken by 634a4408c061, fixed by
+      # e193447ac6c9 in 7.1) — so BT works here too. The xdg-desktop-portal
+      # /proc/<pid>/root breakage is version-independent (CVE-2026-46333 get_dumpable
+      # tightening, 31e62c2ebbfd, in both 7.0.6 and 7.1.x); it's handled by the
+      # security.wrappers CAP_SYS_PTRACE shim below regardless of kernel version.
+      boot.kernelPackages =
+        inputs.nixpkgs-kernel706.legacyPackages.${pkgs.stdenv.hostPlatform.system}.linuxPackages_latest;
+
+      # The pinned kernel comes from an older nixpkgs (May) than the rest of this
+      # config (current unstable), whose NixOS modules read kernel passthru attrs
+      # the older derivation doesn't expose → eval errors. Supply the values
+      # explicitly so the throwing defaults are never forced. Both are x86_64
+      # constants; remove together with the kernel pin.
+      #   - hardware.deviceTree.enable default reads kernel.buildDTBs (x86 has none)
+      #   - system.boot.loader.kernelFile default reads kernel.target (= bzImage)
+      hardware.deviceTree.enable = false;
+      system.boot.loader.kernelFile = "bzImage";
 
       # Fix OLED/PSR screen flickering on RDNA 3.5 (Strix Point)
       # Disable CWSR to prevent MES firmware hangs (hard lockups) on GFX11.
@@ -40,7 +68,58 @@
         "amdgpu.dcdebugmask=0x10"
         "amdgpu.cwsr_enable=0"
         "mt7925e.disable_aspm=1"
+        # MT7925 crash mitigation + resilience (see block below):
+        "cfg80211.ieee80211_regdom=CA" # real regdom (Canada), not world "00" (forces conservative/passive scan)
+        "panic=10" # a panic auto-reboots in 10s instead of freezing forever
+        "printk.always_kmsg_dump=1" # dump full kernel log to pstore on panic, so we capture the next one
       ];
+
+      # ── MT7925 crash resilience & mitigation (belt-and-suspenders under the pin) ──
+      # The kernel-7.0.6 pin above is the actual fix; this block is defence in depth
+      # in case a hard-lock ever recurs (e.g. firmware-triggered — the pin downgrades
+      # the kernel, NOT the linux-firmware blob). CRASH SIGNATURE, captured via
+      # efi-pstore (/var/lib/systemd/pstore; the journal never flushed it — the box
+      # froze at the BUG). 4 panics on 7.1.1, Jun 28–Jul 1 (one only 7 min after boot):
+      #   kernel BUG at lib/list_debug.c:32        (list_add corruption / double-add)
+      #   RIP: __list_add_valid_or_report          Comm: napi/phy0-0
+      #     mt7925_mac_add_txs.part.0  [mt7925_common]   (also seen: mt7925_mac_tx_free)
+      #     mt7925_rx_check            [mt7925_common]
+      #     mt792x_poll_rx             [mt792x_lib]       ← NAPI RX poll
+      # Root cause is the 7.1 mt7925 MLO/station-teardown RCU-lifetime race described
+      # in the boot.kernelPackages comment above (mt76_wcid_init re-inits a poll_list
+      # the RX path already linked); the fix (20b126920a25) is only in v7.2-rc1. The
+      # crash-site code is byte-identical 7.0.6↔7.1.1, so this is NOT a mac-path logic
+      # bug — pinning to pre-7.1 removes the trigger. Trackers / references:
+      #     https://github.com/torvalds/linux/commit/20b126920a25    (THE FIX: "add wcid publish check in mt76_sta_add"; in v7.2-rc1 only, no stable backport)
+      #     https://lkml.org/lkml/2026/1/3/61                       (Sean Wang: mt7925 comprehensive stability series, upstream review)
+      #     https://github.com/zbowling/mt7925                      (out-of-tree patchset: wcid double-init race, MLO nullptr, mutex guards)
+      #     https://zbowling.github.io/mt7925/issues/known-issues/  (symptom catalogue: nullptr in VIF iter, reset-path deadlock)
+      #     https://github.com/burakgon/mt7925-wifi-patches         (alternate patchset, tested on Filogic 360)
+      #     https://community.frame.work/t/mt7925-wifi-driver-fixes-now-available-as-dkms-package/79777 (prebuilt DKMS)
+      #     https://github.com/openwrt/openwrt/issues/16273         (same crash class: kernel panic in mt7925 mac path)
+      #     https://community.frame.work/t/tracking-kernel-panic-from-wifi-mediatek-mt7925-nullptr-dereference/79301 (main tracking thread)
+      #
+      # Until the driver is patched, the strategy is: (1) generic hygiene, (2) auto-
+      # recover so a lock-up is a ~15s reboot instead of a dead laptop. Capture already
+      # works — efi-pstore is built in (CONFIG_EFI_VARS_PSTORE=y) and systemd-pstore
+      # (NixOS default) archives each dump to /var/lib/systemd/pstore on the next boot;
+      # printk.always_kmsg_dump=1 above just makes it dump the full ring buffer.
+
+      # (1) Generic mt7925 hygiene. NOTE: a TXS logic bug can't be "configured away" —
+      # these don't fix the panic, they're documented-good and harmless defaults:
+      #   - a real regulatory domain (CA, via kernelParams above) instead of world "00",
+      #     which forces conservative/passive scanning; needs the regdb present:
+      hardware.wirelessRegulatoryDatabase = true;
+      #   - disable NetworkManager Wi-Fi power-save (documented mt7925 crash path):
+      networking.networkmanager.wifi.powersave = false;
+
+      # (2) Auto-recovery — the real protection until the driver is patched:
+      #   - the panic auto-reboots in 10s (panic=10 in kernelParams above);
+      #   - and if a future fault instead wedges the box hard (no panic), arm the SP5100
+      #     TCO hardware watchdog (/dev/watchdog here) via systemd: if the kernel can't
+      #     pet it within the window, the chip resets the machine on its own.
+      systemd.settings.Manager.RuntimeWatchdogSec = "30s";
+      systemd.settings.Manager.RebootWatchdogSec = "10s";
 
       # AMD GPU and OLED/touch support
       boot.kernelModules = [ "i2c-dev" ];
