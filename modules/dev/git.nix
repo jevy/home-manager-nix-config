@@ -2,7 +2,7 @@
 { ... }:
 {
   flake.modules.homeManager.git =
-    { pkgs, lib, ... }:
+    { lib, ... }:
     {
       programs.git = {
         enable = true;
@@ -26,11 +26,6 @@
             co = "pr checkout";
           };
         };
-      };
-
-      programs.difftastic = {
-        enable = true;
-        git.enable = true;
       };
     };
 }
