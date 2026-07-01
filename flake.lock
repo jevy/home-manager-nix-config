@@ -917,6 +917,21 @@
         "type": "github"
       }
     },
+    "nix-flatpak": {
+      "locked": {
+        "lastModified": 1780908363,
+        "narHash": "sha256-llGS4y3Qh1eUkli3/Y2VY9FV3GOUKFZR1E2BDftt45Q=",
+        "owner": "gmodena",
+        "repo": "nix-flatpak",
+        "rev": "1df08625f0f8c7d6e300a0e5df7955bbb877d809",
+        "type": "github"
+      },
+      "original": {
+        "owner": "gmodena",
+        "repo": "nix-flatpak",
+        "type": "github"
+      }
+    },
     "nix-github-actions": {
       "inputs": {
         "nixpkgs": [
@@ -971,6 +986,22 @@
         "owner": "NixOS",
         "ref": "nixpkgs-unstable",
         "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-kernel706": {
+      "locked": {
+        "lastModified": 1778762356,
+        "narHash": "sha256-TEAMFXp4sU+JonhhQ0DACeb/6OMkiRbHvDtIgsqWMrM=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "ec5490bc79b6e20068bfb068d572a05678bed4f4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "ec5490bc79b6e20068bfb068d572a05678bed4f4",
         "type": "github"
       }
     },
@@ -1194,8 +1225,10 @@
         "llmfit": "llmfit",
         "mcp-servers-nix": "mcp-servers-nix",
         "neomutt-gmail": "neomutt-gmail",
+        "nix-flatpak": "nix-flatpak",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_4",
+        "nixpkgs-kernel706": "nixpkgs-kernel706",
         "nixvim": "nixvim",
         "pi-mono": "pi-mono",
         "sops-nix": "sops-nix",
