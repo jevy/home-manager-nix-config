@@ -76,9 +76,15 @@
         configType = "hyprlang";
         systemd.enable = true; # Required for hyprland-session.target (ashell depends on it)
         # xwayland.enable = true;
-        plugins = [
-          inputs.hy3.packages.${pkgs.stdenv.hostPlatform.system}.hy3
-        ];
+        # hy3 is NOT loaded via the `plugins` option: home-manager renders that
+        # as `exec-once=hyprctl plugin load`, which runs AFTER the config is
+        # parsed. The hy3:* keybinds are validated during parse, so they'd error
+        # ("Invalid dispatcher: hy3:makegroup") and briefly flash the config-error
+        # overlay on every startup. Instead we declare it at parse time via the
+        # `plugin = <path>` keyword in extraConfig below — Hyprland loads it in
+        # handlePluginLoads() and then destroys the error overlay and reloads,
+        # so the binds re-validate cleanly with no flash.
+        plugins = [ ];
 
         settings =
           let
@@ -717,6 +723,9 @@ MONEOF
         # Appended after settings — on reload, the sourced monitor rules
         # override the default monitor line above.
         extraConfig = ''
+          # Load hy3 at parse time (see plugins = [ ] note above). Position is
+          # irrelevant — declared plugins load post-parse, then trigger a reload.
+          plugin = ${inputs.hy3.packages.${pkgs.stdenv.hostPlatform.system}.hy3}/lib/libhy3.so
           source = /tmp/hypr-monitors.conf
         '';
       };
