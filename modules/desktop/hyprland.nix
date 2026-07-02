@@ -194,7 +194,19 @@ MONEOF
 general:layout = hy3
 monitor = eDP-1,''${MODE},0x0,''${SCALE}
 MONEOF
-              hyprctl --batch "keyword general:layout hy3; keyword monitor eDP-1,''${MODE},0x0,''${SCALE}"
+              # Re-assert eDP-1 with retries. On this AMD box the atomic DRM
+              # commit can transiently fail ("Device or resource busy") right
+              # after an unplug, so a single keyword can leave Hyprland with no
+              # live output — i.e. "Unplugged last monitor, entering an unsafe
+              # state". Retry (poking dpms) until eDP-1 is actually enabled.
+              for _ in 1 2 3 4 5 6 7 8 9 10; do
+                hyprctl --batch "keyword general:layout hy3; keyword monitor eDP-1,''${MODE},0x0,''${SCALE}"
+                hyprctl dispatch dpms on
+                UP=$(hyprctl monitors -j \
+                  | ${pkgs.jq}/bin/jq '[.[] | select(.name == "eDP-1" and .disabled == false)] | length')
+                [ "$UP" = "1" ] && break
+                sleep 1
+              done
               # Reload hyprpaper to apply wallpaper
               killall hyprpaper; sleep 0.5; ${pkgs.hyprpaper}/bin/hyprpaper &
             '';
