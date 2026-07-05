@@ -1,63 +1,39 @@
-# mcp-server-kubernetes (native via bun2nix)
+# mcp-server-kubernetes (native via buildNpmPackage)
 
-Upstream ([Flux159/mcp-server-kubernetes](https://github.com/Flux159/mcp-server-kubernetes))
-is a Bun project that ships only a binary `bun.lockb` and **no npm lockfile**,
-so `buildNpmPackage` can't be used. We build it natively with
-[`bun2nix`](https://github.com/nix-community/bun2nix), which needs a text
-`bun.lock` (Bun ≥ 1.2) and a generated `bun.nix`.
+Built from source ([Flux159/mcp-server-kubernetes](https://github.com/Flux159/mcp-server-kubernetes))
+instead of `npx -y mcp-server-kubernetes`, whose per-launch npm-registry version
+check tripped Claude Code's 30 s MCP startup budget under concurrent startup.
 
-## Why not npx?
+## Why buildNpmPackage (not bun2nix)?
 
-`npx -y mcp-server-kubernetes` does an npm-registry version check on every
-launch. Under concurrent MCP startup that regularly exceeded Claude Code's 30 s
-connection budget, so the server showed as `✗ failed`. The same command with
-`--prefer-offline` starts in ~0.7 s. The kubernetes wrapper in
-`modules/dev/mcp.nix` currently uses `--prefer-offline` as an interim; this
-package is the durable native replacement.
+Upstream is a Bun project and ships only a binary `bun.lockb` (no npm lockfile).
+But its build is plain `tsc` — Bun is only the *package manager*, not a runtime
+dependency. nixpkgs has no native bun builder, and bun2nix's in-sandbox
+`bun install` re-resolves package manifests over the network (which the build
+sandbox blocks). So we package it exactly like `pkgs/brave-search-mcp-server`:
+generate an npm `package-lock.json`, vendor it, and `postPatch` it into the
+source before `fetchNpmDeps` runs.
 
-## Generate `bun.nix` (one-time, and on every version bump)
+## Regenerate `package-lock.json` (on every version bump)
 
-Requires network access and Bun ≥ 1.2. From a scratch checkout:
+Requires network access. From a scratch checkout:
 
 ```bash
-git clone https://github.com/Flux159/mcp-server-kubernetes /tmp/mcp-k8s
-cd /tmp/mcp-k8s
-git checkout v3.9.2                       # match `version` in default.nix
+tmp=$(mktemp -d)
+git clone --depth 1 --branch v3.9.2 \
+  https://github.com/Flux159/mcp-server-kubernetes "$tmp"   # match `version` in default.nix
+cd "$tmp"
+rm -f package-lock.json bun.lockb bun.lock
 
-bun install                               # migrates bun.lockb -> text bun.lock
-bunx bun2nix -o bun.nix                    # generate the Nix expression
-                                          # (or: nix run github:nix-community/bun2nix -- -o bun.nix)
+npm install --ignore-scripts            # full install -> complete lockfile with resolved+integrity
 
-cp bun.nix ~/.config/nixpkgs/pkgs/mcp-server-kubernetes/bun.nix
+cp package-lock.json ~/.config/nixpkgs/pkgs/mcp-server-kubernetes/package-lock.json
 ```
 
-## Wire it up
+## Then
 
-1. Fill the `fetchFromGitHub` `hash` in `default.nix` (leave `""`, run
-   `rebuildhm`, copy the hash from the error).
-2. In `modules/dev/mcp.nix`, add to the module `let` block:
-   ```nix
-   bun2nixLib = inputs.bun2nix.packages.${pkgs.system}.default;
-   kubernetesMcpServer = pkgs.callPackage ../../pkgs/mcp-server-kubernetes {
-     bun2nix = bun2nixLib;
-   };
-   ```
-   (add `inputs` to the outer module args — see CLAUDE.md "no specialArgs" rule)
-3. Replace the interim `kubernetesWrapper` with one that execs the native
-   binary and puts `kubectl` on PATH:
-   ```nix
-   kubernetesWrapper = pkgs.writeShellApplication {
-     name = "run-mcp-kubernetes";
-     runtimeInputs = [ kubernetesMcpServer pkgs.kubectl ];
-     text = ''exec mcp-server-kubernetes "$@"'';
-   };
-   ```
-4. `rebuildhm`, then check `/mcp` — kubernetes should connect near-instantly.
-
-## Notes
-
-- If the build fails on top-level `await`, set `bunCompileToBytecode = false;`
-  in `default.nix` (bytecode compilation forces CommonJS).
-- `bun2nix` is a Rust program and slow to compile from source; the
-  `nix-community.cachix.org` substituter (already reachable) serves prebuilt
-  binaries.
+1. If bumping the version, also refresh the `fetchFromGitHub` `hash` in
+   `default.nix` (set to `lib.fakeHash`, run `rebuildhm`, copy from the error).
+2. Set `npmDepsHash = lib.fakeHash;`, run `rebuildhm`, and copy the reported
+   hash into `default.nix`.
+3. `rebuildhm`, then check `/mcp` — kubernetes should connect instantly.

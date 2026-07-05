@@ -1,33 +1,38 @@
 # Native build of mcp-server-kubernetes.
 #
-# Upstream is a Bun project that ships only a binary bun.lockb (no npm
-# lockfile), so buildNpmPackage cannot be used. bun2nix consumes a generated
-# bun.nix (checked in alongside this file) and compiles a standalone binary via
-# `bun build --compile` — no node_modules or npx at runtime, sub-second startup.
-#
-# The generated ./bun.nix must be regenerated on every version bump; see
-# README.md for the one-time steps.
+# Upstream is a Bun project (ships only bun.lockb, no npm lockfile), but its
+# build is plain `tsc` — Bun is only the package manager, not a runtime dep.
+# nixpkgs has no native bun builder, and bun2nix's in-sandbox `bun install`
+# re-resolves manifests over the (sealed) network, so we package it with
+# buildNpmPackage against a generated npm lockfile instead — the same mechanism
+# as pkgs/brave-search-mcp-server. Regenerate the vendored lockfile on version
+# bumps; see README.md.
 {
-  bun2nix,
+  lib,
+  buildNpmPackage,
   fetchFromGitHub,
 }:
-bun2nix.mkDerivation {
+buildNpmPackage rec {
   pname = "mcp-server-kubernetes";
   version = "3.9.2";
 
   src = fetchFromGitHub {
     owner = "Flux159";
     repo = "mcp-server-kubernetes";
-    rev = "v3.9.2";
-    hash = ""; # fill from first build error, then rebuild
+    rev = "v${version}";
+    hash = "sha256-HYNcASb7QFNXmQGjW0VVemUXPgBdNb/IBzG5x3xkB/E=";
   };
 
-  bunDeps = bun2nix.fetchBunDeps {
-    bunNix = ./bun.nix;
-  };
+  # Upstream has no npm lockfile; drop in the generated one before deps are
+  # fetched (buildNpmPackage forwards postPatch to fetchNpmDeps).
+  postPatch = ''
+    cp ${./package-lock.json} package-lock.json
+  '';
 
-  # Entry point (compiles to the `mcp-server-kubernetes` bin). The server shells
-  # out to `kubectl` at runtime — the consuming wrapper is responsible for
-  # putting kubectl on PATH.
-  module = "src/index.ts";
+  # `npm run build` (tsc && shx chmod) runs by default; the
+  # `mcp-server-kubernetes` bin is installed from package.json. The server
+  # shells out to kubectl at runtime — the consuming wrapper puts it on PATH.
+  npmDepsHash = "sha256-fXkWRtT7B2zojgaPcW4jV/FrMl6agS44JN1qYpp3HFQ=";
+
+  meta.mainProgram = "mcp-server-kubernetes";
 }

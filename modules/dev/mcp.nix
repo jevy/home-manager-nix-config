@@ -5,30 +5,16 @@
   flake.modules.homeManager.mcp =
     { config, pkgs, lib, ... }:
     let
-      # Kubernetes MCP server wrapper.
-      #
-      # INTERIM: still launched via npx, but with --prefer-offline. Without it,
-      # npx does an npm-registry version check on every launch that took >30s
-      # under concurrent MCP startup and tripped Claude Code's 30s timeout;
-      # --prefer-offline skips that check and starts in ~0.7s from the warm cache.
-      #
-      # TODO(native): upstream is a Bun project shipping only bun.lockb (no npm
-      # lockfile), so it can't use buildNpmPackage. The native path is bun2nix —
-      # see pkgs/mcp-server-kubernetes/README.md for the one-time bun.nix
-      # generation, then swap this wrapper for the compiled binary.
-      kubernetesWrapper =
-        pkgs.runCommand "run-mcp-kubernetes"
-          {
-            buildInputs = [ pkgs.makeWrapper ];
-          }
-          ''
-            mkdir -p $out/bin
-            makeWrapper ${lib.getExe' pkgs.nodejs "npx"} $out/bin/run-mcp-kubernetes \
-              --add-flags "--prefer-offline" \
-              --add-flags "-y" \
-              --add-flags "mcp-server-kubernetes" \
-              --prefix PATH : ${pkgs.nodejs}/bin
-          '';
+      # Kubernetes MCP server, built natively with buildNpmPackage against a
+      # generated npm lockfile (see pkgs/mcp-server-kubernetes) — no npx registry
+      # check to trip Claude Code's 30s startup budget. The server shells out to
+      # kubectl at runtime, so the wrapper puts it on PATH.
+      kubernetesMcpServer = pkgs.callPackage ../../pkgs/mcp-server-kubernetes { };
+      kubernetesWrapper = pkgs.writeShellApplication {
+        name = "run-mcp-kubernetes";
+        runtimeInputs = [ kubernetesMcpServer pkgs.kubectl ];
+        text = ''exec mcp-server-kubernetes "$@"'';
+      };
 
       # Grafana MCP server (build from source with Go 1.25)
       grafanaMcpServer = pkgs.buildGo125Module rec {

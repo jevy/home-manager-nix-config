@@ -54,14 +54,6 @@
       url = "github:natsukium/mcp-servers-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Builds the Bun-based mcp-server-kubernetes into a standalone binary.
-    # Upstream ships no npm lockfile (only bun.lockb), so buildNpmPackage
-    # can't be used; bun2nix consumes a generated bun.nix instead.
-    # See pkgs/mcp-server-kubernetes/README.md for the regeneration steps.
-    bun2nix = {
-      url = "github:nix-community/bun2nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     hyprland = {
       # Bumped 0.53.1 → 0.55.4: ashell 0.9.0 requires the `tiledLayout` field in
       # Hyprland's workspace IPC, which only exists from 0.54+ (layout-engine
