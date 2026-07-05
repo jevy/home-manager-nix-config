@@ -121,6 +121,42 @@
       systemd.settings.Manager.RuntimeWatchdogSec = "30s";
       systemd.settings.Manager.RebootWatchdogSec = "10s";
 
+      # ── MT7925 + WPA3/SAE: phone-hotspot association failures ──────────────────
+      # NOT a crash — a connectivity regression, documented here because it's the same
+      # card. From ~Jul 2 2026 this laptop could no longer join the Pixel 10 hotspot
+      # ("JevyPixel"): wpa_supplicant looped forever, never associating —
+      #   SME: Trying to authenticate ... (SSID='JevyPixel')
+      #   CTRL-EVENT-AUTH-REJECT auth_type=3 auth_transaction=2 status_code=15   (×24/attempt)
+      #   NetworkManager: (wifi) association took too long, failing activation
+      # auth_type=3 = SAE (WPA3); rejection at the SAE *confirm* (transaction 2) with
+      # the generic status 15 = the AP threw out the handshake. Never associated → no
+      # DHCP/DNS, so it presents as "internet down". WPA2-only APs (e.g. hotels) connect
+      # instantly because they never exercise the SAE path.
+      #
+      # NOT the laptop's fault (verified 2026-07-03 against the journal + flake.lock):
+      # the identical stack CONNECTED fine to this hotspot on Jun 5 & Jun 12 (kernel
+      # 7.0.6) and Jun 19 (7.1.1), then failed from Jul 2 with NOTHING changed on our
+      # side — linux-firmware byte-identical (3pskh1jw…-linux-firmware-20260519, same
+      # store path before & after the Jun 27 input bump), wpa_supplicant 2.11 and
+      # NetworkManager 1.56.0 unchanged, and 7.0.6 already proven-good above. The moving
+      # part is the *phone*: Pixel 10 / Android 16 shipped a WPA3-SAE behaviour change
+      # mid-2026 (OpenWrt #21485 documents the Pixel 10/Android 16 SAE regression),
+      # meeting a card widely reported weak on WPA3 but solid on WPA2. Two fragile SAE
+      # endpoints — a phone-side change tipped it from "works" to "broken".
+      #
+      # FIX (imperative, per-connection — deliberately NOT declared here: the profile
+      # carries the hotspot PSK, which does not belong in the repo). Disable PMF on the
+      # saved connection; WPA3-SAE mandates PMF, so turning it off removes SAE from the
+      # menu and forces the compatible WPA2-PSK path the phone still offers in
+      # transition mode:
+      #     nmcli connection modify JevyPixel 802-11-wireless-security.pmf 1   # 1 = disable
+      #     (revert with `… pmf 0`)   Applied 2026-07-03; community-standard fix for this class.
+      # Same pmf-disable applies per-network if other WPA3 hotspots start failing;
+      # last-resort escapes others use: switch wpa_supplicant↔iwd, or swap in an Intel card.
+      # Refs: https://github.com/openwrt/openwrt/issues/21485                              (Pixel 10 / Android 16 WPA3-SAE regression)
+      #       https://community.frame.work/t/issues-with-mediatek-mt7925-rz717-wi-fi-card/75815 (MT7925: WPA3 unstable, WPA2 solid)
+      #       https://sageaxe.com/troubleshoot/wpa3-transition-issues                       (WPA3 transition-mode fixes: disable PMF / force WPA2)
+
       # AMD GPU and OLED/touch support
       boot.kernelModules = [ "i2c-dev" ];
 
