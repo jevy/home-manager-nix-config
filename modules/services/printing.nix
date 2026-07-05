@@ -2,11 +2,10 @@
 { ... }:
 {
   flake.modules.nixos.printing =
-    { pkgs, ... }:
+    { ... }:
     {
       services.printing = {
         enable = true;
-        drivers = [pkgs.hplip pkgs.brlaser pkgs.cups-brother-hll3230cdw];
       };
 
       services.avahi = {
@@ -15,21 +14,24 @@
         openFirewall = true;
       };
 
-      # Jevin - If need to regenerate the deviceUri: To add the printer; 1. `nix-shell -p hplip` 2. hp-makeuri <IP> 3. Add that URL to cups
-      # Model = `lminfo -m`
-      hardware.printers.ensurePrinters = [
-        # {
-        #   model = "drv:///hp/hpcups.drv/hp-officejet_pro_9010_series.ppd";
-        #   deviceUri = "hp:/net/HP_OfficeJet_Pro_9010_series?ip=192.168.1.76";
-        #   location = "Basement";
-        #   name = "HP_Officejet_Pro_9010";
-        # }
-        # {
-        #   model = "everywhere";
-        #   deviceUri = "ipp://192.168.3.225/ipp";
-        #   location = "Basement";
-        #   name = "BrotherHL_L3270CDW";
-        # }
-      ];
+      # Brother HL-L3270CDW: driverless via IPP Everywhere (verified: IPP 2.0,
+      # URF + PWG raster, duplex, color). No vendor driver/PPD needed.
+      # If the printer's IP changes, update deviceUri — verify the endpoint with:
+      #   ipptool -tv ipp://<IP>/ipp/print get-printer-attributes.test
+      hardware.printers = {
+        ensurePrinters = [
+          {
+            name = "Brother_HL-L3270CDW";
+            description = "Brother HL-L3270CDW";
+            deviceUri = "ipp://192.168.1.13/ipp/print";
+            model = "everywhere";
+            ppdOptions = {
+              PageSize = "Letter";
+              Duplex = "DuplexNoTumble";
+            };
+          }
+        ];
+        ensureDefaultPrinter = "Brother_HL-L3270CDW";
+      };
     };
 }
