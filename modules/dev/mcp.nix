@@ -5,7 +5,17 @@
   flake.modules.homeManager.mcp =
     { config, pkgs, lib, ... }:
     let
-      # Kubernetes MCP server wrapper
+      # Kubernetes MCP server wrapper.
+      #
+      # INTERIM: still launched via npx, but with --prefer-offline. Without it,
+      # npx does an npm-registry version check on every launch that took >30s
+      # under concurrent MCP startup and tripped Claude Code's 30s timeout;
+      # --prefer-offline skips that check and starts in ~0.7s from the warm cache.
+      #
+      # TODO(native): upstream is a Bun project shipping only bun.lockb (no npm
+      # lockfile), so it can't use buildNpmPackage. The native path is bun2nix —
+      # see pkgs/mcp-server-kubernetes/README.md for the one-time bun.nix
+      # generation, then swap this wrapper for the compiled binary.
       kubernetesWrapper =
         pkgs.runCommand "run-mcp-kubernetes"
           {
@@ -14,6 +24,7 @@
           ''
             mkdir -p $out/bin
             makeWrapper ${lib.getExe' pkgs.nodejs "npx"} $out/bin/run-mcp-kubernetes \
+              --add-flags "--prefer-offline" \
               --add-flags "-y" \
               --add-flags "mcp-server-kubernetes" \
               --prefix PATH : ${pkgs.nodejs}/bin
@@ -110,17 +121,22 @@
         '';
       };
 
+      # Brave Search MCP server, built natively from source — see
+      # pkgs/brave-search-mcp-server. Was `npx -y`, which tripped Claude Code's
+      # 30s MCP startup budget on npx's per-launch npm-registry version check.
+      braveSearchMcpServer = pkgs.callPackage ../../pkgs/brave-search-mcp-server { };
+
       # Brave Search MCP server wrapper (reads API key from sops secret)
       braveSearchMcpWrapper = pkgs.writeShellApplication {
         name = "run-brave-search-mcp";
-        runtimeInputs = [ pkgs.nodejs ];
+        runtimeInputs = [ braveSearchMcpServer ];
         text = ''
           SOPS_SECRET_PATH="$HOME/.config/sops-nix/secrets"
           if [ -f "$SOPS_SECRET_PATH/brave_api_key" ]; then
             BRAVE_API_KEY=$(cat "$SOPS_SECRET_PATH/brave_api_key")
             export BRAVE_API_KEY
           fi
-          exec npx -y @brave/brave-search-mcp-server "$@"
+          exec brave-search-mcp-server "$@"
         '';
       };
 
@@ -135,81 +151,6 @@
           fi
           exec npx -y mcp-remote "https://homeassistant.jevy.org/api/mcp" \
             --header "Authorization: Bearer $HA_TOKEN"
-        '';
-      };
-
-      # LinkedIn MCP server wrapper (Docker-based, requires profile volume mount)
-      # Breaking change Feb 2026: LINKEDIN_COOKIE env var no longer supported.
-      # Must create profile first with: uvx linkedin-scraper-mcp --login
-      # Profile stored at ~/.linkedin-mcp/profile/
-      linkedinMcpWrapper = pkgs.writeShellApplication {
-        name = "run-linkedin-mcp";
-        runtimeInputs = [ pkgs.docker ];
-        text = ''
-          # Check if profile exists, warn if not
-          if [ ! -d "$HOME/.linkedin-mcp/profile" ]; then
-            echo "Warning: LinkedIn profile not found at ~/.linkedin-mcp/profile/" >&2
-            echo "Run 'linkedin-login' to create a profile first" >&2
-            exit 1
-          fi
-          exec docker run --rm -i \
-            -v "$HOME/.linkedin-mcp:/home/pwuser/.linkedin-mcp" \
-            stickerdaniel/linkedin-mcp-server:latest
-        '';
-      };
-
-      # FHS environment for running linkedin-scraper-mcp --login
-      # Needed because patchright contains dynamically linked binaries
-      linkedinMcpFHSEnv = pkgs.buildFHSEnv {
-        name = "linkedin-mcp-fhs";
-        targetPkgs = pkgs: with pkgs; [
-          uv
-          gcc.cc.lib
-          stdenv.cc.cc.lib
-          glib
-          libGL
-          libgbm
-          libxkbcommon
-          fontconfig
-          freetype
-          libx11
-          libxcomposite
-          libxdamage
-          libxext
-          libxfixes
-          libxrandr
-          libxcb
-          libxi
-          libxtst
-          libxcursor
-          libxscrnsaver
-          nss
-          nspr
-          dbus
-          cups
-          mesa
-          libdrm
-          alsa-lib
-          at-spi2-atk
-          at-spi2-core
-          gtk3
-          gdk-pixbuf
-          pango
-          cairo
-          expat
-          libuuid
-          systemd
-        ];
-        runScript = "bash";
-      };
-
-      # Helper script to run linkedin-scraper-mcp --login in FHS environment
-      linkedinLogin = pkgs.writeShellApplication {
-        name = "linkedin-login";
-        runtimeInputs = [ linkedinMcpFHSEnv ];
-        text = ''
-          mkdir -p "$HOME/.linkedin-mcp"
-          exec linkedin-mcp-fhs -c "uvx linkedin-scraper-mcp --login"
         '';
       };
 
@@ -283,15 +224,15 @@
             TRUENAS_URL = "truenas.jevy.org";
           };
         };
-        linkedin = {
-          command = "${linkedinMcpWrapper}/bin/run-linkedin-mcp";
-        };
         homeassistant = {
           command = "${homeAssistantMcpWrapper}/bin/run-homeassistant-mcp";
         };
         linear = {
+          # Linear removed the /sse endpoint (deprecated 2026-02, now 404s) in
+          # favor of the streamable-HTTP endpoint at /mcp. mcp-remote bridges it
+          # to stdio; --prefer-offline skips npx's per-launch registry check.
           command = lib.getExe' pkgs.nodejs "npx";
-          args = [ "-y" "mcp-remote" "https://mcp.linear.app/sse" ];
+          args = [ "--prefer-offline" "-y" "mcp-remote" "https://mcp.linear.app/mcp" ];
         };
       };
     in
@@ -311,7 +252,6 @@
         builtins.toJSON { mcp.servers = servers; };
 
       # GitHub MCP server wrapper (standalone, not an MCP config entry)
-      # LinkedIn login helper (for creating profile in FHS environment)
-      home.packages = [ run-github-mcp-server linkedinLogin ];
+      home.packages = [ run-github-mcp-server ];
     };
 }
