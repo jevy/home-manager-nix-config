@@ -13,6 +13,7 @@ in
         nixos.nix
         nixos.user
         nixos.zsh
+        nixos.nixvim
         nixos.stylix
         nixos.audio
         nixos.fonts
