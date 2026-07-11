@@ -1,6 +1,27 @@
 # Nixvim configuration
 { inputs, ... }:
 {
+  # System-level editor default. NixOS ships `environment.variables.EDITOR =
+  # mkDefault "nano"` (programs/environment.nix), which lands in
+  # /etc/set-environment. Home-manager only overrides EDITOR to nvim inside
+  # hm-session-vars.sh, which *only interactive login shells* source — so
+  # anything launched from the graphical session (Hyprland keybinds, .desktop
+  # execs, yazi openers) inherits EDITOR=nano. Setting it here via
+  # environment.sessionVariables makes nvim the editor everywhere: shells,
+  # PAM/systemd graphical sessions, and root/sudo (which also gets a plain
+  # system neovim on PATH; the user's configured nixvim wins via the earlier
+  # per-user profile entry).
+  flake.modules.nixos.nixvim =
+    { pkgs, ... }:
+    {
+      environment.sessionVariables = {
+        EDITOR = "nvim";
+        VISUAL = "nvim";
+        SUDO_EDITOR = "nvim";
+      };
+      environment.systemPackages = [ pkgs.neovim ];
+    };
+
   flake.modules.homeManager.nixvim =
     { config, pkgs, ... }:
     {
