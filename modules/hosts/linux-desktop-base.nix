@@ -65,6 +65,7 @@ in
             homeManager.ghostty
             homeManager.sops
             homeManager.git
+            homeManager.gitSpice
             homeManager.backup
             homeManager.ranger
             homeManager.yazi
@@ -75,6 +76,7 @@ in
             homeManager.mcp
             homeManager.tsq
             homeManager.flowgraph
+            homeManager.hunk
             homeManager.hyprland
             homeManager.kanata
             homeManager.mutt

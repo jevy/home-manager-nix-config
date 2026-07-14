@@ -54,6 +54,10 @@
       url = "github:natsukium/mcp-servers-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    hunk = {
+      url = "github:modem-dev/hunk";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     hyprland = {
       # Bumped 0.53.1 → 0.55.4: ashell 0.9.0 requires the `tiledLayout` field in
       # Hyprland's workspace IPC, which only exists from 0.54+ (layout-engine
