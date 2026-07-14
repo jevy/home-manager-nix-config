@@ -10,10 +10,6 @@ let
         base16Scheme = "${pkgs.base16-schemes}/share/themes/gruvbox-material-dark-soft.yaml";
         opacity.popups = 0.9;
 
-        # Stylix's kmscon target sets services.kmscon.{extraConfig,fonts}, which
-        # were removed in nixpkgs unstable. Keep it disabled.
-        targets.kmscon.enable = false;
-
         fonts = {
           serif = {
             package = pkgs.dejavu_fonts;
@@ -44,6 +40,12 @@ in
         inputs.stylix.nixosModules.stylix
         stylixConfig
       ];
+
+      # Stylix's kmscon target sets services.kmscon.{extraConfig,fonts}, which
+      # were removed in nixpkgs unstable. Keep it disabled. NixOS-only: the
+      # home-manager stylix module has no kmscon target, so this can't live in
+      # the shared stylixConfig.
+      stylix.targets.kmscon.enable = false;
     };
 
   # Home-manager stylix (for macOS standalone)
