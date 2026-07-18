@@ -6,6 +6,12 @@
     {
       services.printing = {
         enable = true;
+        # Don't run cups-browsed: the printer is declared explicitly below, and
+        # cups-browsed would otherwise auto-create a redundant DNS-SD queue
+        # (Brother_HL_L3270CDW_series, implicitclass://). Jobs land on that
+        # duplicate, and a single filter error trips stop-printer, disabling it
+        # and making printing appear broken while the real queue sits idle.
+        browsed.enable = false;
       };
 
       services.avahi = {
