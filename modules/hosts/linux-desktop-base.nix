@@ -50,6 +50,7 @@ in
         overlays.llamaCpp
         overlays.lieer
         overlays.bambuStudio
+        overlays.bluezPin
       ];
 
       system.stateVersion = "24.11";

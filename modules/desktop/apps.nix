@@ -146,6 +146,7 @@
       };
 
       home.pointerCursor = {
+        enable = true;
         gtk.enable = true;
         hyprcursor.enable = true;
         package = pkgs.vanilla-dmz;

@@ -18,7 +18,7 @@ in
 
       services.xrdp = {
         enable = true;
-        defaultWindowManager = "${pkgs.xfce.xfce4-session}/bin/xfce4-session";
+        defaultWindowManager = "${pkgs.xfce4-session}/bin/xfce4-session";
         openFirewall = true;
 
         # Default Xorg backend (xorgxrdp driver) has no GLX → Avalonia/
@@ -61,15 +61,16 @@ in
       #   - xfce4-* / xfwm4 / xfce4-panel: launched by xfce4-session
       #   - tigervnc: provides Xvnc, which xrdp's libvnc.so spawns
       environment.systemPackages = with pkgs; [
-        xfce.xfce4-session
-        xfce.xfwm4
-        xfce.xfce4-panel
-        xfce.xfce4-settings
-        xfce.xfconf
-        xfce.thunar
-        xfce.xfce4-terminal
-        xfce.xfce4-whiskermenu-plugin
-        xfce.garcon
+        # xfce packages moved to top-level in nixpkgs (the xfce.* aliases warn)
+        xfce4-session
+        xfwm4
+        xfce4-panel
+        xfce4-settings
+        xfconf
+        thunar
+        xfce4-terminal
+        xfce4-whiskermenu-plugin
+        garcon
         tigervnc
         xterm
       ];

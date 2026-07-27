@@ -18,17 +18,17 @@
           "--preview-window 'right:50%:wrap'"
           "--bind 'ctrl-/:toggle-preview'"
         ];
-        fileWidgetCommand = "fd --type f --hidden --follow --exclude .git";
-        fileWidgetOptions = [
+        fileWidget.command = "fd --type f --hidden --follow --exclude .git";
+        fileWidget.options = [
           "--preview 'bat --color=always --style=numbers --line-range=:500 {}'"
           "--preview-window 'right:60%:wrap'"
         ];
-        changeDirWidgetCommand = "fd --type d --hidden --follow --exclude .git | sort";
-        changeDirWidgetOptions = [
+        changeDirWidget.command = "fd --type d --hidden --follow --exclude .git | sort";
+        changeDirWidget.options = [
           "--preview 'eza --tree --level=2 --color=always {}'"
           "--preview-window 'right:60%:wrap'"
         ];
-        historyWidgetOptions = [
+        historyWidget.options = [
           "--preview 'echo {}'"
           "--preview-window 'down:3:wrap'"
         ];

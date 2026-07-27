@@ -18,11 +18,11 @@
 
 stdenv.mkDerivation rec {
   pname = "waveloggate";
-  version = "2.0.2";
+  version = "2.0.8";
 
   src = fetchurl {
     url = "https://github.com/wavelog/WaveLogGate/releases/download/v${version}/wavelog-gate_${version}_webkit4.1_amd64.deb";
-    hash = "sha256-yXzpd0aij+QEZJc9KXJEQViqxBs9hyOqurW4gpzUSlA=";
+    hash = "sha256-gbLfrH/YI9Z09/31PbZgURTDuQcFb9dc5vMU/2xDwSw=";
   };
 
   nativeBuildInputs = [
