@@ -2,6 +2,19 @@
   description = "Jevin's Home Manager configuration";
 
   inputs = {
+    # ─────────────────────────────────────────────────────────────────────────
+    # When bumping `nixpkgs`, bump `nixvim` in lockstep (its nixos-render-docs
+    # patch goes stale and fails to apply against a newer nixpkgs).
+    #
+    # HISTORY (2026-07-27): nixpkgs 26.11 made evaluating x86_64-darwin a hard
+    # throw. That briefly broke our eval — NOT via home-manager as first
+    # suspected, but via bun2nix (pulled in by `hunk` and `pi-mono`): its
+    # nixpkgs follows ours, and building its packages forces its flake-parts
+    # `perSystem` for every system in its `systems` input, which defaulted to
+    # nix-systems/default (includes x86_64-darwin). Fixed consumer-side by
+    # pointing those `systems` inputs at nix-systems/triplet (see the
+    # `nix-systems-triplet` input and the follows on hunk/pi-mono below).
+    # ─────────────────────────────────────────────────────────────────────────
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.url = "github:nix-community/home-manager/master";
 
@@ -12,10 +25,14 @@
     # hard-locks under network load (kernel BUG at lib/list_debug.c:32 in
     # mt7925_mac_add_txs, Comm napi/phy0-0). 7.0.6 predates that rework — proven
     # crash-free ~26 days on this machine — AND predates the 7.0.7 BT break, so it
-    # has working BT + no wifi crash. The upstream fix (torvalds 20b126920a25) is
-    # only in mainline v7.2-rc1, unreleased and with no stable backport tag.
-    # TODO: drop this input + restore linuxPackages_latest once a release carries
-    # the fix (v7.2, est. late Aug 2026). See modules/hardware/lenovo-p14s.nix.
+    # has working BT + no wifi crash. The upstream fix (torvalds 20b126920a25)
+    # landed in RELEASED stable 7.1.3 (cherry-picked; ChangeLog-7.1.3, carried into
+    # 7.1.4) — verified 2026-07-22 against the mainline diff + cdn.kernel.org
+    # changelog. So linuxPackages_latest (7.1.4) now HAS the fix + working BT.
+    # TODO: drop this input + restore linuxPackages_latest. The kernel side is
+    # READY NOW, and the nixpkgs bump that was blocking it landed 2026-07-27 —
+    # retire this on the next reboot-friendly occasion after verifying wifi/BT
+    # on 7.1.4. See modules/hardware/lenovo-p14s.nix.
     nixpkgs-kernel706.url = "github:NixOS/nixpkgs/ec5490bc79b6e20068bfb068d572a05678bed4f4";
 
     # Dendritic pattern infrastructure
@@ -57,7 +74,10 @@
     hunk = {
       url = "github:modem-dev/hunk";
       inputs.nixpkgs.follows = "nixpkgs";
+      # See x86_64-darwin note at the top of `inputs`
+      inputs.bun2nix.inputs.systems.follows = "nix-systems-triplet";
     };
+    nix-systems-triplet.url = "github:nix-systems/triplet";
     hyprland = {
       # Bumped 0.53.1 → 0.55.4: ashell 0.9.0 requires the `tiledLayout` field in
       # Hyprland's workspace IPC, which only exists from 0.54+ (layout-engine
@@ -89,6 +109,8 @@
     lieer-src.url = "path:/home/jevin/src/lieer";
     lieer-src.flake = false;
     pi-mono.url = "github:lukasl-dev/pi-mono.nix";
+    # See x86_64-darwin note at the top of `inputs`
+    pi-mono.inputs.bun2nix.inputs.systems.follows = "nix-systems-triplet";
 
     # Declarative Flatpak app management. Needed for Bambu Studio: the nixpkgs
     # build crashes loading the proprietary libbambu_networking.so plugin
