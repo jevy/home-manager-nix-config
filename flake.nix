@@ -18,23 +18,6 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.url = "github:nix-community/home-manager/master";
 
-    # Pinned to the last nixpkgs whose linuxPackages_latest is kernel 7.0.6 — used
-    # ONLY for boot.kernelPackages on lenovo-p14s. Kernel 7.1 reworked the mt7925
-    # MLO / station-teardown path (RCU wcid lifetime), which races the NAPI RX
-    # poll and re-inits a poll_list it already linked → list_add corruption
-    # hard-locks under network load (kernel BUG at lib/list_debug.c:32 in
-    # mt7925_mac_add_txs, Comm napi/phy0-0). 7.0.6 predates that rework — proven
-    # crash-free ~26 days on this machine — AND predates the 7.0.7 BT break, so it
-    # has working BT + no wifi crash. The upstream fix (torvalds 20b126920a25)
-    # landed in RELEASED stable 7.1.3 (cherry-picked; ChangeLog-7.1.3, carried into
-    # 7.1.4) — verified 2026-07-22 against the mainline diff + cdn.kernel.org
-    # changelog. So linuxPackages_latest (7.1.4) now HAS the fix + working BT.
-    # TODO: drop this input + restore linuxPackages_latest. The kernel side is
-    # READY NOW, and the nixpkgs bump that was blocking it landed 2026-07-27 —
-    # retire this on the next reboot-friendly occasion after verifying wifi/BT
-    # on 7.1.4. See modules/hardware/lenovo-p14s.nix.
-    nixpkgs-kernel706.url = "github:NixOS/nixpkgs/ec5490bc79b6e20068bfb068d572a05678bed4f4";
-
     # Dendritic pattern infrastructure
     flake-parts = {
       url = "github:hercules-ci/flake-parts";

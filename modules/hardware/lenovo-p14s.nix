@@ -1,60 +1,32 @@
 # Lenovo ThinkPad P14s Gen 6 AMD hardware configuration
-{ inputs, ... }:
+{ ... }:
 {
   flake.modules.nixos.lenovoP14sHardware =
     { pkgs, ... }:
     {
-      # Kernel PINNED to 7.0.6 (via the nixpkgs-kernel706 flake input) to stop
-      # MT7925 hard-locks under network load. NOT linuxPackages_latest — see below.
-      #
-      # ROOT CAUSE (confirmed against captured pstore dumps + upstream git, 2026-07):
-      # kernel 7.1's mt7925 MLO / station-teardown rework (RCU wcid lifetime, the
-      # 2026-03-06 series) races the NAPI RX poll. mt76_wcid_init re-initializes a
-      # wcid->poll_list that the RX path (mt7925_mac_add_txs → mt76_wcid_add_poll)
-      # may already have linked → "kernel BUG at lib/list_debug.c:32" (list_add
-      # corruption), Comm napi/phy0-0. Verified: the crash-site functions
-      # (mt7925_mac_add_txs, mt7925_mac_tx_free, mt7925_rx_check, mt76_tx_status_*)
-      # are byte-identical 7.0.6↔7.1.1 — the regression is the *teardown* churn that
-      # is NEW in 7.1, so 7.0.6 (which predates it) does not hit this. Empirically:
-      # 7.0.6 ran clean ~26 days on this machine (gens through Jun 26); 7.1.1 landed
-      # Jun 26 and produced 4 list_add BUG panics in 3 days (one 7 min after boot).
-      #
-      # The fix is upstream commit 20b126920a25 ("wifi: mt76: add wcid publish check
-      # in mt76_sta_add") but it is ONLY in mainline v7.2-rc1 — unreleased, no
-      # Cc: stable, so no 7.1.x/7.0.x release carries it. Downgrading is therefore
-      # the only *released* crash-free path; going forward within 7.1 does not help.
-      # TODO: drop this pin + restore pkgs.linuxPackages_latest once a release ships
-      # 20b126920a25 (v7.2, est. late Aug 2026); alternatively cherry-pick it via
-      # boot.kernelPatches to stay current. Track the upstream/stable-backport status.
-      #
-      # Bonus: 7.0.6 also predates the 7.0.7 MT7925 Bluetooth break (btmtk rejecting
-      # the short WMT FUNC_CTRL event, "-22"; broken by 634a4408c061, fixed by
-      # e193447ac6c9 in 7.1) — so BT works here too. The xdg-desktop-portal
-      # /proc/<pid>/root breakage is version-independent (CVE-2026-46333 get_dumpable
-      # tightening, 31e62c2ebbfd, in both 7.0.6 and 7.1.x); it's handled by the
-      # security.wrappers CAP_SYS_PTRACE shim below regardless of kernel version.
-      boot.kernelPackages =
-        inputs.nixpkgs-kernel706.legacyPackages.${pkgs.stdenv.hostPlatform.system}.linuxPackages_latest;
+      # Kernel UNPINNED 2026-07-27 (was 7.0.6 via the retired nixpkgs-kernel706
+      # input, to dodge the 7.1 MT7925 list_add-corruption hard-locks — see the
+      # resilience block below for the crash forensics). Both blockers are gone:
+      #   - the MT7925 wifi fix (20b126920a25, "wifi: mt76: add wcid publish
+      #     check in mt76_sta_add") was cherry-picked into RELEASED stable 7.1.3
+      #     (verified against cdn.kernel.org ChangeLog-7.1.3, 2026-07-27) — the
+      #     earlier note here claiming "v7.2-rc1 only, no stable backport" was
+      #     written before the backport landed;
+      #   - the 7.0.7 MT7925 Bluetooth break (634a4408c061) was fixed in 7.1
+      #     (e193447ac6c9).
+      # linuxPackages_latest is 7.1.5, which carries both, plus the amdgpu TLB
+      # fence rework (69c5fbd2b93b) that fixes the CWSR/MES lockup. The
+      # xdg-desktop-portal /proc/<pid>/root breakage is version-independent
+      # (CVE-2026-46333 get_dumpable tightening); the CAP_SYS_PTRACE shim below
+      # handles it regardless of kernel version.
+      boot.kernelPackages = pkgs.linuxPackages_latest;
 
-      # The pinned kernel comes from an older nixpkgs (May) than the rest of this
-      # config (current unstable), whose NixOS modules read kernel passthru attrs
-      # the older derivation doesn't expose → eval errors. Supply the values
-      # explicitly so the throwing defaults are never forced. Both are x86_64
-      # constants; remove together with the kernel pin.
-      #   - hardware.deviceTree.enable default reads kernel.buildDTBs (x86 has none)
-      #   - system.boot.loader.kernelFile default reads kernel.target (= bzImage)
-      hardware.deviceTree.enable = false;
-      system.boot.loader.kernelFile = "bzImage";
-
-      # Fix OLED/PSR screen flickering on RDNA 3.5 (Strix Point)
-      # Disable CWSR to prevent MES firmware hangs (hard lockups) on GFX11.
-      # Broken CWSR saturates the MES ring buffer → WAIT_REG_MEM timeout → full freeze.
-      # Regression in kernel 6.18+, no upstream fix as of 6.19.9.
-      # Track: https://gitlab.freedesktop.org/drm/amd/-/issues/5092
-      #        https://gitlab.freedesktop.org/drm/amd/-/issues/4941
-      #        https://github.com/ROCm/ROCm/issues/5844  (gfx1152-specific, our exact GPU)
-      # Pending fix: TLB fence rework by Alex Deucher, targeting next kernel release:
-      #   https://lore.kernel.org/amd-gfx/20260316151636.1122226-1-alexander.deucher@amd.com/
+      # amdgpu.dcdebugmask=0x10: fix OLED/PSR screen flickering / display idle
+      # hang on RDNA 3.5 (Strix Point, 890M). Still open upstream as of
+      # 2026-07-27: https://gitlab.freedesktop.org/drm/amd/-/issues/4941
+      # (NOTE: the CWSR/MES-hang workaround amdgpu.cwsr_enable=0 that used to
+      # sit next to this was removed 2026-07-27 — its fix, the TLB fence rework
+      # 69c5fbd2b93b, closed drm/amd#5092 and is in 7.1.x / all 7.x kernels.)
       #
       # MT7925 Wi-Fi 7: disable PCIe ASPM on the wifi device to avoid hard hangs.
       # The mt7925e driver has documented NULL-ptr-deref / stability bugs that
@@ -66,7 +38,6 @@
       #        https://github.com/zbowling/mt7925       (11 fix patches, Jan 2026)
       boot.kernelParams = [
         "amdgpu.dcdebugmask=0x10"
-        "amdgpu.cwsr_enable=0"
         "mt7925e.disable_aspm=1"
         # MT7925 crash mitigation + resilience (see block below):
         "cfg80211.ieee80211_regdom=CA" # real regdom (Canada), not world "00" (forces conservative/passive scan)
@@ -74,23 +45,25 @@
         "printk.always_kmsg_dump=1" # dump full kernel log to pstore on panic, so we capture the next one
       ];
 
-      # ── MT7925 crash resilience & mitigation (belt-and-suspenders under the pin) ──
-      # The kernel-7.0.6 pin above is the actual fix; this block is defence in depth
-      # in case a hard-lock ever recurs (e.g. firmware-triggered — the pin downgrades
-      # the kernel, NOT the linux-firmware blob). CRASH SIGNATURE, captured via
-      # efi-pstore (/var/lib/systemd/pstore; the journal never flushed it — the box
-      # froze at the BUG). 4 panics on 7.1.1, Jun 28–Jul 1 (one only 7 min after boot):
+      # ── MT7925 crash resilience & mitigation (post-unpin soak, 2026-07-27) ──
+      # HISTORY: kernel 7.1.1 produced 4 list_add BUG panics Jun 28–Jul 1 (one 7
+      # min after boot); we pinned 7.0.6 (clean ~26 days) until the upstream fix
+      # reached a release. It has: 20b126920a25 is in stable 7.1.3+ (verified vs
+      # ChangeLog-7.1.3, 2026-07-27) and we now run linuxPackages_latest (7.1.5).
+      # This block is defence in depth while 7.1.5 proves itself — removable
+      # after a few stable weeks. CRASH SIGNATURE, captured via efi-pstore
+      # (/var/lib/systemd/pstore; the journal never flushed it — the box froze
+      # at the BUG):
       #   kernel BUG at lib/list_debug.c:32        (list_add corruption / double-add)
       #   RIP: __list_add_valid_or_report          Comm: napi/phy0-0
       #     mt7925_mac_add_txs.part.0  [mt7925_common]   (also seen: mt7925_mac_tx_free)
       #     mt7925_rx_check            [mt7925_common]
       #     mt792x_poll_rx             [mt792x_lib]       ← NAPI RX poll
-      # Root cause is the 7.1 mt7925 MLO/station-teardown RCU-lifetime race described
-      # in the boot.kernelPackages comment above (mt76_wcid_init re-inits a poll_list
-      # the RX path already linked); the fix (20b126920a25) is only in v7.2-rc1. The
-      # crash-site code is byte-identical 7.0.6↔7.1.1, so this is NOT a mac-path logic
-      # bug — pinning to pre-7.1 removes the trigger. Trackers / references:
-      #     https://github.com/torvalds/linux/commit/20b126920a25    (THE FIX: "add wcid publish check in mt76_sta_add"; in v7.2-rc1 only, no stable backport)
+      # Root cause was the 7.1 mt7925 MLO/station-teardown RCU-lifetime race
+      # (mt76_wcid_init re-inits a poll_list the RX path already linked); the
+      # crash-site code was byte-identical 7.0.6↔7.1.1 — the regression was the
+      # teardown churn new in 7.1. Trackers / references:
+      #     https://github.com/torvalds/linux/commit/20b126920a25    (THE FIX: "add wcid publish check in mt76_sta_add"; in stable 7.1.3+)
       #     https://lkml.org/lkml/2026/1/3/61                       (Sean Wang: mt7925 comprehensive stability series, upstream review)
       #     https://github.com/zbowling/mt7925                      (out-of-tree patchset: wcid double-init race, MLO nullptr, mutex guards)
       #     https://zbowling.github.io/mt7925/issues/known-issues/  (symptom catalogue: nullptr in VIF iter, reset-path deadlock)
@@ -99,7 +72,7 @@
       #     https://github.com/openwrt/openwrt/issues/16273         (same crash class: kernel panic in mt7925 mac path)
       #     https://community.frame.work/t/tracking-kernel-panic-from-wifi-mediatek-mt7925-nullptr-dereference/79301 (main tracking thread)
       #
-      # Until the driver is patched, the strategy is: (1) generic hygiene, (2) auto-
+      # During the soak, the strategy is: (1) generic hygiene, (2) auto-
       # recover so a lock-up is a ~15s reboot instead of a dead laptop. Capture already
       # works — efi-pstore is built in (CONFIG_EFI_VARS_PSTORE=y) and systemd-pstore
       # (NixOS default) archives each dump to /var/lib/systemd/pstore on the next boot;
@@ -164,9 +137,9 @@
       # The kernel fix for CVE-2026-46333 ("ptrace: slightly saner get_dumpable()
       # logic", commit 31e62c2ebbfd, ~2026-05) tightened ptrace_may_access(): opening
       # another process's /proc/<pid>/root now requires CAP_SYS_PTRACE even for a
-      # same-uid, *dumpable* target. That fix is backported into the pinned 7.0.6 above
-      # (so 7.0.6 is NOT free of the "portal regression" the kernel comment hoped —
-      # it's a different, security-driven tightening, not the earlier pidfd bug).
+      # same-uid, *dumpable* target. The tightening is in every kernel we could
+      # run (it was in the old 7.0.6 pin and is in 7.1.5) — it's security-driven
+      # and version-independent, so the kernel unpin changes nothing here.
       #
       # xdg-desktop-portal 1.20.4 resolves a caller's app-info by doing exactly that
       # open, runs with no capabilities, and treats the resulting EACCES as fatal:
@@ -177,8 +150,10 @@
       # portal and reproducing the open from a cap-empty uid-1000 process (fails) vs a
       # process holding any effective capability (succeeds). ptrace_scope is irrelevant.
       #
-      # No clean escape exists yet: nixpkgs (incl. unstable) is still on portal 1.20.4,
-      # and no kernel carries both this CVE fix done right *and* the MT7925 BT fix.
+      # No clean escape exists: nixpkgs (incl. unstable) is still on portal 1.20.4,
+      # and upstream portal (checked through 1.22.1, 2026-07-27) has NO fix for
+      # treating the failed /proc open as "host app" — they consider it not their
+      # bug (see flatpak/xdg-desktop-portal#1953, closed no-change).
       # So: hand the portal exactly the capability the kernel now demands, and nothing
       # more. A security.wrappers setcap shim raises CAP_SYS_PTRACE (ambient) then execs
       # the real binary; the portal's user unit is pointed at the shim via a drop-in.
@@ -266,13 +241,15 @@
       # Bus 1 is then dead until reboot — the integrated RGB camera
       # (30c9:00f4) sits on that bus, so the webcam disappears.
       #
-      # Open Strix/Krackan-Point xHCI resume bug, still unfixed in mainline
-      # as of kernel 6.18/6.19. The earlier xHCI cycle-bit fix (c7c1f3b05c67,
-      # in 6.13.7) does NOT cover this case. No matching xhci_hcd quirk for
-      # PCI ID 1022:1128 has landed.
+      # Strix/Krackan-Point xHCI resume bug. The real fix landed in mainline
+      # 2026-07-17: commit 75c8746b9d0a "drm/amd: Create a device link between
+      # APU display and XHCI devices" (not a quirk — it stops the xHCI resuming
+      # in parallel with/before the GPU). In 7.2-rc4+, carries Cc: stable, but
+      # NOT in 7.1.5 (verified 2026-07-27). TODO: remove this whole rescue
+      # service once 75c8746b9d0a appears in a 7.1.y/kernel changelog we run.
       # Track: https://community.frame.work/t/workaround-xhci-host-controller-not-responding-at-resume-after-suspend/79119
       #        https://github.com/FrameworkComputer/SoftwareFirmwareIssueTracker/issues/163
-      #        https://lkml.org/lkml/2025/8/20/1155
+      #        https://bugzilla.kernel.org/show_bug.cgi?id=221073
       #
       # Workaround: hot-remove and rescan the PCI device, which re-initializes
       # the xHCI controller and re-enumerates bus 1. Verified locally
