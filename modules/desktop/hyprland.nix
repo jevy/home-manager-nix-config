@@ -811,6 +811,10 @@ MONEOF
             # lock holder dies mid-lock (reverted in fd35aec).
             # Needs an upstream hyprlock fix or a gentler approach (e.g. SIGUSR
             # to reinit, or a wrapper that releases the lock before restarting).
+            # Upstream status 2026-07-27: the direct fix (hyprwm/hyprlock#1049,
+            # "rebuild device proxy and re-claim after waking") is OPEN and
+            # unreviewed; not in v0.9.6. An earlier attempt (#971) was rejected
+            # in favor of fixing fprintd's PrepareForSleep handling.
             after_sleep_cmd = "hyprctl dispatch dpms on && sleep 1 && hyprctl reload";
             # Wait for hyprlock to fully lock the session before allowing suspend.
             # Prevents race where suspend interleaves with fprint verification.

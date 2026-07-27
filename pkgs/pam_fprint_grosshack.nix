@@ -1,6 +1,7 @@
 # PAM module that races fingerprint + password instead of running them
 # sequentially. Local copy of nixpkgs PR #402506 (approved, awaiting a
-# committer). Drop this file and the overlay when that PR lands.
+# committer; still open as of 2026-07-27). Drop this file and the overlay
+# when that PR lands.
 #   https://github.com/NixOS/nixpkgs/pull/402506
 #   https://gitlab.com/mishakmak/pam-fprint-grosshack
 {

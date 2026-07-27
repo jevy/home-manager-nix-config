@@ -1,13 +1,15 @@
 # WaveLogGate: pushes CAT data (freq, mode, power) from rigctld to Wavelog,
 # and receives WSJT-X N1MM ADIF broadcasts on :2333 for automatic QSO logging.
 #
-# Architecture notes (v2.0.2, from upstream source):
-#   - QSO push is Go-side: net/http POST to <url>/api/qso. NO queue, NO retry,
-#     NO persistence. A failed POST drops the QSO; recovery means manually
-#     replaying from ~/.local/share/WSJT-X/wsjtx_log.adi.
-#   - HTTP client uses default Transport (no IdleConnTimeout) with a 5s
-#     timeout. Stale keep-alive TCP conns appear to wedge POSTs after long
-#     uptime — daily restart at 06:00 is our workaround.
+# Architecture notes (v2.0.8):
+#   - QSO push is Go-side: net/http POST to <url>/api/qso. Since v2.0.8
+#     (2026-07-06) failed POSTs land in a persistent buffer and are retried
+#     once the network is back — the buffer survives a WavelogGate restart.
+#     (Pre-2.0.8 a failed POST silently dropped the QSO; recovery meant
+#     replaying from ~/.local/share/WSJT-X/wsjtx_log.adi.)
+#   - The 06:00 daily restart below predates the 2.0.8 buffer (it papered
+#     over stale keep-alive conns wedging POSTs). Kept as belt-and-braces
+#     for one field-use cycle; removable if 2.0.8 logs clean POSTs.
 #   - The -debug flag is the only knob for logging; without it the binary is
 #     silent per-QSO. We enable it so journalctl -u wlgate shows POST activity.
 #   - Runs headless under xvfb-run because Wails always opens a webview.

@@ -75,16 +75,14 @@
               ttl = 300;
             };
 
-            # BLOCKED on Vulkan: hybrid MoE with DeltaNet SSM layers (qwen35moe arch)
-            # - Missing GATED_DELTA_NET Vulkan shader — SSM layers fall back to CPU
-            #   https://github.com/ggml-org/llama.cpp/issues/20354
-            # - SSM_CONV/SSM_SCAN shaders were added but fused GDN op is still missing
-            #   https://github.com/ggml-org/llama.cpp/issues/19957
-            # Uncomment once the Vulkan GDN shader lands in llama.cpp
-            # "qwen3.5-35b" = {
-            #   cmd = "${llama-server} --port \${PORT} -m ${modelsDir}/Qwen3.5-35B-A3B-Q4_K_M.gguf -ngl 99 -c 32768 -t 8 --no-webui";
-            #   ttl = 300;
-            # };
+            # Hybrid MoE with DeltaNet SSM layers (qwen35moe arch). Vulkan
+            # GATED_DELTA_NET shader landed in llama.cpp 2026-03-12 (PR #20334,
+            # perf follow-ups #20662/#24581), so SSM layers run on GPU now.
+            # Requires ${modelsDir}/Qwen3.5-35B-A3B-Q4_K_M.gguf to be present.
+            "qwen3.5-35b" = {
+              cmd = "${llama-server} --port \${PORT} -m ${modelsDir}/Qwen3.5-35B-A3B-Q4_K_M.gguf -ngl 99 -c 32768 -t 8 --no-webui";
+              ttl = 300;
+            };
           };
         };
       };

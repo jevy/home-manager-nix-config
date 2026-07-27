@@ -59,6 +59,32 @@
       });
     };
 
+    # BlueZ 5.86 regression: dual-role devices (e.g. Bose QC45, which advertises
+    # both Audio Source and Audio Sink) only expose the reversed "audio-gateway"
+    # profile — the A2DP Sink profile never registers, so playback fails with
+    # "a2dp-sink profile connect failed: Device or resource busy".
+    # Fixed upstream in 5.87 (bluez#1922, closed 2026-05-24; fix 066a164a is in
+    # the 5.87 tag — the earlier "5.87 does not fix it" note here was wrong).
+    # nixpkgs still ships 5.86, so pin 5.87 forward instead of 5.85 back.
+    # TODO: delete this overlay once nixpkgs ships bluez >= 5.87.
+    # If the QC45 still misbehaves on 5.87, suspect WirePlumber role
+    # negotiation (wireplumber#969 / bluez#2280), not BlueZ.
+    # https://github.com/bluez/bluez/issues/1922
+    bluezPin = final: prev: {
+      bluez = prev.bluez.overrideAttrs (old: {
+        version = "5.87";
+        src = prev.fetchurl {
+          url = "mirror://kernel/linux/bluetooth/bluez-5.87.tar.xz";
+          hash = "sha256-Jr3PLOvXMQxvWYhQYGsDfvDFFf5mCOvFTSLFDEwys18=";
+        };
+        # nixpkgs' bluez patches are all tuned for 5.86: the btctl regression
+        # fixes and libical-4.0 support are already upstream in 5.87 (apply
+        # reversed), and lreadline.patch's Makefile.tools hunks don't match.
+        # 5.87 builds clean without them (verified 2026-07-27).
+        patches = [ ];
+      });
+    };
+
     # Bundle the SDRplay backend into SoapySDR so any SoapySDR-based GUI
     # (CubicSDR, SDR++, SDRangel, gqrx, …) can drive the RSPdx via the
     # always-on sdrplay_apiService. Per upstream nixos services.sdrplayApi
