@@ -38,7 +38,6 @@
         (kooha.overrideAttrs (old: {
           preFixup = (old.preFixup or "") + ''
             gappsWrapperArgs+=(--prefix GST_PLUGIN_SYSTEM_PATH_1_0 : "${gst_all_1.gst-plugins-bad}/lib/gstreamer-1.0")
-            gappsWrapperArgs+=(--prefix GST_PLUGIN_SYSTEM_PATH_1_0 : "${gst_all_1.gst-vaapi}/lib/gstreamer-1.0")
           '';
         }))
 

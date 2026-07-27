@@ -133,13 +133,6 @@ in
 {
   flake.modules.nixos.pi =
     { pkgs, ... }:
-    let
-      # Redirect npm global prefix to writable dir (Nix store is read-only)
-      npmPrefixFile = pkgs.writeText "npm-prefix" "/home/jevin/.npm-global";
-      piFinderModelsFile = pkgs.writeText "pi-finder-models" "deepseek/deepseek-v4-flash:medium";
-      # Empty file to blank out API keys so pi doesn't auto-discover providers
-      emptyFile = pkgs.writeText "empty" "";
-    in
     {
       imports = [ inputs.pi-mono.nixosModules.default ];
 
@@ -155,14 +148,15 @@ in
         '';
 
         environment = {
-          NPM_CONFIG_PREFIX = npmPrefixFile;
-          PI_FINDER_MODELS = piFinderModelsFile;
+          # Redirect npm global prefix to writable dir (Nix store is read-only)
+          NPM_CONFIG_PREFIX.value = "/home/jevin/.npm-global";
+          PI_FINDER_MODELS.value = "deepseek/deepseek-v4-flash:medium";
           # Blank out API keys to prevent pi auto-discovering unwanted providers
-          ANTHROPIC_API_KEY = emptyFile;
-          OPENAI_API_KEY = emptyFile;
-          AWS_ACCESS_KEY_ID = emptyFile;
-          AWS_SECRET_ACCESS_KEY = emptyFile;
-          AWS_PROFILE = emptyFile;
+          ANTHROPIC_API_KEY.value = "";
+          OPENAI_API_KEY.value = "";
+          AWS_ACCESS_KEY_ID.value = "";
+          AWS_SECRET_ACCESS_KEY.value = "";
+          AWS_PROFILE.value = "";
         };
       };
     };
