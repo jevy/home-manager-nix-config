@@ -1099,22 +1099,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-kernel706": {
-      "locked": {
-        "lastModified": 1778762356,
-        "narHash": "sha256-TEAMFXp4sU+JonhhQ0DACeb/6OMkiRbHvDtIgsqWMrM=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "ec5490bc79b6e20068bfb068d572a05678bed4f4",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "ec5490bc79b6e20068bfb068d572a05678bed4f4",
-        "type": "github"
-      }
-    },
     "nixpkgs-lib": {
       "locked": {
         "lastModified": 1769909678,
@@ -1356,7 +1340,6 @@
         "nix-systems-triplet": "nix-systems-triplet",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_4",
-        "nixpkgs-kernel706": "nixpkgs-kernel706",
         "nixvim": "nixvim",
         "pi-mono": "pi-mono",
         "sops-nix": "sops-nix",
