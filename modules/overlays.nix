@@ -95,6 +95,18 @@
       });
     };
 
+    # power-profiles-daemon 0.30's check phase is flaky in the Nix sandbox: its
+    # python-dbusmock integration tests (test_vanishing_hold — which alone runs
+    # ~60min before failing — plus ~12 others) time out/fail, breaking every
+    # rebuild that pulls ppd in via udev-rules → system-path. The daemon builds
+    # and runs fine; skip the tests.
+    # TODO: drop once nixpkgs' ppd check phase passes again.
+    powerProfilesDaemonSkipCheck = final: prev: {
+      power-profiles-daemon = prev.power-profiles-daemon.overrideAttrs (_: {
+        doCheck = false;
+      });
+    };
+
     # Bundle the SDRplay backend into SoapySDR so any SoapySDR-based GUI
     # (CubicSDR, SDR++, SDRangel, gqrx, …) can drive the RSPdx via the
     # always-on sdrplay_apiService. Per upstream nixos services.sdrplayApi
