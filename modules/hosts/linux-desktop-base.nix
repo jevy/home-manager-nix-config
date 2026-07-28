@@ -52,6 +52,7 @@ in
         overlays.bambuStudio
         overlays.bluezPin
         overlays.goobookRelaxDeps
+        overlays.powerProfilesDaemonSkipCheck
       ];
 
       system.stateVersion = "24.11";
