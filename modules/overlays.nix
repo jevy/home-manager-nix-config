@@ -85,6 +85,16 @@
       });
     };
 
+    # goobook 3.5.2 pins simplejson<4.0.0 but nixpkgs ships 4.x; upstream
+    # nixpkgs relaxes other deps but not this one (simplejson 4 dropped no
+    # API goobook uses). TODO: drop once nixpkgs adds simplejson to
+    # goobook's pythonRelaxDeps or goobook releases with the pin lifted.
+    goobookRelaxDeps = final: prev: {
+      goobook = prev.goobook.overridePythonAttrs (old: {
+        pythonRelaxDeps = old.pythonRelaxDeps ++ [ "simplejson" ];
+      });
+    };
+
     # Bundle the SDRplay backend into SoapySDR so any SoapySDR-based GUI
     # (CubicSDR, SDR++, SDRangel, gqrx, …) can drive the RSPdx via the
     # always-on sdrplay_apiService. Per upstream nixos services.sdrplayApi

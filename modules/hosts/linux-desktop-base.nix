@@ -51,6 +51,7 @@ in
         overlays.lieer
         overlays.bambuStudio
         overlays.bluezPin
+        overlays.goobookRelaxDeps
       ];
 
       system.stateVersion = "24.11";
