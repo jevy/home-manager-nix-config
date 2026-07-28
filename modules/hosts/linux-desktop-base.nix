@@ -75,7 +75,6 @@ in
             homeManager.audio
             homeManager.nixvim
             homeManager.mcp
-            homeManager.tsq
             homeManager.flowgraph
             homeManager.hunk
             homeManager.hyprland
