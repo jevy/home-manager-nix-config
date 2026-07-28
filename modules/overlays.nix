@@ -95,15 +95,23 @@
       });
     };
 
-    # power-profiles-daemon 0.30's check phase is flaky in the Nix sandbox: its
+    # power-profiles-daemon 0.30's test suite is flaky in the Nix sandbox: its
     # python-dbusmock integration tests (test_vanishing_hold — which alone runs
     # ~60min before failing — plus ~12 others) time out/fail, breaking every
-    # rebuild that pulls ppd in via udev-rules → system-path. The daemon builds
-    # and runs fine; skip the tests.
+    # rebuild that pulls ppd in via udev-rules → system-path. Disable the whole
+    # `tests` meson feature (nixpkgs auto-enables it because the build host can
+    # execute the target, -Dtests=${canExecute}); that also drops the mandatory
+    # UMockdev configure-time dependency the test build pulls in. Just doCheck=
+    # false isn't enough — meson.build still requires UMockdev when tests are on.
     # TODO: drop once nixpkgs' ppd check phase passes again.
     powerProfilesDaemonSkipCheck = final: prev: {
-      power-profiles-daemon = prev.power-profiles-daemon.overrideAttrs (_: {
+      power-profiles-daemon = prev.power-profiles-daemon.overrideAttrs (old: {
         doCheck = false;
+        mesonFlags =
+          (builtins.filter
+            (f: !(prev.lib.hasPrefix "-Dtests=" f))
+            (old.mesonFlags or []))
+          ++ [ "-Dtests=false" ];
       });
     };
 
