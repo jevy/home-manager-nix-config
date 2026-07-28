@@ -1,0 +1,44 @@
+diff --git a/variants/xiao_nrf52/platformio.ini b/variants/xiao_nrf52/platformio.ini
+index a085433..5904dc9 100644
+--- a/variants/xiao_nrf52/platformio.ini
++++ b/variants/xiao_nrf52/platformio.ini
+@@ -26,19 +26,21 @@ build_flags = ${nrf52_base.build_flags}
+   -D SX126X_DIO3_TCXO_VOLTAGE=1.8
+   -D SX126X_CURRENT_LIMIT=140
+   -D SX126X_RX_BOOSTED_GAIN=1
+-  -D PIN_WIRE_SCL=D6
+-  -D PIN_WIRE_SDA=D7
+-  -D PIN_USER_BTN=PIN_BUTTON1
+-  -D DISPLAY_CLASS=NullDisplayDriver
++  -D PIN_WIRE_SDA=D6
++  -D PIN_WIRE_SCL=D7
++  -D PIN_OLED_RESET=-1
++  -D PIN_USER_BTN=D0
++  -D DISPLAY_CLASS=SSD1306Display
+ build_src_filter = ${nrf52_base.build_src_filter}
+   +<helpers/*.cpp>
+   +<helpers/sensors>
+   +<../variants/xiao_nrf52>
+-  +<helpers/ui/NullDisplayDriver.cpp>
++  +<helpers/ui/SSD1306Display.cpp>
+ debug_tool = jlink
+ upload_protocol = nrfutil
+ lib_deps = ${nrf52_base.lib_deps}
+   ${sensor_base.lib_deps}
++  adafruit/Adafruit SSD1306 @ ^2.5.13
+ 
+ [env:Xiao_nrf52_companion_radio_ble]
+ extends = Xiao_nrf52
+diff --git a/variants/xiao_nrf52/target.h b/variants/xiao_nrf52/target.h
+index bb3d2a8..6e08c63 100644
+--- a/variants/xiao_nrf52/target.h
++++ b/variants/xiao_nrf52/target.h
+@@ -10,7 +10,7 @@
+ #include <helpers/sensors/EnvironmentSensorManager.h>
+ 
+ #ifdef DISPLAY_CLASS
+-  #include <helpers/ui/NullDisplayDriver.h>
++  #include <helpers/ui/SSD1306Display.h>
+   extern DISPLAY_CLASS display;
+ #endif
+ 
