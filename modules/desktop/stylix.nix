@@ -46,6 +46,13 @@ in
       # home-manager stylix module has no kmscon target, so this can't live in
       # the shared stylixConfig.
       stylix.targets.kmscon.enable = false;
+
+      # Stylix's regreet target sets programs.regreet.*, renamed in nixpkgs
+      # unstable to services.displayManager.regreet — every rebuild prints an
+      # obsolete-option trace. We use tuigreet (see desktop/hyprland.nix), not
+      # regreet, so disable the target. TODO: drop once stylix migrates to the
+      # new option path.
+      stylix.targets.regreet.enable = false;
     };
 
   # Home-manager stylix (for macOS standalone)
