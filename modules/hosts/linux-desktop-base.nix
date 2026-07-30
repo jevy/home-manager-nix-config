@@ -50,7 +50,6 @@ in
         overlays.llamaCpp
         overlays.lieer
         overlays.bambuStudio
-        overlays.bluezPin
         overlays.goobookRelaxDeps
         overlays.powerProfilesDaemonSkipCheck
       ];
