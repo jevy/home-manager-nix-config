@@ -17,10 +17,12 @@ in
         # Development
         homeManager.nixvim
         homeManager.nixvimVscode
+        homeManager.neovide
         homeManager.git
 
         # Desktop (Mac-specific)
         homeManager.desktopMac
+        homeManager.macFonts
         homeManager.stylix
 
         # Work-Specific
