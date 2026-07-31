@@ -10,7 +10,8 @@
         # skhd
         nerd-font-patcher
         scrcpy
-        direnv
+        # direnv comes from homeManager.direnv (programs.direnv), which also
+        # installs the zsh hook — a bare package here would not.
         lazygit
       ];
 
