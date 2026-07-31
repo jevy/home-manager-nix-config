@@ -23,6 +23,7 @@ in
 
         # Desktop (Mac-specific)
         homeManager.desktopMac
+        homeManager.macAppAliases
         homeManager.macFonts
         homeManager.stylix
 
@@ -39,6 +40,8 @@ in
       nixpkgs.overlays = [
         overlays.volsync
       ];
+      # linear (and other work apps) are unfree; matches the NixOS hosts.
+      nixpkgs.config.allowUnfree = true;
 
       home.stateVersion = "23.11";
       programs.home-manager.enable = true;
