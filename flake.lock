@@ -1012,6 +1012,27 @@
         "type": "github"
       }
     },
+    "nix-darwin": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785389976,
+        "narHash": "sha256-0tLW8Ff5yt8AH97jw4ZpFJ0OCJ122zIlgWGDmOfU/VU=",
+        "owner": "nix-darwin",
+        "repo": "nix-darwin",
+        "rev": "15abb8c98f336cd8bd840d71059adebabe60bf04",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-darwin",
+        "ref": "master",
+        "repo": "nix-darwin",
+        "type": "github"
+      }
+    },
     "nix-flatpak": {
       "locked": {
         "lastModified": 1780908363,
@@ -1336,6 +1357,7 @@
         "llmfit": "llmfit",
         "mcp-servers-nix": "mcp-servers-nix",
         "neomutt-gmail": "neomutt-gmail",
+        "nix-darwin": "nix-darwin",
         "nix-flatpak": "nix-flatpak",
         "nix-systems-triplet": "nix-systems-triplet",
         "nixos-hardware": "nixos-hardware",
