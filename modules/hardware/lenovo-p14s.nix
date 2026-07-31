@@ -184,6 +184,17 @@
 
       # Firmware updates (ThinkPad support)
       services.fwupd.enable = true;
+      # `nixos-rebuild switch` restarts polkit whenever its unit changes, and if
+      # fwupd-refresh.timer fires inside that window `fwupdmgr refresh` downloads
+      # the metadata and then dies with "PolicyKit daemon is not available" — it
+      # needs polkit to authorize org.freedesktop.fwupd.refresh-remote (see the
+      # rule upstream's module installs for the fwupd-refresh user). Ordering the
+      # refresh after polkit closes the race. Merges into the drop-in NixOS
+      # already generates over the package's unit.
+      systemd.services.fwupd-refresh = {
+        requires = [ "polkit.service" ];
+        after = [ "polkit.service" ];
+      };
       services.upower.enable = true;
 
       # Fingerprint reader
