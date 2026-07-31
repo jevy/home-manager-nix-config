@@ -18,6 +18,15 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.url = "github:nix-community/home-manager/master";
 
+    # macOS system management (mac-work host). Runs with nix.enable = false —
+    # Nix itself is owned by the Determinate nix-installer here, so nix-darwin
+    # manages the system (and the /Applications/Nix Apps Spotlight aliaser)
+    # without touching the Nix installation. See modules/hosts/mac-work.
+    nix-darwin = {
+      url = "github:nix-darwin/nix-darwin/master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Dendritic pattern infrastructure
     flake-parts = {
       url = "github:hercules-ci/flake-parts";

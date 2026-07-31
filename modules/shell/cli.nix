@@ -68,11 +68,11 @@
         lg = "lazygit";
         lhead = "ls --sort created -r | head";
         # Machine-aware rebuild. Lives in cliBase (imported by every host) so it
-        # works on the Mac too — NixOS hosts rebuild the whole system; the Mac is
-        # standalone home-manager, so switch its homeConfiguration by name.
+        # works on the Mac too — NixOS hosts rebuild the whole system; the Mac
+        # runs nix-darwin, so switch its darwinConfiguration by name.
         rebuildhm =
           if pkgs.stdenv.isDarwin then
-            "cd ~/.config/nixpkgs && home-manager switch --flake \".#mac-work\""
+            "cd ~/.config/nixpkgs && sudo darwin-rebuild switch --flake \".#mac-work\""
           else
             "cd ~/.config/nixpkgs && sudo nixos-rebuild switch --flake \".#$(hostname)\"";
       };

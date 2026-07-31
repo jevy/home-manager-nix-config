@@ -5,8 +5,9 @@
 # The font is intentionally NOT set here: stylix already themes Neovide's font
 # (MesloLGS Nerd Font Mono, matching every other themed app). macFonts installs
 # that font so macOS can actually resolve it. On darwin the package ships
-# Applications/Neovide.app, which home-manager links into
-# ~/Applications/Home Manager Apps → Spotlight-launchable.
+# Applications/Neovide.app; to make it Spotlight-launchable it's also listed in
+# the mac-work host's environment.systemPackages, which nix-darwin aliases into
+# /Applications/Nix Apps (see modules/hosts/mac-work/default.nix).
 { ... }:
 {
   flake.modules.homeManager.neovide =
