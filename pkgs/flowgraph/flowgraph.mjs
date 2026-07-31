@@ -20,7 +20,7 @@
 //           out = <root>/.flowgraph/pr-flow.md
 //
 // Depends on: git, ripgrep (rg), (optional) tsq on PATH, and — for --pdf/--open —
-// mermaid-cli (mmdc) + a PDF viewer (zathura, else xdg-open).
+// mermaid-cli (mmdc) + a PDF viewer (zathura, else open/xdg-open).
 //
 // ───────────────────────────────────────────────────────────────────────────
 // WHY THIS EXISTS (and why it's grep-and-regex instead of a clean LSP walk)
@@ -96,7 +96,7 @@ usage: flowgraph [--root <dir>] [--base <ref>] [--head <ref>] [--out <file>]
   --json   also write <out>.json with the raw graph
   --print  print the Mermaid to stdout as well
   --pdf    also render <out>.pdf via mermaid-cli (Chromium)
-  --open   render the PDF and open it (zathura, else xdg-open)
+  --open   render the PDF and open it (zathura, else open/xdg-open)
 `;
 
 // ---------------- shell helpers ----------------
@@ -797,9 +797,11 @@ function renderPdf(outPath, mermaid) {
 }
 
 // Open in the user's PDF viewer — zathura if present (vim-keys, their default),
-// else xdg-open. Detached so flowgraph returns immediately.
+// else the platform opener: `open` on macOS, `xdg-open` elsewhere. Detached so
+// flowgraph returns immediately.
 function openFile(path) {
-  const opener = which('zathura') ? 'zathura' : (which('xdg-open') ? 'xdg-open' : null);
+  const fallback = process.platform === 'darwin' ? 'open' : 'xdg-open';
+  const opener = which('zathura') ? 'zathura' : (which(fallback) ? fallback : null);
   if (!opener) { console.error(`  open it with: zathura ${path}`); return; }
   spawn(opener, [path], { detached: true, stdio: 'ignore' }).unref();
 }

@@ -121,7 +121,7 @@ All under `modules/`. Each file can define `flake.modules.nixos.*` and/or `flake
 | `apps/` | User apps: mutt, spicetify, ncspot, 1Password, timetagger |
 | `base/` | Foundational: nix settings, user account, fonts |
 | `desktop/` | Hyprland, audio (PipeWire), stylix theming, ashell bar, mako, steam |
-| `dev/` | Dev tools: git, nixvim, claude-code, opencode, pi, mcp servers, qmd, tsq, flowgraph |
+| `dev/` | Dev tools: git, git-spice, hunk, nixvim, claude-code, opencode, pi, mcp servers, qmd, flowgraph |
 | `hardware/` | Hardware-specific: lenovo-p14s quirks |
 | `hosts/` | Host definitions + base layers (composition entry points) |
 | `secrets/` | sops-nix setup |

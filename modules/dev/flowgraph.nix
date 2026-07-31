@@ -5,8 +5,10 @@
 #
 # Conventions are tuned for covenant-web (Apollo `gql`, `combineResolvers`,
 # `@/services/*`, prisma + drizzle), but the core diff→bridge→emit is generic.
-# Uses `tsq` (from the tsq module) at runtime for type-aware blast-radius;
-# degrades gracefully to a tsq-free spine when tsq isn't on PATH.
+# Uses `tsq` at runtime for type-aware blast-radius. tsq is NOT provided by this
+# config — it lives in the covenant-web project and lands on PATH via that repo's
+# direnv, so the feature is live inside that worktree and flowgraph degrades
+# gracefully to a tsq-free spine everywhere else.
 {
   flake.modules.homeManager.flowgraph =
     { pkgs, lib, ... }:
