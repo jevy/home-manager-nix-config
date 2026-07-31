@@ -13,6 +13,9 @@
 # cava is Linux-only here: on macOS it has no system audio source without a
 # loopback device (BlackHole et al), so the wrapper leaves it off the PATH and
 # the visualizer stays disabled.
+#
+# The runtime deps (mpv, cava) are deliberately NOT inputs to the cargo build —
+# see the wrapper derivation at the bottom for why.
 {
   lib,
   stdenv,
@@ -22,6 +25,7 @@
   openssl,
   dbus,
   makeBinaryWrapper,
+  symlinkJoin,
   mpv,
   cava,
 }:
@@ -57,49 +61,61 @@ let
     }
     EOF
   '';
+
+  unwrapped = rustPlatform.buildRustPackage (
+    {
+      pname = "ferrosonic-unwrapped";
+      inherit version;
+
+      src = fetchFromGitHub {
+        owner = "Jamie098";
+        repo = "ferrosonic-ng";
+        rev = "v${version}";
+        hash = "sha256-ReKJxGusk106WF+spXeXgTAdIvnYMsLRcx55X1Lch3w=";
+      };
+
+      cargoHash = "sha256-aav2CRG4CCnGHEW7Ole1tttWV02ENBIDKOm5qHfnBMc=";
+
+      nativeBuildInputs = [ pkg-config ];
+
+      buildInputs = [
+        openssl # reqwest native-tls
+      ]
+      ++ lib.optionals stdenv.hostPlatform.isLinux [
+        dbus # MPRIS2
+      ];
+    }
+    # Added conditionally rather than as an empty string, so the Linux derivation
+    # hash is unchanged and Linux hosts don't rebuild.
+    // lib.optionalAttrs stdenv.hostPlatform.isDarwin { postPatch = darwinNotificationPatch; }
+  );
 in
-rustPlatform.buildRustPackage (
-  {
-    pname = "ferrosonic";
-    inherit version;
+# The PATH wrapper lives in its own derivation so that mpv/cava churn doesn't
+# retrigger the cargo build. Folded into buildRustPackage's postInstall, the
+# runtime deps land in the compile derivation's env, so a bump anywhere beneath
+# them — bluez → pipewire → cava is the recurring one — recompiles the whole
+# crate and reruns checkPhase to produce a binary that differs only in the PATH
+# string it prefixes. As a symlinkJoin it's a sub-second relink instead.
+symlinkJoin {
+  name = "ferrosonic-${version}";
+  paths = [ unwrapped ];
 
-    src = fetchFromGitHub {
-      owner = "Jamie098";
-      repo = "ferrosonic-ng";
-      rev = "v${version}";
-      hash = "sha256-ReKJxGusk106WF+spXeXgTAdIvnYMsLRcx55X1Lch3w=";
-    };
+  nativeBuildInputs = [ makeBinaryWrapper ];
 
-    cargoHash = "sha256-aav2CRG4CCnGHEW7Ole1tttWV02ENBIDKOm5qHfnBMc=";
+  # mpv is the playback engine (required); cava drives the visualizer
+  # (optional, Linux only — ferrosonic probes for it with `which cava`).
+  postBuild = ''
+    wrapProgram $out/bin/ferrosonic \
+      --prefix PATH : ${lib.makeBinPath ([ mpv ] ++ lib.optional stdenv.hostPlatform.isLinux cava)}
+  '';
 
-    nativeBuildInputs = [
-      pkg-config
-      makeBinaryWrapper
-    ];
+  passthru = { inherit unwrapped; };
 
-    buildInputs = [
-      openssl # reqwest native-tls
-    ]
-    ++ lib.optionals stdenv.hostPlatform.isLinux [
-      dbus # MPRIS2
-    ];
-
-    # mpv is the playback engine (required); cava drives the visualizer
-    # (optional, Linux only — ferrosonic probes for it with `which cava`).
-    postInstall = ''
-      wrapProgram $out/bin/ferrosonic \
-        --prefix PATH : ${lib.makeBinPath ([ mpv ] ++ lib.optional stdenv.hostPlatform.isLinux cava)}
-    '';
-
-    meta = {
-      description = "Terminal Subsonic/Navidrome client with bit-perfect audio, MPRIS2 and cava visualizer";
-      homepage = "https://github.com/Jamie098/ferrosonic-ng";
-      license = lib.licenses.mit;
-      mainProgram = "ferrosonic";
-      platforms = lib.platforms.unix;
-    };
-  }
-  # Added conditionally rather than as an empty string, so the Linux derivation
-  # hash is unchanged and Linux hosts don't rebuild.
-  // lib.optionalAttrs stdenv.hostPlatform.isDarwin { postPatch = darwinNotificationPatch; }
-)
+  meta = {
+    description = "Terminal Subsonic/Navidrome client with bit-perfect audio, MPRIS2 and cava visualizer";
+    homepage = "https://github.com/Jamie098/ferrosonic-ng";
+    license = lib.licenses.mit;
+    mainProgram = "ferrosonic";
+    platforms = lib.platforms.unix;
+  };
+}
