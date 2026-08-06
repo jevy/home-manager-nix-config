@@ -10,9 +10,9 @@
 # module), so the package comes straight off the flake input.
 #
 # ── Hotkeys ──────────────────────────────────────────────────────────────────
-# All of these are upstream *defaults*: config.toml is unmanaged (see the bottom
-# of this header), so nothing here rebinds them. `herdr --default-config` prints
-# the authoritative list; `prefix+?` shows it in-app.
+# Upstream defaults except where `herdrConfig` below overrides them (currently
+# only prefix+j/k). `herdr --default-config` prints the authoritative default
+# list; `prefix+?` shows the live bindings in-app.
 #
 # Prefix is ctrl+b. "prefix+x" means ctrl+b then x — not a simultaneous chord.
 #
@@ -27,11 +27,15 @@
 #     prefix+shift+n    new workspace       prefix+shift+g  new worktree
 #     prefix+shift+w    rename              prefix+shift+d  close
 #     prefix+g          goto (navigate mode; then h/j/k/l or arrows)
-#   Note: previous_workspace / next_workspace / switch_workspace ship UNBOUND.
-#   For direct ctrl+shift+1..9 switching, set keys.indexed.workspaces.
+#     prefix+j          next workspace      prefix+k        previous workspace
+#   These two are ours (see herdrConfig): upstream ships previous_workspace /
+#   next_workspace / switch_workspace UNBOUND, leaving only the prefix+w picker.
+#   They take prefix+j/k from focus_pane_down/up, which cost nothing here —
+#   splits are side-by-side, and navigate mode's j/k still move panes vertically
+#   since navigate_* is independent of focus_pane_*.
 #
 #   Panes — i.e. moving between the agent and a review pane (tuicr, reviewr, hunk)
-#     prefix+h/j/k/l    focus pane left/down/up/right
+#     prefix+h/l        focus pane left/right  (down/up unbound, see above)
 #     prefix+tab        cycle panes         prefix+shift+tab  cycle backwards
 #     prefix+z          zoom/unzoom the focused pane  ← best way to read a diff
 #                       full-screen, then pop back to the agent
@@ -40,6 +44,10 @@
 #     prefix+b          toggle sidebar
 #   last_pane ships UNBOUND; bind it (e.g. prefix+tab) for fast agent↔review
 #   flip-flopping, which is the motion this setup uses most.
+#   GOTCHA: focus_pane_* only moves WITHIN the current tab. Agents here get a tab
+#   each (one pane per tab), so prefix+h/l does nothing until a second pane exists
+#   in that tab — which is exactly what a reviewr split gives you. To move between
+#   agents, use the tab keys above, not the pane keys.
 #
 #   Inside the review tools themselves
 #     pickr chooser     t tuicr · h hunk · d plain diff · o browser · q cancel
@@ -69,17 +77,69 @@
 # ~/.config/herdr/plugins/config/<id>/ and never reads or writes what's inside,
 # so config.toml is a plain home.file symlink.
 #
-# herdr's own config (~/.config/herdr/config.toml) is deliberately NOT managed
-# here — herdr's Settings UI writes to it, and a read-only symlink would break
-# that.
+# ── herdr's own config ───────────────────────────────────────────────────────
+# ~/.config/herdr/config.toml is generated (pkgs.formats.toml — nixpkgs has no
+# pure `lib.generators.toTOML`) but installed as a WRITABLE COPY, not a symlink.
+# herdr writes this file itself: the Settings UI, `config reset-keys`, and the
+# `onboarding` flag all persist here, and it writes in place rather than
+# temp+rename — so a store symlink makes every write fail with
+# `Os { code: 30, kind: ReadOnlyFilesystem }` instead of silently replacing the
+# link. Verified by pointing XDG_CONFIG_HOME at a symlinked copy and running
+# `herdr config reset-keys`.
+#
+# The tradeoff of a copy: herdr may write to it freely between rebuilds, but each
+# activation restores this file's content. Changes made through the Settings UI
+# are therefore TRANSIENT — to keep one, add it here. Anything herdr must
+# persist across a rebuild (notably `onboarding`) has to be declared below, or it
+# resets every switch.
 { inputs, ... }:
 {
   flake.modules.homeManager.herdr =
-    { pkgs, lib, ... }:
+    {
+      pkgs,
+      lib,
+      config,
+      ...
+    }:
     let
       herdr = inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default;
       herdr-pickr = pkgs.callPackage ../../pkgs/herdr-pickr.nix { src = inputs.herdr-pickr; };
       herdr-reviewr = pkgs.callPackage ../../pkgs/herdr-reviewr.nix { src = inputs.herdr-reviewr; };
+
+      # herdr's own config. TOML has no comment support once generated, so the
+      # reasoning lives here rather than in the output file.
+      herdrConfig = (pkgs.formats.toml { }).generate "herdr-config.toml" {
+        # herdr writes this itself after the first run. It MUST be declared here:
+        # activation replaces the file, so a missing value re-triggers onboarding
+        # on every rebuild.
+        onboarding = false;
+
+        ui = {
+          show_agent_labels_on_pane_borders = true;
+          toast.delivery = "system";
+        };
+
+        keys = {
+          # Workspace switching on prefix+j/k. Upstream leaves
+          # previous_workspace/next_workspace unbound, so the prefix+w picker is
+          # otherwise the only way across. This takes the keys from
+          # focus_pane_down/up, which is free here: splits are side-by-side, and
+          # navigate mode (prefix+g) keeps j/k for vertical pane moves because
+          # navigate_* is independent of focus_pane_*.
+          focus_pane_down = "";
+          focus_pane_up = "";
+          next_workspace = "prefix+j";
+          previous_workspace = "prefix+k";
+
+          # To bind a plugin action (e.g. toggling the reviewr pane) add:
+          #   command = [{
+          #     key = "prefix+alt+v";
+          #     type = "plugin_action";
+          #     command = "persiyanov.reviewr.toggle";  # "<plugin_id>.<action_id>"
+          #   }];
+          # pkgs.formats.toml renders a list of attrsets as [[keys.command]].
+        };
+      };
 
       # pickr's `browser` reviewer shells out to the platform opener.
       opener = if pkgs.stdenv.hostPlatform.isDarwin then "open" else "xdg-open";
@@ -181,6 +241,17 @@
           || warnEcho "herdr: failed to link the herdr-pickr plugin"
         run ${lib.getExe' herdr "herdr"} plugin link ${herdr-reviewr} \
           || warnEcho "herdr: failed to link the herdr-reviewr plugin"
+      '';
+
+      # A writable copy rather than a symlink — see the header. `install -D`
+      # creates the parent dir, and -m 0644 keeps it writable by herdr after the
+      # store file's read-only mode. The reload is best-effort: it fails when no
+      # server is running, which is the normal case during a fresh switch, so it
+      # stays quiet rather than warning.
+      home.activation.herdrConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        run install -D -m 0644 ${herdrConfig} \
+          ${config.xdg.configHome}/herdr/config.toml
+        run ${lib.getExe' herdr "herdr"} server reload-config >/dev/null 2>&1 || true
       '';
     };
 }
