@@ -70,6 +70,12 @@
       inputs.bun2nix.inputs.systems.follows = "nix-systems-triplet";
     };
     nix-systems-triplet.url = "github:nix-systems/triplet";
+
+    # tuicr — PR review TUI (a herdr-pickr reviewer backend, also useful alone).
+    tuicr = {
+      url = "github:agavra/tuicr";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     hyprland = {
       # Bumped 0.53.1 → 0.55.4: ashell 0.9.0 requires the `tiledLayout` field in
       # Hyprland's workspace IPC, which only exists from 0.54+ (layout-engine
