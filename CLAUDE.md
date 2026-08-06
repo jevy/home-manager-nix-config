@@ -17,13 +17,24 @@ nix flake check
 nix flake update <input-name>
 ```
 
-## Reviewing a PR
+## Reviewing code
 
 `flowgraph` maps a branch's diff as a FE→GraphQL→resolver→service→DB flow diagram
 (changed files highlighted). From the worktree: `flowgraph --open` → reads the
 working-tree diff, renders a PDF, opens it in zathura. Then drive into it from
 Neovim with `gd`/`gri`/`grr` (cross the gql→resolver wire) and `<leader>go`/`gi`
 (walk the call tree). Full playbook + flags + gotchas: **`pkgs/flowgraph/README.md`**.
+
+Three diff reviewers, split by what's being reviewed — see the header of
+**`modules/dev/herdr.nix`** for hotkeys and the herdr plugin wiring:
+
+| Situation | Tool |
+|-----------|------|
+| Open PR/MR, comments must reach the forge | `tuicr pr <url>`, or Ctrl+click the link in herdr → pickr chooser → `t` |
+| An agent's local diff, comments back to the agent | reviewr sidebar (herdr plugin): `u`/`b`/`t` scope, `c` comment, `s` send |
+| Quick look while the agent works | `hunk diff --watch` (auto-reloads; tuicr needs `:e`) |
+
+Agents read/write tuicr sessions via `tuicr review list` / `comments` / `add`.
 
 ## Architecture: Dendritic Pattern with flake-parts
 
@@ -65,21 +76,25 @@ Hosts (`modules/hosts/*/default.nix`) import feature modules by name:
 { config, inputs, ... }:
 let inherit (config.flake.modules) nixos homeManager; in
 {
-  configurations.nixos.framework.module = { ... }: {
+  configurations.nixos.lenovo-p14s.module = { ... }: {
     imports = [ nixos.boot nixos.network nixos.hyprland ... ];
     home-manager.users.jevin.imports = [ homeManager.zsh homeManager.git ... ];
   };
 }
 ```
 
-- **framework**: Full NixOS + home-manager (x86_64-linux)
-- **mac-work**: Standalone home-manager via `configurations.home` (aarch64-darwin)
+- **lenovo-p14s**, **shop-sdr**: NixOS + home-manager via `configurations.nixos` (x86_64-linux)
+- **mac-work**: nix-darwin + home-manager via `configurations.darwin` (aarch64-darwin)
 
 ### Infrastructure modules
 
 - `modules/flake-parts.nix` — enables flake-parts module system
 - `modules/nixos.nix` — `configurations.nixos.*` → `flake.nixosConfigurations`
-- `modules/home.nix` — `configurations.home.*` → `flake.homeConfigurations`
+- `modules/darwin.nix` — `configurations.darwin.*` → `flake.darwinConfigurations`
+- `modules/home.nix` — `configurations.home.*` → `flake.homeConfigurations`.
+  Currently unused: mac-work moved to nix-darwin, so nothing declares
+  `configurations.home` and `flake.homeConfigurations` evaluates empty. Kept as
+  scaffolding for a future standalone-HM host.
 - `modules/systems.nix` — declares supported systems
 - `modules/overlays.nix` — shared overlays (+ `modules/desktop/hyprland.nix` contributes one)
 
@@ -87,6 +102,7 @@ let inherit (config.flake.modules) nixos homeManager; in
 
 1. Create `modules/<category>/<name>.nix`
 2. Define `flake.modules.nixos.<name>` and/or `flake.modules.homeManager.<name>`
+   (or `flake.modules.darwin.<name>` for macOS system-level config)
 3. Add the module to the relevant host's imports list
 4. `import-tree` auto-discovers the file — no manual registration needed
 
@@ -106,7 +122,7 @@ Three hosts, two base layers:
 |------|----------|------|---------|
 | `lenovo-p14s` | x86_64-linux | `linuxDesktopBase` | Daily driver laptop (OLED, Hyprland, llama-swap) |
 | `shop-sdr` | x86_64-linux | `linuxServerBase` | Headless ham radio station (IC-7300, SDRplay, WSPR) |
-| `mac-work` | aarch64-darwin | standalone HM | Work Mac (home-manager only, no NixOS) |
+| `mac-work` | aarch64-darwin | nix-darwin | Work Mac (nix-darwin + home-manager; `darwin-rebuild`, not standalone HM) |
 
 **Base layers** (`modules/hosts/`):
 - `linuxDesktopBase` → pulls in ~20 nixos.* + ~30 homeManager.* modules (desktop, audio, Hyprland, dev tools, etc.)
@@ -114,7 +130,7 @@ Three hosts, two base layers:
 
 ## Module Categories
 
-All under `modules/`. Each file can define `flake.modules.nixos.*` and/or `flake.modules.homeManager.*`.
+All under `modules/`. Each file can define `flake.modules.nixos.*`, `flake.modules.homeManager.*`, and/or `flake.modules.darwin.*`.
 
 | Category | What's there |
 |----------|-------------|
