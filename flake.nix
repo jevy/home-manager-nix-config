@@ -89,6 +89,15 @@
       url = "github:tomasvarga/herdr-pickr";
       flake = false;
     };
+    # herdr-reviewr — herdr plugin: sidebar for reviewing an agent's local diff
+    # and sending line comments back to its input. A Rust binary plus a bash
+    # host, with no flake of its own, so pkgs/herdr-reviewr.nix builds it.
+    # Pin to a tag: the manifest version and the release tag must agree, and the
+    # plugin dir baked into the store is what `herdr plugin link` registers.
+    herdr-reviewr = {
+      url = "github:persiyanov/herdr-reviewr/v0.29.0";
+      flake = false;
+    };
     hyprland = {
       # Bumped 0.53.1 → 0.55.4: ashell 0.9.0 requires the `tiledLayout` field in
       # Hyprland's workspace IPC, which only exists from 0.54+ (layout-engine
