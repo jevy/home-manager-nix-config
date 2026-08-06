@@ -71,10 +71,23 @@
     };
     nix-systems-triplet.url = "github:nix-systems/triplet";
 
+    # herdr — terminal workspace manager for AI coding agents. Not in nixpkgs;
+    # upstream's flake exposes packages only (no home-manager module), so
+    # modules/dev/herdr.nix wires it up by hand.
+    herdr = {
+      url = "github:herdrdev/herdr";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     # tuicr — PR review TUI (a herdr-pickr reviewer backend, also useful alone).
     tuicr = {
       url = "github:agavra/tuicr";
       inputs.nixpkgs.follows = "nixpkgs";
+    };
+    # herdr-pickr — herdr plugin: Ctrl+click a PR/MR link → pick a reviewer.
+    # A plain script directory (bash + a TOML manifest), not a flake.
+    herdr-pickr = {
+      url = "github:tomasvarga/herdr-pickr";
+      flake = false;
     };
     hyprland = {
       # Bumped 0.53.1 → 0.55.4: ashell 0.9.0 requires the `tiledLayout` field in

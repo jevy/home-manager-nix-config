@@ -107,6 +107,7 @@ in
               homeManager.git
               homeManager.gitSpice
               homeManager.hunk
+              homeManager.herdr
               homeManager.tuicr
               homeManager.flowgraph
               homeManager.claudeCode
