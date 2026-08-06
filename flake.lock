@@ -479,6 +479,43 @@
         "type": "github"
       }
     },
+    "herdr": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": "rust-overlay"
+      },
+      "locked": {
+        "lastModified": 1785719327,
+        "narHash": "sha256-QEx40plgXYSDMo0ll/2HbvIKoaq/bUhCJ1TKq21ChjQ=",
+        "owner": "herdrdev",
+        "repo": "herdr",
+        "rev": "eacea2daf0b72973173b728936b27478374f2cd2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "herdrdev",
+        "repo": "herdr",
+        "type": "github"
+      }
+    },
+    "herdr-pickr": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783960185,
+        "narHash": "sha256-B0A/fCLOKrOAtu9nm3lQHOUVY7pQODhbelNqK8hRbWo=",
+        "owner": "tomasvarga",
+        "repo": "herdr-pickr",
+        "rev": "e393ef593e44d2497f43d20aa7b0e4a26ea3d445",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tomasvarga",
+        "repo": "herdr-pickr",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": "nixpkgs"
@@ -1393,6 +1430,8 @@
         "deploy-rs": "deploy-rs",
         "disko": "disko",
         "flake-parts": "flake-parts",
+        "herdr": "herdr",
+        "herdr-pickr": "herdr-pickr",
         "home-manager": "home-manager",
         "hunk": "hunk",
         "hy3": "hy3",
@@ -1432,6 +1471,27 @@
         "owner": "rust-lang",
         "ref": "nightly",
         "repo": "rust-analyzer",
+        "type": "github"
+      }
+    },
+    "rust-overlay": {
+      "inputs": {
+        "nixpkgs": [
+          "herdr",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1783577481,
+        "narHash": "sha256-EWMxOWrJ031f8f/lrcEmhTRs4npw1/5N3Hcjin846c8=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "4cdea398dc491b082dccdce0fad1ed0b75fa3394",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
         "type": "github"
       }
     },

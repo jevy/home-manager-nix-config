@@ -78,6 +78,7 @@ in
             homeManager.mcp
             homeManager.flowgraph
             homeManager.hunk
+            homeManager.herdr
             homeManager.tuicr
             homeManager.hyprland
             homeManager.kanata
