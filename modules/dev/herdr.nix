@@ -35,15 +35,18 @@
 #   since navigate_* is independent of focus_pane_*.
 #
 #   Panes — i.e. moving between the agent and a review pane (tuicr, reviewr, hunk)
+#     prefix+d          toggle the reviewr pane  ← ours; the only reviewer that
+#                       works with no PR open. See the plugin action below.
+#     prefix+tab        back to the previous pane  ← ours (last_pane); the
+#                       agent↔review flip this setup uses most
 #     prefix+h/l        focus pane left/right  (down/up unbound, see above)
-#     prefix+tab        cycle panes         prefix+shift+tab  cycle backwards
+#     prefix+shift+tab  cycle panes backwards (forward cycling gave up its key
+#                       to last_pane — see herdrConfig)
 #     prefix+z          zoom/unzoom the focused pane  ← best way to read a diff
 #                       full-screen, then pop back to the agent
 #     prefix+v          split vertical      prefix+minus      split horizontal
 #     prefix+x          close pane          prefix+r          resize mode
 #     prefix+b          toggle sidebar
-#   last_pane ships UNBOUND; bind it (e.g. prefix+tab) for fast agent↔review
-#   flip-flopping, which is the motion this setup uses most.
 #   GOTCHA: focus_pane_* only moves WITHIN the current tab. Agents here get a tab
 #   each (one pane per tab), so prefix+h/l does nothing until a second pane exists
 #   in that tab — which is exactly what a reviewr split gives you. To move between
@@ -131,13 +134,31 @@
           next_workspace = "prefix+j";
           previous_workspace = "prefix+k";
 
-          # To bind a plugin action (e.g. toggling the reviewr pane) add:
-          #   command = [{
-          #     key = "prefix+alt+v";
-          #     type = "plugin_action";
-          #     command = "persiyanov.reviewr.toggle";  # "<plugin_id>.<action_id>"
-          #   }];
-          # pkgs.formats.toml renders a list of attrsets as [[keys.command]].
+          # Flip back to the pane you came from. Upstream ships this unbound,
+          # leaving only cycle_pane_next here; last_pane is the better motion for
+          # the two-pane agent↔review layout this setup lives in, since it
+          # returns to the agent from anywhere instead of walking the ring.
+          # Takes prefix+tab from cycle_pane_next — cycle_pane_previous
+          # (prefix+shift+tab) still walks the ring when a tab has 3+ panes.
+          cycle_pane_next = "";
+          last_pane = "prefix+tab";
+
+          # Plugin actions. "<plugin_id>.<action_id>"; `herdr plugin action list`
+          # prints the live ids. pkgs.formats.toml renders a list of attrsets as
+          # [[keys.command]].
+          #
+          # reviewr's pane is the only reviewer that works before a PR exists —
+          # pickr's rows all interpolate a forge {url}. With auto_open = false it
+          # otherwise has no keyboard entry point at all, so it gets prefix+d
+          # ("diff"). Free in upstream's map: only prefix+shift+d (close
+          # workspace) is taken.
+          command = [
+            {
+              key = "prefix+d";
+              type = "plugin_action";
+              command = "persiyanov.reviewr.toggle";
+            }
+          ];
         };
       };
 
@@ -229,13 +250,11 @@
       # through its socket and can fail on a protocol mismatch, which shouldn't
       # take the whole switch down; restarting herdr and re-running fixes it.
       #
-      # Auto-route (skip the chooser) is toggled by pickr.toggle-auto, and
-      # reviewr's pane by persiyanov.reviewr.toggle. Both need a keybind in
-      # ~/.config/herdr/config.toml — unmanaged here, see the header:
-      #   [[keys.command]]
-      #   key = "prefix+alt+v"
-      #   type = "plugin_action"
-      #   command = "persiyanov.reviewr.toggle"
+      # Actions these expose (`herdr plugin action list`): persiyanov.reviewr's
+      # open/close/toggle, and pickr's route + toggle-auto. reviewr.toggle is
+      # bound to prefix+d in herdrConfig above; the rest are unbound — pickr is
+      # driven by Ctrl+clicking a link, and auto = false in pickrConfig already
+      # means the chooser always shows, so toggle-auto has nothing to add.
       home.activation.herdrPluginLink = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         run ${lib.getExe' herdr "herdr"} plugin link ${herdr-pickr} \
           || warnEcho "herdr: failed to link the herdr-pickr plugin"
