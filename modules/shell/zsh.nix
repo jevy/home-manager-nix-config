@@ -9,13 +9,20 @@
         enable = true;
         enableZshIntegration = true;
         defaultCommand = "fd --type f --hidden --follow --exclude .git";
+        # Layout only — NO --preview here. FZF_DEFAULT_OPTS applies to every fzf
+        # invocation on the system, including callers whose list items are
+        # labels rather than paths; a global `bat {}` preview renders
+        # "[bat error]: 'Branch vs upstream': No such file or directory" beside
+        # their menu. herdr-hunk's picker hit exactly that.
+        #
+        # Nothing is lost: each of the three widgets below already declares its
+        # own preview, so the global one was only ever reaching third-party
+        # callers, which is precisely where it did harm.
         defaultOptions = [
           "--height 60%"
           "--border"
           "--layout=reverse"
           "--info=inline"
-          "--preview 'bat --color=always --style=numbers --line-range=:500 {}'"
-          "--preview-window 'right:50%:wrap'"
           "--bind 'ctrl-/:toggle-preview'"
         ];
         fileWidget.command = "fd --type f --hidden --follow --exclude .git";
