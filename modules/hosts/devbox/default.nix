@@ -15,20 +15,20 @@
 # commits straight to main), no desktop modules. Adding one later is a commit
 # here plus a bump of apps/devbox/home-config-rev in home-infrastructure-flux.
 #
-# Two modules from the intended set are deliberately ABSENT, both for the same
-# reason — they reference `config.sops.secrets.<name>.path`, and the pod holds
-# no PGP/age key by design (see the spec's "No sops capability in the pod"), so
-# importing `homeManager.sops` to get the options declared would only move the
-# failure from eval time to activation time:
+# One module from the intended set is deliberately ABSENT:
 #
-#   * homeManager.ssh — sets `IdentityFile` to a sops secret path. The pod's
-#     ssh identity is the GitHub deploy key that bootstrap.sh installs from a
-#     mounted Kubernetes Secret, so this module has nothing to contribute.
-#   * homeManager.mcp — every wrapper reads its token from
-#     ~/.config/sops-nix/secrets, and two (truenas, github) interpolate a sops
-#     path at eval time. It also drags in chromium + playwright, a large chunk
-#     of first-boot download time. Restoring MCP here means
-#     first splitting the sops-dependent wrappers out of modules/dev/mcp.nix.
+#   * homeManager.ssh — sets `IdentityFile` to a sops secret path, and the pod
+#     holds no PGP/age key by design (see the spec's "No sops capability in the
+#     pod"), so importing `homeManager.sops` to get the option declared would
+#     only move the failure from eval time to activation time. Nothing is lost:
+#     the pod's ssh identity is the GitHub deploy key that bootstrap.sh
+#     installs from a mounted Kubernetes Secret.
+#
+# `homeManager.mcp` IS imported, restricted by `local.mcp.only` below. It was
+# absent originally because two wrappers (truenas, github) interpolated a sops
+# path at eval time; both now read their token by guarded literal path, the
+# same way grafana/brave/n8n always did, so the module evaluates with no sops
+# at all.
 #
 # `homeManager.cliBase` is sops-free (the sops-using CLI bits live in
 # `cliLinux`, which is not imported here) and so is safe to take whole.
@@ -47,6 +47,9 @@ let
     inherit system;
     config.allowUnfree = true;
     overlays = [
+      # context7-mcp, mcp-server-git and mcp-server-time come from here, so
+      # homeManager.mcp does not evaluate without it.
+      inputs.mcp-servers-nix.overlays.default
       (_final: prev: {
         # `numr` (a calculator TUI, pulled in by cliBase) does not build against
         # the current nixpkgs: its numr-editor crate fails with 84 instances of
@@ -79,7 +82,29 @@ in
       homeManager.direnv
       homeManager.herdr
       homeManager.claudeCode
+      homeManager.mcp
       {
+        # The subset the pod can actually run. Everything here needs either
+        # nothing at all, or an env var the Kubernetes Secret already supplies:
+        #
+        #   context7, git, time   no credentials
+        #   kubernetes            the pod's ServiceAccount kubeconfig
+        #   grafana               GRAFANA_SERVICE_ACCOUNT_TOKEN from the Secret
+        #   brave-search          BRAVE_API_KEY from the Secret
+        #
+        # Left out: playwright (chromium, and no display to drive it),
+        # homeassistant and n8n (tokens not in the Secret yet — add the key
+        # there and the name here), truenas and linear (same, plus linear wants
+        # an interactive OAuth flow).
+        local.mcp.only = [
+          "context7"
+          "git"
+          "time"
+          "kubernetes"
+          "grafana"
+          "brave-search"
+        ];
+
         home.username = "dev";
         home.homeDirectory = "/home/dev";
         home.stateVersion = "24.11";

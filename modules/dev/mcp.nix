@@ -83,12 +83,23 @@
       # the public ingress (truenas.jevy.org, valid LE cert) so no
       # --insecure is needed; switch to the LAN IP + --insecure if running
       # off-network is not desired.
+      #
+      # The secret is read by literal path rather than
+      # `config.sops.secrets.truenas_api_key.path`, and guarded with `-f`, so
+      # this module evaluates on hosts that have no sops-nix at all — the
+      # devbox pod holds no key by design. Same pattern as the grafana, brave
+      # and n8n wrappers above. On a sops host the path is identical, so
+      # nothing changes there; without it the server starts unauthenticated
+      # and fails at first call instead of breaking eval for every host.
       truenasMcpWrapper = pkgs.writeShellApplication {
         name = "run-truenas-mcp";
         runtimeInputs = [ truenasMcpServer ];
         text = ''
-          TRUENAS_API_KEY=$(cat ${config.sops.secrets.truenas_api_key.path})
-          export TRUENAS_API_KEY
+          SOPS_SECRET_PATH="$HOME/.config/sops-nix/secrets"
+          if [ -f "$SOPS_SECRET_PATH/truenas_api_key" ]; then
+            TRUENAS_API_KEY=$(cat "$SOPS_SECRET_PATH/truenas_api_key")
+            export TRUENAS_API_KEY
+          fi
           exec truenas-mcp "$@"
         '';
       };
@@ -158,12 +169,17 @@
         '';
       };
 
-      # GitHub MCP server wrapper (reads token from sops secret at runtime)
+      # GitHub MCP server wrapper (reads token from sops secret at runtime).
+      # Guarded literal path rather than an eval-time sops reference — see the
+      # note on truenasMcpWrapper.
       run-github-mcp-server = pkgs.writeShellApplication {
         name = "run-github-mcp-server";
         text = ''
-          GITHUB_PERSONAL_ACCESS_TOKEN=$(cat ${config.sops.secrets.github_personal_access_token.path})
-          export GITHUB_PERSONAL_ACCESS_TOKEN
+          SOPS_SECRET_PATH="$HOME/.config/sops-nix/secrets"
+          if [ -f "$SOPS_SECRET_PATH/github_personal_access_token" ]; then
+            GITHUB_PERSONAL_ACCESS_TOKEN=$(cat "$SOPS_SECRET_PATH/github_personal_access_token")
+            export GITHUB_PERSONAL_ACCESS_TOKEN
+          fi
           exec github-mcp-server "$@"
         '';
       };
@@ -223,21 +239,44 @@
       };
     in
     {
-      # Central MCP config (generates ~/.config/mcp/mcp.json)
-      programs.mcp.enable = true;
-      programs.mcp.servers = servers;
+      # Which servers to configure. `null` means all of them, which is what
+      # every workstation wants. The devbox pod sets an explicit list: it has
+      # no display for playwright and no sops-nix for the servers whose tokens
+      # are not in its Kubernetes Secret, and `lib.getAttrs` never forces the
+      # ones left out — so excluding playwright genuinely keeps chromium out of
+      # the pod's closure rather than merely hiding it from the config.
+      options.local.mcp.only = lib.mkOption {
+        type = with lib.types; nullOr (listOf str);
+        default = null;
+        example = [
+          "kubernetes"
+          "grafana"
+        ];
+        description = "Restrict the configured MCP servers to these names.";
+      };
 
-      # Claude Code: symlink to programs.mcp output
-      home.file.".mcp.json".source =
-        config.lib.file.mkOutOfStoreSymlink
-          "${config.xdg.configHome}/mcp/mcp.json";
+      config =
+        let
+          selected =
+            if config.local.mcp.only == null then servers else lib.getAttrs config.local.mcp.only servers;
+        in
+        {
+          # Central MCP config (generates ~/.config/mcp/mcp.json)
+          programs.mcp.enable = true;
+          programs.mcp.servers = selected;
 
-      # VSCode Cline: needs { mcp: { servers: {...} } } format
-      home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/.keep".text = "";
-      home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json".text =
-        builtins.toJSON { mcp.servers = servers; };
+          # Claude Code: symlink to programs.mcp output
+          home.file.".mcp.json".source =
+            config.lib.file.mkOutOfStoreSymlink
+              "${config.xdg.configHome}/mcp/mcp.json";
 
-      # GitHub MCP server wrapper (standalone, not an MCP config entry)
-      home.packages = [ run-github-mcp-server ];
+          # VSCode Cline: needs { mcp: { servers: {...} } } format
+          home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/.keep".text = "";
+          home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json".text =
+            builtins.toJSON { mcp.servers = selected; };
+
+          # GitHub MCP server wrapper (standalone, not an MCP config entry)
+          home.packages = [ run-github-mcp-server ];
+        };
     };
 }
