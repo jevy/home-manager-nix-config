@@ -44,6 +44,27 @@ let
   pkgs = import inputs.nixpkgs {
     inherit system;
     config.allowUnfree = true;
+    overlays = [
+      (_final: prev: {
+        # `numr` (a calculator TUI, pulled in by cliBase) does not build against
+        # the current nixpkgs: its numr-editor crate fails with 84 instances of
+        # "requires panic strategy `abort` which is incompatible with this
+        # crate's strategy of `unwind`". cache.nixos.org has no copy either
+        # (narinfo 404), so there is nothing to substitute.
+        #
+        # This is NOT a devbox regression — it is latent breakage in cliBase
+        # that the Lenovo never notices, because a working numr from an older
+        # rustc is already in its local store. A from-scratch build of any host
+        # would hit the same wall. Discovered by the devbox closure CI job,
+        # which builds on a clean runner.
+        #
+        # Stubbed rather than removed because cliBase is shared with every host
+        # and dropping the package there is a decision for those hosts too. A
+        # devbox has no use for a calculator TUI, so an empty derivation costs
+        # nothing here. Delete this overlay once numr builds again.
+        numr = prev.runCommand "numr-stubbed-out" { } "mkdir -p $out";
+      })
+    ];
   };
 in
 {
