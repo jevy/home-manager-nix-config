@@ -172,7 +172,19 @@
       ...
     }:
     let
-      herdr = inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # nixpkgs, not the `herdr` flake input. Both are 0.7.5 and Apache-2.0,
+      # but they are byte-different derivations and only the nixpkgs one is in
+      # cache.nixos.org — its narinfo returns 200 where the flake input's
+      # returns 404. Using the input therefore compiled herdr, and a whole Rust
+      # toolchain, from source on any machine with a cold store. Found while
+      # building the devbox closure (home-infrastructure-flux apps/devbox) on a
+      # clean CI runner — the only place a cold store is ever visible here.
+      #
+      # Trade-off: herdr version bumps now wait on nixpkgs instead of tracking
+      # upstream directly. The `herdr` input is still declared in flake.nix, so
+      # switching back is a one-line revert if you need a release nixpkgs has
+      # not picked up yet.
+      herdr = pkgs.herdr;
       herdr-pickr = pkgs.callPackage ../../pkgs/herdr-pickr.nix { src = inputs.herdr-pickr; };
       herdr-hunk = pkgs.callPackage ../../pkgs/herdr-hunk.nix { src = inputs.herdr-hunk; };
 
