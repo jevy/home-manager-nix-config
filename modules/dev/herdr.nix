@@ -120,6 +120,74 @@
         ui = {
           show_agent_labels_on_pane_borders = true;
           toast.delivery = "system";
+
+          # Order the agent panel as an attention queue rather than grouping it
+          # by space (upstream default "spaces"). With several agents running,
+          # the useful question is "which one is waiting on me", and priority
+          # floats blocked/done to the top instead of pinning each row to
+          # wherever its space happens to sit.
+          #
+          # This was set through the Settings TUI first, which does NOT survive:
+          # activation reinstalls config.toml from the store on every rebuild
+          # (see the header). Declared here so it actually persists.
+          agent_panel_sort = "priority";
+
+          # Sidebar agent rows. Each inner list is one rendered line; tokens on a
+          # line are joined with " · ". Built-in tokens: state_icon, state_text,
+          # workspace, tab, pane, agent, terminal_title, terminal_title_stripped
+          # (plus $name for anything a pane reports as custom metadata).
+          #
+          # Upstream default is [["state_icon" "workspace" "tab"] ["agent"]],
+          # which drops state_text — so a row reads "claude" and the only signal
+          # that an agent is blocked and waiting on you is the colour of the dot.
+          # The status is always in the model (`herdr agent list` reports
+          # agent_status idle/working/blocked/done); it just isn't rendered.
+          # Spelling it out is the whole point of the panel when several agents
+          # run at once.
+          #
+          # "$cwd" is NOT a built-in. herdr's built-in token list is closed —
+          # state_icon, state_text, workspace, tab, pane, agent, terminal_title,
+          # terminal_title_stripped — and there is no directory token in it, even
+          # though the server tracks `cwd` and `foreground_cwd` per pane (see
+          # `herdr pane get <id>`). The only way to render a value herdr doesn't
+          # ship is to push it as pane metadata and reference it as $name; the
+          # zsh hook in `herdrCwdHook` below is what supplies this one. If that
+          # hook stops firing the row simply renders empty — it never errors.
+          #
+          # Worth the plumbing because `workspace` is a label, not a location:
+          # every worktree of one repo can carry the same workspace name, and a
+          # `wt`-style worktree lives at a path the name says nothing about.
+          sidebar.agents = {
+            rows = [
+              [
+                "state_icon"
+                "workspace"
+              ]
+              [ "$cwd" ]
+              [
+                "state_text"
+                "agent"
+              ]
+            ];
+
+            # Claude sets its terminal title to a summary of the current task
+            # ("Fix avahi-daemon service startup failure"), which disambiguates
+            # two agents in the same repo far better than the workspace name —
+            # every worktree of one repo otherwise renders an identical row.
+            # Agents without an entry here fall back to `rows` above.
+            rows_by_agent.claude = [
+              [
+                "state_icon"
+                "workspace"
+              ]
+              [ "terminal_title_stripped" ]
+              [ "$cwd" ]
+              [
+                "state_text"
+                "agent"
+              ]
+            ];
+          };
         };
 
         keys = {
@@ -231,8 +299,47 @@
         # keybind away — see the toggle note below.
         auto_open = false
       '';
+
+      # Supplies the $cwd sidebar token (see herdrConfig above). Pushed from the
+      # shell rather than from an agent hook because it is agent-agnostic: any
+      # pane running any tool reports its directory the same way, and the
+      # ~/.claude, ~/.pi and ~/.config/opencode integration files are owned and
+      # overwritten by `herdr integration install`, so nothing we add there
+      # survives an upgrade.
+      #
+      # The three env guards are herdr's own contract (the integration hooks
+      # test the same trio): outside a herdr pane the variables are unset and
+      # this is a no-op, so it stays harmless in a plain terminal.
+      #
+      # chpwd fires on cd only, so the initial directory needs the explicit call
+      # after it — that first push is the one that matters for an agent pane,
+      # since the shell there usually launches the agent and never cds again.
+      #
+      # `&|` disowns: report-metadata is a unix-socket round trip on the order of
+      # milliseconds, but a prompt has no business blocking on a socket that may
+      # be gone (server restarted, session detached). Errors go to /dev/null for
+      # the same reason — a dead socket must not print over the prompt.
+      #
+      # --source namespaces the metadata, so this can't collide with the agent
+      # state the integration hooks report under `herdr:claude`.
+      herdrCwdHook = ''
+        if [[ -n ''${HERDR_ENV-} && -n ''${HERDR_PANE_ID-} && -n ''${HERDR_SOCKET_PATH-} ]]; then
+          _herdr_report_cwd() {
+            ${lib.getExe' herdr "herdr"} pane report-metadata "$HERDR_PANE_ID" \
+              --source zsh-cwd --token "cwd=''${PWD/#$HOME/~}" >/dev/null 2>&1 &|
+          }
+          chpwd_functions+=(_herdr_report_cwd)
+          _herdr_report_cwd
+        fi
+      '';
     in
     {
+      # Ordered after the zsh module's own init (mkOrder 1000) purely so the
+      # hook lands in a predictable place in .zshrc; it depends on nothing there.
+      programs.zsh.initContent = lib.mkIf config.programs.zsh.enable (
+        lib.mkOrder 1100 herdrCwdHook
+      );
+
       # pickr's reviewer rows need tuicr / gh / hunk / bat on PATH; those come
       # from the tuicr, git (programs.gh), hunk and cliBase (programs.bat)
       # modules, which every host importing this one also imports.
