@@ -5,8 +5,10 @@
 #
 # User is `dev`, home is /home/dev; both the nix store and the home live on a
 # Longhorn PVC. The pod activates this configuration by flake ref at a pinned
-# rev (`apps/devbox/home-config-rev` over there), having first pulled the
-# closure from the public `jevy-homelab` Cachix cache.
+# rev (`apps/devbox/home-config-rev` over there), substituting from
+# cache.nixos.org — there is no private binary cache. Measured: 29 of the
+# closure's 1166 paths are missing from cache.nixos.org, and all but
+# claude-code and claude-code-router are text-file derivations.
 #
 # Lean module set on purpose: no nixvim (large closure, the agent edits files
 # itself), no tuicr/hunk/pickr/reviewr (forge review tooling; the flux repo
@@ -24,8 +26,8 @@
 #     mounted Kubernetes Secret, so this module has nothing to contribute.
 #   * homeManager.mcp — every wrapper reads its token from
 #     ~/.config/sops-nix/secrets, and two (truenas, github) interpolate a sops
-#     path at eval time. It also drags in chromium + playwright, which is a
-#     large fraction of the closure Cachix has to hold. Restoring MCP here means
+#     path at eval time. It also drags in chromium + playwright, a large chunk
+#     of first-boot download time. Restoring MCP here means
 #     first splitting the sops-dependent wrappers out of modules/dev/mcp.nix.
 #
 # `homeManager.cliBase` is sops-free (the sops-using CLI bits live in
