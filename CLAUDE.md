@@ -25,16 +25,40 @@ working-tree diff, renders a PDF, opens it in zathura. Then drive into it from
 Neovim with `gd`/`gri`/`grr` (cross the gql→resolver wire) and `<leader>go`/`gi`
 (walk the call tree). Full playbook + flags + gotchas: **`pkgs/flowgraph/README.md`**.
 
-Three diff reviewers, split by what's being reviewed — see the header of
-**`modules/dev/herdr.nix`** for hotkeys and the herdr plugin wiring:
+Two diff reviewers, split by where the comments have to end up — see the header
+of **`modules/dev/herdr.nix`** for hotkeys and the herdr plugin wiring:
 
 | Situation | Tool |
 |-----------|------|
+| Anything local — an agent's diff, your own work, a past commit | **hunk**, `prefix+d` → fzf picker → scope. `c` then **ctrl+s** writes a note; `prefix+shift+s` sends every note to the agent |
 | Open PR/MR, comments must reach the forge | `tuicr pr <url>`, or Ctrl+click the link in herdr → pickr chooser → `t` |
-| An agent's local diff, comments back to the agent | reviewr sidebar (herdr plugin): `u`/`b`/`t` scope, `c` comment, `s` send |
-| Quick look while the agent works | `hunk diff --watch` (auto-reloads; tuicr needs `:e`) |
+| **On a git-spice stack** | `gs-review` — diffs against the base `gs` tracks, not main (`gs-review hunk` for the read-only variant) |
+
+The picker's rows are: working tree (live), staged, last commit, pick commit,
+pick range, branch vs upstream, stash. Each one **re-points an already-open
+hunk pane** rather than opening a second, so `prefix+d` is both "open the
+review" and "change what it shows".
+
+In hunk, `Enter` inserts a newline in a note — **ctrl+s saves it**. Notes stay
+local until `prefix+shift+s`, which pushes them into the agent's input and then
+deletes them from the pane (that deletion is the receipt).
+
+Agents talk to a live hunk session with `hunk session comment list --type user`
+(what you typed), `comment add --focus` (annotate a line and jump the cursor
+there), `navigate`, and `reload`. `--type user` vs `--type agent` is exact:
+CLI-added notes are always `agent`, even with `--author` set.
 
 Agents read/write tuicr sessions via `tuicr review list` / `comments` / `add`.
+The **`tuicr` skill** (global, built by `modules/dev/tuicr.nix` from the pinned
+`inputs.tuicr`) teaches agents that CLI plus the routing table above — it exists
+because upstream's own skill tells agents to default to tuicr, which is wrong
+here: on a local diff tuicr cannot send comments back.
+
+HISTORY: `prefix+d` used to open the reviewr plugin (`u`/`b`/`t` scopes, `s` to
+send). It was replaced by hunk for two reasons — hunk separates staged from
+unstaged and offers seven scopes to reviewr's three, and hunk has a write API so
+an agent can put a note *on a line* instead of only receiving one. The cost was
+reviewr's `last turn` scope, which has no hunk equivalent.
 
 ## Architecture: Dendritic Pattern with flake-parts
 

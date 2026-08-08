@@ -500,6 +500,22 @@
         "type": "github"
       }
     },
+    "herdr-hunk": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783839237,
+        "narHash": "sha256-8YsiIensGF1wikuJcfqksCiTsSr6E/Df4s4HY4+hWog=",
+        "owner": "JacquesvanWyk",
+        "repo": "herdr-hunk",
+        "rev": "1fb6f50b1710a7003ed3ddb9e9ac35625d3b0977",
+        "type": "github"
+      },
+      "original": {
+        "owner": "JacquesvanWyk",
+        "repo": "herdr-hunk",
+        "type": "github"
+      }
+    },
     "herdr-pickr": {
       "flake": false,
       "locked": {
@@ -513,23 +529,6 @@
       "original": {
         "owner": "tomasvarga",
         "repo": "herdr-pickr",
-        "type": "github"
-      }
-    },
-    "herdr-reviewr": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1785576797,
-        "narHash": "sha256-xr9V9rJjT3RMir/luIn09eo2bXuw5Fxn3lkHHZXAOTA=",
-        "owner": "persiyanov",
-        "repo": "herdr-reviewr",
-        "rev": "42ccaaa72176937181c82a91484f97466fb5ed59",
-        "type": "github"
-      },
-      "original": {
-        "owner": "persiyanov",
-        "ref": "v0.29.0",
-        "repo": "herdr-reviewr",
         "type": "github"
       }
     },
@@ -1448,8 +1447,8 @@
         "disko": "disko",
         "flake-parts": "flake-parts",
         "herdr": "herdr",
+        "herdr-hunk": "herdr-hunk",
         "herdr-pickr": "herdr-pickr",
-        "herdr-reviewr": "herdr-reviewr",
         "home-manager": "home-manager",
         "hunk": "hunk",
         "hy3": "hy3",

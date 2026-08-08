@@ -89,13 +89,16 @@
       url = "github:tomasvarga/herdr-pickr";
       flake = false;
     };
-    # herdr-reviewr — herdr plugin: sidebar for reviewing an agent's local diff
-    # and sending line comments back to its input. A Rust binary plus a bash
-    # host, with no flake of its own, so pkgs/herdr-reviewr.nix builds it.
-    # Pin to a tag: the manifest version and the release tag must agree, and the
-    # plugin dir baked into the store is what `herdr plugin link` registers.
-    herdr-reviewr = {
-      url = "github:persiyanov/herdr-reviewr/v0.29.0";
+    # herdr-hunk — herdr plugin: an fzf picker that opens any diff (working
+    # tree, staged, a commit, a range, a stash) in a hunk pane. A plain script
+    # directory (bash + a TOML manifest) with no build hook at all, so
+    # pkgs/herdr-hunk.nix just stages it. Replaced herdr-reviewr — see the
+    # "Why hunk, not reviewr" note in modules/dev/herdr.nix.
+    #
+    # Unpinned: upstream ships no tags (0.1.1 lives only in the manifest), so
+    # there is nothing to pin to. `nix flake update herdr-hunk` moves it.
+    herdr-hunk = {
+      url = "github:JacquesvanWyk/herdr-hunk";
       flake = false;
     };
     hyprland = {
