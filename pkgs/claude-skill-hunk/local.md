@@ -3,19 +3,8 @@
 
 # This machine
 
-Appended by `pkgs/claude-skill-hunk`. Everything above is upstream's; this
-section is local setup upstream can't know about.
-
-## hunk is the DEFAULT reviewer here
-
-| Situation | Tool |
-|-----------|------|
-| Any local diff — your work, the user's, a past commit | **hunk** (this skill) |
-| Comments must reach a GitHub PR / GitLab MR | **tuicr** — see the `tuicr` skill |
-
-tuicr is used outside herdr, for already-pushed PRs. It is not the general
-reviewer: on a local diff it cannot send comments anywhere, and it does not
-auto-reload. Do not route local work to it.
+Local setup, appended by `pkgs/claude-skill-hunk`. Everything between here and
+the header at the top is upstream's, verbatim.
 
 ## How the user drives it
 
@@ -29,11 +18,13 @@ Under herdr (prefix is `ctrl+b`):
 - In hunk: `c` starts a note, **`ctrl+s` saves it** (Enter only inserts a
   newline). Panes open with `--watch`, so they follow your edits.
 
-If no session is live, ask them to press `prefix+d` — do not launch the TUI.
+Their notes do **not** arrive on their own — they land in your input only when
+the user presses `prefix+shift+s`. Never tell them to quit hunk to "flush"
+anything.
 
-## --type user vs --type agent
+## The user/agent note split
 
-Verified against a live session, and easy to get wrong:
+Verified against a live session:
 
 | | user's note | yours |
 |---|---|---|
@@ -41,13 +32,8 @@ Verified against a live session, and easy to get wrong:
 | `source` | `user` | `agent` — **even with `--author` set** |
 | `noteId` | `user:…` | `mcp:…` |
 
-Always read with `--type user`. A bare `comment list` shows the legacy
-live-agent view, and treating your own notes as the user's is the failure mode
-this table exists to prevent.
-
-Their notes do **not** arrive on their own — they land in your input only when
-the user presses `prefix+shift+s`. Never tell them to quit hunk to "flush"
-anything.
+So `--type user` never echoes your own notes back at you, and you can annotate a
+session the user is reviewing without polluting what they wrote.
 
 ## On a git-spice stack
 
