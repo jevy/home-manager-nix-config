@@ -86,7 +86,35 @@ in
         # openssh via `nix profile` before home-manager has ever run, so the pod
         # is reachable on first boot. Having it here too means the profile copy
         # is redundant once activation succeeds, not load-bearing.
-        home.packages = [ pkgs.openssh ];
+        #
+        # Everything after openssh is base userland that `cliBase` takes for
+        # granted because every other host is NixOS and gets it from
+        # environment.systemPackages. A bare nixos/nix container has none of it:
+        # without this an SSH session has no `ls`, `cat`, `grep` or `whoami`.
+        home.packages = with pkgs; [
+          openssh
+          coreutils
+          findutils
+          diffutils
+          gnugrep
+          gnused
+          gawk
+          gnutar
+          gzip
+          procps
+          util-linux
+          less
+          which
+          bashInteractive
+        ];
+
+        # home-manager's hm-session-vars.sh sets FZF and locale variables but
+        # never touches PATH, and the profile has no nix.sh either — on NixOS
+        # the system PATH covers this, in a container nothing does. Without it
+        # an SSH session inherits only sshd's compiled-in default and cannot see
+        # a single installed package. login-shell in the flux repo sets the same
+        # PATH defensively; this is the declarative half.
+        home.sessionPath = [ "$HOME/.nix-profile/bin" ];
 
         # Distinguishes commits pushed from the pod in `git log`. bootstrap.sh
         # repeats this repo-locally, so the identity is right even if activation
