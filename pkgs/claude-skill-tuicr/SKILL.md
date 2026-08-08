@@ -1,6 +1,6 @@
 ---
 name: tuicr
-description: Use when review comments must reach a GitHub PR or GitLab MR, when the user asks to review a pull request together in the terminal, or when reading back comments a user left in a tuicr session. Also use when choosing between tuicr and hunk inside a herdr workspace.
+description: Use when review comments must reach a GitHub PR or GitLab MR, when the user asks to review a pull request together in the terminal, or when reading back comments a user left in a tuicr session. For a local diff with no PR, use the hunk-review skill instead.
 ---
 
 # tuicr
@@ -8,66 +8,25 @@ description: Use when review comments must reach a GitHub PR or GitLab MR, when 
 tuicr is a terminal review TUI whose comments can be submitted to a forge. The
 TUI belongs to the user; `tuicr review` is the agent's interface to it.
 
-## Pick the reviewer first
+## tuicr is the FORGE reviewer, not the general one
 
-This machine has two reviewers. Reaching for tuicr by default is the most
-common mistake — it is the *forge* reviewer, not the general one.
+Reaching for tuicr on a local diff is the most common mistake.
 
-| Situation | Tool | Why |
-|-----------|------|-----|
-| Open PR/MR, comments must reach the forge | **tuicr** | Only reviewer that submits to GitHub/GitLab |
-| Any local diff | **hunk** | Live session with a two-way comment API |
+| Situation | Tool |
+|-----------|------|
+| Open PR/MR, comments must reach the forge | **tuicr** — only reviewer that submits to GitHub/GitLab |
+| Any local diff | **hunk** — see the `hunk-review` skill |
 
-**If there is no PR, tuicr is usually the wrong answer.** Local diffs go to
-hunk: tell the user to press `prefix+d` (`ctrl+b` then `d`) for the picker, then
-choose a scope (working tree, staged, last commit, a commit, a range, branch vs
-upstream, a stash). Each row re-points an already-open hunk pane, so `prefix+d`
-also *changes* what an open review shows.
+**If there is no PR, stop and use hunk.** On a local diff tuicr cannot send
+comments anywhere, and it does not auto-reload. hunk has a live session with a
+two-way comment API; the `hunk-review` skill covers it.
 
-**Comments the user writes in hunk do not arrive on their own.** They press
-`prefix+shift+s`, which pushes every note into your input as an ordinary
-message and then deletes the notes from the pane. Do not tell the user to quit
-hunk to "flush" anything.
-
-**Never run `tuicr review comments` looking for hunk notes** — you will get an
-empty array and conclude something broke. See the hunk section below for the
-right command.
+**Never run `tuicr review comments` looking for notes the user wrote in hunk** —
+you will get an empty array and conclude something broke. Those live in the hunk
+session and arrive in your input when the user presses `prefix+shift+s`.
 
 tuicr on a *local* diff (`tuicr -w`) is a valid fallback when the user
 specifically wants tuicr's UI, and that session *is* readable via the CLI below.
-
-## Talking to a live hunk session
-
-This is the part with no tuicr equivalent: you can both read the user's notes
-and write your own onto a line.
-
-```bash
-hunk session list --json                                   # find live sessions
-hunk session comment list --repo . --type user --json      # what the USER wrote
-hunk session comment add --repo . --file src/a.ts --new-line 42 \
-  --summary "Should this handle the empty case?" --focus    # annotate + jump
-hunk session navigate --repo . --next-comment
-hunk session reload --repo . -- diff main...HEAD            # re-scope their pane
-```
-
-`--type` is an exact filter, verified against a live session:
-
-| | user note | your note |
-|---|---|---|
-| written by | `c` then **ctrl+s** in the TUI | `comment add` |
-| `source` | `user` | `agent` — even with `--author` set |
-| `noteId` | `user:…` | `mcp:…` |
-
-So `--type user` never echoes your own notes back at you, and you can annotate a
-session the user is reviewing without polluting what they wrote.
-
-**Do not launch the TUI yourself** (`hunk diff`, `hunk show`). The TUI belongs to
-the user; `hunk session *` is your interface. If no session is live, ask them to
-press `prefix+d`.
-
-`hunk session reload` re-points the user's *open* window, which is how you show
-them a range they can't reach from the picker — a git-spice base, say. Tell them
-what you changed it to; the pane gives no other signal.
 
 ## On a stack, use gs-review
 
