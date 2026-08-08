@@ -2,7 +2,7 @@
 { ... }:
 {
   flake.modules.nixos.printing =
-    { ... }:
+    { pkgs, ... }:
     {
       services.printing = {
         enable = true;
@@ -19,6 +19,19 @@
         nssmdns4 = true;
         openFirewall = true;
       };
+
+      # The unit sets no RuntimeDirectory, so /run/avahi-daemon survives a
+      # restart. If the daemon dies without unlinking its PID file (shutdown,
+      # suspend, SIGKILL), the next start fails with "Failed to create PID file:
+      # File exists" (exit 255) — a failed unit at the end of nixos-rebuild
+      # switch. avahi tries to clear the stale file itself and can't: the unit's
+      # CapabilityBoundingSet drops CAP_DAC_OVERRIDE, and /run/avahi-daemon is
+      # owned by the avahi user with mode 0755, so root can't unlink inside it.
+      # Hence the "+" prefix — it runs the cleanup with full privileges outside
+      # the sandbox. Plain (or "-"-only) ExecStartPre hits the same EACCES.
+      systemd.services.avahi-daemon.serviceConfig.ExecStartPre = [
+        "+-${pkgs.coreutils}/bin/rm -f /run/avahi-daemon/pid"
+      ];
 
       # Brother HL-L3270CDW: driverless via IPP Everywhere (verified: IPP 2.0,
       # URF + PWG raster, duplex, color). No vendor driver/PPD needed.
