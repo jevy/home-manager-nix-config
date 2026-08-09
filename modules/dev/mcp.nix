@@ -169,21 +169,6 @@
         '';
       };
 
-      # GitHub MCP server wrapper (reads token from sops secret at runtime).
-      # Guarded literal path rather than an eval-time sops reference — see the
-      # note on truenasMcpWrapper.
-      run-github-mcp-server = pkgs.writeShellApplication {
-        name = "run-github-mcp-server";
-        text = ''
-          SOPS_SECRET_PATH="$HOME/.config/sops-nix/secrets"
-          if [ -f "$SOPS_SECRET_PATH/github_personal_access_token" ]; then
-            GITHUB_PERSONAL_ACCESS_TOKEN=$(cat "$SOPS_SECRET_PATH/github_personal_access_token")
-            export GITHUB_PERSONAL_ACCESS_TOKEN
-          fi
-          exec github-mcp-server "$@"
-        '';
-      };
-
       # Server definitions shared across all tools
       servers = {
         context7 = {
@@ -274,9 +259,6 @@
           home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/.keep".text = "";
           home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json".text =
             builtins.toJSON { mcp.servers = selected; };
-
-          # GitHub MCP server wrapper (standalone, not an MCP config entry)
-          home.packages = [ run-github-mcp-server ];
         };
     };
 }
