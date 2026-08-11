@@ -52,6 +52,11 @@
         # Default is Ctrl+G; remap so behaviour matches the rest of the system.
         set abort_key = "\e"
 
+        # Toggle full headers in the pager. The default key for
+        # display-toggle-weed is h, which vim-keys/exit stole; i is a module
+        # noop in the pager, so it's free.
+        bind pager i display-toggle-weed
+
         # Ctrl+o for reverse-sort prompt (O is taken by lieer sync)
         # Avoiding \e (Alt) prefixes so Esc stays a clean cancel.
         bind index \Co sort-reverse
