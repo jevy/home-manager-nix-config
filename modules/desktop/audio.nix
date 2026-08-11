@@ -71,6 +71,24 @@
         ];
       };
 
+      # Pin LDAC to 990 kbps instead of the default adaptive bitrate, which
+      # sags under marginal RF even when the link could sustain full rate.
+      # Drop to "sq" (660 kbps) if dropouts show up.
+      services.pipewire.wireplumber.extraConfig."52-ldac-hq" = {
+        "monitor.bluez.rules" = [
+          {
+            matches = [
+              { "device.name" = "~bluez_card.*"; }
+            ];
+            actions = {
+              update-props = {
+                "bluez5.a2dp.ldac.quality" = "hq";
+              };
+            };
+          }
+        ];
+      };
+
       # Audio device priority configuration
       # Scarlett > QC35 Bluetooth > Laptop speakers (fallback)
       services.pipewire.wireplumber.extraConfig."51-device-priorities" = {
