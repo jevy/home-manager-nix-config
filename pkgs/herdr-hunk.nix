@@ -16,7 +16,9 @@
 # replaces reviewr's u/b/t keys, over a wider set of scopes.
 #
 # ── Patches ──────────────────────────────────────────────────────────────────
-# Four, all of them portability or correctness fixes upstream would want:
+# Six, all of them portability or correctness fixes upstream would want. 1–4
+# are one-liners; 5–6 are the "open it in the tab I am looking at" pair, which
+# gets its own section below.
 #
 #   1. PATH. herdr runs plugin ACTIONS and EVENTS with a minimal PATH (the same
 #      constraint pkgs/herdr-reviewr.nix worked around), and upstream
@@ -34,6 +36,33 @@
 #
 #   3. The "not found" hint says `brew install hunk`, which is wrong advice on
 #      every host here.
+#
+#   4. `--preview-window=hidden` on the top-level fzf menu, so a `--preview` in
+#      the inherited FZF_DEFAULT_OPTS can't render errors beside the rows.
+#
+# ── Patches 5–6: the review opens in the tab you are looking at ──────────────
+# Two unrelated reasons `prefix+d` could put the diff in a DIFFERENT TAB of the
+# same workspace:
+#
+#   5. NOTHING PINS THE SPLIT. `herdr plugin pane open` resolves an absent
+#      --target-pane at OPEN time, from whatever is focused then — and a plugin
+#      action runs detached, so that is later than the keypress. herdr already
+#      hands the action the pane the key was pressed in (HERDR_PANE_ID), so
+#      this is one flag. autodiff.sh already did it with the event's pane id.
+#
+#   6. A HUNK SESSION IS KEYED BY REPO ROOT, NOT BY TAB. picker.sh reloads a
+#      live session rather than stacking a second viewer — the behaviour that
+#      makes the picker a scope switcher, worth keeping — but that session's
+#      pane may be in another tab, because autodiff opens one beside ANY agent
+#      that goes idle with changes. Picking a scope then reloads a pane you
+#      cannot see while the picker pane exits, so the review looks like it
+#      opened somewhere else. Fix: move that pane here first, which keeps ONE
+#      session per repo — what `hunk-send` (modules/dev/herdr.nix) resolves
+#      against. It is found by label and cwd rather than by pid (which would
+#      mean a `pane process-info` call per candidate): panes of this plugin all
+#      carry the title "hunk", and a session is per repo anyway, so a hunk pane
+#      sitting in the same repo in another tab is the one. Worst case it moves
+#      a hunk pane that was not the session's — visible, and harmless.
 #
 # ── What is deliberately NOT baked ───────────────────────────────────────────
 # `hunk` and `herdr` resolve from PATH. herdr passes its own path in
@@ -74,6 +103,68 @@ let
   pathLine = ''
     set -uo pipefail
     export PATH="${runtimePath}:''${PATH:-}"'';
+
+  # Patch 5. Pins the pane the picker's split hangs off (and, for the `tab`
+  # placement, the workspace the tab lands in) to the one the key was pressed
+  # in. `extra` is already expanded into the `plugin pane open` argv below it,
+  # so the flags ride along there. The case guards keep a malformed id — most
+  # of all one starting with `-` — from being read as a flag.
+  pickerPinPane = ''
+    extra=()
+    [ "$placement" = "split" ] && extra=(--direction right)
+
+    # Pin the target: herdr resolves an absent --target-pane at open time,
+    # which is after the keypress this action was spawned from. See the
+    # "Patches 5-6" note in pkgs/herdr-hunk.nix.
+    if [ "$placement" = "split" ]; then
+      case "''${HERDR_PANE_ID:-}" in
+        "" | -* | *[!A-Za-z0-9_:.-]*) ;;
+        *) extra+=(--target-pane "$HERDR_PANE_ID") ;;
+      esac
+    else
+      case "''${HERDR_WORKSPACE_ID:-}" in
+        "" | -* | *[!A-Za-z0-9_:.-]*) ;;
+        *) extra+=(--workspace "$HERDR_WORKSPACE_ID") ;;
+      esac
+    fi'';
+
+  # Patch 6. `session_here` replaces the bare `hunk session get` test in both
+  # of picker.sh's reuse paths: same answer (is there a live session for this
+  # repo?), but a hunk pane sitting in another tab is dragged here first, so
+  # the reload that follows happens where you can see it. Only the answer to
+  # "is there a session" is load-bearing — every "cannot tell" (outside herdr,
+  # no jq, no stray pane found) still reloads, exactly as upstream does.
+  pickerSessionHere = ''
+    herdr_bin="''${HERDR_BIN_PATH:-herdr}"
+
+    session_here() {
+      hunk session get --repo "$repo_root" >/dev/null 2>&1 || return 1
+      [ -n "''${HERDR_PANE_ID:-}" ] && [ -n "''${HERDR_TAB_ID:-}" ] || return 0
+      command -v jq >/dev/null 2>&1 || return 0
+
+      # A hunk pane on this repo, elsewhere in THIS workspace — empty if one is
+      # already in this tab (nothing to do) or if the only ones are in another
+      # workspace (not ours to move). See the "Patches 5-6" note in
+      # pkgs/herdr-hunk.nix.
+      local stray
+      stray="$("$herdr_bin" pane list 2>/dev/null |
+        jq -r --arg w "''${HERDR_TAB_ID%%:*}" --arg t "$HERDR_TAB_ID" --arg r "$repo_root" '
+          [.result.panes[]?
+           | select(.label == "hunk" and .workspace_id == $w
+                    and ((.foreground_cwd // .cwd // "") | startswith($r)))] as $hunks
+          | if ($hunks | any(.tab_id == $t)) then ""
+            else ($hunks | first | .pane_id // "") end')"
+      case "$stray" in "" | -* | *[!A-Za-z0-9_:.-]*) return 0 ;; esac
+
+      # --focus to match the fresh-open path, where the picker pane becomes the
+      # viewer and keeps focus. This pane exits as soon as the reload lands.
+      "$herdr_bin" pane move "$stray" --tab "$HERDR_TAB_ID" --split right \
+        --target-pane "$HERDR_PANE_ID" --focus >/dev/null 2>&1 || true
+    }
+
+    # Session-aware: if a hunk viewer is already open for this repo, reload it
+    # with the chosen view instead of opening a second one; else become hunk.
+    view() {'';
 in
 stdenvNoCC.mkDerivation {
   pname = "herdr-hunk";
@@ -136,6 +227,26 @@ stdenvNoCC.mkDerivation {
       --replace-fail \
         "fzf --prompt='hunk> ' --reverse --height=100%" \
         "fzf --prompt='hunk> ' --reverse --height=100% --preview-window=hidden"
+
+    # 5. Pin the picker pane to the pane the key was pressed in.
+    substituteInPlace $out/scripts/open-hunk-picker.sh \
+      --replace-fail \
+        'extra=()
+    [ "$placement" = "split" ] && extra=(--direction right)' \
+        ${lib.escapeShellArg pickerPinPane}
+
+    # 6. Reuse a live session only after bringing its pane into this tab. The
+    # anchor is the `session get` test, which appears in BOTH reuse paths
+    # (view() and the working-tree branch) — substituteInPlace rewrites both.
+    substituteInPlace $out/scripts/picker.sh \
+      --replace-fail \
+        'hunk session get --repo "$repo_root" >/dev/null 2>&1 &&' \
+        'session_here &&' \
+      --replace-fail \
+        '# Session-aware: if a hunk viewer is already open for this repo, reload it
+    # with the chosen view instead of opening a second one; else become hunk.
+    view() {' \
+        ${lib.escapeShellArg pickerSessionHere}
 
     runHook postInstall
   '';

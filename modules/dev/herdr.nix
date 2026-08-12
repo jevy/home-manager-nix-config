@@ -84,7 +84,11 @@
 #
 #   Panes — i.e. moving between the agent and a review pane (hunk, tuicr)
 #     prefix+d          hunk picker  ← ours. Opens the review, and re-scopes an
-#                       already-open one. See the plugin action below.
+#                       already-open one. See the plugin action below. It lands
+#                       in the tab you pressed the key in, and pulls a hunk pane
+#                       autodiff left in another tab over to yours rather than
+#                       reloading it out of sight — patches 5-6 in
+#                       pkgs/herdr-hunk.nix, neither of which upstream does.
 #     prefix+shift+s    send your hunk notes to the agent  ← ours (hunk-send)
 #     prefix+tab        back to the previous pane  ← ours (last_pane); the
 #                       agent↔review flip this setup uses most
