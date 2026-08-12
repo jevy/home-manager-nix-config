@@ -33,6 +33,10 @@ in
         # and darwin.macSpaces, whose native Ctrl+1..6 Space switching
         # AeroSpace's own workspaces supersede.
         darwin.aerospace
+
+        # Key-event viewers, for aiming AeroSpace bindings at a custom
+        # keyboard layout. Diagnostic only — nothing starts at login.
+        darwin.keyInspect
       ];
 
       nixpkgs.hostPlatform = "aarch64-darwin";
