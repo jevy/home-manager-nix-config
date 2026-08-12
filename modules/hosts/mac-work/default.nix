@@ -88,6 +88,10 @@ in
         # AeroSpace is NOT listed here: services.aerospace adds its package to
         # environment.systemPackages itself, so it gets the Nix Apps alias (and
         # therefore the Accessibility dialog) for free.
+        #
+        # AltTab needs BOTH Accessibility and Screen Recording
+        # granted by hand, so it has to be pickable in those dialogs.
+        alt-tab-macos
       ];
 
       # useGlobalPkgs is intentionally left false: stylix's home-manager module
@@ -124,6 +128,7 @@ in
 
               # Desktop (Mac-specific)
               homeManager.desktopMac
+              homeManager.altTab
               homeManager.monoMic
               homeManager.macFonts
               homeManager.stylix
