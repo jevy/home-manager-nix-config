@@ -497,21 +497,78 @@
       # manages it, so its filename is not guaranteed. `path to application id`
       # is not Accessibility-gated, so neither of these scripts needs a TCC grant.
       #
-      # Shared by newWindow and workContainer; sets $FIREFOX. $APP carries a
-      # trailing slash, so the path doubles a separator — harmless on POSIX, and
-      # stripping it would need a shell parameter expansion whose brace form has
-      # to be escaped inside a Nix indented string. Not worth it.
-      firefoxBin = ''
+      # Shared by newWindow and workContainer; sets $FIREFOX and defines
+      # new_window_here. $APP carries a trailing slash, so the path doubles a
+      # separator — harmless on POSIX, and stripping it would need a shell
+      # parameter expansion whose brace form has to be escaped inside a Nix
+      # indented string. Not worth it.
+      #
+      # WHY new_window_here EXISTS, i.e. why this is not just one exec line.
+      # `firefox --new-window` ACTIVATES Firefox, and activating an app raises
+      # its most recently used window — which is very often parked on another
+      # workspace. AeroSpace follows that focus, switches to that workspace, and
+      # only then detects the new window, so the window is born over there. The
+      # keypress therefore teleports you instead of giving you a browser beside
+      # what you were doing. Measured live: focused workspace 1, run the script,
+      # end up on workspace 2 with the new window on 2.
+      #
+      # So the workspace is read BEFORE the launch and the window is carried
+      # back. Verified: the window lands on the original workspace and tiles
+      # with what was already there.
+      #
+      # THE WINDOW IS FOUND BY DIFFING window ids, not by asking for Firefox's
+      # focused window. `list-windows --focused` is unreliable here — focus is
+      # in motion for a moment after activation — and the newest id is not
+      # necessarily the largest. A snapshot before and after is exact.
+      #
+      # WHAT THIS DOES NOT FIX: a lone tiled window still fills the monitor.
+      # That is the tiler behaving correctly, but it bites in one specific way
+      # worth knowing about — a window floated by $mod+I's lone-window branch is
+      # no longer a tiling sibling, so a browser arriving on that workspace is
+      # the ONLY tiled window and spans the full width underneath the float.
+      # $mod+F on the floated window puts it back in the tree; see the COST note
+      # on centerMaster.
+      firefoxLib = ''
         APP=$(/usr/bin/osascript -e \
           'POSIX path of (path to application id "org.mozilla.firefox")')
         FIREFOX="$APP/Contents/MacOS/firefox"
+
+        new_window_here() {
+          local ws before new
+          ws=$(aerospace list-workspaces --focused)
+          before=$(aerospace list-windows --all --format '%{window-id}')
+
+          "$FIREFOX" --new-window "$@"
+
+          # ~5s of polling. Firefox answers in well under a second when it is
+          # already running; a cold start is what needs the headroom.
+          new=""
+          for _ in $(seq 1 50); do
+            new=$(aerospace list-windows --all --format '%{window-id}' \
+                    | grep -vxF "$before" | head -1 || true)
+            if [ -n "$new" ]; then break; fi
+            sleep 0.1
+          done
+
+          # No window appeared — nothing to place, and Firefox has already said
+          # whatever it had to say. Leave the workspace as the launch left it.
+          [ -n "$new" ] || return 0
+
+          # Each of these no-ops when it is already true (the window was born
+          # here, the workspace never changed), and a no-op only prints a tip
+          # unless --fail-if-noop is passed.
+          aerospace move-node-to-workspace --window-id "$new" "$ws" >/dev/null || true
+          aerospace workspace "$ws" >/dev/null || true
+          aerospace focus --window-id "$new" >/dev/null || true
+        }
       '';
 
       newWindow = pkgs.writeShellApplication {
         name = "firefox-new-window";
+        runtimeInputs = [ pkgs.aerospace ];
         text = ''
-          ${firefoxBin}
-          exec "$FIREFOX" --new-window about:newtab
+          ${firefoxLib}
+          new_window_here about:newtab
         '';
       };
 
@@ -573,6 +630,7 @@
       workUrl = "https://github.com/covenantco/covenant-web/pulls";
       workContainer = pkgs.writeShellApplication {
         name = "firefox-work-container";
+        runtimeInputs = [ pkgs.aerospace ];
         text = ''
           notify() {
             /usr/bin/osascript -e "display notification \"$2\" with title \"$1\"" \
@@ -591,8 +649,8 @@
             exit 1
           fi
 
-          ${firefoxBin}
-          exec "$FIREFOX" --new-window "${workUrl}"
+          ${firefoxLib}
+          new_window_here "${workUrl}"
         '';
       };
 
