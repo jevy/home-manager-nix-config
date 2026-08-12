@@ -173,6 +173,13 @@
       mod = "ctrl-alt-cmd";
       modShift = "ctrl-alt-shift-cmd";
 
+      # Where centerMaster records the window its one-window branch floated,
+      # so the browser launchers below can put that window back in the tree
+      # when a new window arrives beside it (see new_window_here). One slot,
+      # deliberately: the snap is only ever live on one workspace in practice,
+      # and a stale id degrades to a no-op, not a wrong action.
+      floatState = ".cache/aerospace/center-master-float";
+
       # Gap sizes, matching gaps_in / gaps_out in hyprland.nix. Declared here
       # rather than inline in settings.gaps because centerMaster below has to do
       # arithmetic with them — the available width for windows is the monitor
@@ -245,10 +252,13 @@
       # the three-window snap produces, and repeated presses are idempotent.
       #
       # THE COST is that the window is now floating: it no longer tiles, so a
-      # second window opens at full width underneath it. mod+F (layout floating
-      # tiling) puts it back, and two tiled windows are AVAIL/2 each anyway, so
-      # the recovery is one key. The notify below says so when it sees floating
-      # windows rather than reporting a misleading tiled count.
+      # second window opens at full width in front of it. mod+F (layout
+      # floating tiling) puts it back, and two tiled windows are AVAIL/2 each
+      # anyway, so the recovery is one key. The notify below says so when it
+      # sees floating windows rather than reporting a misleading tiled count.
+      # The browser launchers pay this cost automatically: the branch below
+      # records the floated window's id in floatState, and new_window_here
+      # re-tiles it when a browser arrives beside it (see firefoxLib).
       #
       # ACCESSIBILITY, and it needs NO grant of its own — verified live, by
       # pressing the key and finding the window at exactly 2548 wide and x=1286.
@@ -358,6 +368,7 @@
           # See the header for why this cannot be done with resize, and why the
           # rect has to be read while the window is still tiled.
           if [ "$TOTAL" -eq 1 ]; then
+            WIN=$(focused_id)
             aerospace layout tiling >/dev/null 2>&1 || true
 
             RECT=$(ax_rect 2>/dev/null | tr -d ',' || true)
@@ -384,6 +395,12 @@
                 "Could not set the window frame (Accessibility?)"
               exit 1
             fi
+
+            # Remember which window is floating so a browser landing on this
+            # workspace can dissolve the float instead of tiling alone at
+            # full width in front of it (see new_window_here in firefoxLib).
+            mkdir -p "$(dirname "$HOME/${floatState}")"
+            printf '%s\n' "$WIN" > "$HOME/${floatState}"
             exit 0
           fi
 
@@ -521,20 +538,35 @@
       # in motion for a moment after activation — and the newest id is not
       # necessarily the largest. A snapshot before and after is exact.
       #
-      # WHAT THIS DOES NOT FIX: a lone tiled window still fills the monitor.
-      # That is the tiler behaving correctly, but it bites in one specific way
-      # worth knowing about — a window floated by $mod+I's lone-window branch is
-      # no longer a tiling sibling, so a browser arriving on that workspace is
-      # the ONLY tiled window and spans the full width underneath the float.
-      # $mod+F on the floated window puts it back in the tree; see the COST note
-      # on centerMaster.
+      # THE FLOATED-TERMINAL SEQUEL, the second half of "it opens full screen"
+      # and a real report from the field after the carry above was fixed: a
+      # window floated by $mod+I's lone-window branch is no longer a tiling
+      # sibling, so a browser arriving on that workspace is the ONLY tiled
+      # window and spans the full width — and, being focused, it raises IN
+      # FRONT of the float, so the workspace reads as "a fullscreen browser
+      # covering my terminal". Verified live on workspace 1: a Ghostty floated
+      # by $mod+I at exactly 2548 wide, and the arriving browser tiled alone at
+      # the full 5104.
+      #
+      # So after the carry, if the ONLY other window here is the one
+      # centerMaster recorded floating (the state file above), put it back in
+      # the tree. Two tiled windows split at AVAIL/2 each — exactly the width
+      # the float already had — so the terminal keeps its size, merely sliding
+      # left, and the browser takes the other half. The float hack dissolves at
+      # precisely the moment it stops being needed.
+      #
+      # Scoped to the recorded window on purpose: other floats (dialogs, a
+      # Slack huddle) must not be yanked into the tree, and with more than two
+      # windows normal tiling already did the right thing. A lone tiled browser
+      # on a genuinely empty workspace still fills the monitor — that is every
+      # tiler's behaviour, and $mod+I exists for exactly that case.
       firefoxLib = ''
         APP=$(/usr/bin/osascript -e \
           'POSIX path of (path to application id "org.mozilla.firefox")')
         FIREFOX="$APP/Contents/MacOS/firefox"
 
         new_window_here() {
-          local ws before new
+          local ws before new floated here n
           ws=$(aerospace list-workspaces --focused)
           before=$(aerospace list-windows --all --format '%{window-id}')
 
@@ -559,6 +591,20 @@
           # unless --fail-if-noop is passed.
           aerospace move-node-to-workspace --window-id "$new" "$ws" >/dev/null || true
           aerospace workspace "$ws" >/dev/null || true
+
+          # Dissolve a centerMaster float when it is the only other window
+          # here — see THE FLOATED-TERMINAL SEQUEL above. `layout tiling` on
+          # an already-tiled window (stale state) is a harmless no-op.
+          if [ -f "$HOME/${floatState}" ]; then
+            floated=$(cat "$HOME/${floatState}")
+            here=$(aerospace list-windows --workspace "$ws" --format '%{window-id}')
+            n=$(printf '%s\n' "$here" | grep -c . || true)
+            if [ "$n" -eq 2 ] && printf '%s\n' "$here" | grep -qxF "$floated"; then
+              aerospace layout tiling --window-id "$floated" >/dev/null 2>&1 || true
+              rm -f "$HOME/${floatState}"
+            fi
+          fi
+
           aerospace focus --window-id "$new" >/dev/null || true
         }
       '';
