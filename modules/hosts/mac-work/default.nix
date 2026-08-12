@@ -121,6 +121,7 @@ in
               homeManager.zsh
               homeManager.cliBase
               homeManager.ghostty
+              homeManager.nosleepMac
 
               # Development
               homeManager.nixvim
