@@ -27,6 +27,12 @@ in
         # Installs the BlackHole 2ch HAL plug-in into /Library (root-owned);
         # its home-manager half below runs the bridge that feeds it.
         darwin.monoMic
+
+        # Tiling, directional focus and workspaces. Replaced
+        # homeManager.rectangle, which could only place the focused window,
+        # and darwin.macSpaces, whose native Ctrl+1..6 Space switching
+        # AeroSpace's own workspaces supersede.
+        darwin.aerospace
       ];
 
       nixpkgs.hostPlatform = "aarch64-darwin";
@@ -79,6 +85,9 @@ in
         # Feishin ships a real .app; declaring it here (rather than only in the
         # navidrome home-manager module) is what gets it into Spotlight.
         feishin
+        # AeroSpace is NOT listed here: services.aerospace adds its package to
+        # environment.systemPackages itself, so it gets the Nix Apps alias (and
+        # therefore the Accessibility dialog) for free.
       ];
 
       # useGlobalPkgs is intentionally left false: stylix's home-manager module
