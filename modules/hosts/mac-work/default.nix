@@ -37,6 +37,12 @@ in
         # Key-event viewers, for aiming AeroSpace bindings at a custom
         # keyboard layout. Diagnostic only — nothing starts at login.
         darwin.keyInspect
+
+        # Next calendar event in the menu bar. An LSUIElement app needing
+        # hand-granted Calendar access, so it goes through the darwin layer to
+        # land in /Applications/Nix Apps as a real copy rather than a
+        # user-scoped symlink into /nix — see the module header.
+        darwin.meetingbar
       ];
 
       nixpkgs.hostPlatform = "aarch64-darwin";
