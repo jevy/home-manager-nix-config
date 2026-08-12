@@ -23,6 +23,8 @@
           window-theme = "ghostty";
           shell-integration-features = "sudo,ssh-env,ssh-terminfo";
           font-family = "MesloLGS Nerd Font";
+          # Linux runs HiDPI, so 11pt lands on ~22 physical px. See the darwin
+          # block below — the Mac's main display is not HiDPI and needs more.
           font-size = 11;
           keybind =
             [
@@ -79,6 +81,20 @@
           # Tradeoff: Option no longer types special glyphs (é, etc.) in the
           # terminal. Drop this if you'd rather keep Option-as-compose on the Mac.
           macos-option-as-alt = true;
+
+          # The Mac's main display is the 5120x1440 ultrawide, which macOS drives
+          # at 1x ("UI Looks like: 5120x1440", ~109 PPI). Two consequences, both
+          # of which made text look washed out and spindly:
+          #
+          #   1. font-size is points, and at 1x a point is one physical pixel —
+          #      the 11 above rendered as 11px here versus 22px on HiDPI Linux.
+          #   2. macOS dropped subpixel antialiasing in Mojave, so sub-100-PPI
+          #      panels get grayscale AA only, and thin stems fade to gray.
+          #
+          # font-thicken is macOS-only and exists precisely for (2). Dial it back
+          # with font-thicken-strength (0-255, default 255) if it reads too bold.
+          font-size = 14;
+          font-thicken = true;
         };
       };
     };
