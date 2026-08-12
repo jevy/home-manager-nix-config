@@ -46,16 +46,22 @@
             HELP
             }
 
-            # Parse a single-token duration (1h / 30m / 45s / bare-minutes) to seconds.
+            # Parse a single-token duration (1h / 30m / 45s / bare-minutes) to
+            # seconds. The digit check has to come after the suffix is stripped
+            # and before any arithmetic: "bogus" ends in s, and $(( bogu )) under
+            # `set -u` aborts the script instead of returning a clean failure.
             parse_duration() {
-              local in="$1"
+              local in="$1" n unit
               case "$in" in
-                *h) printf '%s' "$(( ''${in%h} * 3600 ))" ;;
-                *m) printf '%s' "$(( ''${in%m} * 60 ))" ;;
-                *s) printf '%s' "$(( ''${in%s} ))" ;;
-                *[!0-9]*) return 1 ;;
-                *) printf '%s' "$(( in * 60 ))" ;;
+                *h) n=''${in%h}; unit=3600 ;;
+                *m) n=''${in%m}; unit=60 ;;
+                *s) n=''${in%s}; unit=1 ;;
+                *)  n="$in";     unit=60 ;;
               esac
+              case "$n" in
+                ""|*[!0-9]*) return 1 ;;
+              esac
+              printf '%s' "$(( n * unit ))"
             }
 
             # Pretty-print a seconds count as 1h05m / 5m / 42s.
