@@ -79,6 +79,51 @@ in
       # Caps → Ctrl. The old standalone config expressed this via
       # home.keyboard.options = [ "ctrl:nocaps" ], which is setxkbmap (Linux
       # only) and silently did nothing on macOS. nix-darwin does it natively.
+      #
+      # NOTE this disagrees with the Linux hosts on purpose-by-accident: kanata
+      # makes Caps a plain Esc and moved Ctrl to the home row to spare the left
+      # pinky (see the ulnar-nerve note in modules/services/kanata.nix). Keep
+      # Caps→Ctrl only as the fallback for the built-in keyboard, which has no
+      # kanata and no home-row mods; on the Voyager, Ctrl comes from the keys
+      # below. Switch to remapCapsLockToEscape if the laptop keyboard stops
+      # being used bare.
+      #
+      # NO Ctrl/⌘ REMAPPING HERE, DELIBERATELY. The Voyager's own Mac layer
+      # already solves it, and an OS-level remap would fight the firmware.
+      #
+      # The friction being avoided: on Linux one Ctrl serves two jobs — app
+      # commands (Ctrl+C copies) and terminal control codes (Ctrl+C interrupts).
+      # macOS necessarily splits those across ⌘ and ⌃.
+      #
+      # The firmware resolves the app-command half exactly right, by making the
+      # f-hold/j-hold home-row mods emit whatever the host calls "app command":
+      # Ctrl on the Linux layer, ⌘ on the Mac layer. Every GUI chord is then one
+      # identical motion on both machines — f-hold+L is Ctrl+L in Firefox on
+      # Linux and ⌘L in Firefox here, f-hold+C copies in both, and so on. Do not
+      # "fix" this from Nix; it is already correct, and a hidutil Ctrl↔⌘ swap
+      # would double-apply on top of the layer.
+      #
+      # What the firmware leaves orphaned is the OTHER half: with f/j spent on ⌘,
+      # the Mac layer has no home-row Ctrl, so terminal control codes have
+      # nowhere to come from. That wants a dedicated THUMB sending plain Ctrl on
+      # BOTH layers — a thumb because terminal Ctrl targets span both hands
+      # (Ctrl+A/C/D/R/W/E and Ctrl+H/L/U/K/N/P) and a thumb has no same-finger
+      # collision with any letter, unlike f-hold+R or f-hold+V where the index
+      # would have to hold the mod and press the letter above/below it.
+      #
+      # That yields one rule true on both machines:
+      #
+      #   home row (f/j) -> talk to the APP      (Ctrl on Linux, ⌘ here)
+      #   thumb          -> talk to the TERMINAL (Ctrl on both)
+      #
+      # and it is free to learn: on the Linux layer the thumb is a redundant
+      # Ctrl, so thumb+C already interrupts there today. Nothing to configure on
+      # this side — which is why this block stays a bare Caps remap.
+      #
+      # (The terminal half needs no Nix help either: modules/shell/ghostty.nix
+      # puts the ctrl+a leader and ctrl+h/l splits in the *base* keybind list
+      # rather than the Darwin one, so every terminal chord is already identical
+      # across platforms.)
       system.keyboard = {
         enableKeyMapping = true;
         remapCapsLockToControl = true;

@@ -20,6 +20,28 @@
 # moving that load off the left ring finger onto the right thumb is the
 # single biggest ergonomic win available.
 #
+# SCOPE: this covers the INTERNAL keyboard only — linux-dev below pins it to
+# platform-i8042-serio-0-event-kbd. The Voyager is firmware-owned (Oryx) on
+# every host, so nothing here applies to it.
+#
+# The Voyager carries a split kanata cannot express, because it exists to
+# reconcile Linux with macOS:
+#
+#   f-hold / j-hold  -> the APP-command modifier. Ctrl on the Linux layer, ⌘ on
+#                       the Mac layer. Makes every GUI chord one identical
+#                       motion across hosts (f+L is Ctrl+L in Firefox on Linux
+#                       and ⌘L here; f+C copies on both).
+#   right thumb      -> plain Ctrl on BOTH layers, for terminal control codes.
+#                       Needed because the Mac layer spends f/j on ⌘ and would
+#                       otherwise have no Ctrl at all; a thumb because Ctrl+A/C/
+#                       D/R/W/E are left-hand letters and f-hold cannot reach R
+#                       or V (same finger — they sit directly above and below f).
+#
+# On this keyboard f/j stay plain Ctrl and there is no thumb cluster to give
+# the second role to, so the laptop is deliberately the odd one out. See the
+# keyboard block in modules/hosts/mac-work/default.nix for the macOS half and
+# why no hidutil Ctrl↔⌘ remap belongs there.
+#
 # Runs as a per-user (home-manager) service tied to graphical-session.target,
 # NOT a system service. A system-level kanata grabs (EVIOCGRAB) the keyboard
 # at boot, before login — which breaks the regreet/cage greeter (the greeter
