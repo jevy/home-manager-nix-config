@@ -28,13 +28,14 @@
         # ── Colors ───────────────────────────────────────────────────────
         class C:
             """ANSI color codes, disabled when piped or --no-color."""
-            BOLD = RESET = DIM = RED = GREEN = YELLOW = BLUE = CYAN = ""
+            BOLD = RESET = DIM = RED = GREEN = YELLOW = BLUE = CYAN = REV = ""
 
         def init_colors(force_off=False):
             if not force_off and sys.stdout.isatty():
                 C.BOLD, C.DIM, C.RESET = "\033[1m", "\033[2m", "\033[0m"
                 C.RED, C.GREEN, C.YELLOW = "\033[31m", "\033[32m", "\033[33m"
                 C.BLUE, C.CYAN = "\033[34m", "\033[36m"
+                C.REV = "\033[7m"
 
 
         # ── Task model ───────────────────────────────────────────────────
@@ -165,19 +166,8 @@
             acounts = Counter(t.area or "(inbox)" for t in active)
             or_none([f"  {count:4d}  {area}" for area, count in acounts.most_common()])
 
-            # ── Today List (active today + completed today) ──
-            section("Today List (sorted by score)")
             completed_today = [t for t in all_tasks if t.completed_at == TODAY]
             today_active = [t for t in active if t.today]
-            today_all = sorted(
-                {id(t): t for t in today_active + completed_today}.values(),
-                key=lambda t: (t.completed, -t.score),
-            )
-            or_none([
-                f"  {C.DIM}[done]{C.RESET} [{t.area}] {t.name}" if t.completed else
-                f"  {C.GREEN}[{t.area}]{C.RESET} {t.name:<40s} {C.DIM}{t.spoons} spoons{C.RESET}  score:{t.score}"
-                for t in today_all
-            ])
 
             # ── Up Next ──
             section("Up Next (score >= 40, not today)")
@@ -249,7 +239,40 @@
             section("Spoon Budget (all active tasks)")
             total_spoons = sum(t.spoons for t in active if t.spoons)
             print(f"  Total spoons across all active tasks: {total_spoons:.1f}")
-            print()
+
+            # ── TODAY — last on purpose: this is what stays on screen ──
+            today_view(today_active, completed_today)
+
+
+        def today_view(today_active, completed_today):
+            """The one section meant to be read, so it prints last."""
+            rule = "─" * 66
+            print(f"\n{C.BOLD}{rule}")
+            print(f"  TODAY · {TODAY:%a %b %-d}")
+            print(f"{rule}{C.RESET}")
+
+            todo = sorted(today_active, key=lambda t: -t.score)
+            if not todo:
+                print(f"  {C.DIM}nothing flagged for today{C.RESET}")
+            for t in todo:
+                do_now = t.quadrant == "Do First" or (t.due and t.due <= TODAY)
+                bullet = f"{C.RED}{C.BOLD}▶{C.RESET}" if do_now else " "
+                name = t.name if len(t.name) <= 38 else t.name[:37] + "…"
+                pad = " " * (38 - len(name))
+                name = f"{C.BOLD}{name}{C.RESET}" if do_now else name
+                quad = f"{t.quadrant_color}{C.REV} {t.quadrant:<8s} {C.RESET}"
+                due = ""
+                if t.due and t.due < TODAY:
+                    due = f"  {C.RED}OVERDUE {t.due}{C.RESET}"
+                elif t.due == TODAY:
+                    due = f"  {C.RED}due today{C.RESET}"
+                print(f"  {bullet} {quad} {name}{pad} {C.DIM}[{t.area or '?'}] {t.spoons} sp{C.RESET}{due}")
+
+            spoons = sum(t.spoons for t in todo if t.spoons)
+            done = len(completed_today)
+            print(f"\n  {C.CYAN}{len(todo)} to do{C.RESET} · {spoons:.1f} spoons"
+                  f" · {C.GREEN}{done} done today{C.RESET}")
+            print(f"  {C.DIM}▶ = do it now (urgent+important or due){C.RESET}\n")
 
 
         if __name__ == "__main__":
