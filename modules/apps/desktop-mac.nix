@@ -13,7 +13,11 @@
         # direnv comes from homeManager.direnv (programs.direnv), which also
         # installs the zsh hook — a bare package here would not.
         lazygit
-        linear # Linear.app desktop client
+        # linear is NOT here: it lives in the host's environment.systemPackages
+        # so nix-darwin's mkalias trampoline puts a real copy in
+        # /Applications/Nix Apps, which Spotlight indexes. A home.packages entry
+        # only ever produced a ~/Applications symlink into /nix that
+        # LaunchServices refuses to index — see the mac-work host header.
       ];
 
       home.file.yabai = {

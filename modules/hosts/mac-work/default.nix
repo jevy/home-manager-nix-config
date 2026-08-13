@@ -7,7 +7,7 @@
 # trampoline nix-darwin uses for system apps into /Applications/Nix Apps (a
 # location Spotlight *does* index). That aliaser only covers
 # environment.systemPackages, so GUI apps that need to appear in Spotlight
-# (linear, ghostty, neovide) are declared as system packages below; their
+# (ghostty, neovide, feishin) are declared as system packages below; their
 # home-manager modules still own the app config.
 #
 # Nix itself is owned by the Determinate nix-installer on this machine, so
@@ -47,7 +47,10 @@ in
 
       nixpkgs.hostPlatform = "aarch64-darwin";
       nixpkgs.overlays = [ overlays.volsync ];
-      # linear (and other work apps) are unfree; matches the NixOS hosts.
+      # Nothing in systemPackages currently needs this (linear, the one unfree
+      # system app, is no longer Nix-managed) — kept on deliberately so adding a
+      # work app later doesn't hit an eval failure. Matches the NixOS hosts. The
+      # HM block below sets its own; it does not inherit this one.
       nixpkgs.config.allowUnfree = true;
 
       # Determinate nix-installer owns the Nix installation and daemon here;
@@ -136,7 +139,8 @@ in
       environment.systemPackages = with pkgs; [
         ghostty-bin
         neovide
-        linear
+        # Linear is deliberately NOT managed by Nix: it self-updates and is
+        # installed by hand from linear.app into /Applications.
         # Feishin ships a real .app; declaring it here (rather than only in the
         # navidrome home-manager module) is what gets it into Spotlight.
         feishin
@@ -159,6 +163,9 @@ in
           { ... }:
           {
             nixpkgs.overlays = [ overlays.volsync ];
+            # Needed at the HM level for 1password-cli (homeManager.
+            # onepasswordCli). Not inherited from the darwin-level setting
+            # above: useGlobalPkgs is off, so HM instantiates its own nixpkgs.
             nixpkgs.config.allowUnfree = true;
 
             imports = [
