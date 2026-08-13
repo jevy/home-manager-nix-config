@@ -51,14 +51,6 @@
       };
     };
 
-    # Patched lieer: save state after metadata phase so interrupted full pulls
-    lieer = final: prev: {
-      lieer = prev.lieer.overrideAttrs (old: {
-        src = inputs.lieer-src;
-        patches = [];
-      });
-    };
-
     # goobook 3.5.2 pins simplejson<4.0.0 but nixpkgs ships 4.x; upstream
     # nixpkgs relaxes other deps but not this one (simplejson 4 dropped no
     # API goobook uses). TODO: drop once nixpkgs adds simplejson to
