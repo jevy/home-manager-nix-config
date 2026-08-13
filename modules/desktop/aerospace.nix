@@ -173,11 +173,12 @@
       mod = "ctrl-alt-cmd";
       modShift = "ctrl-alt-shift-cmd";
 
-      # Where centerMaster records the window its one-window branch floated,
-      # so the browser launchers below can put that window back in the tree
-      # when a new window arrives beside it (see new_window_here). One slot,
-      # deliberately: the snap is only ever live on one workspace in practice,
-      # and a stale id degrades to a no-op, not a wrong action.
+      # Where centerMaster records the windows it floated, so the browser
+      # launchers below can put them back in the tree when a new window arrives
+      # beside them (see new_window_here). One id per line: the one-window
+      # branch writes one, the two-window branch writes both. Only ever the
+      # current workspace's snap — it is only ever live on one workspace in
+      # practice, and a stale id degrades to a no-op, not a wrong action.
       floatState = ".cache/aerospace/center-master-float";
 
       # Gap sizes, matching gaps_in / gaps_out in hyprland.nix. Declared here
@@ -212,8 +213,15 @@
       #
       #   3  the original case: shrink the centre to AVAIL/2, sides fall out
       #      equal at AVAIL/4 each (see the resize note below)
-      #   2  nothing to do. Two equal columns are AVAIL/2 each, which already IS
-      #      the centre width, so balance-sizes alone is the whole job
+      #   2  the three-window layout with the right slot left EMPTY: AVAIL/4 on
+      #      the left, AVAIL/2 centred, nothing on the right. Tiling cannot do
+      #      this — two tiled columns always divide the whole container between
+      #      them, and there is no placeholder to hold the empty quarter — so
+      #      this branch floats BOTH windows and sets their frames, the same
+      #      mechanism the one-window case needs and for the same reason.
+      #      (It used to be a no-op: two equal columns are already AVAIL/2 each,
+      #      which is the centre width, so balance-sizes alone was the job. That
+      #      is still true, and still not the layout that was wanted.)
       #   1  a lone window fills the monitor, and no AeroSpace command can
       #      narrow it — see below
       #
@@ -404,6 +412,110 @@
             exit 0
           fi
 
+          # --- TWO WINDOWS: AVAIL/4 left, AVAIL/2 centred, right slot empty ---
+          # Keyed off TOTAL rather than the tiled walk below, for the same reason
+          # the one-window branch is: the walk ignores floating windows, so after
+          # a press both of these windows are invisible to it and a second press
+          # would report strays instead of re-snapping.
+          if [ "$TOTAL" -eq 2 ]; then
+            ids=$(aerospace list-windows --workspace "$WS" --format '%{window-id}')
+            a=$(printf '%s\n' "$ids" | sed -n 1p | tr -d '[:space:]')
+            b=$(printf '%s\n' "$ids" | sed -n 2p | tr -d '[:space:]')
+
+            # Re-tile BEFORE measuring, so the numbers below always come from
+            # tiled columns. This is what makes repeated presses idempotent
+            # instead of quartering an already-narrowed frame — the same
+            # ordering, and the same reason, as the one-window branch.
+            aerospace layout tiling --window-id "$a" >/dev/null 2>&1 || true
+            aerospace layout tiling --window-id "$b" >/dev/null 2>&1 || true
+            aerospace layout --root h_tiles >/dev/null 2>&1 || true
+            aerospace balance-sizes
+
+            # Order the pair by measured x rather than by walking the tree: this
+            # branch has to read both frames anyway for their y/height, so the
+            # read doubles as the sort and no second mechanism is needed.
+            rect_of() {
+              aerospace focus --window-id "$1" >/dev/null 2>&1 || true
+              ax_rect 2>/dev/null | tr -d ',' || true
+            }
+            RA=$(rect_of "$a")
+            RB=$(rect_of "$b")
+            XA=$(printf '%s\n' "$RA" | awk '{print $1}')
+            YA=$(printf '%s\n' "$RA" | awk '{print $2}')
+            WA=$(printf '%s\n' "$RA" | awk '{print $3}')
+            HA=$(printf '%s\n' "$RA" | awk '{print $4}')
+            XB=$(printf '%s\n' "$RB" | awk '{print $1}')
+            YB=$(printf '%s\n' "$RB" | awk '{print $2}')
+            WB=$(printf '%s\n' "$RB" | awk '{print $3}')
+            HB=$(printf '%s\n' "$RB" | awk '{print $4}')
+
+            if [ -z "$WA" ] || [ -z "$WB" ] || [ "$WA" -le 0 ] || [ "$WB" -le 0 ]
+            then
+              notify "Centred master" \
+                "No window frame — grant Accessibility to /usr/bin/osascript"
+              exit 1
+            fi
+
+            if [ "$XA" -le "$XB" ]; then
+              LEFT=$a
+              CENTRE=$b
+              LX=$XA
+              LY=$YA
+              LH=$HA
+            else
+              LEFT=$b
+              CENTRE=$a
+              LX=$XB
+              LY=$YB
+              LH=$HB
+            fi
+
+            # The leftmost window KEEPS the left slot and the other becomes the
+            # centre, so nothing swaps sides under the press. Read as "the
+            # three-window layout minus its right window": left stays a side
+            # column, its neighbour takes the centre.
+            #
+            # Both columns tiled span the container, so C is their two widths
+            # plus the one inner gap between them, and AVAIL = C - 2*INNER —
+            # the same AVAIL the three-window branch gets from NSScreen, but
+            # measured, so it is right on any monitor. On the 5120 ultrawide:
+            # 2550 + 2550 + 4 = 5104, AVAIL 5096, so 1274 at x=8 and 2548 at
+            # x=1286 — the same centre the other two branches produce.
+            C=$((WA + WB + INNER))
+            AVAIL=$((C - 2 * INNER))
+            CENTRE_W=$((AVAIL / 2))
+            SIDE_W=$((AVAIL / 4))
+            CENTRE_X=$((LX + (C - CENTRE_W) / 2))
+
+            # Both windows take the column's y/height, so they stay aligned
+            # rather than inheriting whatever each had while tiling reflowed.
+            aerospace focus --window-id "$LEFT" >/dev/null 2>&1 || true
+            aerospace layout floating >/dev/null 2>&1 || true
+            if ! ax_set "$LX" "$LY" "$SIDE_W" "$LH" >/dev/null 2>&1; then
+              notify "Centred master" \
+                "Could not set the left window frame (Accessibility?)"
+              exit 1
+            fi
+
+            # Floating the left one leaves the centre briefly tiled and
+            # full-width; its frame is set explicitly here, so that is invisible.
+            aerospace focus --window-id "$CENTRE" >/dev/null 2>&1 || true
+            aerospace layout floating >/dev/null 2>&1 || true
+            if ! ax_set "$CENTRE_X" "$LY" "$CENTRE_W" "$LH" >/dev/null 2>&1; then
+              notify "Centred master" \
+                "Could not set the centre window frame (Accessibility?)"
+              exit 1
+            fi
+
+            # BOTH ids, so a browser landing here dissolves both floats rather
+            # than tiling full-width in front of them (see new_window_here).
+            mkdir -p "$(dirname "$HOME/${floatState}")"
+            printf '%s\n%s\n' "$LEFT" "$CENTRE" > "$HOME/${floatState}"
+
+            aerospace focus --window-id "$CENTRE" >/dev/null 2>&1 || true
+            exit 0
+          fi
+
           # Columns, not rows, whatever the workspace was in before. Do this
           # before the walk so left/right mean what they look like.
           aerospace layout --root h_tiles >/dev/null 2>&1 || true
@@ -426,8 +538,12 @@
             i=$((i + 1))
           done
 
-          # --- TWO WINDOWS: balance-sizes above already did the whole job ----
-          # Two equal columns are AVAIL/2 each, which IS the centre width.
+          # --- TWO TILED, PLUS A FLOAT: leave the pair balanced --------------
+          # The two-window snap proper is handled by the TOTAL branch above, so
+          # reaching here means a third window is floating — something floated
+          # by hand, or a picker. Balancing the pair (done above) is the honest
+          # response: quartering them would put the empty slot under a float
+          # that is deliberately sitting there.
           if [ "$count" -eq 2 ]; then
             exit 0
           fi
@@ -566,7 +682,7 @@
         FIREFOX="$APP/Contents/MacOS/firefox"
 
         new_window_here() {
-          local ws before new floated here n
+          local ws before new floated here others nOthers stray
           ws=$(aerospace list-workspaces --focused)
           before=$(aerospace list-windows --all --format '%{window-id}')
 
@@ -592,15 +708,26 @@
           aerospace move-node-to-workspace --window-id "$new" "$ws" >/dev/null || true
           aerospace workspace "$ws" >/dev/null || true
 
-          # Dissolve a centerMaster float when it is the only other window
-          # here — see THE FLOATED-TERMINAL SEQUEL above. `layout tiling` on
-          # an already-tiled window (stale state) is a harmless no-op.
+          # Dissolve centerMaster's floats when they are the ONLY other windows
+          # here — see THE FLOATED-TERMINAL SEQUEL above. `layout tiling` on an
+          # already-tiled window (stale state) is a harmless no-op.
+          #
+          # The test is "every window here except the new one is one we floated"
+          # rather than a window count, because the state file holds one id after
+          # a one-window snap and two after a two-window snap. Anything else on
+          # the workspace means the float is not simply in the way, so leave it.
           if [ -f "$HOME/${floatState}" ]; then
-            floated=$(cat "$HOME/${floatState}")
             here=$(aerospace list-windows --workspace "$ws" --format '%{window-id}')
-            n=$(printf '%s\n' "$here" | grep -c . || true)
-            if [ "$n" -eq 2 ] && printf '%s\n' "$here" | grep -qxF "$floated"; then
-              aerospace layout tiling --window-id "$floated" >/dev/null 2>&1 || true
+            others=$(printf '%s\n' "$here" | grep -vxF "$new" || true)
+            nOthers=$(printf '%s\n' "$others" | grep -c . || true)
+            stray=$(printf '%s\n' "$others" \
+                      | grep -vxF -f "$HOME/${floatState}" || true)
+            if [ "$nOthers" -gt 0 ] && [ -z "$stray" ]; then
+              while read -r floated; do
+                [ -n "$floated" ] || continue
+                aerospace layout tiling --window-id "$floated" >/dev/null 2>&1 \
+                  || true
+              done < "$HOME/${floatState}"
               rm -f "$HOME/${floatState}"
             fi
           fi
