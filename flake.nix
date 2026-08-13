@@ -129,8 +129,6 @@
       url = "github:AlexsJones/llmfit";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    lieer-src.url = "path:/home/jevin/src/lieer";
-    lieer-src.flake = false;
     pi-mono.url = "github:lukasl-dev/pi-mono.nix";
     # See x86_64-darwin note at the top of `inputs`
     pi-mono.inputs.bun2nix.inputs.systems.follows = "nix-systems-triplet";

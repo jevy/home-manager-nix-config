@@ -48,7 +48,6 @@ in
         overlays.hyprland
         overlays.mcpServers
         overlays.llamaCpp
-        overlays.lieer
         overlays.bambuStudio
         overlays.goobookRelaxDeps
         overlays.powerProfilesDaemonSkipCheck
