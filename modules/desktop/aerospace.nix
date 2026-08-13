@@ -44,8 +44,12 @@
 #   1. YABAI has the one clean primitive for the single-window case: per-space
 #      padding, settable at runtime (`yabai -m space --padding abs:...`), so a
 #      lone window narrows with no floating and no Accessibility API at all.
-#      Its signals (window_created / window_destroyed) would also make the
-#      ratio self-maintaining rather than a keypress.
+#      Its signals (window_created / window_destroyed) are NO LONGER a
+#      differentiator: 0.21.3 has the on-window-detected config callback (used
+#      below to dissolve the snap's floats) and an `aerospace subscribe` event
+#      stream carrying window-detected / focus-changed / workspace-changed. So
+#      only the padding primitive is left in yabai's column, and it buys one
+#      branch of one script.
 #
 #      BEFORE ACTING ON THIS, VERIFY THE PREMISE ABOVE — it is probably stale.
 #      The claim that yabai's *tiling* needs the scripting addition looks wrong
@@ -264,9 +268,10 @@
       # floating tiling) puts it back, and two tiled windows are AVAIL/2 each
       # anyway, so the recovery is one key. The notify below says so when it
       # sees floating windows rather than reporting a misleading tiled count.
-      # The browser launchers pay this cost automatically: the branch below
-      # records the floated window's id in floatState, and new_window_here
-      # re-tiles it when a browser arrives beside it (see firefoxLib).
+      # That cost is also paid automatically: both float branches record their
+      # window ids in floatState, and dissolveSnap below puts them back in the
+      # tree when any new window arrives beside them, driven by the
+      # on-window-detected callback in settings.
       #
       # ACCESSIBILITY, and it needs NO grant of its own — verified live, by
       # pressing the key and finding the window at exactly 2548 wide and x=1286.
@@ -608,6 +613,100 @@
         '';
       };
 
+      # DISSOLVE THE SNAP'S FLOATS when a new window lands beside them. This is
+      # the other half of the float hack above — the undo that keeps it from
+      # outliving its usefulness — and it is a script of its own so that the
+      # on-window-detected callback in settings can run it for EVERY window
+      # AeroSpace detects, whatever opened it.
+      #
+      # THE FAILURE IT FIXES. A window floated by centerMaster is not a tiling
+      # sibling, so the next window to appear on that workspace is the ONLY
+      # tiled one and spans the full width — and, being focused, it raises IN
+      # FRONT of the floats, so the workspace reads as "one fullscreen window
+      # covering my layout". Measured live on workspace 1 with the two-window
+      # snap in place (Firefox at 1274 and Ghostty at 2548, both floating): a
+      # new Ghostty tiled alone at x=8 w=5104, on top of both.
+      #
+      # WHY IT IS NOT INSIDE new_window_here ANY MORE. It was, and that fixed
+      # exactly two doors into the workspace — $mod+B and $modShift+B. Every
+      # other way a window appears ($mod+Enter, Spotlight, the Dock, a link
+      # handler, an app reopening its window) still landed in front of the snap,
+      # which is the bug this script exists for. The launcher case is the
+      # special one, not the general one; see below for why it still calls this.
+      #
+      # WHAT IT DOES: if the ONLY other windows on the workspace are ones
+      # centerMaster recorded floating, put them back in the tree. After a
+      # one-window snap the two tiled windows split at AVAIL/2 each — exactly
+      # the width the float already had — so the terminal keeps its size and
+      # merely slides to one side (which side depends on where AeroSpace
+      # inserts the newcomer; measured live at 2548 floating -> 2550 tiled).
+      # After a two-window snap the three land at equal thirds, so the 25/50/25
+      # is lost and $mod+I has to be pressed again: the same "does not
+      # self-maintain" limitation the header opens with, and still far better
+      # than a full-width window sitting on top of the snap.
+      #
+      # It deliberately does NOT re-run the snap. The three-window branch would
+      # in fact reproduce the ratio exactly, and tiled rather than floating, but
+      # the one-window case cannot — re-snapping there floats the pair again and
+      # hands the very same problem to the NEXT window. A rule that only
+      # sometimes maintains the layout is worse than one that never does.
+      #
+      # SCOPED TO THE RECORDED IDS on purpose: other floats — a dialog, a Slack
+      # huddle, anything $mod+F floated by hand — must not be yanked into the
+      # tree, and with more than two windows normal tiling already did the right
+      # thing. A lone tiled window on a genuinely empty workspace still fills
+      # the monitor; that is every tiler's behaviour, and $mod+I exists for it.
+      #
+      # RACE-FREE BY CONSTRUCTION, which matters because exec-and-forget does
+      # not wait and this can therefore run before AeroSpace has put the new
+      # window in the tree. The new id is only ever SUBTRACTED from the
+      # workspace's window list, so a list that does not contain it yet gives
+      # the same answer.
+      dissolveSnap = pkgs.writeShellApplication {
+        name = "aerospace-dissolve-snap";
+        runtimeInputs = [ pkgs.aerospace ];
+        text = ''
+          STATE="$HOME/${floatState}"
+
+          # No snap recorded — the overwhelmingly common case, since this runs
+          # on every window AeroSpace detects. Nothing to undo.
+          [ -f "$STATE" ] || exit 0
+
+          # The window that just appeared, and the workspace to judge. The
+          # callback supplies both as env vars; the positional arguments are for
+          # new_window_here, which has to override them (see firefoxLib).
+          NEW="''${1:-''${AEROSPACE_WINDOW_ID:-}}"
+          WS="''${2:-''${AEROSPACE_WORKSPACE:-}}"
+
+          # Without a new window there is no "beside them" to test, and every
+          # window here would look like a float to dissolve — which would undo
+          # a snap nobody disturbed. Refuse rather than guess.
+          [ -n "$NEW" ] || exit 0
+          [ -n "$WS" ] || WS=$(aerospace list-workspaces --focused)
+
+          here=$(aerospace list-windows --workspace "$WS" --format '%{window-id}')
+          others=$(printf '%s\n' "$here" | grep -vxF "$NEW" || true)
+          nOthers=$(printf '%s\n' "$others" | grep -c . || true)
+
+          # The test is "every window here except the new one is one we
+          # floated" rather than a window count, because the state file holds
+          # one id after a one-window snap and two after a two-window snap.
+          # Anything else on the workspace means the float is not simply in the
+          # way, so leave it alone.
+          stray=$(printf '%s\n' "$others" | grep -vxF -f "$STATE" || true)
+          [ "$nOthers" -gt 0 ] || exit 0
+          [ -z "$stray" ] || exit 0
+
+          # `layout tiling` on an already-tiled window (stale state, a window
+          # closed and its id reused) is a harmless no-op.
+          while read -r floated; do
+            [ -n "$floated" ] || continue
+            aerospace layout tiling --window-id "$floated" >/dev/null 2>&1 || true
+          done < "$STATE"
+          rm -f "$STATE"
+        '';
+      };
+
       # A new Firefox WINDOW, for $mod+B — matching hyprland, where
       # `exec, firefox` gives a window rather than a tab.
       #
@@ -654,35 +753,20 @@
       # in motion for a moment after activation — and the newest id is not
       # necessarily the largest. A snapshot before and after is exact.
       #
-      # THE FLOATED-TERMINAL SEQUEL, the second half of "it opens full screen"
-      # and a real report from the field after the carry above was fixed: a
-      # window floated by $mod+I's lone-window branch is no longer a tiling
-      # sibling, so a browser arriving on that workspace is the ONLY tiled
-      # window and spans the full width — and, being focused, it raises IN
-      # FRONT of the float, so the workspace reads as "a fullscreen browser
-      # covering my terminal". Verified live on workspace 1: a Ghostty floated
-      # by $mod+I at exactly 2548 wide, and the arriving browser tiled alone at
-      # the full 5104.
-      #
-      # So after the carry, if the ONLY other window here is the one
-      # centerMaster recorded floating (the state file above), put it back in
-      # the tree. Two tiled windows split at AVAIL/2 each — exactly the width
-      # the float already had — so the terminal keeps its size, merely sliding
-      # left, and the browser takes the other half. The float hack dissolves at
-      # precisely the moment it stops being needed.
-      #
-      # Scoped to the recorded window on purpose: other floats (dialogs, a
-      # Slack huddle) must not be yanked into the tree, and with more than two
-      # windows normal tiling already did the right thing. A lone tiled browser
-      # on a genuinely empty workspace still fills the monitor — that is every
-      # tiler's behaviour, and $mod+I exists for exactly that case.
+      # THE FLOATED-TERMINAL SEQUEL is dissolveSnap's job (see there), and every
+      # window gets that treatment from the on-window-detected callback — but
+      # this launcher still has to ask for it explicitly, and the reason is the
+      # carry above. The callback fires when the window is DETECTED, which is on
+      # whatever workspace it was born on; by the time the carry has brought it
+      # back here, the callback has already run and judged the wrong workspace.
+      # So the carry ends with a call that passes the ids it actually landed on.
       firefoxLib = ''
         APP=$(/usr/bin/osascript -e \
           'POSIX path of (path to application id "org.mozilla.firefox")')
         FIREFOX="$APP/Contents/MacOS/firefox"
 
         new_window_here() {
-          local ws before new floated here others nOthers stray
+          local ws before new
           ws=$(aerospace list-workspaces --focused)
           before=$(aerospace list-windows --all --format '%{window-id}')
 
@@ -708,29 +792,11 @@
           aerospace move-node-to-workspace --window-id "$new" "$ws" >/dev/null || true
           aerospace workspace "$ws" >/dev/null || true
 
-          # Dissolve centerMaster's floats when they are the ONLY other windows
-          # here — see THE FLOATED-TERMINAL SEQUEL above. `layout tiling` on an
-          # already-tiled window (stale state) is a harmless no-op.
-          #
-          # The test is "every window here except the new one is one we floated"
-          # rather than a window count, because the state file holds one id after
-          # a one-window snap and two after a two-window snap. Anything else on
-          # the workspace means the float is not simply in the way, so leave it.
-          if [ -f "$HOME/${floatState}" ]; then
-            here=$(aerospace list-windows --workspace "$ws" --format '%{window-id}')
-            others=$(printf '%s\n' "$here" | grep -vxF "$new" || true)
-            nOthers=$(printf '%s\n' "$others" | grep -c . || true)
-            stray=$(printf '%s\n' "$others" \
-                      | grep -vxF -f "$HOME/${floatState}" || true)
-            if [ "$nOthers" -gt 0 ] && [ -z "$stray" ]; then
-              while read -r floated; do
-                [ -n "$floated" ] || continue
-                aerospace layout tiling --window-id "$floated" >/dev/null 2>&1 \
-                  || true
-              done < "$HOME/${floatState}"
-              rm -f "$HOME/${floatState}"
-            fi
-          fi
+          # Judged against the workspace the carry ended on, not the one the
+          # window was born on — see THE FLOATED-TERMINAL SEQUEL above. A no-op
+          # when the callback already dissolved the snap (the state file is
+          # gone), which is what happens when the window was born here.
+          ${lib.getExe dissolveSnap} "$new" "$ws" || true
 
           aerospace focus --window-id "$new" >/dev/null || true
         }
@@ -1085,6 +1151,38 @@
           # here because it is the surviving half of the yabai config's
           # `mouse_follows_focus on`.
           on-focused-monitor-changed = [ "move-mouse monitor-lazy-center" ];
+
+          # PUT THE SNAP'S FLOATS BACK IN THE TREE whenever a window appears
+          # beside them, whatever opened it — $mod+Enter, Spotlight, the Dock, a
+          # link handler, an app reopening a window on login. See dissolveSnap
+          # for the failure this fixes and why it cannot be a keybinding: the
+          # thing that needs to react is the window's arrival, not a keypress.
+          #
+          # IT RUNS FOR EVERY DETECTED WINDOW, and that is affordable because
+          # the script's first act is to look for the state file and exit when
+          # there is no snap to undo — which is the common case. A narrower `if`
+          # could not express the real condition anyway: it depends on what else
+          # is already on the workspace, not on the new window's app.
+          #
+          # `.*` rather than no matcher at all. nix-darwin types `if` as a
+          # submodule with default {}, so leaving it out still emits an empty
+          # `[on-window-detected.if]` table, and AeroSpace has opinions about a
+          # rule with no condition — it carries the string "Omitting 'if' is
+          # error prone. You can use `if = 'true'` to preserve the previous
+          # behavior." The new-style `if = 'true'` cannot be written through
+          # that submodule type, so this says the same thing in the legacy
+          # vocabulary the module does expose: match every app name.
+          #
+          # The callback gets AEROSPACE_WINDOW_ID and AEROSPACE_WORKSPACE, which
+          # is exactly what the script needs and is why it is invoked with no
+          # arguments. check-further-callbacks is left off since this is the only
+          # callback; it has to be set if a second one is ever appended.
+          on-window-detected = [
+            {
+              "if".app-name-regex-substring = ".*";
+              run = [ "exec-and-forget ${lib.getExe dissolveSnap}" ];
+            }
+          ];
 
           # Pin workspaces to monitors — the declarative version of what
           # hyprland.nix's monitorAttached script does imperatively (move
