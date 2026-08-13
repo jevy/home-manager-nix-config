@@ -168,7 +168,7 @@
 { ... }:
 {
   flake.modules.darwin.aerospace =
-    { lib, pkgs, ... }:
+    { config, lib, pkgs, ... }:
     let
       mod = "ctrl-alt-cmd";
       modShift = "ctrl-alt-shift-cmd";
@@ -975,5 +975,74 @@
           mode.service.binding = serviceBinds;
         };
       };
+
+      # THE DEAD-SERVER HEAL, and why activation needs one.
+      #
+      # WHAT BROKE. The plist pins the store path of the binary, so it changes
+      # on EVERY version bump, and activation then replaces the agent with
+      # `launchctl unload` + `load -w`. On the 0.21.2 → 0.21.3 bump the instance
+      # that came up was alive but had never opened its socket
+      # (/tmp/bobko.aerospace-$USER.sock): the server was dead, so `aerospace`
+      # exited "Connection refused" and — since AeroSpace owns its own
+      # keybindings — not one hotkey worked. Nothing was logged anywhere, and it
+      # presents exactly like a revoked Accessibility grant, which is the wrong
+      # tree to bark up (see below).
+      #
+      # WHAT IS VERIFIED. A clean bootout-then-bootstrap recovers it. Two
+      # tempting explanations are ruled out: a leftover socket file is NOT the
+      # blocker (AeroSpace does leave one behind on SIGTERM, but a fresh
+      # instance rebinds straight over it — tested), and Accessibility is NOT
+      # revoked by the path change (the same binary enumerates windows through
+      # the AX API once its server is up, adhoc signature notwithstanding).
+      #
+      # WHAT IS NOT KNOWN: why that particular start came up server-less. The
+      # likeliest story is a race between the outgoing and incoming instances
+      # during unload/load, but it did not reproduce on demand, so this heals
+      # the observed end state rather than a mechanism it cannot prove.
+      #
+      # HENCE PROBE-THEN-RESTART. Ask the server whether it answers and act only
+      # if it does not: an unconditional restart on every rebuild would tear
+      # down a healthy WM for nothing. bootout-then-bootstrap rather than
+      # `kickstart -k` because bootout waits for the old process to be gone
+      # before the new one starts, and that is the sequence actually observed to
+      # recover. Runs in postActivation because that is after the block that
+      # reloads user agents — probing earlier would read the state of the
+      # instance about to be killed. `asuser` + `sudo` is how nix-darwin itself
+      # reaches the user's GUI launchd domain from a root activation script.
+      system.activationScripts.postActivation.text =
+        let
+          user = config.system.primaryUser;
+          cli = "${config.services.aerospace.package}/bin/aerospace";
+          agent = "org.nixos.aerospace";
+        in
+        ''
+          echo "checking AeroSpace server..." >&2
+          aeroUid=$(id -u ${user} 2>/dev/null || true)
+          if [ -n "$aeroUid" ]; then
+            # ~5s of grace: a just-loaded agent takes a moment to bind, and
+            # treating "still starting" as "dead" would restart it for nothing.
+            aeroProbe() {
+              for _ in 1 2 3 4 5 6 7 8 9 10; do
+                launchctl asuser "$aeroUid" sudo --user=${user} -- \
+                  ${cli} list-workspaces --focused >/dev/null 2>&1 && return 0
+                sleep 0.5
+              done
+              return 1
+            }
+            if ! aeroProbe; then
+              echo "  server not answering; restarting the agent" >&2
+              launchctl asuser "$aeroUid" sudo --user=${user} -- \
+                launchctl bootout "gui/$aeroUid/${agent}" || true
+              launchctl asuser "$aeroUid" sudo --user=${user} -- \
+                launchctl bootstrap "gui/$aeroUid" \
+                ~${user}/Library/LaunchAgents/${agent}.plist || true
+              if aeroProbe; then
+                echo "  recovered" >&2
+              else
+                echo "  STILL not answering — launchctl print gui/$aeroUid/${agent}" >&2
+              fi
+            fi
+          fi
+        '';
     };
 }
