@@ -71,6 +71,22 @@
     };
     nix-systems-triplet.url = "github:nix-systems/triplet";
 
+    # qmd — on-device hybrid search (BM25 + vector) over the Obsidian vault.
+    #
+    # Deliberately NOT following our nixpkgs. Upstream's flake builds
+    # node_modules as a fixed-output derivation via `bun install`, with the
+    # hash pinned per-system in its own flake.nix. Repointing nixpkgs changes
+    # the bun version, which can change the resolved tree and break that FOD
+    # hash — a failure we cannot fix from this side without patching upstream.
+    # The cost is a second nixpkgs in the lock; the benefit is that `nix flake
+    # update qmd` just works.
+    #
+    # Replaced a hand-rolled pkgs/qmd.nix (buildNpmPackage + a generated
+    # package-lock.json, since upstream ships none). Upstream added a proper
+    # flake, so that whole workaround is gone. See modules/dev/qmd.nix for the
+    # one patch we still apply on top (Vulkan).
+    qmd.url = "github:tobi/qmd/40fb36f4adc92849ac607e8e76941eabad6e84be";
+
     # herdr — terminal workspace manager for AI coding agents. Not in nixpkgs;
     # upstream's flake exposes packages only (no home-manager module), so
     # modules/dev/herdr.nix wires it up by hand.
