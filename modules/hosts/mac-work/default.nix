@@ -183,7 +183,10 @@ in
         users.jevin =
           { ... }:
           {
-            nixpkgs.overlays = [ overlays.volsync ];
+            # mcpServers overlay: context7-mcp, mcp-server-git and
+            # mcp-server-time come from mcp-servers-nix — homeManager.mcp
+            # does not evaluate without it (same note as the devbox host).
+            nixpkgs.overlays = [ overlays.volsync overlays.mcpServers ];
             # Needed at the HM level for 1password-cli (homeManager.
             # onepasswordCli). Not inherited from the darwin-level setting
             # above: useGlobalPkgs is off, so HM instantiates its own nixpkgs.
@@ -208,7 +211,29 @@ in
               homeManager.tuicr
               homeManager.flowgraph
               homeManager.claudeCode
+              homeManager.opencodeMac
               homeManager.dockerMac
+              homeManager.llmfit
+              homeManager.llamaSwapMac
+              homeManager.piDarwin
+              homeManager.mcp
+              {
+                # Only the lightweight/local ones. playwright is out because
+                # its wrapper hard-codes pkgs.chromium as the browser
+                # executable, and chromium is Linux-only in nixpkgs
+                # (`lib.getAttrs` never forces the excluded server, so
+                # chromium stays out of the closure). context7, kubernetes,
+                # grafana, n8n, truenas and homeassistant are out by
+                # preference — not wanted on this machine. brave-search's key
+                # is in the shared secrets.yaml and decrypts here via
+                # homeManager.sops.
+                local.mcp.only = [
+                  "git"
+                  "time"
+                  "brave-search"
+                  "linear"
+                ];
+              }
 
               # Desktop (Mac-specific)
               homeManager.desktopMac

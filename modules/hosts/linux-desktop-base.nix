@@ -72,6 +72,7 @@ in
             homeManager.yazi
             homeManager.cliBase
             homeManager.cliLinux
+            homeManager.llmfit
             homeManager.audio
             homeManager.nixvim
             homeManager.mcp
