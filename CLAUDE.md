@@ -160,7 +160,7 @@ All under `modules/`. Each file can define `flake.modules.nixos.*`, `flake.modul
 |----------|-------------|
 | `apps/` | User apps: mutt, spicetify, ncspot, 1Password, timetagger |
 | `base/` | Foundational: nix settings, user account, fonts |
-| `desktop/` | Hyprland, audio (PipeWire), stylix theming, ashell bar, mako, steam |
+| `desktop/` | Hyprland, audio (PipeWire), stylix theming, ashell bar, mako, steam; on mac-work the tiling WM — `aerospace.nix` and `yabai.nix`, selected by `windowManager` in the mac-work host. Read the chosen one's header before touching it: both record measured behaviour that contradicts the upstream docs. |
 | `dev/` | Dev tools: git, git-spice, hunk, nixvim, claude-code, opencode, pi, mcp servers, qmd, flowgraph |
 | `hardware/` | Hardware-specific: lenovo-p14s quirks |
 | `hosts/` | Host definitions + base layers (composition entry points) |
