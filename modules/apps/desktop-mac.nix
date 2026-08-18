@@ -20,81 +20,28 @@
         # LaunchServices refuses to index — see the mac-work host header.
       ];
 
-      home.file.yabai = {
-        executable = true;
-        target = ".config/yabai/yabairc";
-        text = ''
-          #!/usr/bin/env sh
-
-          # load scripting addition
-          sudo yabai --load-sa
-          # yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"
-
-          yabai -m config layout bsp
-          yabai -m config mouse_follows_focus          off
-          yabai -m config focus_follows_mouse          off
-          yabai -m config window_origin_display        default
-          yabai -m config window_placement             second_child
-          yabai -m config window_topmost               off
-          yabai -m config window_shadow                on
-          yabai -m config window_opacity               off
-          yabai -m config window_opacity_duration      0.0
-          yabai -m config active_window_opacity        1.0
-          yabai -m config normal_window_opacity        0.90
-          yabai -m config window_border                off
-          yabai -m config window_border_width          6
-          yabai -m config active_window_border_color   0xff775759
-          yabai -m config normal_window_border_color   0xff555555
-          yabai -m config insert_feedback_color        0xffd75f5f
-          yabai -m config split_ratio                  0.50
-          yabai -m config auto_balance                 off
-          yabai -m config mouse_modifier               fn
-          yabai -m config mouse_action1                move
-          yabai -m config mouse_action2                resize
-          yabai -m config mouse_drop_action            swap
-
-          yabai -m config top_padding    0
-          yabai -m config bottom_padding 0
-          yabai -m config left_padding   0
-          yabai -m config right_padding  0
-          yabai -m config window_gap     0
-
-          # rules
-          yabai -m rule --add app="^System Preferences$" manage=off
-
-          echo "yabai configuration loaded.."
-        '';
-      };
-
-      home.file.skhd = {
-        target = ".config/skhd/skhdrc";
-        text = ''
-
-          -----
-
-          cmd + alt + ctrl - h : yabai -m window --focus west
-          cmd + alt + ctrl - l : yabai -m window --focus east
-          cmd + alt + ctrl - k : yabai -m window --focus north
-          cmd + alt + ctrl - j : yabai -m window --focus south
-
-          hyper - h : yabai -m window --warp west
-          hyper - l : yabai -m window --warp east
-          hyper - k : yabai -m window --warp north
-          hyper - j : yabai -m window --warp south
-
-          cmd + alt + ctrl - i : yabai -m display --focus 1 # Top monitor
-          hyper - i            : yabai -m window --display 1; yabai -m display --focus 1
-          cmd + alt + ctrl - o : yabai -m display --focus 2 # Side monitor
-          hyper - o            : yabai -m window --display 2; yabai -m display --focus 2
-          cmd + alt + ctrl - u : yabai -m display --focus 3 # Bottom monitor
-          hyper - u            : yabai -m window --display 3; yabai -m display --focus 3
-
-          alt - e : yabai -m window --toggle split
-
-          cmd + alt + ctrl - t : yabai -m window --toggle float;\
-                                 yabai -m window --grid 4:4:1:1:2:2
-        '';
-      };
+      # THE DORMANT yabairc AND skhdrc THAT USED TO LIVE HERE ARE GONE, and
+      # they were not harmless. They wrote ~/.config/yabai/yabairc and
+      # ~/.config/skhd/skhdrc — the DEFAULT paths both tools read when started
+      # without -c — while carrying the retired keymap:
+      #
+      #   cmd + alt + ctrl - i : yabai -m display --focus 1
+      #   cmd + alt + ctrl - h/j/k/l : yabai -m window --focus west/east/north/south
+      #
+      # modules/desktop/yabai.nix now owns both files through services.yabai and
+      # services.skhd, which pass explicit -c paths into the Nix store. So these
+      # were shadowed rather than active — but they are exactly the bindings you
+      # would blame for "$mod+I focuses a display instead of centring the
+      # layout", and they sat one missing -c flag away from being live. That is
+      # too sharp an edge to leave lying in a dormant module.
+      #
+      # The yabairc also began with `sudo yabai --load-sa`, which is the
+      # scripting-addition load that requires SIP to be partially disabled.
+      # modules/desktop/yabai.nix deliberately does not use the scripting
+      # addition; see its header for the audit of what actually needs SIP off.
+      #
+      # The keymap itself is not lost: yabai.nix ports it, and its header records
+      # which bindings could not be carried over and why.
 
       home.file.hammerspoon = {
         executable = false;
