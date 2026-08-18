@@ -16,6 +16,25 @@
 let
   inherit (config.flake.modules) darwin homeManager;
   inherit (config.flake) overlays;
+
+  # WHICH TILING WINDOW MANAGER IS ACTIVE. Exactly one, ever — two window
+  # managers both claiming Accessibility will fight over every window, so this
+  # is a selector rather than two independent toggles.
+  #
+  # "aerospace" is the incumbent: workspaces without touching Mission Control,
+  # no SIP question, and its own hotkeys. Its limit is that it cannot tile an
+  # empty slot, so the 25/50/25 centred-master layout only works with three
+  # windows (modules/desktop/aerospace.nix).
+  #
+  # "yabai" is the alternative, and the reason is that one limit: with SIP still
+  # fully enabled, `space --padding` plus `window --ratio` express the same
+  # layout for one and two windows too, tiled, with nothing floating. It costs
+  # native macOS Spaces you must create by hand, a second daemon for keys
+  # (skhd), an Accessibility grant that has to be renewed on every version bump,
+  # and "Displays have separate Spaces" turned on (which yabai refuses to start
+  # without). VERIFIED live on macOS 26.6 with SIP enabled — the measurements are
+  # in modules/desktop/yabai.nix's header.
+  windowManager = "yabai";
 in
 {
   configurations.darwin.mac-work.module =
@@ -32,7 +51,9 @@ in
         # homeManager.rectangle, which could only place the focused window,
         # and darwin.macSpaces, whose native Ctrl+1..6 Space switching
         # AeroSpace's own workspaces supersede.
-        darwin.aerospace
+        #
+        # Selected by `windowManager` above — never both at once.
+        darwin.${windowManager}
 
         # Key-event viewers, for aiming AeroSpace bindings at a custom
         # keyboard layout. Diagnostic only — nothing starts at login.
