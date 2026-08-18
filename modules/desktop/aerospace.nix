@@ -10,78 +10,90 @@
 # itself, so both of those modules are gone; only AltTab remains, and for a
 # different job (see modules/desktop/alt-tab.nix).
 #
-# WHY NOT YABAI. The retired yabai/skhd config is still in
+# WHY AEROSPACE NEEDS NO SIP CHANGES: it does not drive Mission Control at all.
+# It emulates workspaces by parking windows off-screen instead, so it needs only
+# Accessibility. See AEROSPACE WORKSPACES ARE NOT macOS SPACES below for the
+# consequences of that design.
+#
+# THE FLOAT-BASED SNAP THAT USED TO LIVE HERE IS GONE. It floated windows and
+# set their frames through the Accessibility API to build a 25/50/25 for one and
+# two window counts, because AeroSpace cannot tile an empty slot. It crashed
+# AeroSpace outright, and reliably:
+#
+#   AppBundle.MacWindow is already unbound
+#     FocusCommand.run -> makeFloatingWindowsSeenAsTiling -> unbindFromParent
+#     refreshSessionEvent: socketServer: focus --window-id <id>
+#
+# That is upstream https://github.com/nikitabobko/AeroSpace/issues/1311,
+# "Crash 'AppBundle.MacWindow is already unbound'. `focus` command over floating
+# windows" — filed 2025-04-16, labelled bug/regression/crash, STILL OPEN as of
+# 2026-08. The snap ended with `aerospace focus --window-id "$CENTRE"` on a
+# window it had just floated, which is exactly the reported trigger. Observed
+# here: /private/tmp/bobko.aerospace/aerospace-runtime-error.txt with die: true,
+# the launchd agent at runs = 4, and every window re-tiled to equal columns
+# because the tree was rebuilt from scratch.
+#
+# The float approach was ALSO wrong independently of the crash. A floated window
+# is not a tiling sibling, so the next window to appear tiles alone at full
+# width IN FRONT of it — the layout vanishes behind a window that thinks it is
+# the only one. A companion script (dissolveSnap) put the floats back in the
+# tree from the on-window-detected callback, but it could only fire when the
+# floats were the ONLY other windows on the workspace; with anything else open
+# it correctly refused, and the layout got buried. So the mechanism could not be
+# made correct, only narrowed.
+#
+# DO NOT REINTRODUCE FLOATS TO GET AN EMPTY SLOT. Two tiled columns always
+# divide their whole container, and AeroSpace has no placeholder node, so
+# "quarter, centred half, empty quarter" is not expressible in its tiling model.
+# The three-window branch below survives because it uses `resize` on tiled
+# windows and never floats anything.
+#
+# YABAI IS THE STANDING ALTERNATIVE, and the reason is exactly the primitive
+# above. The retired yabai/skhd config is still in
 # modules/apps/desktop-mac.nix (dormant, packages commented out). Its skhdrc
 # carries the note that killed it:
 #
 #   # Turned off in favor for Hammerspoon as it doesn't need disabling of
 #   # MacOS security
 #
-# yabai's tiling needs its scripting addition, which needs SIP partially
-# disabled; the fallback was Hammerspoon's hs.spaces, which switches Spaces but
-# cannot tile. AeroSpace resolves that trade-off rather than picking a side: it
-# needs no SIP changes at all, because it does not drive Mission Control. It
-# emulates workspaces by moving windows off-screen instead.
+# THAT NOTE IS WRONG FOR MODERN YABAI. Verified against yabai's own man page
+# (doc/yabai.asciidoc), which carries the sentence "System Integrity Protection
+# must be partially disabled" on individual commands rather than globally. With
+# SIP FULLY ENABLED yabai gives tiling, `window --ratio abs:<r>` (real tiled
+# split ratios), `space --padding` (which is how an empty slot is expressed
+# without floating anything), `space --balance/--mirror/--rotate/--layout`,
+# `window --grid/--warp/--swap`, `space --focus` (since 7.1.19, 2026-04-18) and
+# `window --space` (since 7.1.25, 2026-05-08). What still needs SIP partially
+# disabled: opacity/shadow/animation, `window --raise/--lower/--sub-layer`,
+# `--toggle sticky|pip`, scratchpads, and space create/destroy/move/swap/display.
+# None of that is load-bearing here.
 #
-# FUTURE WORK, if centerMaster's hackiness ever stops being worth it. Two
-# separate complaints hide inside "this feels hacky", and only one of them is
-# essential:
+# nix-darwin has services.yabai (config / extraConfig / package /
+# enableScriptingAddition, which defaults to false), so it would be as
+# declarative as this file. The costs are real and should be priced before any
+# move: workspaces become native macOS Spaces, created by hand, with no
+# persistent-workspaces equivalent; keybindings move to skhd; and z-order
+# control is on the far side of the SIP line.
 #
-#   * THE SCRIPT EXISTING AT ALL is AeroSpace's doing. No master layout, no
-#     declarative split ratio, and node weights reachable only through the
-#     `resize` command — so a 25/50/25 has to be applied imperatively to the
-#     windows that happen to be open. That is also why nothing self-maintains
-#     and mod+I has to be pressed again after every open or close.
-#   * THE FLOAT + ACCESSIBILITY DETOUR for a lone window is NOT AeroSpace being
-#     deficient; a lone window fills its container in essentially every tiler.
-#     "One window should be half width" is smart-gaps territory, not tiling.
-#     Note it is not even Hyprland parity: master with orientation = center and
-#     mfact = 0.45 also gives a single window the whole screen unless
-#     always_center_master is added.
+# The risks, recorded so they are not rediscovered: yabai is one maintainer (the
+# GitHub account renamed koekeishiya -> asmvik, same person) who publicly asked
+# in Oct 2025 whether anyone still used the project, then shipped nine releases
+# between Jan and May 2026 — including a deliberate run at making things work
+# with SIP enabled. Tahoe support is self-described as "preliminary" (7.1.16).
+# macOS 27 lands late 2026 and every macOS major has historically broken
+# something. Against that, AeroSpace is pushed to more often but has left the
+# crash above open for sixteen months.
 #
-# The candidates, ranked by what they would actually buy:
+# AMETHYST was the other candidate and is still a bad trade: a real three-column
+# layout with a main-pane ratio that self-maintains, needing only Accessibility,
+# but no workspace model to replace AeroSpace's and a plist rather than anything
+# Nix-shaped. Trading workspaces for a ratio is not worth it.
 #
-#   1. YABAI has the one clean primitive for the single-window case: per-space
-#      padding, settable at runtime (`yabai -m space --padding abs:...`), so a
-#      lone window narrows with no floating and no Accessibility API at all.
-#      Its signals (window_created / window_destroyed) are NO LONGER a
-#      differentiator: 0.21.3 has the on-window-detected config callback (used
-#      below to dissolve the snap's floats) and an `aerospace subscribe` event
-#      stream carrying window-detected / focus-changed / workspace-changed. So
-#      only the padding primitive is left in yabai's column, and it buys one
-#      branch of one script.
-#
-#      BEFORE ACTING ON THIS, VERIFY THE PREMISE ABOVE — it is probably stale.
-#      The claim that yabai's *tiling* needs the scripting addition looks wrong
-#      for modern yabai, where the addition is believed to be required mainly
-#      for space create/destroy, cross-display moves, opacity/borders and
-#      similar extras, with plain tiling and padding working without it. That is
-#      UNVERIFIED as of this writing and is the single highest-value thing to
-#      check, since the whole choice of WM rests on it.
-#   2. AMETHYST fixes the self-maintenance properly: a real three-column layout
-#      with a main-pane ratio, kept as windows come and go, needing only
-#      Accessibility and no SIP changes. But it has the same lone-window
-#      behaviour, no workspace model to replace AeroSpace's, and a plist rather
-#      than anything Nix-shaped. Trading workspaces for a ratio is a bad deal.
-#   3. PER-MONITOR OUTER GAPS, which AeroSpace supports declaratively, e.g.
-#      gaps.outer.left = [{ monitor.dell = 1274 }, 8]. Zero script and zero
-#      Accessibility, and a lone window is natively centred at the master
-#      width — but it caps the ENTIRE tiling area at that width, so the
-#      three-column case dies. Only sensible if the ultrawide's outer thirds
-#      turn out to be wasted space anyway.
-#
-# RECOMMENDATION: stay on AeroSpace. It does the four things that matter daily
-# — workspaces, directional focus, moves, monitors — and each replacement costs
-# one of them. The single-window branch is contained: ~25 lines, idempotent, and
-# it fails loudly rather than silently.
-#
-# A HAMMERSPOON EXECUTOR was the fallback here, for the case where AeroSpace's
-# Accessibility grant did not reach the scripts it spawns — it is a stable app
-# path, so its grant would survive rebuilds where a Nix-built helper's would
-# not, and it would narrow the blast radius from "any script can drive any app"
-# to one app this config controls. It proved unnecessary: the grant does carry,
-# and nothing had to be granted by hand (see the ACCESSIBILITY note on
-# centerMaster). Revisit only if that stops being true.
+# PER-MONITOR OUTER GAPS deserve a mention because AeroSpace supports them
+# declaratively, e.g. gaps.outer.left = [{ monitor.dell = 1274 }, 8]. Zero
+# script, no Accessibility, and a lone window is natively centred at the master
+# width — but it caps the ENTIRE tiling area at that width, so the three-column
+# case dies. Only sensible if the ultrawide's outer thirds are wasted anyway.
 #
 # AEROSPACE WORKSPACES ARE NOT macOS SPACES. This is the consequence of that
 # design and the thing most likely to surprise. An AeroSpace workspace is a set
@@ -177,14 +189,6 @@
       mod = "ctrl-alt-cmd";
       modShift = "ctrl-alt-shift-cmd";
 
-      # Where centerMaster records the windows it floated, so the browser
-      # launchers below can put them back in the tree when a new window arrives
-      # beside them (see new_window_here). One id per line: the one-window
-      # branch writes one, the two-window branch writes both. Only ever the
-      # current workspace's snap — it is only ever live on one workspace in
-      # practice, and a stale id degrades to a no-op, not a wrong action.
-      floatState = ".cache/aerospace/center-master-float";
-
       # Gap sizes, matching gaps_in / gaps_out in hyprland.nix. Declared here
       # rather than inline in settings.gaps because centerMaster below has to do
       # arithmetic with them — the available width for windows is the monitor
@@ -212,93 +216,34 @@
       # key has to be pressed again. There is no config option that changes
       # this.
       #
-      # WINDOW COUNTS. The centre column is AVAIL/2, so what this key has to do
-      # depends on how many windows are tiled:
+      # WINDOW COUNTS. This key needs THREE tiled windows, and only three:
       #
-      #   3  the original case: shrink the centre to AVAIL/2, sides fall out
-      #      equal at AVAIL/4 each (see the resize note below)
-      #   2  the three-window layout with the right slot left EMPTY: AVAIL/4 on
-      #      the left, AVAIL/2 centred, nothing on the right. Tiling cannot do
-      #      this — two tiled columns always divide the whole container between
-      #      them, and there is no placeholder to hold the empty quarter — so
-      #      this branch floats BOTH windows and sets their frames, the same
-      #      mechanism the one-window case needs and for the same reason.
-      #      (It used to be a no-op: two equal columns are already AVAIL/2 each,
-      #      which is the centre width, so balance-sizes alone was the job. That
-      #      is still true, and still not the layout that was wanted.)
-      #   1  a lone window fills the monitor, and no AeroSpace command can
-      #      narrow it — see below
+      #   3  the case this exists for: shrink the centre to AVAIL/2, and the
+      #      sides fall out equal at AVAIL/4 each (see the resize note below)
+      #   2  two tiled columns are already AVAIL/2 each — which IS the centre
+      #      width — so balance-sizes alone is the whole job. The right slot
+      #      cannot be left empty: tiling divides the entire container, and
+      #      AeroSpace has no placeholder node. See the header on why the float
+      #      hack that used to fake this is gone and must not come back.
+      #   1  a lone window fills the monitor. `resize width N` EXITS 2 AND DOES
+      #      NOTHING, silently, with no error message at all — resize spreads
+      #      its delta across siblings and a lone window has none, so there is
+      #      nothing to take the space. Measured on 0.21.2-Beta. There is no
+      #      tiling route to a narrow single window, and the non-tiling route
+      #      crashed AeroSpace (see the header).
       #
-      # THE ONE-WINDOW CASE needs a different mechanism, and this is the part
-      # worth reading before changing anything here. Three things were measured
-      # on 0.21.2-Beta against a live lone window on the 5120 ultrawide:
+      # NOTHING HERE WRITES WINDOW GEOMETRY ANY MORE. The only osascript calls
+      # left are `display notification` and the read-only NSScreen width lookup
+      # below, neither of which is Accessibility-gated, so this script needs no
+      # TCC grant of its own.
       #
-      #   1. `resize width N` EXITS 2 AND DOES NOTHING, silently, with no error
-      #      message at all. resize spreads its delta across siblings, and a
-      #      lone window has none, so there is nothing to take the space. This
-      #      is not a bug to work around; there is no tiling route to a narrow
-      #      single window.
-      #   2. Setting the frame through the Accessibility API while the window is
-      #      still TILED is reverted synchronously — a read taken immediately
-      #      after the write, with no sleep, already shows the full 5104 back.
-      #      AeroSpace reconciles tiled frames, so this is not a race that a
-      #      delay or a retry could win.
-      #   3. Setting the frame on a FLOATING window sticks, exactly, and
-      #      survives focus and monitor changes. AeroSpace does not manage
-      #      floating geometry (`resize` says so outright: "resize command
-      #      doesn't support floating windows yet", upstream issue #9), and that
-      #      hands-off behaviour is what makes this work.
-      #
-      # So the single-window path floats the window and sets its frame itself.
-      # The order matters: it tiles the window FIRST and reads the rect while it
-      # is still full-width, because that rect is the measurement. A press with
-      # the window already floating would otherwise read the narrowed frame and
-      # halve it again on every press.
-      #
-      # That read also removes the NSScreen lookup from this path entirely. The
-      # tiled rect already has the outer gaps applied by AeroSpace, so its width
-      # is AVAIL + 2*INNER and the target is (W - 2*INNER)/2 — the same number
-      # the three-window branch computes from the monitor, but derived from the
-      # window, so it is correct on any monitor with no index arithmetic.
-      # Verified live: 5104 wide at x=8 gives 2548 at x=1286, matching the 2548
-      # the three-window snap produces, and repeated presses are idempotent.
-      #
-      # THE COST is that the window is now floating: it no longer tiles, so a
-      # second window opens at full width in front of it. mod+F (layout
-      # floating tiling) puts it back, and two tiled windows are AVAIL/2 each
-      # anyway, so the recovery is one key. The notify below says so when it
-      # sees floating windows rather than reporting a misleading tiled count.
-      # That cost is also paid automatically: both float branches record their
-      # window ids in floatState, and dissolveSnap below puts them back in the
-      # tree when any new window arrives beside them, driven by the
-      # on-window-detected callback in settings.
-      #
-      # ACCESSIBILITY, and it needs NO grant of its own — verified live, by
-      # pressing the key and finding the window at exactly 2548 wide and x=1286.
-      # Only the AX write produces that geometry, so the write succeeded from a
-      # script AeroSpace spawned with exec-and-forget.
-      #
-      # THE MECHANISM IS THE RESPONSIBLE PROCESS, not the executable, and the
-      # difference matters if this ever appears to break. osascript has no grant
-      # of its own: the identical AX read run from launchd fails with "osascript
-      # is not allowed assistive access. (-1719)", while from a terminal it
-      # succeeds, because TCC attributes a child's request to the responsible
-      # ancestor rather than to the binary making it. AeroSpace holds
-      # Accessibility already — it cannot manage windows without it — so
-      # everything it spawns inherits the grant.
-      #
-      # This narrows the per-executable claim made elsewhere in this file (see
-      # the workContainer notes, where a broad grant for /usr/bin/osascript is
-      # described as necessary). For GEOMETRY the grant carries and nothing had
-      # to be granted by hand. If a UI-driving script genuinely still fails
-      # under AeroSpace, the difference is not "TCC is per-executable"; look for
-      # another cause.
-      #
-      # It is still osascript rather than a compiled helper, and deliberately:
-      # TCC keys a grant to a path, and every rebuild gives a Nix-built binary a
-      # NEW store path, which would silently drop the grant on each rebuild.
-      # /usr/bin/osascript is Apple-signed at a stable path, so a grant given
-      # once survives. Read-only geometry is all this needs; it drives no menus.
+      # Worth keeping from the era that did: TCC ATTRIBUTES A REQUEST TO THE
+      # RESPONSIBLE PROCESS, not to the executable. The same AX read fails from
+      # launchd with "osascript is not allowed assistive access. (-1719)" and
+      # succeeds when spawned by AeroSpace, which already holds Accessibility.
+      # So a script AeroSpace launches with exec-and-forget inherits the grant,
+      # and a per-executable grant for /usr/bin/osascript is not the fix if
+      # something here ever appears to be permission-blocked.
       #
       # HOW IT ORDERS THE WINDOWS. By walking AeroSpace's own tree, not by
       # reading geometry. `focus --boundaries workspace --boundaries-action fail`
@@ -345,6 +290,18 @@
 
           focused_id() { aerospace list-windows --focused --format '%{window-id}'; }
 
+          # RESIDUAL EXPOSURE TO UPSTREAM #1311, stated because it is not zero.
+          # The crash lives in makeFloatingWindowsSeenAsTiling, which AeroSpace
+          # runs from FocusCommand whenever the workspace holds ANY floating
+          # window — so every `focus` below, including the walk and the final
+          # one, is exposed while a float is present. --ignore-floating changes
+          # which window is chosen, not whether that routine runs.
+          #
+          # What removing the snap's floats bought is that this config no longer
+          # MANUFACTURES the trigger on a keypress. A window floated by hand with
+          # mod+F still leaves a window of risk, and there is no way to close it
+          # from here: AeroSpace offers no focus that skips the reconciliation.
+
           # One step left or right, non-zero at the workspace edge so the walks
           # below terminate. --ignore-floating keeps floating windows out.
           step() {
@@ -352,174 +309,12 @@
               --boundaries workspace --boundaries-action fail "$1" >/dev/null 2>&1
           }
 
-          # Frame of the focused window, for the one-window case only. window 1
-          # of the frontmost process IS the focused window: AX orders an app's
-          # windows front to back. Both halves are one osascript call so the
-          # size/position/size ordering cannot be split up — setting size first
-          # keeps a shrink from being clipped at the screen edge, and setting it
-          # again after the move is the belt-and-braces AX convention.
-          ax_rect() {
-            /usr/bin/osascript -e 'tell application "System Events" to tell (first process whose frontmost is true) to get {position, size} of window 1'
-          }
-          ax_set() {
-            /usr/bin/osascript -e "tell application \"System Events\" to tell (first process whose frontmost is true)
-                set size of window 1 to {$3, $4}
-                set position of window 1 to {$1, $2}
-                set size of window 1 to {$3, $4}
-              end tell"
-          }
-
           # Window count INCLUDING floating ones. The walk below counts only
-          # tiled windows, which is the wrong basis for the one-window test:
-          # with one tiled and one floating window the walk also says 1, and
-          # floating the tiled one on top of it is not what this key means.
+          # tiled windows, so this is what lets the failure message name a
+          # float that is in the way instead of reporting a bare tiled count.
           WS=$(aerospace list-workspaces --focused)
           TOTAL=$(aerospace list-windows --workspace "$WS" \
                     --format '%{window-id}' | grep -c . || true)
-
-          # --- ONE WINDOW: float it and centre it at the master width -------
-          # See the header for why this cannot be done with resize, and why the
-          # rect has to be read while the window is still tiled.
-          if [ "$TOTAL" -eq 1 ]; then
-            WIN=$(focused_id)
-            aerospace layout tiling >/dev/null 2>&1 || true
-
-            RECT=$(ax_rect 2>/dev/null | tr -d ',' || true)
-            X=$(printf '%s\n' "$RECT" | awk '{print $1}')
-            Y=$(printf '%s\n' "$RECT" | awk '{print $2}')
-            W=$(printf '%s\n' "$RECT" | awk '{print $3}')
-            H=$(printf '%s\n' "$RECT" | awk '{print $4}')
-
-            if [ -z "$W" ] || [ "$W" -le 0 ]; then
-              notify "Centred master" \
-                "No window frame — grant Accessibility to /usr/bin/osascript"
-              exit 1
-            fi
-
-            # W is the full tiled width, so it already has the outer gaps
-            # applied: W = AVAIL + 2*INNER, and the target is the centre column
-            # AVAIL/2. No monitor lookup, so this is right on any display.
-            TARGET=$(( (W - 2 * INNER) / 2 ))
-            NEWX=$(( X + (W - TARGET) / 2 ))
-
-            aerospace layout floating
-            if ! ax_set "$NEWX" "$Y" "$TARGET" "$H" >/dev/null 2>&1; then
-              notify "Centred master" \
-                "Could not set the window frame (Accessibility?)"
-              exit 1
-            fi
-
-            # Remember which window is floating so a browser landing on this
-            # workspace can dissolve the float instead of tiling alone at
-            # full width in front of it (see new_window_here in firefoxLib).
-            mkdir -p "$(dirname "$HOME/${floatState}")"
-            printf '%s\n' "$WIN" > "$HOME/${floatState}"
-            exit 0
-          fi
-
-          # --- TWO WINDOWS: AVAIL/4 left, AVAIL/2 centred, right slot empty ---
-          # Keyed off TOTAL rather than the tiled walk below, for the same reason
-          # the one-window branch is: the walk ignores floating windows, so after
-          # a press both of these windows are invisible to it and a second press
-          # would report strays instead of re-snapping.
-          if [ "$TOTAL" -eq 2 ]; then
-            ids=$(aerospace list-windows --workspace "$WS" --format '%{window-id}')
-            a=$(printf '%s\n' "$ids" | sed -n 1p | tr -d '[:space:]')
-            b=$(printf '%s\n' "$ids" | sed -n 2p | tr -d '[:space:]')
-
-            # Re-tile BEFORE measuring, so the numbers below always come from
-            # tiled columns. This is what makes repeated presses idempotent
-            # instead of quartering an already-narrowed frame — the same
-            # ordering, and the same reason, as the one-window branch.
-            aerospace layout tiling --window-id "$a" >/dev/null 2>&1 || true
-            aerospace layout tiling --window-id "$b" >/dev/null 2>&1 || true
-            aerospace layout --root h_tiles >/dev/null 2>&1 || true
-            aerospace balance-sizes
-
-            # Order the pair by measured x rather than by walking the tree: this
-            # branch has to read both frames anyway for their y/height, so the
-            # read doubles as the sort and no second mechanism is needed.
-            rect_of() {
-              aerospace focus --window-id "$1" >/dev/null 2>&1 || true
-              ax_rect 2>/dev/null | tr -d ',' || true
-            }
-            RA=$(rect_of "$a")
-            RB=$(rect_of "$b")
-            XA=$(printf '%s\n' "$RA" | awk '{print $1}')
-            YA=$(printf '%s\n' "$RA" | awk '{print $2}')
-            WA=$(printf '%s\n' "$RA" | awk '{print $3}')
-            HA=$(printf '%s\n' "$RA" | awk '{print $4}')
-            XB=$(printf '%s\n' "$RB" | awk '{print $1}')
-            YB=$(printf '%s\n' "$RB" | awk '{print $2}')
-            WB=$(printf '%s\n' "$RB" | awk '{print $3}')
-            HB=$(printf '%s\n' "$RB" | awk '{print $4}')
-
-            if [ -z "$WA" ] || [ -z "$WB" ] || [ "$WA" -le 0 ] || [ "$WB" -le 0 ]
-            then
-              notify "Centred master" \
-                "No window frame — grant Accessibility to /usr/bin/osascript"
-              exit 1
-            fi
-
-            if [ "$XA" -le "$XB" ]; then
-              LEFT=$a
-              CENTRE=$b
-              LX=$XA
-              LY=$YA
-              LH=$HA
-            else
-              LEFT=$b
-              CENTRE=$a
-              LX=$XB
-              LY=$YB
-              LH=$HB
-            fi
-
-            # The leftmost window KEEPS the left slot and the other becomes the
-            # centre, so nothing swaps sides under the press. Read as "the
-            # three-window layout minus its right window": left stays a side
-            # column, its neighbour takes the centre.
-            #
-            # Both columns tiled span the container, so C is their two widths
-            # plus the one inner gap between them, and AVAIL = C - 2*INNER —
-            # the same AVAIL the three-window branch gets from NSScreen, but
-            # measured, so it is right on any monitor. On the 5120 ultrawide:
-            # 2550 + 2550 + 4 = 5104, AVAIL 5096, so 1274 at x=8 and 2548 at
-            # x=1286 — the same centre the other two branches produce.
-            C=$((WA + WB + INNER))
-            AVAIL=$((C - 2 * INNER))
-            CENTRE_W=$((AVAIL / 2))
-            SIDE_W=$((AVAIL / 4))
-            CENTRE_X=$((LX + (C - CENTRE_W) / 2))
-
-            # Both windows take the column's y/height, so they stay aligned
-            # rather than inheriting whatever each had while tiling reflowed.
-            aerospace focus --window-id "$LEFT" >/dev/null 2>&1 || true
-            aerospace layout floating >/dev/null 2>&1 || true
-            if ! ax_set "$LX" "$LY" "$SIDE_W" "$LH" >/dev/null 2>&1; then
-              notify "Centred master" \
-                "Could not set the left window frame (Accessibility?)"
-              exit 1
-            fi
-
-            # Floating the left one leaves the centre briefly tiled and
-            # full-width; its frame is set explicitly here, so that is invisible.
-            aerospace focus --window-id "$CENTRE" >/dev/null 2>&1 || true
-            aerospace layout floating >/dev/null 2>&1 || true
-            if ! ax_set "$CENTRE_X" "$LY" "$CENTRE_W" "$LH" >/dev/null 2>&1; then
-              notify "Centred master" \
-                "Could not set the centre window frame (Accessibility?)"
-              exit 1
-            fi
-
-            # BOTH ids, so a browser landing here dissolves both floats rather
-            # than tiling full-width in front of them (see new_window_here).
-            mkdir -p "$(dirname "$HOME/${floatState}")"
-            printf '%s\n%s\n' "$LEFT" "$CENTRE" > "$HOME/${floatState}"
-
-            aerospace focus --window-id "$CENTRE" >/dev/null 2>&1 || true
-            exit 0
-          fi
 
           # Columns, not rows, whatever the workspace was in before. Do this
           # before the walk so left/right mean what they look like.
@@ -543,27 +338,24 @@
             i=$((i + 1))
           done
 
-          # --- TWO TILED, PLUS A FLOAT: leave the pair balanced --------------
-          # The two-window snap proper is handled by the TOTAL branch above, so
-          # reaching here means a third window is floating — something floated
-          # by hand, or a picker. Balancing the pair (done above) is the honest
-          # response: quartering them would put the empty slot under a float
-          # that is deliberately sitting there.
+          # --- TWO TILED: balance-sizes above already did the whole job ------
+          # Two tiled columns each get AVAIL/2, which is exactly the centre
+          # width, so there is nothing left to resize. Silent rather than a
+          # notify: this is a success, not a refusal.
           if [ "$count" -eq 2 ]; then
             exit 0
           fi
 
           if [ "$count" -ne 3 ]; then
-            # Name the actual obstacle. The usual way to land here is the sequel
-            # to the one-window case above: its window is still floating, so a
-            # second window tiled alone underneath it and the tiled count reads
-            # 1 while the workspace plainly holds two.
+            # Name the actual obstacle. A float that someone put there by hand
+            # with mod+F is the usual reason the tiled count is lower than the
+            # workspace looks.
             stray=$((TOTAL - count))
             if [ "$stray" -gt 0 ]; then
               notify "Centred master" \
                 "$stray floating window(s) in the way — mod+F un-floats"
             else
-              notify "Centred master" "Needs 1, 2 or 3 tiled windows (found $count)"
+              notify "Centred master" "Needs 2 or 3 tiled windows (found $count)"
             fi
             exit 0
           fi
@@ -571,9 +363,8 @@
           center=$(printf '%s\n' "$ordered" | sed -n 2p | tr -d '[:space:]')
 
           # Width of the focused monitor, via its NSScreen index (1-based).
-          # Only the three-window branch needs this — the one-window branch
-          # derives its width from the window itself — so it is read here rather
-          # than up front, where an unreadable NSScreen would fail both.
+          # Read here rather than up front because only this branch needs it, so
+          # an unreadable NSScreen cannot fail a press that would have worked.
           idx=$(aerospace list-monitors --focused \
                   --format '%{monitor-appkit-nsscreen-screens-id}')
           # Returns 0 rather than an empty string on a bad index. An empty
@@ -610,100 +401,6 @@
           aerospace resize --window-id "$center" width $((AVAIL / 2))
 
           aerospace focus --window-id "$center"
-        '';
-      };
-
-      # DISSOLVE THE SNAP'S FLOATS when a new window lands beside them. This is
-      # the other half of the float hack above — the undo that keeps it from
-      # outliving its usefulness — and it is a script of its own so that the
-      # on-window-detected callback in settings can run it for EVERY window
-      # AeroSpace detects, whatever opened it.
-      #
-      # THE FAILURE IT FIXES. A window floated by centerMaster is not a tiling
-      # sibling, so the next window to appear on that workspace is the ONLY
-      # tiled one and spans the full width — and, being focused, it raises IN
-      # FRONT of the floats, so the workspace reads as "one fullscreen window
-      # covering my layout". Measured live on workspace 1 with the two-window
-      # snap in place (Firefox at 1274 and Ghostty at 2548, both floating): a
-      # new Ghostty tiled alone at x=8 w=5104, on top of both.
-      #
-      # WHY IT IS NOT INSIDE new_window_here ANY MORE. It was, and that fixed
-      # exactly two doors into the workspace — $mod+B and $modShift+B. Every
-      # other way a window appears ($mod+Enter, Spotlight, the Dock, a link
-      # handler, an app reopening its window) still landed in front of the snap,
-      # which is the bug this script exists for. The launcher case is the
-      # special one, not the general one; see below for why it still calls this.
-      #
-      # WHAT IT DOES: if the ONLY other windows on the workspace are ones
-      # centerMaster recorded floating, put them back in the tree. After a
-      # one-window snap the two tiled windows split at AVAIL/2 each — exactly
-      # the width the float already had — so the terminal keeps its size and
-      # merely slides to one side (which side depends on where AeroSpace
-      # inserts the newcomer; measured live at 2548 floating -> 2550 tiled).
-      # After a two-window snap the three land at equal thirds, so the 25/50/25
-      # is lost and $mod+I has to be pressed again: the same "does not
-      # self-maintain" limitation the header opens with, and still far better
-      # than a full-width window sitting on top of the snap.
-      #
-      # It deliberately does NOT re-run the snap. The three-window branch would
-      # in fact reproduce the ratio exactly, and tiled rather than floating, but
-      # the one-window case cannot — re-snapping there floats the pair again and
-      # hands the very same problem to the NEXT window. A rule that only
-      # sometimes maintains the layout is worse than one that never does.
-      #
-      # SCOPED TO THE RECORDED IDS on purpose: other floats — a dialog, a Slack
-      # huddle, anything $mod+F floated by hand — must not be yanked into the
-      # tree, and with more than two windows normal tiling already did the right
-      # thing. A lone tiled window on a genuinely empty workspace still fills
-      # the monitor; that is every tiler's behaviour, and $mod+I exists for it.
-      #
-      # RACE-FREE BY CONSTRUCTION, which matters because exec-and-forget does
-      # not wait and this can therefore run before AeroSpace has put the new
-      # window in the tree. The new id is only ever SUBTRACTED from the
-      # workspace's window list, so a list that does not contain it yet gives
-      # the same answer.
-      dissolveSnap = pkgs.writeShellApplication {
-        name = "aerospace-dissolve-snap";
-        runtimeInputs = [ pkgs.aerospace ];
-        text = ''
-          STATE="$HOME/${floatState}"
-
-          # No snap recorded — the overwhelmingly common case, since this runs
-          # on every window AeroSpace detects. Nothing to undo.
-          [ -f "$STATE" ] || exit 0
-
-          # The window that just appeared, and the workspace to judge. The
-          # callback supplies both as env vars; the positional arguments are for
-          # new_window_here, which has to override them (see firefoxLib).
-          NEW="''${1:-''${AEROSPACE_WINDOW_ID:-}}"
-          WS="''${2:-''${AEROSPACE_WORKSPACE:-}}"
-
-          # Without a new window there is no "beside them" to test, and every
-          # window here would look like a float to dissolve — which would undo
-          # a snap nobody disturbed. Refuse rather than guess.
-          [ -n "$NEW" ] || exit 0
-          [ -n "$WS" ] || WS=$(aerospace list-workspaces --focused)
-
-          here=$(aerospace list-windows --workspace "$WS" --format '%{window-id}')
-          others=$(printf '%s\n' "$here" | grep -vxF "$NEW" || true)
-          nOthers=$(printf '%s\n' "$others" | grep -c . || true)
-
-          # The test is "every window here except the new one is one we
-          # floated" rather than a window count, because the state file holds
-          # one id after a one-window snap and two after a two-window snap.
-          # Anything else on the workspace means the float is not simply in the
-          # way, so leave it alone.
-          stray=$(printf '%s\n' "$others" | grep -vxF -f "$STATE" || true)
-          [ "$nOthers" -gt 0 ] || exit 0
-          [ -z "$stray" ] || exit 0
-
-          # `layout tiling` on an already-tiled window (stale state, a window
-          # closed and its id reused) is a harmless no-op.
-          while read -r floated; do
-            [ -n "$floated" ] || continue
-            aerospace layout tiling --window-id "$floated" >/dev/null 2>&1 || true
-          done < "$STATE"
-          rm -f "$STATE"
         '';
       };
 
@@ -752,14 +449,6 @@
       # focused window. `list-windows --focused` is unreliable here — focus is
       # in motion for a moment after activation — and the newest id is not
       # necessarily the largest. A snapshot before and after is exact.
-      #
-      # THE FLOATED-TERMINAL SEQUEL is dissolveSnap's job (see there), and every
-      # window gets that treatment from the on-window-detected callback — but
-      # this launcher still has to ask for it explicitly, and the reason is the
-      # carry above. The callback fires when the window is DETECTED, which is on
-      # whatever workspace it was born on; by the time the carry has brought it
-      # back here, the callback has already run and judged the wrong workspace.
-      # So the carry ends with a call that passes the ids it actually landed on.
       firefoxLib = ''
         APP=$(/usr/bin/osascript -e \
           'POSIX path of (path to application id "org.mozilla.firefox")')
@@ -791,12 +480,6 @@
           # unless --fail-if-noop is passed.
           aerospace move-node-to-workspace --window-id "$new" "$ws" >/dev/null || true
           aerospace workspace "$ws" >/dev/null || true
-
-          # Judged against the workspace the carry ended on, not the one the
-          # window was born on — see THE FLOATED-TERMINAL SEQUEL above. A no-op
-          # when the callback already dissolved the snap (the state file is
-          # gone), which is what happens when the window was born here.
-          ${lib.getExe dissolveSnap} "$new" "$ws" || true
 
           aerospace focus --window-id "$new" >/dev/null || true
         }
@@ -991,9 +674,10 @@
         "${mod}-w" = "layout accordion";
         "${modShift}-w" = "layout tiles";
 
-        # The 1/4 | 1/2 | 1/4 centred-master snap — and with a single window on
-        # the workspace, that same centre width, floated and centred (see the
-        # WINDOW COUNTS note on centerMaster). On I because the deleted
+        # The 1/4 | 1/2 | 1/4 centred-master snap, which needs three tiled
+        # windows; with two it balances them and with one it declines, because
+        # neither is expressible in AeroSpace's tiling model (see the WINDOW
+        # COUNTS note on centerMaster). On I because the deleted
         # rectangle.nix put this very layout on U/I/O — "U I O sit directly
         # above J K L and read left / middle / right" — and I was its
         # centreHalf. Nothing sits on U/O now: with a real tiling WM the side
@@ -1152,37 +836,16 @@
           # `mouse_follows_focus on`.
           on-focused-monitor-changed = [ "move-mouse monitor-lazy-center" ];
 
-          # PUT THE SNAP'S FLOATS BACK IN THE TREE whenever a window appears
-          # beside them, whatever opened it — $mod+Enter, Spotlight, the Dock, a
-          # link handler, an app reopening a window on login. See dissolveSnap
-          # for the failure this fixes and why it cannot be a keybinding: the
-          # thing that needs to react is the window's arrival, not a keypress.
-          #
-          # IT RUNS FOR EVERY DETECTED WINDOW, and that is affordable because
-          # the script's first act is to look for the state file and exit when
-          # there is no snap to undo — which is the common case. A narrower `if`
-          # could not express the real condition anyway: it depends on what else
-          # is already on the workspace, not on the new window's app.
-          #
-          # `.*` rather than no matcher at all. nix-darwin types `if` as a
-          # submodule with default {}, so leaving it out still emits an empty
-          # `[on-window-detected.if]` table, and AeroSpace has opinions about a
-          # rule with no condition — it carries the string "Omitting 'if' is
-          # error prone. You can use `if = 'true'` to preserve the previous
-          # behavior." The new-style `if = 'true'` cannot be written through
-          # that submodule type, so this says the same thing in the legacy
-          # vocabulary the module does expose: match every app name.
-          #
-          # The callback gets AEROSPACE_WINDOW_ID and AEROSPACE_WORKSPACE, which
-          # is exactly what the script needs and is why it is invoked with no
-          # arguments. check-further-callbacks is left off since this is the only
-          # callback; it has to be set if a second one is ever appended.
-          on-window-detected = [
-            {
-              "if".app-name-regex-substring = ".*";
-              run = [ "exec-and-forget ${lib.getExe dissolveSnap}" ];
-            }
-          ];
+          # NO on-window-detected CALLBACK. There used to be one, matching every
+          # app, whose whole job was undoing the float-based snap when a new
+          # window landed on top of it. Both halves are gone — see the header.
+          # If one is ever added back, note that nix-darwin types `if` as a
+          # submodule with default {}, so an omitted matcher still emits an empty
+          # `[on-window-detected.if]` table and AeroSpace complains ("Omitting
+          # 'if' is error prone. You can use `if = 'true'` ..."); the new-style
+          # `if = 'true'` is not expressible through that submodule type, so the
+          # legacy equivalent is app-name-regex-substring = ".*".
+          # check-further-callbacks matters as soon as there is more than one.
 
           # Pin workspaces to monitors — the declarative version of what
           # hyprland.nix's monitorAttached script does imperatively (move
