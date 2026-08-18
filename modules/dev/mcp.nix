@@ -255,6 +255,15 @@
             config.lib.file.mkOutOfStoreSymlink
               "${config.xdg.configHome}/mcp/mcp.json";
 
+          # pi (pi-mcp-extension, declared in ./pi.nix): same server set at the
+          # extension's global config path. Its per-server schema is a superset
+          # of {command,args,env} — transport defaults to "stdio", which every
+          # server above is (linear/homeassistant ride mcp-remote over stdio).
+          # Servers default to lifecycle "lazy": start one in pi with
+          # `/mcp:start <name>`, or add `lifecycle = "eager"` to a server in
+          # `servers` above to auto-start it on every pi session.
+          home.file.".pi/agent/mcp.json".text = builtins.toJSON { mcpServers = selected; };
+
           # VSCode Cline: needs { mcp: { servers: {...} } } format
           home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/.keep".text = "";
           home.file.".config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json".text =

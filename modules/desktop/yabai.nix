@@ -17,10 +17,40 @@
 #   * STACK LAYOUT works and cycles: all windows full-size at one origin
 #     (1496x848 @ x=8), and stack-index walks 1 -> 2 -> 3 with the wrap fallback.
 #
-# STILL UNVERIFIED: every test ran on ONE display, because the ultrawide was
-# undocked. All the multi-monitor bindings ($mod+U, the arrows, and their
-# $modShift variants) are therefore untested, as is the 5120px arithmetic
-# (a quarter there should be 1274px and a centre 2548px).
+# ALSO VERIFIED LIVE on the 5120x1440 ultrawide (display 1, built-in demoted to
+# display 2). The arithmetic holds at that width — targets were 1274 | 2548 |
+# 1274, measured:
+#
+#   * ONE WINDOW: 2556 centred at x=1282, both outer quarters reserved.
+#   * TWO WINDOWS: 1275 @ x=8 then 2550 @ x=1287, right quarter (1283px) EMPTY.
+#   * THREE WINDOWS: 1275 | 2547 | 1273, all tiled. Idempotent over three passes.
+#   * THREE TO EIGHT WINDOWS, after the centred-master snap was generalised to
+#     subdivide the side columns. Every count holds the same three column widths
+#     — 1275 | 2547 | 1273 — and only the stacking changes, left|centre|right:
+#       3 -> 1|1|1   4 -> 2|1|1   5 -> 2|1|2
+#       6 -> 3|1|2   7 -> 3|1|3   8 -> 4|1|3
+#     Each was measured after the count changed under it (windows opened, closed
+#     and moved between spaces), and each is idempotent over three presses.
+#   * MOVING A WINDOW INTO THE CENTRE used to destroy the layout: the centre is
+#     the one region WIDER than tall (2547x1393), so bsp split it side by side
+#     and gave 1275 | 1271 | 1271 | 1273 — four columns, no centre. Moving into a
+#     SIDE column was always safe, those being taller than wide. With the centre
+#     armed via `window --insert south` the same move now STACKS into the centre
+#     (2547px x2) and the three columns survive. Verified after three $mod+I
+#     presses, which also proves the double-set idiom below: a single `--insert`
+#     would have toggled itself back off on the second press.
+#   * Firefox sat in the CENTRE slot at 2550px and in a SIDE column at 1275px —
+#     its 500px minimum width, which makes it unusable as a side column on the
+#     1512px built-in, is a non-issue here. As predicted, and it is the only
+#     reason that prediction is now more than a guess.
+#   * THE STALE-ENTRY FILTER EARNS ITS KEEP HERE TOO. Closing a test window left
+#     `query --windows` reporting id=13352, app "ghostty" lower-cased, empty
+#     title, is-visible false, has-ax-reference FALSE — a fourth "window" that
+#     would have put a two-window space into the three-or-more branch and left
+#     two real windows overlapping.
+#
+# STILL UNVERIFIED: the multi-monitor bindings ($mod+U, the arrows, and their
+# $modShift variants) have never been driven, on either display arrangement.
 #
 # ============================================================================
 # VERIFY THIS FILE YOURSELF. DO NOT TRUST IT.
@@ -44,15 +74,93 @@
 #      and the layout keys did not clear it, so after a snap $mod+W squeezed the
 #      stack into a 752px strip and new windows piled up BELOW instead of beside.
 #      This one was documented in this very file and still shipped broken.
+#   4. THE LAYOUT-PERSISTENCE BUG, the same mistake as 3 in a second piece of
+#      per-space state. The snap set padding and ratios but never checked
+#      `space --layout`. On a space left in `stack` by $mod+Y, ratios are a
+#      silent no-op, so all that landed was the padding — and with the LEFT AND
+#      RIGHT PADDING STILL 1282 FROM A ONE-WINDOW SNAP, every window sat
+#      full-size in the middle half of the ultrawide. Pressing $mod+I again
+#      could not recover it. Found on the ultrawide, but nothing about it was
+#      display-specific; it was just as broken on the built-in.
+#   5. THE STALE-READ BUG, in the generalised snap. The root boundary is fixed
+#      by measuring the centre window and moving its left edge, and the measure
+#      ran immediately after the ratio commands — so it read the PREVIOUS
+#      layout, computed a delta of roughly zero, took the "already correct"
+#      early exit and never moved anything. Gave 510 | 3057 | 1528 on the first
+#      press and the right answer on the second, which is exactly how a missing
+#      settle hides: press the key twice and it looks fine.
+#   6. THE MIRRORED-LAYOUT BUG, from assuming `--warp` puts the warped window on
+#      a predictable side of the split it creates. It does not — it depends on
+#      where the window came from. With an ODD number of windows the centre
+#      window landed as the root's FIRST child, so the layout came out mirrored:
+#      the centre alone against the left screen edge at 1697px and the left
+#      column exiled to the far right at 2550px. Even counts were unaffected,
+#      which made it look like an arithmetic bug rather than a topology one. It
+#      also disarmed bug 5's fix, because a window on the screen edge has no
+#      ancestor boundary for `--resize` to move.
+#
+# REJECTED, WITH MEASUREMENTS, SO IT IS NOT RETRIED:
+#
+#   * PINNING `split_type horizontal` ON THE SPACE. It is a per-space setting
+#     (vertical|horizontal|auto, `auto` meaning "choose from the region's
+#     width/height ratio"), and forcing `horizontal` looked like the clean fix
+#     for the four-column bug: every new split becomes top-and-bottom, so an
+#     inserted window stacks into a column and a fourth column is unreachable.
+#     It works for insertion — measured, a window moved into a snapped space
+#     stacked at x=8 y=39/738/1087 and the centre never moved.
+#
+#     IT BREAKS THE SNAP ITSELF, and the mechanism is the promotion rule above.
+#     Step 1 toggles the root vertical; step 2 then warps a window out of the old
+#     root, which collapses it and promotes the root-to-be, which is re-derived
+#     as HORIZONTAL because that is what the space now demands. The whole layout
+#     comes back as a vertical stack: measured 5104px x2 | 1699px x1, reproduced
+#     identically on three consecutive runs. Under `auto` the same promotion
+#     happens but re-derives a full-width region as vertical, which is the only
+#     reason any of this works — the snap has always been relying on the default,
+#     not overriding it.
+#
+#     So `split_type` stays `auto`, and the centre slot is protected per-window
+#     with `--insert` instead. If you are tempted by this again: the tell is that
+#     the FIRST press of $mod+I looks fine and the SECOND collapses the layout.
 #
 # THE LESSON, and the reason for this section: the man page tells you WHICH
 # COMMANDS EXIST and WHAT NEEDS SIP. It does not tell you HOW bsp BEHAVES. Every
 # behavioural fact below had to be discovered by driving it:
 #
 #   * split direction follows container aspect ratio, not config;
-#   * `window --ratio` reaches only a window's IMMEDIATE parent split, which is
-#     why centred-master caps at three windows;
-#   * `space --padding` persists until something overwrites it;
+#   * `window --ratio` and `window --toggle split` reach only a window's
+#     IMMEDIATE parent split, so a node with no window directly beneath it —
+#     the root, once both side columns hold more than one window — cannot be
+#     named at all. `window --resize` is the way in: it moves an EDGE and yabai
+#     walks up to whichever ancestor owns it;
+#   * `window --warp` picks which side of the new split the window lands on from
+#     the DIRECTION IT TRAVELLED, not from the argument order — warping the same
+#     window onto the same target repeatedly ALTERNATES it between first_child
+#     and second_child;
+#   * yabai APPLIES FRAMES ASYNCHRONOUSLY — a query issued straight after a
+#     layout command still reports the previous geometry. THE TREE METADATA IS
+#     NOT ASYNC, though: `split-type` and `split-child` read correctly the
+#     instant a `--warp` or `--toggle split` returns. Measured over five trials
+#     of each, immediate versus settled. So settle before reading FRAMES, and
+#     never bother settling before reading SHAPE;
+#   * A NODE'S SPLIT TYPE IS RE-DERIVED WHEN THAT NODE IS PROMOTED TO ROOT. Set
+#     a node vertical with `--toggle split`, then remove a window that was the
+#     old root's other child — the old root collapses, your node takes its place,
+#     and it comes back HORIZONTAL. Measured under split_type `horizontal` AND
+#     under `auto`. This is the deepest rule in this file: it means the root's
+#     orientation cannot be set early and relied upon, and it is the reason the
+#     snap depends on `auto` re-deriving a wide region as vertical rather than on
+#     its own toggle surviving;
+#   * `window --insert <DIR>` overrides the aspect-ratio choice for the next
+#     insertion into that window, and is CONSUMED BY THAT INSERTION — measured,
+#     an armed target split horizontal and the very next warp onto it split
+#     vertical again. Its state is NOT exposed by `query --windows`, so it can
+#     never be read back and set conditionally. The man page calls it a toggle
+#     ("setting the mode it already holds undoes it") but THAT WAS NOT
+#     REPRODUCIBLE: `--insert south` twice still armed the window, checked
+#     against an unarmed baseline that measured vertical on the same region;
+#   * `space --padding` persists until something overwrites it, and so does
+#     `space --layout` — a layout key press outlives the windows it was aimed at;
 #   * `query --windows` keeps STALE entries for closed windows — filter on
 #     has-ax-reference;
 #   * apps enforce minimum sizes (Firefox: 500px) and a window that refuses its
@@ -94,6 +202,32 @@
 # window, because a float is not a tiling sibling, and (b) crashed AeroSpace
 # outright via upstream issue #1311, a focus-over-floating-windows crash open
 # since April 2025. That workaround is gone; see aerospace.nix's header.
+#
+# AND THERE IS NO EXTENSION POINT TO DO IT PROPERLY. The obvious question when
+# reading the tree surgery below is "why not just write a layout algorithm and
+# hook it in?" — the answer is that yabai has nowhere to hook it. Verified on
+# 7.1.25 rather than assumed:
+#
+#   * `space --layout` accepts exactly bsp|stack|float. Three layouts, compiled
+#     in; `--layout custom` is rejected as an unknown value.
+#   * the man page has ZERO matches for plugin, hook, extension api or custom
+#     layout;
+#   * signals run AFTER an event is processed ("react to some event that has
+#     been processed"), so they can observe the tiling decision and never
+#     influence it.
+#
+# So the only lever is: let bsp tile, then reach in and rewrite its tree. Every
+# awkward thing in centerMaster — the warp sequence, the orientation toggles,
+# the `--resize` to reach an unaddressable root — is a symptom of driving an
+# engine from outside its intended interface, not of the code being needlessly
+# clever. If that trade ever stops being worth it, the tool that HAS the missing
+# API is Amethyst, whose custom layouts are JavaScript files exposing
+# getFrameAssignments(windows, screenFrame, state) -> frames keyed by window id.
+# READ FROM ITS DOCS, NOT DRIVEN — by the standard this header sets, treat that
+# as a lead to verify rather than a fact, and probe it the same way before
+# betting anything on it. It would also be a window-manager migration rather
+# than a refactor: it costs the SIP-safe space and display commands verified
+# above and every binding in this file.
 #
 # yabai expresses the same layout with NO FLOATING AT ALL, using two primitives
 # AeroSpace lacks:
@@ -241,6 +375,16 @@
 #      That single observation is what this whole module exists for. Then press
 #      $mod+I twice more — non-idempotent layout code is the most common bug
 #      class here and repeated presses are how you catch it.
+#      THEN THE TWO CASES THAT BROKE EVERY EARLIER VERSION:
+#        a. GO PAST THREE WINDOWS. Open up to eight, pressing $mod+I at each
+#           count. The three column widths must not move (1275 | 2547 | 1273 on
+#           the ultrawide); only the stacking changes, 1|1|1 through 4|1|3. An
+#           ODD count is the one that catches mirrored-tree bugs, because the
+#           even ones can look right by accident.
+#        b. MOVE A WINDOW INTO THE CENTRE with $mod+Shift+H/L. It must STACK in
+#           the centre, not open a fourth column. This is the case `--insert`
+#           arming exists for, and it is the first thing to break if the snap's
+#           final step is ever reordered.
 #   7. ROLLING BACK. Set windowManager = "aerospace" and rebuild, but CLEAR THE
 #      PADDING FIRST or the margins outlive the switch:
 #        yabai -m space --padding abs:8:8:8:8
@@ -266,6 +410,12 @@
 #     from an orphaned instance. Kill the orphan, remove the pid file.
 #   * A CLOSED WINDOW STILL COUNTS -> stale query entry; filter on
 #     has-ax-reference.
+#   * FOUR COLUMNS AFTER MOVING A WINDOW -> the centre slot's `--insert` arming
+#     is CONSUMED BY ONE INSERTION, so the second window moved into the centre
+#     falls back to the aspect ratio and splits it side by side. Measured: warp
+#     into an armed centre gave horizontal, the very next warp gave vertical.
+#     $mod+I rebuilds AND re-arms; there is no state to inspect because the mode
+#     is not exposed by `query --windows`.
 { ... }:
 {
   flake.modules.darwin.yabai =
@@ -319,6 +469,20 @@
             exit 1
           fi
 
+          # ASSERT bsp BEFORE MEASURING ANYTHING. `space --layout` is PERSISTENT
+          # PER-SPACE STATE, exactly like padding, and the centred-master layout
+          # is a bsp TREE — so if the space was left in `stack` by $mod+Y, every
+          # `--ratio` below is a silent no-op and each branch's padding is the
+          # only thing that lands. Measured on the 5120 ultrawide with two
+          # windows on a stacked space: both windows full-size at x=1282 w=2556,
+          # because the LEFT/RIGHT PADDING WAS STILL 1282 FROM A ONE-WINDOW SNAP
+          # (OUTER + SIDE) and a stack simply fills whatever it is given. The
+          # visible symptom is "centred mode, but every window is in the middle" —
+          # and pressing $mod+I again could not fix it, because nothing in here
+          # ever looked at the layout. Setting bsp when already bsp is a no-op:
+          # three consecutive presses gave byte-identical geometry.
+          yabai -m space --layout bsp >/dev/null 2>&1 || true
+
           # Tiled windows only. Two filters, both load-bearing:
           #
           #   is-floating == false      a float someone put there by hand with
@@ -336,8 +500,8 @@
           WINS=$(yabai -m query --windows --space \
                    | jq -c '[.[] | select(."is-floating" == false
                                           and ."has-ax-reference" == true)
-                                 | {id, x: .frame.x, w: .frame.w}]
-                            | sort_by(.x)')
+                                 | {id, x: .frame.x, y: .frame.y}]
+                            | sort_by(.x, .y)')
           COUNT=$(printf '%s' "$WINS" | jq 'length')
 
           MON_W=$(yabai -m query --displays --display | jq -r '.frame.w | floor')
@@ -354,9 +518,56 @@
           AVAIL=$((MON_W - 2 * OUTER - 2 * INNER))
           SIDE=$((AVAIL / 4))
 
-          # Only ids are read back now: the three-window branch reads the tree
-          # from split-type/split-child rather than measuring widths.
+          # SORTED WEST TO EAST, THEN NORTH TO SOUTH, and only ids are read
+          # back: the layout branches build the tree from split-type and
+          # split-child rather than measuring widths. The y in the sort is what
+          # makes a STACKED COLUMN read in visual order — sorting on x alone
+          # leaves windows sharing a column in whatever order the query
+          # returned, so the partition below would shuffle them on every press.
           nth_id() { printf '%s' "$WINS" | jq -r ".[$1].id"; }
+
+          # ARM THE CENTRE SLOT SO A WINDOW MOVED INTO IT STACKS.
+          #
+          # THE PROBLEM THIS SOLVES is the one failure mode the snap cannot
+          # prevent by rebuilding: bsp chooses a split axis from the region's
+          # width/height ratio, and the centre slot is the one region that is
+          # WIDER THAN TALL (2547x1393 on the ultrawide). So moving a window
+          # into it splits it SIDE BY SIDE and the layout becomes four columns.
+          # Measured: 1275 | 1271 | 1271 | 1273, the centre gone. Moving into a
+          # SIDE column is safe — those are taller than wide, so they stack.
+          #
+          # `window --insert south` sets a window's splitting mode explicitly,
+          # which overrides the aspect-ratio choice for the next insertion.
+          # Verified: with it armed, warping a window onto the centre stacked
+          # into the centre (2547px x2) and the three columns survived.
+          #
+          # WHY IT IS SET TWICE, and the one claim here that is insurance
+          # rather than measurement. The man page says `--insert` is a TOGGLE:
+          # "If the current splitting mode matches the selected mode, the action
+          # will be undone". If that held, arming blindly would DISARM the centre
+          # on every second press of $mod+I — and the mode is NOT exposed by
+          # `query --windows`, so it cannot be read back and set conditionally.
+          #
+          # DRIVEN, THE UNDO DID NOT HAPPEN: `--insert south` twice in a row
+          # still produced a stacked insertion (horizontal) on a region wide
+          # enough that the unarmed baseline was measured as vertical. So a
+          # single call would very likely do. The `east` first is kept anyway
+          # because it costs one command and makes the outcome independent of
+          # which behaviour istrue — whatever the prior mode, south never matches
+          # east, so the pair always lands on south.
+          #
+          # $mod+Shift+Return RUNS THIS SAME COMMAND on the focused window.
+          # Measured, that REINFORCES the arming rather than clearing it, so the
+          # two do not fight — see the toggle note above.
+          #
+          # NOT A SUBSTITUTE FOR $mod+I. The mode is consumed by the insertion,
+          # so this survives exactly one window landing in the centre. It buys
+          # "the layout is not destroyed", not "the layout stays even" — the
+          # ratios still drift and the key is still what re-evens them.
+          arm_centre() {
+            yabai -m window "$1" --insert east >/dev/null 2>&1 || true
+            yabai -m window "$1" --insert south >/dev/null 2>&1 || true
+          }
 
           case "$COUNT" in
             0)
@@ -372,6 +583,7 @@
             1)
               yabai -m space --padding "abs:$OUTER:$OUTER:$((OUTER + SIDE)):$((OUTER + SIDE))"
               yabai -m space --gap "abs:$INNER"
+              arm_centre "$(nth_id 0)"
               exit 0
               ;;
 
@@ -393,138 +605,213 @@
                 notify "Centred master" "Could not set the split ratio"
                 exit 1
               }
+              arm_centre "$(nth_id 1)"
               exit 0
               ;;
 
-            # --- THREE WINDOWS: 1/4 | 1/2 | 1/4, all tiled -------------------
-            # No padding beyond the base, so the tree fills the screen and the
-            # ratios do all the work.
+            # --- THREE OR MORE: 1/4 | 1/2 | 1/4, side columns subdivided -----
+            # One window takes the centre half. EVERY OTHER WINDOW STACKS INTO
+            # THE TWO OUTER QUARTERS, which subdivide again for each window
+            # added rather than growing a fourth column. No padding beyond the
+            # base, so the tree fills the screen and the ratios do the work.
             #
-            # bsp IS A TREE, and `--ratio` only reaches a window's IMMEDIATE
-            # parent split. Three windows are always one leaf beside a nested
-            # pair, so getting 25/50/25 means setting two ratios on two
-            # different splits — and both splits must be VERTICAL (side-by-side)
-            # for widths to mean anything.
+            # THE TARGET TREE — the only shape that produces this layout:
             #
-            # THE BUG THIS BRANCH WAS WRITTEN AROUND, found by running it: bsp
-            # picks a split direction from the container's ASPECT RATIO, not
-            # from anything configurable. On the built-in 1512x982 display the
-            # right-hand region is 746 wide by 848 tall — taller than wide — so
-            # opening a third window there split it HORIZONTALLY and produced two
-            # windows stacked at identical x and width. Measured live:
+            #   root (vertical)
+            #     |- L column   (horizontal chain: L0, L1, ... stacked)
+            #     '- (vertical)
+            #          |- C     the centre window
+            #          '- R column   (horizontal chain: R0, R1, ... stacked)
             #
-            #   id=75  x=8    w=373   split-type=vertical    first_child
-            #   id=202 x=385  w=1119  split-type=horizontal  first_child
-            #   id=212 x=385  w=1119  split-type=horizontal  second_child
+            # Windows are assigned west to east out of the x,y-sorted list, so
+            # the layout is IDEMPOTENT — re-reading after a snap gives the same
+            # partition and every command below becomes a no-op. The odd window
+            # goes left (COUNT/2 on the left, the rest on the right), so the
+            # counts run 1|1|1, 2|1|1, 2|1|2, 3|1|2, 3|1|3 as windows arrive.
             #
-            # An earlier version of this branch tried to infer the shape from
-            # widths after `space --equalize`. That cannot work: a stacked pair
-            # has the same width as its parent, so the measurement is degenerate
-            # and the ratios then land on the wrong splits.
-            #
-            # `split-type` AND `split-child` ARE THE ANSWER, and they were there
-            # all along in `query --windows`: split-type is the orientation of a
-            # window's PARENT split, split-child is which side of it the window
-            # sits on. So the shape can be read directly instead of guessed, and
-            # `window --toggle split` flips a split that came out horizontal.
-            # Verified live — one toggle turned the stack above into
-            # 373 | 743 | 371, all tiled, nothing floating.
-            3)
-              yabai -m space --padding "abs:$OUTER:$OUTER:$OUTER:$OUTER"
-              yabai -m space --gap "abs:$INNER"
-
-              # Sorted by x THEN y, so a stacked pair still reads in visual
-              # order rather than in whatever order the query returned.
-              read_tree() {
-                yabai -m query --windows --space \
-                  | jq -c '[.[] | select(."is-floating" == false
-                                         and ."has-ax-reference" == true)
-                                | {id, x: .frame.x, y: .frame.y,
-                                   split: ."split-type"}]
-                           | sort_by(.x, .y)'
-              }
-              tid() { printf '%s' "$1" | jq -r ".[$2].id"; }
-
-              # STEP 1 — CONSTRUCT the shape instead of deducing it. Re-inserting
-              # the rightmost window so it splits the middle one forces
-              # [L,(C,R)]: the warped pair gets a common parent and L is left as
-              # the root's other child. Verified live from a [(L,C),R] start —
-              # afterwards the two right-hand windows reported a shared parent
-              # split and L reported the root's.
-              #
-              # This replaces two earlier attempts that both asserted tree
-              # properties without checking them, and both produced wrong
-              # geometry:
-              #   * measuring widths after `space --equalize` — degenerate,
-              #     because a stacked pair is exactly as wide as its parent;
-              #   * assuming "the leftmost window is the root's first child",
-              #     which is false for [(L,C),R] — there the leftmost window's
-              #     parent is the INNER split, so both ratio commands landed on
-              #     the same split and the root was never set.
-              T=$(read_tree)
-              yabai -m window "$(tid "$T" 2)" --warp "$(tid "$T" 1)" \
-                >/dev/null 2>&1 || true
-
-              # STEP 2 — FORCE BOTH SPLITS SIDE-BY-SIDE. bsp picks a split
-              # direction from the container's ASPECT RATIO, not from anything
-              # configurable, so on a narrow display the right-hand region comes
-              # out taller than wide and gets split into a STACK. Measured: two
-              # windows at identical x and width.
-              #
-              # split-type reports a window's PARENT split, so any window
-              # reporting "horizontal" names a split that needs flipping. The
-              # loop re-reads because each toggle reshapes the tree; three passes
-              # is comfortably more than the two splits three windows can have.
-              for _ in 1 2 3; do
-                T=$(read_tree)
-                H=$(printf '%s' "$T" \
-                      | jq -r 'map(select(.split == "horizontal"))[0].id // empty')
-                [ -n "$H" ] || break
-                yabai -m window "$H" --toggle split >/dev/null 2>&1 || true
-              done
-
-              # STEP 3 — RATIOS. Both splits are vertical and the shape is known,
-              # so this is just arithmetic: the root gives its first child a
-              # quarter, and the pair splits the remaining three quarters 2:1 to
-              # put AVAIL/2 in the middle.
-              T=$(read_tree)
-              yabai -m window "$(tid "$T" 0)" --ratio abs:0.25 >/dev/null 2>&1 || true
-              yabai -m window "$(tid "$T" 1)" --ratio abs:0.6667 >/dev/null 2>&1 || true
-
-              # A WINDOW WITH A MINIMUM SIZE CAN DEFEAT ALL OF THIS, and it takes
-              # the rest of the space down with it. Firefox measured a hard floor
-              # of 500px wide here: asked for 450, 400, 372, 300 and 200 it
-              # returned 500 every time. A quarter of this 1512px display is
-              # 372px, so Firefox cannot BE a side column, and when it refuses
-              # the frame yabai hands it the whole space is left inconsistent —
-              # the OTHER windows also stopped re-laying-out until Firefox was
-              # moved off the space, after which `--balance` worked instantly.
-              #
-              # Not worked around here, because the honest fix is either a wider
-              # display (a quarter of the 5120 ultrawide is 1274px, comfortably
-              # over the floor) or keeping such a window in the CENTRE slot,
-              # which at AVAIL/2 = 744px clears it. Report it rather than
-              # silently producing a broken layout.
-              AFTER=$(read_tree)
-              NARROW=$(printf '%s' "$AFTER" | jq -r 'length')
-              if [ "$NARROW" = "3" ]; then
-                W_L=$(yabai -m query --windows --window "$(tid "$AFTER" 0)" \
-                        | jq -r '.frame.w | floor')
-                if [ "$W_L" -gt "$((SIDE + SIDE / 2))" ]; then
-                  notify "Centred master" \
-                    "Left window will not go below ''${W_L}px (minimum size) — layout is approximate"
-                fi
-              fi
-              exit 0
-              ;;
-
-            # More than three: base padding and equal columns is the honest
-            # answer. There is no centre to widen once the row is this long.
+            # THIS REPLACED a three-window special case plus `space --balance`
+            # for anything larger. Balance was measured on the ultrawide with
+            # six windows and gives FOUR EQUAL COLUMNS of 1271|1271|1273|1275 —
+            # no centre at all, which is the whole point of the key.
             *)
               yabai -m space --padding "abs:$OUTER:$OUTER:$OUTER:$OUTER"
               yabai -m space --gap "abs:$INNER"
-              yabai -m space --balance
-              notify "Centred master" "$COUNT tiled windows — balanced instead"
+
+              NL=$((COUNT / 2))
+              NR=$((COUNT - 1 - NL))
+              CID=$(nth_id "$NL")
+
+              prop() {
+                yabai -m query --windows --window "$1" | jq -r --arg k "$2" '.[$k]'
+              }
+
+              # bsp PICKS SPLIT DIRECTION FROM THE REGION'S ASPECT RATIO, not
+              # from anything configurable, so every node has to be corrected
+              # after it is created — on a tall region a new split comes out
+              # horizontal and produces a stack where a column was wanted.
+              # split-type reports a window's PARENT split, so a node can be
+              # named by any window sitting directly beneath it, and
+              # `--toggle split` flips exactly that node.
+              want_split() { # id, wanted split-type of that window's parent
+                if [ "$(prop "$1" split-type)" != "$2" ]; then
+                  yabai -m window "$1" --toggle split >/dev/null 2>&1 || true
+                fi
+              }
+
+              # `--ratio` names the fraction given to the FIRST child, so which
+              # side the addressed window sits on decides whether it receives
+              # the value or its complement. split-child answers that.
+              set_ratio() { # id, fraction wanted for THIS window's own side
+                if [ "$(prop "$1" split-child)" = "first_child" ]; then
+                  yabai -m window "$1" --ratio "abs:$2" >/dev/null 2>&1 || true
+                else
+                  yabai -m window "$1" --ratio \
+                    "abs:$(awk -v r="$2" 'BEGIN { printf "%.4f", 1 - r }')" \
+                    >/dev/null 2>&1 || true
+                fi
+              }
+
+              # `--warp` PICKS WHICH SIDE OF THE NEW SPLIT THE WINDOW LANDS
+              # ON FROM THE DIRECTION IT TRAVELLED, not from the argument order,
+              # so the same call yields (target, window) or (window, target)
+              # depending only on where the window happened to be. That is
+              # invisible in the widths — set_ratio corrects for it — but it
+              # MIRRORS THE LAYOUT: measured with seven windows, the centre
+              # window landed as the root's FIRST child and came out alone
+              # against the left screen edge at 1697px with the left column
+              # exiled to the far right at 2550px. It also disarms step 5, since
+              # a window on the screen edge has no ancestor boundary to move.
+              #
+              # Both children are leaves at the moment of the warp — nothing has
+              # been warped onto either of them yet — so `--swap` exchanges
+              # exactly the two windows and nothing else.
+              warp_onto() { # id, target — leaves id as the target's SECOND child
+                yabai -m window "$1" --warp "$2" >/dev/null 2>&1 || true
+                if [ "$(prop "$1" split-child)" = "first_child" ]; then
+                  yabai -m window "$1" --swap "$2" >/dev/null 2>&1 || true
+                fi
+              }
+
+              # STEP 1 — CONSTRUCT THE ROOT, AND SET IT WHILE IT IS STILL
+              # ADDRESSABLE. Warping the centre window onto the westmost one
+              # makes the two of them siblings, and at THIS INSTANT both are
+              # leaves of that node — the only moment the root can be named at
+              # all. `--toggle split` and `--ratio` reach a window's IMMEDIATE
+              # parent and nothing else, so once the columns are built neither
+              # of the root's children is a window and the root becomes
+              # unreachable. Measured: with the columns in place the root ratio
+              # stayed at 0.5 and the left group sat at 2550px, half the
+              # ultrawide, with no window able to name the node holding it.
+              warp_onto "$CID" "$(nth_id 0)"
+              want_split "$CID" vertical
+              set_ratio "$CID" 0.75
+
+              # STEP 2 — GROW THE COLUMNS. Each warp splits the leaf it targets,
+              # so warping window k onto window k-1 chains them: L0 beside
+              # (L1 beside (L2 ...)). Every target is a window already placed by
+              # an earlier warp, which is what makes the sequence sound — a warp
+              # only ever REMOVES an unplaced window, so no relation built here
+              # is ever destroyed by a later one, and after COUNT-1 warps the
+              # COUNT-1 relations are exactly the target tree.
+              I=1
+              while [ "$I" -lt "$NL" ]; do
+                warp_onto "$(nth_id "$I")" "$(nth_id "$((I - 1))")"
+                I=$((I + 1))
+              done
+              J=0
+              while [ "$J" -lt "$NR" ]; do
+                if [ "$J" -eq 0 ]; then
+                  warp_onto "$(nth_id "$((NL + 1))")" "$CID"
+                else
+                  warp_onto "$(nth_id "$((NL + 1 + J))")" \
+                    "$(nth_id "$((NL + J))")"
+                fi
+                J=$((J + 1))
+              done
+
+              # STEP 3 — ORIENT EVERY NODE. Columns are horizontal splits (top
+              # and bottom); the centre/right divide is vertical. C names a
+              # DIFFERENT node now than it did in step 1: with R0 warped onto
+              # it, C's parent is the centre-versus-right-column split rather
+              # than the root. A chain node is named by its own first window,
+              # so the loops stop one short — the last window in a column shares
+              # its parent with the one before it.
+
+              want_split "$CID" vertical
+              I=0
+              while [ "$I" -lt "$((NL - 1))" ]; do
+                want_split "$(nth_id "$I")" horizontal
+                I=$((I + 1))
+              done
+              J=0
+              while [ "$J" -lt "$((NR - 1))" ]; do
+                want_split "$(nth_id "$((NL + 1 + J))")" horizontal
+                J=$((J + 1))
+              done
+
+              # STEP 4 — RATIOS. The centre keeps two thirds of everything east
+              # of the left column, which is AVAIL/2 once the root is a quarter.
+              # In a column of k windows the first takes 1/k of it and the rest
+              # share what is left, recursively, so every window ends up the
+              # same height.
+              set_ratio "$CID" 0.6667
+              I=0
+              while [ "$I" -lt "$((NL - 1))" ]; do
+                set_ratio "$(nth_id "$I")" \
+                  "$(awk -v k="$((NL - I))" 'BEGIN { printf "%.4f", 1 / k }')"
+                I=$((I + 1))
+              done
+              J=0
+              while [ "$J" -lt "$((NR - 1))" ]; do
+                set_ratio "$(nth_id "$((NL + 1 + J))")" \
+                  "$(awk -v k="$((NR - J))" 'BEGIN { printf "%.4f", 1 / k }')"
+                J=$((J + 1))
+              done
+
+              # STEP 5 — THE ROOT BOUNDARY, the one thing step 1 cannot be
+              # trusted to have kept. `--resize` moves an EDGE and yabai walks
+              # up to whichever ancestor owns it: C's own parent is a vertical
+              # split owning C's RIGHT edge, so asking for C's LEFT edge lands
+              # on the root. That is the only handle on it once the columns
+              # exist. Verified live — one pass took the left group from 2550px
+              # to 1275 and gave 1275 | 2547 | 1273.
+              #
+              # THE SLEEP IS LOAD-BEARING, and its absence is what made the
+              # first version of this branch need TWO key presses to settle.
+              # yabai APPLIES FRAMES ASYNCHRONOUSLY: query the geometry straight
+              # after the ratio commands and it still reports the PREVIOUS
+              # layout. Measured on a four-window space — the read came back at
+              # the old centre x, DX computed as roughly zero, the tolerance
+              # below took the break, and the root was never corrected at all.
+              # The visible symptom was a correct centre-to-right split inside a
+              # wrong root: 510 | 3057 | 1528 instead of 1274 | 2548 | 1274.
+              # A second press then looked fine, which is exactly how this hides.
+              TARGET_X=$((OUTER + SIDE + INNER))
+              for _ in 1 2 3; do
+                sleep 0.12
+                CUR_X=$(yabai -m query --windows --window "$CID" \
+                          | jq -r '.frame.x | floor')
+                DX=$((TARGET_X - CUR_X))
+                if [ "$DX" -gt -3 ] && [ "$DX" -lt 3 ]; then break; fi
+                yabai -m window "$CID" --resize "left:$DX:0" >/dev/null 2>&1 || true
+              done
+              sleep 0.12
+
+              # A WINDOW WITH A MINIMUM SIZE CAN DEFEAT ALL OF THIS, and it
+              # takes the rest of the space down with it. Firefox measured a
+              # hard floor of 500px wide: asked for 450, 400, 372, 300 and 200
+              # it returned 500 every time. That makes it unusable as a side
+              # column on the 1512px built-in, where a quarter is 372px, and a
+              # non-issue on the ultrawide, where a quarter is 1274px. Report it
+              # rather than silently producing a broken layout — the honest fix
+              # is to put such a window in the CENTRE slot.
+              W_L=$(yabai -m query --windows --window "$(nth_id 0)" \
+                      | jq -r '.frame.w | floor')
+              if [ "$W_L" -gt "$((SIDE + SIDE / 2))" ]; then
+                notify "Centred master" \
+                  "Left column will not go below ''${W_L}px (minimum size) — layout is approximate"
+              fi
+              arm_centre "$CID"
               exit 0
               ;;
           esac
@@ -836,6 +1123,15 @@
           # way the NEXT window splits this one, which is the closest analogue:
           # AeroSpace's join-with pulls two windows under a shared parent, and
           # this decides where that parent's split will fall.
+          #
+          # SHARES A MECHANISM WITH THE CENTRED-MASTER SNAP. centerMaster arms
+          # the CENTRE window with this very command so a window moved into it
+          # stacks instead of carving out a fourth column. Pressing this key on
+          # an already-armed centre was measured to REINFORCE the arming, not
+          # clear it, despite the man page describing --insert as a toggle — so
+          # the manual key and the snap do not fight. Pressing it with another
+          # direction (there is no such binding today) would override the snap
+          # until the next $mod+I.
           (bind modShift "return" "yabai -m window --insert south")
 
           ""
@@ -909,6 +1205,14 @@
           # New windows become the second child, so they open to the right of
           # or below the window they split rather than displacing it. Same value
           # the retired config used.
+          #
+          # NOW LOAD-BEARING, not just a preference. The centred-master snap
+          # builds each side column as a chain of warps and relies on the warped
+          # window landing BELOW the one it split; that is what makes a column
+          # read top-to-bottom in the same order as the x,y-sorted window list,
+          # which in turn is what makes the snap idempotent. Flip this to
+          # first_child and the columns still tile, but every press reverses
+          # their vertical order and the layout never settles.
           window_placement = "second_child";
           split_ratio = 0.5;
           # OFF, and this matters more here than it looks: auto_balance would

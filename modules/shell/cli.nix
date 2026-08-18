@@ -112,7 +112,6 @@
           grpcurl
           dysk
           # inputs.typestream.packages.${pkgs.stdenv.hostPlatform.system}.typestream # TODO: upstream flake still references buildGo124Module (checked 2026-07-27; v0.4.1 released but flake untouched) — needs our own override or an upstream fix
-          inputs.llmfit.packages.${pkgs.stdenv.hostPlatform.system}.default
           volsync
           (pkgs.callPackage ../../pkgs/sms-backup-md.nix { })
         ]
