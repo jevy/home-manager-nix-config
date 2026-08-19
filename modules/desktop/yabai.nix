@@ -1,5 +1,121 @@
 # yabai + skhd — the tiling alternative to modules/desktop/aerospace.nix.
 #
+# ============================================================================
+# THE PLAN — a SELF-MAINTAINING centred master. Status per step; keep this
+# block current as steps land or die.
+# ============================================================================
+#
+# STEP 0 — MANUAL SNAP on $mod+I. DONE, VERIFIED LIVE on both displays (see
+#   the STATUS block below). Its one structural flaw: it does not maintain
+#   itself. yabai re-tiles on every open/close/move and the key had to be
+#   pressed again by hand.
+#
+# STEP 1 — SIGNAL-DRIVEN AUTO-SNAP. LIVE, WORKING PER FIRST REPORT
+#   (2026-08-18): layout self-maintains — but with LOTS OF FLASHING, most of
+#   it pointless: the snap replayed the full tree surgery even when the
+#   layout was already correct, and space_changed runs it on every space
+#   switch. Hence STEP 1.1 below. yabai has a signal system (`yabai -m signal --add
+#   event=<E> action=<CMD>`) — arbitrary commands on window-manager events,
+#   none of it behind the SIP line — which this module previously never used.
+#   Registered declaratively via services.yabai.extraConfig (the yabairc is a
+#   store path in the launchd plist, so edits reload the same way the skhd
+#   keymap does). The wiring, all in this file:
+#
+#     * centerMasterAuto — flock-serialised, notification-silent wrapper that
+#       re-runs the snap ONLY when the focused space is already bsp, so a
+#       space deliberately put in stack by $mod+Y/$mod+W is left alone.
+#       Manual $mod+I goes through the same lock (--manual) but stays loud
+#       and still force-sets bsp.
+#     * Signals on window_created / window_destroyed / window_minimized /
+#       window_deminimized / application_hidden / application_visible plus
+#       space_changed / display_changed. The space/display pair exists
+#       because `window --space` moves a window without any hookable-safe
+#       event on the SOURCE space — re-snapping on every space entry heals
+#       stale spaces lazily.
+#     * $modShift+H/J/K/L append the auto-snap after a successful --warp,
+#       because window_moved is the one event that CANNOT be hooked (see
+#       the loop warning below).
+#
+#   FACTS THIS RESTS ON, from reading the yabai source (asmvik/yabai @
+#   dd84572, post-7.1.25) — file:line cites are into that tree:
+#     * window_created fires AFTER the window is inserted and tiled
+#       (event_loop.c:590-596); window_destroyed fires AFTER sibling
+#       promotion and re-tile (event_loop.c:613-624). A snap in the handler
+#       always sees the final window set.
+#     * Signal actions are double-forked and never block yabai's event loop
+#       (event_signal.c:64-92). There is NO debounce — an app opening three
+#       windows fires three actions, hence the flock.
+#     * NEVER HOOK window_moved OR window_resized. They fire for yabai's OWN
+#       moves — there is no self-origin suppression, and the comment at
+#       window_manager.c:732-738 admits the frame cache cannot reliably
+#       provide one. A snap hooked on either loops on its own warps.
+#     * The events actually hooked cannot be produced by the snap itself
+#       (it never creates, destroys, minimises, hides, or switches space),
+#       which is the loop-safety argument. application_hidden/visible were
+#       NOT source-traced like the others — worst case they fire before the
+#       untile and one snap lands early; the next event corrects it.
+#
+#   VERIFY (the Step-0 checklist in the runbook below still applies first):
+#     1. `yabai -m signal --list` shows the eight center-master-auto-* labels.
+#     2. Open/close windows on a bsp space — layout re-snaps with NO keypress,
+#        including down to 1 window and back up.
+#     3. $mod+W (stack), then open a window — space STAYS stacked (the guard).
+#     4. $modShift+J into the centre — columns survive without pressing $mod+I.
+#     5. $modShift+2 a window away, $mod+Tab back — the source space healed
+#        on re-entry (the space_changed signal).
+#     6. Minimise + unminimise (cmd+M, then dock) — both directions re-snap.
+#     7. Rapid-fire: open 4 windows quickly — flock serialises, final layout
+#        correct. Kill switch if anything runs away:
+#          for e in created destroyed minimized deminimized; do
+#            yabai -m signal --remove center-master-auto-window_$e; done
+#
+# STEP 1.1 — THE IDEMPOTENCE GATE. IMPLEMENTED, NOT YET VERIFIED LIVE.
+#   Response to the flashing: before issuing any layout command, the snap
+#   now compares every window's frame against its target and exits when they
+#   all match (see THE IDEMPOTENCE GATE in centerMaster). Space switches and
+#   duplicate events become true no-ops; the one-reflow flash on REAL window
+#   changes remains, and is the Step 2 criterion now: if THAT still grates
+#   after the gate, the fork is the answer — a native layout applies the new
+#   frames in one pass with no intermediate states.
+#   VERIFY:
+#     8. $mod+Tab between two snapped spaces repeatedly — nothing moves, no
+#        flash. `time <centerMasterAuto store path>` on a correct space
+#        returns in well under a second with no visible effect.
+#     9. Open a window — exactly ONE reflow, then still. Close it — same.
+#    10. $mod+I on a correct layout — silent no-op now (the gate runs in the
+#        manual path too). To force a rebuild past the gate, perturb first
+#        (resize with $mod+minus, then $mod+I).
+#
+# STEP 2 — OPTIONAL FORK: a native VIEW_MASTER_CENTER layout in yabai
+#   itself. RESEARCHED, NOT STARTED. Decision gate: live with Step 1 for a
+#   while — every open/close now visibly replays the tree surgery (warps,
+#   ratio passes, the load-bearing 0.12s settles). If that churn grates, the
+#   fork deletes this entire script plus the signal glue and computes frames
+#   in one pass with no churn. Feasibility, verified by reading the source:
+#     * yabai's frame pipeline is LAYOUT-AGNOSTIC — view_update ->
+#       window_node_update -> window_node_flush dispatch on tree shape,
+#       never on view->layout. `stack` is not a second engine, it is the bsp
+#       tree kept at depth 0 with windows in the root's window_list.
+#     * Touch points: enum + label (view.h:169-183), a third arm in
+#       view_add_window_node_with_insertion_point (view.c:751-812), a forced
+#       split variant of window_node_get_split (view.c:136-148), message.c
+#       parsing, a post-removal normaliser (view_remove_window_node is
+#       layout-agnostic but promotion will NOT restore 1/4|1/2|1/4 when the
+#       centre closes), and a per-command decision on each `!= VIEW_BSP`
+#       guard (window_manager.c:1754,1840,2004,2331,2360). ~300-500 lines.
+#       No layout abstraction exists — ~25 scattered ad-hoc ifs.
+#     * The algorithm to port is Hyprland's, already daily-driven on the
+#       P14s: src/layout/algorithm/tiled/master/MasterAlgorithm.cpp at the
+#       pinned input rev — LIST-based (ordered nodes + isMaster + percSize,
+#       no tree), centre = mfact*W centred, slaves alternate left/right in
+#       list order, sides stack vertically. ~120 lines for the centred case.
+#       Note two semantic deltas from the snap here: Hyprland alternates
+#       slaves by INSERTION order (this file assigns west-to-east by sorted
+#       position) and puts the odd window left via ceil (this file uses
+#       COUNT/2, floor-left). Pick one on purpose when porting.
+#     * Packaging: point pkgs.yabai at the fork in modules/overlays.nix; the
+#       per-store-path Accessibility re-grant cost is already being paid.
+#
 # STATUS: VERIFIED LIVE on macOS 26.6 arm64, yabai 7.1.25, SIP ENABLED, on the
 # built-in 1512x982 display. Measured, not inferred:
 #
@@ -51,6 +167,10 @@
 #
 # STILL UNVERIFIED: the multi-monitor bindings ($mod+U, the arrows, and their
 # $modShift variants) have never been driven, on either display arrangement.
+# ALSO UNVERIFIED: everything Step 1 added — the signal registrations, the
+# flock wrapper, the stack-space guard, and the two behavioural deltas it
+# rides on (is-minimized/is-hidden filtering, arm_centre removal). Run the
+# Step 1 VERIFY list in the plan block above before trusting any of it.
 #
 # ============================================================================
 # VERIFY THIS FILE YOURSELF. DO NOT TRUST IT.
@@ -143,22 +263,39 @@
 #     instant a `--warp` or `--toggle split` returns. Measured over five trials
 #     of each, immediate versus settled. So settle before reading FRAMES, and
 #     never bother settling before reading SHAPE;
-#   * A NODE'S SPLIT TYPE IS RE-DERIVED WHEN THAT NODE IS PROMOTED TO ROOT. Set
-#     a node vertical with `--toggle split`, then remove a window that was the
-#     old root's other child — the old root collapses, your node takes its place,
-#     and it comes back HORIZONTAL. Measured under split_type `horizontal` AND
-#     under `auto`. This is the deepest rule in this file: it means the root's
-#     orientation cannot be set early and relied upon, and it is the reason the
-#     snap depends on `auto` re-deriving a wide region as vertical rather than on
-#     its own toggle surviving;
-#   * `window --insert <DIR>` overrides the aspect-ratio choice for the next
-#     insertion into that window, and is CONSUMED BY THAT INSERTION — measured,
-#     an armed target split horizontal and the very next warp onto it split
-#     vertical again. Its state is NOT exposed by `query --windows`, so it can
-#     never be read back and set conditionally. The man page calls it a toggle
-#     ("setting the mode it already holds undoes it") but THAT WAS NOT
-#     REPRODUCIBLE: `--insert south` twice still armed the window, checked
-#     against an unarmed baseline that measured vertical on the same region;
+#   * A NODE'S SPLIT ORIENTATION DOES NOT SURVIVE PROMOTION TO ROOT. Set a
+#     node vertical with `--toggle split`, then remove a window that was the
+#     old root's other child — the old root collapses, your node takes its
+#     place, and it comes back HORIZONTAL. Measured under split_type
+#     `horizontal` AND under `auto`. An earlier draft of this bullet called
+#     that "re-derived", which the source says is the WRONG MECHANISM: a
+#     node's split is STICKY (nothing in the codebase ever resets ->split to
+#     SPLIT_NONE), and promotion copies the surviving child's contents into
+#     the parent EXCEPT the split field, so the promoted node wears the OLD
+#     PARENT's orientation (view_remove_window_node, view.c:621-728; the
+#     auto-derivation at view.c:136-148 only runs while split is still
+#     unset). Same practical rule — the root's orientation cannot be set
+#     early and relied upon — plus a corollary the old wording hid: a leaf
+#     that was ONCE an internal node re-splits with its STALE old
+#     orientation, not a fresh aspect-derived one. The want_split
+#     corrections in the snap are what absorb both;
+#   * `window --insert <DIR>|stack` overrides the aspect-ratio choice for the
+#     next insertion into that window, and is CONSUMED BY THAT INSERTION —
+#     measured, an armed target split horizontal and the very next warp onto
+#     it split vertical again; the source agrees (insert_dir zeroed at
+#     view.c:775). Its state is NOT exposed by any query — verified against
+#     the full serialisation list, window.h:32-64. The man page calls it a
+#     toggle and the source implements one (window_manager.c:1769-1776), but
+#     the toggle WAS NOT REPRODUCIBLE here: `--insert south` twice still
+#     armed the window. Unresolved — possibly an insertion consumed the mode
+#     between the two presses. Treat the toggle as real when writing code.
+#     TWO MORE FACTS FROM THE SOURCE, both unmeasured here so far: the armed
+#     node HIJACKS NEWLY CREATED WINDOWS, not just warps — the marked node is
+#     checked BEFORE the focused-window lookup (view.c:768-782), so an armed
+#     centre catches the next window opened ANYWHERE on that space — and
+#     `--insert stack` makes the caught insertion JOIN the node as a
+#     yabai-stack instead of splitting it (view.c:773-780). The hijack is
+#     half of why arm_centre was retired; see the note at its old site;
 #   * `space --padding` persists until something overwrites it, and so does
 #     `space --layout` — a layout key press outlives the windows it was aimed at;
 #   * `query --windows` keeps STALE entries for closed windows — filter on
@@ -435,9 +572,12 @@
       # mfact = 0.45, and the layout aerospace.nix can only reach for three
       # windows.
       #
-      # Like the AeroSpace version this does NOT self-maintain — yabai re-tiles
-      # on open and close, so the key has to be pressed again. Unlike the
-      # AeroSpace version, every window count is expressible and nothing floats.
+      # SINCE STEP 1 THIS SELF-MAINTAINS: the signals registered in
+      # extraConfig below re-run it (through centerMasterAuto) whenever the
+      # window set changes, so $mod+I is now the manual override — the loud
+      # entry point that also FORCES bsp, where the auto path refuses to
+      # touch a non-bsp space. Unlike the AeroSpace version, every window
+      # count is expressible and nothing floats.
       #
       # PADDING IS PERSISTENT SPACE STATE, which is the one trap in here. It is
       # not reset when the window count changes, so EVERY branch below sets all
@@ -454,7 +594,16 @@
           OUTER=${toString gapOuter}
           INNER=${toString gapInner}
 
+          # --quiet is the signal-driven entry, passed by centerMasterAuto.
+          # Under auto-snap every notify() here would fire on ORDINARY WINDOW
+          # EVENTS — "No tiled windows" on closing the last window of a
+          # space, the minimum-size warning on every event while Firefox sits
+          # in a side column of the built-in display — so the auto path
+          # silences them all. Manual $mod+I stays loud.
+          if [ "''${1:-}" = "--quiet" ]; then QUIET=1; else QUIET=0; fi
+
           notify() {
+            if [ "$QUIET" = "1" ]; then return 0; fi
             /usr/bin/osascript -e "display notification \"$2\" with title \"$1\"" \
               >/dev/null 2>&1 || true
           }
@@ -497,10 +646,20 @@
           # yabai's own man page names this property as the way to spot them:
           # "yabai window commands will NOT WORK for these windows ... identified
           # by looking at the has-ax-reference property."
+          # TWO MORE FILTERS SINCE STEP 1: is-minimized and is-hidden. The
+          # snap now runs FROM the minimise/hide events, and a minimised or
+          # cmd+H-hidden window is untiled by yabai but still present in the
+          # query — counting it would push the space into the wrong branch,
+          # the same failure mode as the stale-entry bug above. This was a
+          # latent bug in the manual snap too (press $mod+I with a minimised
+          # window and it counted); the events just made it unavoidable.
           WINS=$(yabai -m query --windows --space \
                    | jq -c '[.[] | select(."is-floating" == false
-                                          and ."has-ax-reference" == true)
-                                 | {id, x: .frame.x, y: .frame.y}]
+                                          and ."has-ax-reference" == true
+                                          and ."is-minimized" == false
+                                          and ."is-hidden" == false)
+                                 | {id, x: .frame.x, y: .frame.y,
+                                        w: .frame.w, h: .frame.h}]
                             | sort_by(.x, .y)')
           COUNT=$(printf '%s' "$WINS" | jq 'length')
 
@@ -518,6 +677,73 @@
           AVAIL=$((MON_W - 2 * OUTER - 2 * INNER))
           SIDE=$((AVAIL / 4))
 
+          # THE IDEMPOTENCE GATE (Step 1.1). If every window already sits in
+          # its target frame, exit before issuing a single layout command.
+          #
+          # WHY: the first live run of the auto-snap produced LOTS OF
+          # FLASHING, and most of it was pointless — the branches below
+          # replay the FULL tree surgery (warps, orientation toggles, settle
+          # sleeps) even when the layout is already correct, and Step 1 runs
+          # them on every space_changed. "Idempotent" was only ever true of
+          # the FINAL geometry; the transient states in between are exactly
+          # the flashing. This gate makes the no-op case actually a no-op.
+          # The flash that remains — one reflow when the window set REALLY
+          # changed — is inherent to doing layout through the command API,
+          # and is the churn the Step 2 fork decision is about.
+          #
+          # WHAT IT CHECKS, against the same west-to-east partition the 3+
+          # branch uses (left = COUNT/2, then centre, rest right): every
+          # window's x and w against its column's target, and heights EQUAL
+          # WITHIN each side column (a drifted horizontal ratio shows up as
+          # unequal heights; absolute height targets would need the menu-bar
+          # height, which the display frame does not expose). Tolerance 6px
+          # — the measured rounding residue was <= 3px (see STATUS block).
+          #
+          # FRAMES ARE ASYNC (see step 5 below), so an event arriving
+          # mid-settle can read half-applied frames and fail the gate
+          # spuriously — the cost is one redundant snap, which is what
+          # happened on every event before the gate existed.
+          if [ "$COUNT" -ge 1 ]; then
+            if printf '%s' "$WINS" \
+                 | jq -r '.[] | "\(.x) \(.w) \(.h)"' \
+                 | awk -v count="$COUNT" -v outer="$OUTER" -v inner="$INNER" \
+                       -v side="$SIDE" -v avail="$AVAIL" -v monw="$MON_W" '
+                     function bad(a, b) { d = a - b; return d > 6 || d < -6 }
+                     { x[NR - 1] = $1; w[NR - 1] = $2; h[NR - 1] = $3 }
+                     END {
+                       if (count == 1) {
+                         if (bad(x[0], outer + side)) exit 1
+                         if (bad(w[0], monw - 2 * (outer + side))) exit 1
+                         exit 0
+                       }
+                       cx = outer + side + inner
+                       if (count == 2) {
+                         if (bad(x[0], outer) || bad(w[0], side)) exit 1
+                         if (bad(x[1], cx)) exit 1
+                         if (bad(w[1], monw - (outer + side) - cx)) exit 1
+                         exit 0
+                       }
+                       nl = int(count / 2)
+                       cw = avail / 2
+                       rx = cx + cw + inner
+                       rw = monw - outer - rx
+                       for (i = 0; i < count; i++) {
+                         if (i < nl)       { tx = outer; tw = side }
+                         else if (i == nl) { tx = cx;    tw = cw }
+                         else              { tx = rx;    tw = rw }
+                         if (bad(x[i], tx) || bad(w[i], tw)) exit 1
+                       }
+                       for (i = 1; i < nl; i++)
+                         if (bad(h[i], h[0])) exit 1
+                       for (i = nl + 2; i < count; i++)
+                         if (bad(h[i], h[nl + 1])) exit 1
+                       exit 0
+                     }'
+            then
+              exit 0
+            fi
+          fi
+
           # SORTED WEST TO EAST, THEN NORTH TO SOUTH, and only ids are read
           # back: the layout branches build the tree from split-type and
           # split-child rather than measuring widths. The y in the sort is what
@@ -526,48 +752,41 @@
           # returned, so the partition below would shuffle them on every press.
           nth_id() { printf '%s' "$WINS" | jq -r ".[$1].id"; }
 
-          # ARM THE CENTRE SLOT SO A WINDOW MOVED INTO IT STACKS.
+          # ARM_CENTRE IS RETIRED (Step 1), so it is not re-invented. It used
+          # to `--insert south` the centre window at the end of every branch,
+          # protecting the one thing a rebuild could not: the centre is the
+          # only region WIDER than tall (2547x1393 on the ultrawide), so a
+          # window moved into it split SIDE BY SIDE and the layout became four
+          # columns — measured 1275 | 1271 | 1271 | 1273, the centre gone.
+          # (Moving into a SIDE column was always safe: taller than wide, so
+          # it stacks.) With it armed, the same move stacked into the centre
+          # at 2547px x2 and the columns survived.
           #
-          # THE PROBLEM THIS SOLVES is the one failure mode the snap cannot
-          # prevent by rebuilding: bsp chooses a split axis from the region's
-          # width/height ratio, and the centre slot is the one region that is
-          # WIDER THAN TALL (2547x1393 on the ultrawide). So moving a window
-          # into it splits it SIDE BY SIDE and the layout becomes four columns.
-          # Measured: 1275 | 1271 | 1271 | 1273, the centre gone. Moving into a
-          # SIDE column is safe — those are taller than wide, so they stack.
+          # TWO REASONS IT DIED, both from the auto-snap:
           #
-          # `window --insert south` sets a window's splitting mode explicitly,
-          # which overrides the aspect-ratio choice for the next insertion.
-          # Verified: with it armed, warping a window onto the centre stacked
-          # into the centre (2547px x2) and the three columns survived.
+          #   1. REDUNDANT. Any centre-destroying insertion now fires a
+          #      hookable event (or rides a keybinding that appends the snap),
+          #      and the rebuild restores the three columns without the arm.
+          #      The arm only ever bought "not destroyed BETWEEN key
+          #      presses", and there is no between any more.
+          #   2. ACTIVELY HARMFUL under signals, per the yabai source: the
+          #      armed node hijacks NEWLY CREATED windows, not just warps —
+          #      view->insertion_point is checked before the focused-window
+          #      lookup (view.c:768-782). Re-armed at the end of every
+          #      auto-snap, EVERY new window on the space would land on the
+          #      centre regardless of focus, fire the created signal, get
+          #      pulled back out by the rebuild, and re-arm the trap. Endless
+          #      churn with a surprise placement in the middle of it.
           #
-          # WHY IT IS SET TWICE, and the one claim here that is insurance
-          # rather than measurement. The man page says `--insert` is a TOGGLE:
-          # "If the current splitting mode matches the selected mode, the action
-          # will be undone". If that held, arming blindly would DISARM the centre
-          # on every second press of $mod+I — and the mode is NOT exposed by
-          # `query --windows`, so it cannot be read back and set conditionally.
+          # ALSO CONSIDERED AND REJECTED: swapping south for `--insert stack`
+          # (the caught window would JOIN the centre as a yabai-stack,
+          # view.c:773-780) — a nicer arm, but reason 2 applies to any armed
+          # mode, so it dies the same way.
           #
-          # DRIVEN, THE UNDO DID NOT HAPPEN: `--insert south` twice in a row
-          # still produced a stacked insertion (horizontal) on a region wide
-          # enough that the unarmed baseline was measured as vertical. So a
-          # single call would very likely do. The `east` first is kept anyway
-          # because it costs one command and makes the outcome independent of
-          # which behaviour istrue — whatever the prior mode, south never matches
-          # east, so the pair always lands on south.
-          #
-          # $mod+Shift+Return RUNS THIS SAME COMMAND on the focused window.
-          # Measured, that REINFORCES the arming rather than clearing it, so the
-          # two do not fight — see the toggle note above.
-          #
-          # NOT A SUBSTITUTE FOR $mod+I. The mode is consumed by the insertion,
-          # so this survives exactly one window landing in the centre. It buys
-          # "the layout is not destroyed", not "the layout stays even" — the
-          # ratios still drift and the key is still what re-evens them.
-          arm_centre() {
-            yabai -m window "$1" --insert east >/dev/null 2>&1 || true
-            yabai -m window "$1" --insert south >/dev/null 2>&1 || true
-          }
+          # $modShift+Return (`window --insert south` on the focused window)
+          # remains the MANUAL one-shot version of this gesture when you want
+          # the next window to land somewhere specific; the auto-snap will
+          # re-even the ratios right after it lands.
 
           case "$COUNT" in
             0)
@@ -583,7 +802,6 @@
             1)
               yabai -m space --padding "abs:$OUTER:$OUTER:$((OUTER + SIDE)):$((OUTER + SIDE))"
               yabai -m space --gap "abs:$INNER"
-              arm_centre "$(nth_id 0)"
               exit 0
               ;;
 
@@ -605,7 +823,6 @@
                 notify "Centred master" "Could not set the split ratio"
                 exit 1
               }
-              arm_centre "$(nth_id 1)"
               exit 0
               ;;
 
@@ -811,10 +1028,66 @@
                 notify "Centred master" \
                   "Left column will not go below ''${W_L}px (minimum size) — layout is approximate"
               fi
-              arm_centre "$CID"
               exit 0
               ;;
           esac
+        '';
+      };
+
+      # THE STEP-1 ENTRY POINTS: every path into the snap goes through here so
+      # that every path is SERIALISED. yabai's signal system has no debounce —
+      # an app opening three windows fires three actions (event_signal.c
+      # forks per subscriber, per event) — and the snap is not safe to run
+      # concurrently with itself: two interleaved runs warp against each
+      # other's half-built trees. flock makes bursts queue; each queued run
+      # re-queries from scratch, so the LAST run always lands the layout for
+      # the final window set and the earlier ones were at worst wasted work.
+      # (pkgs.flock is the discoteq port — macOS ships no flock(1).)
+      #
+      # Two modes:
+      #
+      #   (no args)  the SIGNAL path: quiet, and REFUSES to touch a space
+      #              whose layout is not bsp. That guard is what keeps
+      #              $mod+W/$mod+Y meaningful — without it, the first window
+      #              event on a deliberately-stacked space would force it
+      #              back to bsp (centerMaster asserts bsp for the manual
+      #              case) and stack mode would become unusable.
+      #   --manual   the $mod+I path: same lock (so a keypress cannot race a
+      #              signal), but loud, and no guard — the manual gesture is
+      #              exactly "make this space centred-master, whatever it is".
+      #
+      # The lock ORDERING matters: the bsp check runs AFTER the lock is
+      # taken, because the layout can change while waiting (e.g. queued
+      # behind a --manual run that is about to force bsp).
+      centerMasterAuto = pkgs.writeShellApplication {
+        name = "yabai-center-master-auto";
+        runtimeInputs = [
+          pkgs.flock
+          pkgs.yabai
+          pkgs.jq
+        ];
+        text = ''
+          LOCK="/tmp/yabai-center-master-$(id -u).lock"
+
+          case "''${1:-}" in
+            --manual)
+              exec flock "$LOCK" ${lib.getExe centerMaster}
+              ;;
+            --locked)
+              # Below the lock now — fall through to the guarded quiet snap.
+              ;;
+            *)
+              exec flock "$LOCK" "$0" --locked
+              ;;
+          esac
+
+          # Signals must never notify, so every failure here is a silent
+          # skip: a dead server during a signal storm would otherwise spam a
+          # notification per queued event.
+          TYPE=$(yabai -m query --spaces --space 2>/dev/null | jq -r '.type') \
+            || exit 0
+          if [ "$TYPE" != "bsp" ]; then exit 0; fi
+          exec ${lib.getExe centerMaster} --quiet
         '';
       };
 
@@ -991,7 +1264,17 @@
         # move that matches AeroSpace's `move` on a tree. --swap would exchange
         # two windows in place instead, never reshaping the tree, so a window
         # could not be moved into a different column.
-        ++ lib.mapAttrsToList (k: d: bind modShift k "yabai -m window --warp ${d}") directions
+        #
+        # THE APPENDED AUTO-SNAP IS THE window_moved GAP CLOSING (Step 1):
+        # a warp reshapes the tree but creates/destroys nothing, so none of
+        # the hooked signals fire, and window_moved — the event that WOULD
+        # fire — is unhookable (it also fires for the snap's own warps; see
+        # the plan block). So the one keybinding that moves windows within a
+        # space carries its own re-snap. && so a warp that failed at the
+        # layout edge (exit 1, layout unchanged) skips the rebuild.
+        ++ lib.mapAttrsToList (
+          k: d: bind modShift k "yabai -m window --warp ${d} && ${lib.getExe centerMasterAuto}"
+        ) directions
 
         ++ [
           ""
@@ -1004,9 +1287,18 @@
           # assuming these ten keys land where they read.
         ]
         ++ map (w: bind mod w.key "yabai -m space --focus ${w.index}") workspaces
-        # `--space ^<n>` follows the window to its new Space, matching
-        # AeroSpace's move-node-to-workspace, which focuses the target.
-        ++ map (w: bind modShift w.key "yabai -m window --space ^${w.index}") workspaces
+        # Follow the window to its new Space, matching AeroSpace's
+        # move-node-to-workspace, which focuses the target. The follow is a
+        # TRAILING `--focus` FLAG, not a `^` prefix on the selector — `^` is
+        # RULE syntax (`rule --add space='^3'`, yabai.asciidoc:658-660) and
+        # SPACE_SEL does not accept it (asciidoc:108). An earlier draft here
+        # wrote `--space ^<n>` and every one of these ten keys died with
+        # `value '^3' is not a valid option for SPACE_SEL`, exit 1 — measured
+        # live, which is also how the working form below was confirmed
+        # (window moved AND target space focused, exit 0). `--focus` is
+        # undocumented on `window --space`; the docs list the flag for no
+        # window subcommand except `--focus` itself.
+        ++ map (w: bind modShift w.key "yabai -m window --space ${w.index} --focus") workspaces
 
         ++ [
           ""
@@ -1037,8 +1329,10 @@
           "# --- Layout --------------------------------------------------------"
           # The centred-master snap. On I for the same reason aerospace.nix puts
           # it there: the deleted rectangle.nix used U/I/O for this row and I
-          # was its centreHalf.
-          (bind mod "i" (lib.getExe centerMaster))
+          # was its centreHalf. Through centerMasterAuto --manual since Step 1
+          # so the keypress takes the same flock as the signals — loud, and
+          # still forces bsp, unlike the signal path.
+          (bind mod "i" "${lib.getExe centerMasterAuto} --manual")
 
           # Flip the orientation of the split the focused window sits in —
           # hy3's implicit behaviour when you split against the grain, and
@@ -1179,6 +1473,49 @@
         enable = true;
         enableScriptingAddition = false;
 
+        # THE STEP-1 SIGNALS: this is what makes the centred master
+        # SELF-MAINTAINING. Each one re-runs the snap (through the flock +
+        # bsp-guard in centerMasterAuto) after an event that changes the
+        # visible window set. Registered here because nix-darwin's yabairc is
+        # a store path in the launchd plist, so edits to this list reload the
+        # agent and re-register from a clean table — no duplicate-label
+        # handling needed. Inspect live with `yabai -m signal --list`;
+        # kill switch: `yabai -m signal --remove center-master-auto-<event>`.
+        #
+        # THE EVENT LIST IS A LOOP-SAFETY ARGUMENT, not a convenience pick.
+        # window_moved and window_resized are DELIBERATELY ABSENT: yabai's
+        # own tiling moves fire them (no self-origin suppression —
+        # window_manager.c:732-738 admits the frame cache cannot provide
+        # one), so hooking either makes the snap trigger itself forever. The
+        # events below cannot be produced by the snap: it never creates,
+        # destroys, minimises, hides, or switches space.
+        #
+        #   window_created      fires AFTER the window is tiled
+        #                       (event_loop.c:590-596), so the snap sees it
+        #   window_destroyed    fires AFTER sibling promotion
+        #                       (event_loop.c:613-624); also covers app quit
+        #   window_minimized /  a minimised window is untiled but still
+        #   window_deminimized  queryable — hence the is-minimized filter
+        #   application_hidden / cmd+H, same shape as minimise. NOT
+        #   application_visible  source-traced; worst case a snap runs early
+        #                        and the next event corrects it
+        #   space_changed /     lazy healing: `window --space` changes the
+        #   display_changed     SOURCE space with no hookable event, so every
+        #                       space entry re-snaps instead. Idempotent =
+        #                       byte-identical geometry when already correct
+        extraConfig = lib.concatMapStringsSep "\n" (event:
+          "yabai -m signal --add event=${event} action='${lib.getExe centerMasterAuto}' label=center-master-auto-${event}"
+        ) [
+          "window_created"
+          "window_destroyed"
+          "window_minimized"
+          "window_deminimized"
+          "application_hidden"
+          "application_visible"
+          "space_changed"
+          "display_changed"
+        ];
+
         config = {
           layout = "bsp";
 
@@ -1215,11 +1552,12 @@
           # their vertical order and the layout never settles.
           window_placement = "second_child";
           split_ratio = 0.5;
-          # OFF, and this matters more here than it looks: auto_balance would
-          # re-equalise every ratio whenever a window opens or closes, which
-          # would undo a snap immediately rather than merely failing to maintain
-          # it. The snap is already documented as not self-maintaining; this
-          # keeps it from being actively destroyed.
+          # OFF, and it matters even more since Step 1: auto_balance
+          # re-equalises every ratio whenever a window opens or closes —
+          # i.e. it would fight the auto-snap ON THE SAME EVENTS, yabai
+          # flattening the ratios internally while the signal-driven snap
+          # re-asserts 1/4|1/2|1/4 from outside. With it off, the signals are
+          # the only thing reacting to window events.
           auto_balance = "off";
 
           # fn as the drag modifier keeps the mouse bindings off the four-
