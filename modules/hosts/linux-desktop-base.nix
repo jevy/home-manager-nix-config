@@ -85,7 +85,6 @@ in
             homeManager.mutt
             homeManager.spicetify
             homeManager.ncspot
-            homeManager.nixvimVscode
             homeManager.clipboard
             homeManager.desktopApps
             homeManager.linuxDesktop

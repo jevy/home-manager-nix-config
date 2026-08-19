@@ -209,7 +209,6 @@ in
 
               # Development
               homeManager.nixvim
-              homeManager.nixvimVscode
               homeManager.neovide
               homeManager.direnv
               homeManager.git
