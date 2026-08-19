@@ -1,0 +1,400 @@
+From 26e2e16249354ef9f9fc8f255a3f55bf75acadc6 Mon Sep 17 00:00:00 2001
+From: jevin <jevin@quickjack.ca>
+Date: Wed, 19 Aug 2026 08:57:38 -0400
+Subject: [PATCH] feat: native master_center layout with configurable
+ center_ratio
+
+A fourth layout: quarter | centred master | quarter. The bsp tree is kept
+as an ordered container only; view_update assigns every occupied leaf its
+frame directly in one pass. Window counts 1 and 2 leave the unused side
+columns empty. Slot widths come from 'config center_ratio' (default 0.5);
+side columns split the remainder equally and subdivide vertically.
+
+warp/swap/insert/zoom-fullscreen allowed; ratio/zoom-parent/rotate/
+mirror/balance/equalize remain bsp-only (internal node areas are not
+maintained under this layout).
+---
+ doc/yabai.asciidoc   | 11 ++++--
+ src/message.c        | 29 +++++++++++++++
+ src/space_manager.c  | 12 +++++++
+ src/space_manager.h  |  2 ++
+ src/view.c           | 85 ++++++++++++++++++++++++++++++++++++++++++--
+ src/view.h           |  6 ++--
+ src/window_manager.c | 13 +++----
+ 7 files changed, 145 insertions(+), 13 deletions(-)
+
+diff --git a/doc/yabai.asciidoc b/doc/yabai.asciidoc
+index 1ed7dcf..23bbfc9 100644
+--- a/doc/yabai.asciidoc
++++ b/doc/yabai.asciidoc
+@@ -217,6 +217,10 @@ Global Settings
+ *split_ratio* ['<FLOAT_SEL>']::
+     Specify the size distribution when a window is split.
+ 
++*center_ratio* ['<FLOAT_SEL>']::
++    Fraction of the available width given to the centre column in the 'master_center' layout. +
++    The two side columns split the remainder equally. Default: 0.5.
++
+ *mouse_modifier* ['cmd|alt|shift|ctrl|fn']::
+     Keyboard modifier used for moving and resizing windows.
+ 
+@@ -232,7 +236,7 @@ Global Settings
+ Space Settings
+ ^^^^^^^^^^^^^^
+ 
+-*layout* ['bsp|stack|float']::
++*layout* ['bsp|stack|float|master_center']::
+     Set the layout of the selected space.
+ 
+ *split_type* ['vertical|horizontal|auto']::
+@@ -351,8 +355,9 @@ COMMAND
+ *--toggle* 'padding|gap|mission-control|show-desktop'::
+     Toggle space setting on or off for the selected space.
+ 
+-*--layout* 'bsp|stack|float'::
+-    Set the layout of the selected space.
++*--layout* 'bsp|stack|float|master_center'::
++    Set the layout of the selected space. +
++    'master_center': one window occupies a centred master column of width 'center_ratio'; remaining windows stack vertically in equal-width side columns (first half left, rest right). With one window both side columns are left empty; with two, the right column is left empty.
+ 
+ *--label* ['<LABEL>']::
+     Label the selected space, allowing that label to be used as an alias in commands that take a `SPACE_SEL` parameter. +
+diff --git a/src/message.c b/src/message.c
+index 5fa53e3..f2006bd 100644
+--- a/src/message.c
++++ b/src/message.c
+@@ -44,6 +44,7 @@ extern bool g_verbose;
+ #define COMMAND_CONFIG_LAYOUT                "layout"
+ #define COMMAND_CONFIG_WINDOW_GAP            "window_gap"
+ #define COMMAND_CONFIG_SPLIT_RATIO           "split_ratio"
++#define COMMAND_CONFIG_CENTER_RATIO          "center_ratio"
+ #define COMMAND_CONFIG_SPLIT_TYPE            "split_type"
+ #define COMMAND_CONFIG_AUTO_BALANCE          "auto_balance"
+ #define COMMAND_CONFIG_MOUSE_MOD             "mouse_modifier"
+@@ -72,6 +73,7 @@ extern bool g_verbose;
+ #define ARGUMENT_CONFIG_LAYOUT_BSP            "bsp"
+ #define ARGUMENT_CONFIG_LAYOUT_STACK          "stack"
+ #define ARGUMENT_CONFIG_LAYOUT_FLOAT          "float"
++#define ARGUMENT_CONFIG_LAYOUT_MC             "master_center"
+ #define ARGUMENT_CONFIG_SPLIT_TYPE_Y          "vertical"
+ #define ARGUMENT_CONFIG_SPLIT_TYPE_X          "horizontal"
+ #define ARGUMENT_CONFIG_SPLIT_TYPE_AUTO       "auto"
+@@ -125,6 +127,7 @@ extern bool g_verbose;
+ #define ARGUMENT_SPACE_LAYOUT_BSP   "bsp"
+ #define ARGUMENT_SPACE_LAYOUT_STACK "stack"
+ #define ARGUMENT_SPACE_LAYOUT_FLT   "float"
++#define ARGUMENT_SPACE_LAYOUT_MC    "master_center"
+ /* ----------------------------------------------------------------------------- */
+ 
+ /* --------------------------------DOMAIN WINDOW-------------------------------- */
+@@ -1523,6 +1526,15 @@ static void handle_domain_config(FILE *rsp, struct token domain, char *message)
+                     } else {
+                         daemon_fail(rsp, "cannot set layout for a macOS fullscreen space!\n");
+                     }
++                } else if (token_equals(value, ARGUMENT_CONFIG_LAYOUT_MC)) {
++                    if (space_is_user(sel_sid)) {
++                        view_set_flag(view, VIEW_LAYOUT);
++                        view->layout = VIEW_MASTER_CENTER;
++                        view_clear(view);
++                        window_manager_validate_and_check_for_windows_on_space(&g_space_manager, &g_window_manager, sel_sid);
++                    } else {
++                        daemon_fail(rsp, "cannot set layout for a macOS fullscreen space!\n");
++                    }
+                 } else {
+                     daemon_fail(rsp, "unknown value '%.*s' given to command '%.*s' for domain '%.*s'\n", value.length, value.text, command.length, command.text, domain.length, domain.text);
+                 }
+@@ -1535,6 +1547,8 @@ static void handle_domain_config(FILE *rsp, struct token domain, char *message)
+                     space_manager_set_layout_for_all_spaces(&g_space_manager, VIEW_STACK);
+                 } else if (token_equals(value, ARGUMENT_CONFIG_LAYOUT_FLOAT)) {
+                     space_manager_set_layout_for_all_spaces(&g_space_manager, VIEW_FLOAT);
++                } else if (token_equals(value, ARGUMENT_CONFIG_LAYOUT_MC)) {
++                    space_manager_set_layout_for_all_spaces(&g_space_manager, VIEW_MASTER_CENTER);
+                 } else {
+                     daemon_fail(rsp, "unknown value '%.*s' given to command '%.*s' for domain '%.*s'\n", value.length, value.text, command.length, command.text, domain.length, domain.text);
+                 }
+@@ -1548,6 +1562,15 @@ static void handle_domain_config(FILE *rsp, struct token domain, char *message)
+             } else {
+                 daemon_fail(rsp, "unknown value '%.*s' given to command '%.*s' for domain '%.*s'\n", value.token.length, value.token.text, command.length, command.text, domain.length, domain.text);
+             }
++        } else if (token_equals(command, COMMAND_CONFIG_CENTER_RATIO)) {
++            struct token_value value = token_to_value(get_token(&message));
++            if (value.type == TOKEN_TYPE_INVALID) {
++                fprintf(rsp, "%.4f\n", g_space_manager.center_ratio);
++            } else if (value.type == TOKEN_TYPE_FLOAT && in_range_ii(value.float_value, 0.1f, 0.9f)) {
++                space_manager_set_center_ratio(&g_space_manager, value.float_value);
++            } else {
++                daemon_fail(rsp, "unknown value '%.*s' given to command '%.*s' for domain '%.*s'\n", value.token.length, value.token.text, command.length, command.text, domain.length, domain.text);
++            }
+         } else if (token_equals(command, COMMAND_CONFIG_SPLIT_TYPE)) {
+             struct token value = get_token(&message);
+             if (sel_sid) {
+@@ -2024,6 +2047,12 @@ static void handle_domain_space(FILE *rsp, struct token domain, char *message)
+                 } else {
+                     daemon_fail(rsp, "cannot set layout for a macOS fullscreen space!\n");
+                 }
++            } else if (token_equals(value, ARGUMENT_SPACE_LAYOUT_MC)) {
++                if (space_is_user(acting_sid)) {
++                    space_manager_set_layout_for_space(&g_space_manager, acting_sid, VIEW_MASTER_CENTER);
++                } else {
++                    daemon_fail(rsp, "cannot set layout for a macOS fullscreen space!\n");
++                }
+             } else {
+                 daemon_fail(rsp, "unknown value '%.*s' given to command '%.*s' for domain '%.*s'\n", value.length, value.text, command.length, command.text, domain.length, domain.text);
+             }
+diff --git a/src/space_manager.c b/src/space_manager.c
+index f8215b3..48e6890 100644
+--- a/src/space_manager.c
++++ b/src/space_manager.c
+@@ -256,6 +256,17 @@ void space_manager_toggle_show_desktop(uint64_t sid)
+     CoreDockSendNotification(CFSTR("com.apple.showdesktop.awake"), 0);
+ }
+ 
++void space_manager_set_center_ratio(struct space_manager *sm, float ratio)
++{
++    sm->center_ratio = ratio;
++    table_for (struct view *view, sm->view, {
++        if (view->layout == VIEW_MASTER_CENTER) {
++            view_update(view);
++            view_flush(view);
++        }
++    })
++}
++
+ void space_manager_set_layout_for_all_spaces(struct space_manager *sm, enum view_type layout)
+ {
+     sm->layout = layout;
+@@ -1203,6 +1214,7 @@ void space_manager_begin(struct space_manager *sm)
+ {
+     sm->layout = VIEW_FLOAT;
+     sm->split_ratio = 0.5f;
++    sm->center_ratio = 0.5f;
+     sm->auto_balance = SPLIT_NONE;
+     sm->split_type = SPLIT_AUTO;
+     sm->window_placement = CHILD_SECOND;
+diff --git a/src/space_manager.h b/src/space_manager.h
+index 9fc32aa..baeff3f 100644
+--- a/src/space_manager.h
++++ b/src/space_manager.h
+@@ -20,6 +20,7 @@ struct space_manager
+     int right_padding;
+     int window_gap;
+     float split_ratio;
++    float center_ratio;
+     enum window_node_split split_type;
+     enum window_node_child window_placement;
+     enum window_insertion_point window_insertion_point;
+@@ -51,6 +52,7 @@ bool space_manager_query_spaces_for_displays(FILE *rsp, uint64_t flags);
+ struct view *space_manager_query_view(struct space_manager *sm, uint64_t sid);
+ struct view *space_manager_find_view(struct space_manager *sm, uint64_t sid);
+ void space_manager_refresh_view(struct space_manager *sm, uint64_t sid);
++void space_manager_set_center_ratio(struct space_manager *sm, float ratio);
+ void space_manager_mark_view_invalid(struct space_manager *sm,  uint64_t sid);
+ void space_manager_mark_view_dirty(struct space_manager *sm,  uint64_t sid);
+ void space_manager_untile_window(struct view *view, struct window *window);
+diff --git a/src/view.c b/src/view.c
+index 160737e..16124ec 100644
+--- a/src/view.c
++++ b/src/view.c
+@@ -718,6 +718,11 @@ struct window_node *view_remove_window_node(struct view *view, struct window *wi
+     free(child);
+     free(node);
+ 
++    if (view->layout == VIEW_MASTER_CENTER) {
++        view_update(view);
++        return view->root;
++    }
++
+     if (view->auto_balance != SPLIT_NONE) {
+         window_node_balance(view->root, view->auto_balance);
+         view_update(view);
+@@ -748,6 +753,69 @@ void view_stack_window_node(struct window_node *node, struct window *window)
+     ++node->window_count;
+ }
+ 
++//
++// The master_center layout: quarter | centred half | quarter, the fixed
++// column widths never changing with window count. The bsp tree is kept
++// as-is and used ONLY as an ordered container — splits and ratios are
++// ignored, and every occupied leaf is assigned its frame directly, in
++// leaf order: the first count/2 leaves stack in the left column, the
++// next is the centre, the rest stack in the right column. One window
++// gets the centred half with both quarters empty; two get the left
++// quarter and the centre with the right quarter empty. A leaf may hold
++// a window stack; it occupies a single slot.
++//
++// Internal node areas are deliberately NOT maintained; anything that
++// consumes them (zoom-parent, mouse bsp-grid adjust, --ratio) is guarded
++// off for this layout in window_manager.c.
++//
++static void view_master_center_column(struct window_node **leaves, int first, int count, float x, float w, float y, float h, int gap)
++{
++    float wh = (h - (count - 1) * gap) / count;
++    for (int i = 0; i < count; ++i) {
++        leaves[first+i]->area = (struct area) { x, y + i * (wh + gap), w, wh };
++    }
++}
++
++static void view_master_center_update(struct view *view)
++{
++    struct window_node **leaves = NULL;
++    for (struct window_node *node = window_node_find_first_leaf(view->root); node; node = window_node_find_next_leaf(node)) {
++        if (window_node_is_occupied(node)) ts_buf_push(leaves, node);
++    }
++
++    int count = leaves ? ts_buf_len(leaves) : 0;
++    if (!count) return;
++
++    int gap = window_node_get_gap(view);
++    struct area bounds = view->root->area;
++
++    float avail  = bounds.w - 2 * gap;
++    float center = avail * g_space_manager.center_ratio;
++    float side   = (avail - center) * 0.5f;
++    float center_x = bounds.x + side + gap;
++
++    if (count == 1) {
++        leaves[0]->area = (struct area) { center_x, bounds.y, center, bounds.h };
++    } else if (count == 2) {
++        leaves[0]->area = (struct area) { bounds.x, bounds.y, side, bounds.h };
++        leaves[1]->area = (struct area) { center_x, bounds.y, center, bounds.h };
++    } else {
++        int nl = count / 2;
++        int nr = count - 1 - nl;
++
++        float right_x = center_x + center + gap;
++        float right_w = bounds.x + bounds.w - right_x;
++
++        view_master_center_column(leaves, 0, nl, bounds.x, side, bounds.y, bounds.h, gap);
++        leaves[nl]->area = (struct area) { center_x, bounds.y, center, bounds.h };
++        view_master_center_column(leaves, nl + 1, nr, right_x, right_w, bounds.y, bounds.h, gap);
++    }
++
++    for (int i = 0; i < count; ++i) {
++        if (leaves[i]->insert_dir) insert_feedback_show(leaves[i]);
++    }
++}
++
+ struct window_node *view_add_window_node_with_insertion_point(struct view *view, struct window *window, uint32_t insertion_point)
+ {
+     if (!window_node_is_occupied(view->root) &&
+@@ -755,8 +823,11 @@ struct window_node *view_add_window_node_with_insertion_point(struct view *view,
+         view->root->window_list[0] = window->id;
+         view->root->window_order[0] = window->id;
+         view->root->window_count = 1;
++
++        if (view->layout == VIEW_MASTER_CENTER) view_update(view);
++
+         return view->root;
+-    } else if (view->layout == VIEW_BSP) {
++    } else if (view->layout == VIEW_BSP || view->layout == VIEW_MASTER_CENTER) {
+         uint32_t prev_insertion_point = 0;
+         struct window_node *leaf = NULL;
+ 
+@@ -796,6 +867,11 @@ struct window_node *view_add_window_node_with_insertion_point(struct view *view,
+ 
+         window_node_split(view, leaf, window);
+ 
++        if (view->layout == VIEW_MASTER_CENTER) {
++            view_update(view);
++            return view->root;
++        }
++
+         if (view->auto_balance != SPLIT_NONE) {
+             window_node_balance(view->root, view->auto_balance);
+             view_update(view);
+@@ -978,7 +1054,12 @@ void view_update(struct view *view)
+         view->root->area.h -= (view->top_padding + view->bottom_padding);
+     }
+ 
+-    window_node_update(view, view->root);
++    if (view->layout == VIEW_MASTER_CENTER) {
++        view_master_center_update(view);
++    } else {
++        window_node_update(view, view->root);
++    }
++
+     view_set_flag(view, VIEW_IS_VALID);
+     view_set_flag(view, VIEW_IS_DIRTY);
+ }
+diff --git a/src/view.h b/src/view.h
+index 25b4e84..df16978 100644
+--- a/src/view.h
++++ b/src/view.h
+@@ -171,7 +171,8 @@ enum view_type
+     VIEW_DEFAULT,
+     VIEW_BSP,
+     VIEW_STACK,
+-    VIEW_FLOAT
++    VIEW_FLOAT,
++    VIEW_MASTER_CENTER
+ };
+ 
+ static const char *view_type_str[] =
+@@ -179,7 +180,8 @@ static const char *view_type_str[] =
+     "default",
+     "bsp",
+     "stack",
+-    "float"
++    "float",
++    "master_center"
+ };
+ 
+ enum view_flag
+diff --git a/src/window_manager.c b/src/window_manager.c
+index 13bc245..644bff0 100644
+--- a/src/window_manager.c
++++ b/src/window_manager.c
+@@ -303,6 +303,7 @@ enum window_op_error window_manager_adjust_window_ratio(struct window_manager *w
+ 
+     struct view *view = window_manager_find_managed_window(wm, window);
+     if (!view) return WINDOW_OP_ERROR_INVALID_SRC_VIEW;
++    if (view->layout == VIEW_MASTER_CENTER) return WINDOW_OP_ERROR_INVALID_SRC_VIEW;
+ 
+     struct window_node *node = view_find_window_node(view, window->id);
+     if (!node || !node->parent) return WINDOW_OP_ERROR_INVALID_SRC_NODE;
+@@ -1751,7 +1752,7 @@ enum window_op_error window_manager_set_window_insertion(struct space_manager *s
+ 
+     uint64_t sid = window_space(window->id);
+     struct view *view = space_manager_find_view(sm, sid);
+-    if (view->layout != VIEW_BSP) return WINDOW_OP_ERROR_INVALID_SRC_VIEW;
++    if (view->layout != VIEW_BSP && view->layout != VIEW_MASTER_CENTER) return WINDOW_OP_ERROR_INVALID_SRC_VIEW;
+ 
+     struct window_node *node = view_find_window_node(view, window->id);
+     if (!node) return WINDOW_OP_ERROR_INVALID_SRC_NODE;
+@@ -1837,11 +1838,11 @@ enum window_op_error window_manager_warp_window(struct space_manager *sm, struct
+ 
+     uint64_t a_sid = window_space(a->id);
+     struct view *a_view = space_manager_find_view(sm, a_sid);
+-    if (a_view->layout != VIEW_BSP) return WINDOW_OP_ERROR_INVALID_SRC_VIEW;
++    if (a_view->layout != VIEW_BSP && a_view->layout != VIEW_MASTER_CENTER) return WINDOW_OP_ERROR_INVALID_SRC_VIEW;
+ 
+     uint64_t b_sid = window_space(b->id);
+     struct view *b_view = space_manager_find_view(sm, b_sid);
+-    if (b_view->layout != VIEW_BSP) return WINDOW_OP_ERROR_INVALID_DST_VIEW;
++    if (b_view->layout != VIEW_BSP && b_view->layout != VIEW_MASTER_CENTER) return WINDOW_OP_ERROR_INVALID_DST_VIEW;
+ 
+     struct window_node *a_node = view_find_window_node(a_view, a->id);
+     if (!a_node) return WINDOW_OP_ERROR_INVALID_SRC_NODE;
+@@ -2001,8 +2002,8 @@ enum window_op_error window_manager_swap_window(struct space_manager *sm, struct
+         return WINDOW_OP_ERROR_SUCCESS;
+     }
+ 
+-    if (a_view->layout != VIEW_BSP) return WINDOW_OP_ERROR_INVALID_SRC_VIEW;
+-    if (b_view->layout != VIEW_BSP) return WINDOW_OP_ERROR_INVALID_DST_VIEW;
++    if (a_view->layout != VIEW_BSP && a_view->layout != VIEW_MASTER_CENTER) return WINDOW_OP_ERROR_INVALID_SRC_VIEW;
++    if (b_view->layout != VIEW_BSP && b_view->layout != VIEW_MASTER_CENTER) return WINDOW_OP_ERROR_INVALID_DST_VIEW;
+ 
+     if (window_node_contains_window(a_node, a_view->insertion_point)) {
+         a_view->insertion_point = b->id;
+@@ -2357,7 +2358,7 @@ void window_manager_toggle_window_zoom_fullscreen(struct window_manager *wm, str
+     TIME_FUNCTION;
+ 
+     struct view *view = window_manager_find_managed_window(wm, window);
+-    if (!view || view->layout != VIEW_BSP) return;
++    if (!view || (view->layout != VIEW_BSP && view->layout != VIEW_MASTER_CENTER)) return;
+ 
+     struct window_node *node = view_find_window_node(view, window->id);
+     assert(node);
+-- 
+2.55.0
+
