@@ -64,6 +64,14 @@ in
         # land in /Applications/Nix Apps as a real copy rather than a
         # user-scoped symlink into /nix — see the module header.
         darwin.meetingbar
+
+        # Brightness on the external Dell. macOS never speaks DDC/CI, so the
+        # native slider cannot reach it — this is the only module that installs
+        # via a Homebrew cask rather than nixpkgs, because nixpkgs' build loses
+        # the vendor signature the Accessibility grant has to anchor to. Read
+        # its header before adding any other cask; it also documents why
+        # onActivation.cleanup is still "none".
+        darwin.monitorcontrol
       ];
 
       nixpkgs.hostPlatform = "aarch64-darwin";
