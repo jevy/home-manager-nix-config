@@ -27,7 +27,7 @@
 # `homeManager.mcp` IS imported, restricted by `local.mcp.only` below. It was
 # absent originally because two wrappers (truenas, github) interpolated a sops
 # path at eval time; both now read their token by guarded literal path, the
-# same way grafana/brave/n8n always did, so the module evaluates with no sops
+# same way grafana/brave always did, so the module evaluates with no sops
 # at all.
 #
 # `homeManager.cliBase` is sops-free (the sops-using CLI bits live in
@@ -93,9 +93,10 @@ in
         #   brave-search          BRAVE_API_KEY from the Secret
         #
         # Left out: playwright (chromium, and no display to drive it),
-        # homeassistant and n8n (tokens not in the Secret yet — add the key
-        # there and the name here), truenas and linear (same, plus linear wants
-        # an interactive OAuth flow).
+        # homeassistant and truenas (tokens not in the Secret yet — add the
+        # key there and the name here), and hermes (its wrapper `kubectl exec`s
+        # into the hermes namespace, which the pod's ServiceAccount is not
+        # granted).
         local.mcp.only = [
           "context7"
           "git"

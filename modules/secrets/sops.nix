@@ -27,7 +27,6 @@
           github_personal_access_token = { };
           grafana_homelab_secret = { };
           truenas_api_key = { };
-          n8n_api_key = { };
           obsidian_api_key = { };
           homeassistant_token = { };
           linkedin_cookie = { };

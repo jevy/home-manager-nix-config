@@ -230,15 +230,15 @@ in
                 # executable, and chromium is Linux-only in nixpkgs
                 # (`lib.getAttrs` never forces the excluded server, so
                 # chromium stays out of the closure). context7, kubernetes,
-                # grafana, n8n, truenas and homeassistant are out by
-                # preference — not wanted on this machine. brave-search's key
+                # grafana, truenas, homeassistant and hermes are out by
+                # preference — not wanted on this machine (hermes would also
+                # need a cluster kubeconfig here). brave-search's key
                 # is in the shared secrets.yaml and decrypts here via
                 # homeManager.sops.
                 local.mcp.only = [
                   "git"
                   "time"
                   "brave-search"
-                  "linear"
                 ];
               }
 
