@@ -91,5 +91,41 @@
       };
     };
 
+    # ddcci-driver (out-of-tree DDC/CI kernel module, pulled in by
+    # services.ddccontrol on the P14s) calls strncpy() in ddcci.c, but kernel
+    # 7.2 removed strncpy from <linux/string.h> (in favour of strscpy), so the
+    # module no longer compiles: GCC 15 hard-errors on the implicit
+    # declaration. Swap the 5 strncpy(buf, device->X, PAGE_SIZE) calls to
+    # strscpy() — semantically identical here (NUL-terminated copy into a
+    # sysfs show buffer). Scope to linuxPackages_latest (7.2); older kernels
+    # still ship strncpy. TODO: drop once nixpkgs bumps ddcci-driver to a rev
+    # that's fixed upstream.
+    ddcciDriverFix = final: prev: {
+      linuxPackages_latest = prev.linuxPackages_latest.extend (self: super: {
+        ddcci-driver = super.ddcci-driver.overrideAttrs (old: {
+          postPatch = (old.postPatch or "") + ''
+            substituteInPlace ./ddcci/ddcci.c \
+              --replace-fail 'strncpy(buf, device->' 'strscpy(buf, device->'
+          '';
+        });
+      });
+    };
+
+    # masterpdfeditor 5.9.98's tarball was removed from code-industry.net
+    # (404), breaking the fetch. Pin src to 5.9.99, the oldest version the
+    # vendor still hosts. The x86_64-only URL/hash is fine: the package's
+    # `src` selects per-system, but our hosts are all x86_64-linux and this
+    # is what the previous 5.9.98 hash covered. TODO: drop once nixpkgs bumps
+    # masterpdfeditor past the deleted version.
+    masterpdfeditorFix = final: prev: {
+      masterpdfeditor = prev.masterpdfeditor.overrideAttrs (old: {
+        version = "5.9.99";
+        src = prev.fetchurl {
+          url = "https://code-industry.net/public/master-pdf-editor-5.9.99-qt5.x86_64-qt_include.tar.gz";
+          hash = "sha256-ksVuJyuImstESVwHUmOUv6aERosg6g5bSsRvPSf5EVM=";
+        };
+      });
+    };
+
   };
 }

@@ -37,7 +37,6 @@
         js8call               # JS8Call — keyboard chat over FT8-like protocol
         fldigi                # Olivia, PSK31, MFSK, RTTY, Hellschreiber, etc.
         gridtracker           # Live WSJT-X decode map
-        grig                  # Hamlib rig control GUI
         flrig                 # Rig control GUI used by fldigi/wsjtx
         tqsl                  # ARRL Logbook of the World
         sparksdr              # SparkSDR for RSPdx multi-band monitoring

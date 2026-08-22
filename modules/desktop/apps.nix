@@ -84,7 +84,6 @@
         # Ham radio rig control
         flrig
         hamlib_4
-        grig
         tigervnc
         remmina
         xauth

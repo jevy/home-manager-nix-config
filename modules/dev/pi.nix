@@ -270,6 +270,7 @@ in
           # MCP client — reads ~/.pi/agent/mcp.json, written by
           # ./mcp.nix from the same `programs.mcp.servers` Claude Code gets.
           "npm:pi-mcp-extension"
+          "npm:pi-mcp-adapter"
         ];
       };
 

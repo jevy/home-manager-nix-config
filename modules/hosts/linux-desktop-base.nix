@@ -51,6 +51,8 @@ in
         overlays.bambuStudio
         overlays.goobookRelaxDeps
         overlays.powerProfilesDaemonSkipCheck
+        overlays.ddcciDriverFix
+        overlays.masterpdfeditorFix
       ];
 
       system.stateVersion = "24.11";

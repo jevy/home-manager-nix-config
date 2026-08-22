@@ -1,9 +1,30 @@
 # Hyprland window manager configuration
 { inputs, ... }:
+let
+  # Hyprland v0.56.2 needs one patch on top of the released flake: nixpkgs
+  # ships glaze 8.x, but the v0.56.2 CMakeLists pins `find_package(glaze
+  # 7...<8)`, so CMake misses the system glaze and falls back to a FetchContent
+  # git clone — which then fails (no git in the sandbox). Upstream dropped the
+  # version constraint one commit after the tag (91f29f2 "flake.lock: update,
+  # drop glaze version requirement"); glaze 8.x is API-compatible so no C++
+  # change is needed.
+  #
+  # Kept as a shared binding because TWO consumers build the raw flake package:
+  # the overlay below (→ pkgs.hyprland) and the hy3 plugin (→ its own
+  # `hyprland` buildInput). Both must see the same patched derivation or the
+  # unpatched one fails the build.
+  patchedHyprland = system:
+    (inputs.hyprland.packages.${system}.hyprland).overrideAttrs (old: {
+      postPatch = (old.postPatch or "") + ''
+        substituteInPlace CMakeLists.txt \
+          --replace-fail 'find_package(glaze 7...<8 QUIET)' 'find_package(glaze QUIET)'
+      '';
+    });
+in
 {
   # Overlay: Pin hyprland version from flake input
   flake.overlays.hyprland = final: prev: {
-    hyprland = inputs.hyprland.packages.${prev.stdenv.hostPlatform.system}.hyprland;
+    hyprland = patchedHyprland prev.stdenv.hostPlatform.system;
   };
 
   # NixOS hyprland configuration
@@ -13,7 +34,7 @@
     {
       programs.hyprland = {
         enable = lib.mkDefault true;
-        package = lib.mkDefault inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+        package = lib.mkDefault pkgs.hyprland;
         withUWSM = lib.mkDefault true;
       };
 
@@ -56,7 +77,7 @@
 
   # Home-manager hyprland configuration
   flake.modules.homeManager.hyprland =
-    { config, pkgs, lib, ... }:
+    { pkgs, lib, ... }:
     {
       services.hyprpolkitagent.enable = true;
 
@@ -131,7 +152,6 @@
             # Dynamic monitor config file — sourced by Hyprland on reload.
             # Lives in /tmp (cleared on reboot; recreated by exec-once startup script).
             # Scripts write this file AND apply keywords for immediate effect.
-            monitorConf = "/tmp/hypr-monitors.conf";
 
             monitorAttached = pkgs.writeShellScript "monitor-attached" ''
               JQ="${pkgs.jq}/bin/jq"
@@ -725,7 +745,12 @@ MONEOF
         extraConfig = ''
           # Load hy3 at parse time (see plugins = [ ] note above). Position is
           # irrelevant — declared plugins load post-parse, then trigger a reload.
-          plugin = ${inputs.hy3.packages.${pkgs.stdenv.hostPlatform.system}.hy3}/lib/libhy3.so
+          # hy3 builds against the raw hyprland flake package; override it to
+          # the patched derivation (glaze version-constraint fix) so its
+          # hyprland buildInput doesn't pull the unpatched, unbuildable one.
+          plugin = ${(inputs.hy3.packages.${pkgs.stdenv.hostPlatform.system}.hy3.override {
+            hyprland = patchedHyprland pkgs.stdenv.hostPlatform.system;
+          })}/lib/libhy3.so
           source = /tmp/hypr-monitors.conf
         '';
       };
