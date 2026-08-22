@@ -45,7 +45,6 @@ in
       };
       nixpkgs.overlays = [
         overlays.volsync
-        overlays.hyprland
         overlays.mcpServers
         overlays.bambuStudio
         overlays.goobookRelaxDeps
