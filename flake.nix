@@ -117,43 +117,6 @@
       url = "github:JacquesvanWyk/herdr-hunk";
       flake = false;
     };
-    hyprland = {
-      # Bumped 0.53.1 → 0.55.4: ashell 0.9.0 requires the `tiledLayout` field in
-      # Hyprland's workspace IPC, which only exists from 0.54+ (layout-engine
-      # redesign). Without it the workspace indicator silently disappears.
-      # Bumped 0.55.4 → 0.56.2: 0.55.4's flake set has a cross-toolchain ABI
-      # break (guiutils built with GCC15 links hyprtoolkit built with GCC16 →
-      # undefined GLIBCXX_3.4.36; hyprland-guiutils#23). Still ≥0.54 for
-      # ashell's tiledLayout IPC field, and co-tested with hy3 hl0.56.0.1.
-      #
-      # v0.56.2's flake.lock itself does NOT fully clear the GCC15/GCC16 seam:
-      # nixpkgs builds hyprtoolkit with gcc16Stdenv, but v0.56.2 still pins
-      # hyprland-guiutils (a16ad89) and xdg-desktop-portal-hyprland (b653ab5)
-      # to gcc15Stdenv, so guiutils fails to link hyprtoolkit
-      # (GLIBCXX_3.4.36 undefined). Upstream Hyprland fixed this one commit
-      # after the tag in 45c8510 "flake.lock: update" by bumping those two
-      # inputs to their "nix: gcc 15 -> 16" commits. We apply the same two
-      # bumps here as sub-input overrides so hyprland itself stays on the
-      # released v0.56.2 tag (keeps hy3's plugin ABI target intact) instead of
-      # jumping to an untagged master snapshot.
-      url = "github:hyprwm/Hyprland/v0.56.2";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        # "nix: gcc 15 -> 16" — parent is a16ad89 (v0.56.2's pin), C++ untouched
-        hyprland-guiutils.url = "github:hyprwm/hyprland-guiutils/4c30cf3097ea963c0e250749ee0c59f8b08816d6";
-        # "nix: gcc 15 -> 16" — parent chain is b653ab5 (v0.56.2's pin)
-        xdph.url = "github:hyprwm/xdg-desktop-portal-hyprland/9f0e9ff02739cd538d39bd706422dc50e9ca60dd";
-      };
-    };
-    hy3 = {
-      # Must track the Hyprland minor for plugin ABI compatibility.
-      url = "github:outfoxxed/hy3/hl0.56.0.1";
-      inputs.hyprland.follows = "hyprland";
-    };
-    hyprland-plugins = {
-      url = "github:hyprwm/hyprland-plugins";
-      inputs.hyprland.follows = "hyprland";
-    };
     typing-analysis = {
       url = "github:jevy/typing-analysis";
       inputs.nixpkgs.follows = "nixpkgs";

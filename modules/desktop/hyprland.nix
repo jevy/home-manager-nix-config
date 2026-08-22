@@ -1,32 +1,29 @@
 # Hyprland window manager configuration
-{ inputs, ... }:
-let
-  # Hyprland v0.56.2 needs one patch on top of the released flake: nixpkgs
-  # ships glaze 8.x, but the v0.56.2 CMakeLists pins `find_package(glaze
-  # 7...<8)`, so CMake misses the system glaze and falls back to a FetchContent
-  # git clone — which then fails (no git in the sandbox). Upstream dropped the
-  # version constraint one commit after the tag (91f29f2 "flake.lock: update,
-  # drop glaze version requirement"); glaze 8.x is API-compatible so no C++
-  # change is needed.
-  #
-  # Kept as a shared binding because TWO consumers build the raw flake package:
-  # the overlay below (→ pkgs.hyprland) and the hy3 plugin (→ its own
-  # `hyprland` buildInput). Both must see the same patched derivation or the
-  # unpatched one fails the build.
-  patchedHyprland = system:
-    (inputs.hyprland.packages.${system}.hyprland).overrideAttrs (old: {
-      postPatch = (old.postPatch or "") + ''
-        substituteInPlace CMakeLists.txt \
-          --replace-fail 'find_package(glaze 7...<8 QUIET)' 'find_package(glaze QUIET)'
-      '';
-    });
-in
+#
+# Hyprland, hy3 and xdg-desktop-portal-hyprland all come from nixpkgs now.
+#
+# HISTORY: they used to come from `inputs.hyprland` / `inputs.hy3`, pinned to
+# the v0.56.2 tag and hl0.56.0.1, with a `patchedHyprland` binding that relaxed
+# the v0.56.2 `find_package(glaze 7...<8)` constraint (nixpkgs ships glaze 8, so
+# CMake fell back to a FetchContent git clone that fails in the sandbox) plus
+# sub-input overrides bumping hyprland-guiutils and xdph to their "nix: gcc 15
+# -> 16" commits to clear a GCC15/16 ABI seam.
+#
+# All of that was buying the SAME version nixpkgs already ships — 0.56.2, with
+# hy3 0.56.0.1 and xdph 1.4.1 — while guaranteeing a from-source build of the
+# whole Hyprland tree on every nixpkgs bump. `nixpkgs.follows = "nixpkgs"` meant
+# hyprland.cachix.org could never match (it builds against Hyprland's own pinned
+# nixpkgs), and the glaze `overrideAttrs` changed the hash on top of that. For
+# the record, hyprland.cachix.org has no v0.56.2 build at all — it serves
+# main/-git, not release tags — so that substituter was never going to help.
+#
+# The glaze patch and both GCC-seam overrides are unnecessary here: nixpkgs
+# already handles them in its own packaging.
+#
+# Reinstate the flake input only to track Hyprland AHEAD of nixpkgs. Doing it to
+# pin a version nixpkgs already has costs a full C++ rebuild for nothing.
+{ ... }:
 {
-  # Overlay: Pin hyprland version from flake input
-  flake.overlays.hyprland = final: prev: {
-    hyprland = patchedHyprland prev.stdenv.hostPlatform.system;
-  };
-
   # NixOS hyprland configuration
   # Uses mkDefault to avoid conflicts with legacy config during transition
   flake.modules.nixos.hyprland =
@@ -745,12 +742,9 @@ MONEOF
         extraConfig = ''
           # Load hy3 at parse time (see plugins = [ ] note above). Position is
           # irrelevant — declared plugins load post-parse, then trigger a reload.
-          # hy3 builds against the raw hyprland flake package; override it to
-          # the patched derivation (glaze version-constraint fix) so its
-          # hyprland buildInput doesn't pull the unpatched, unbuildable one.
-          plugin = ${(inputs.hy3.packages.${pkgs.stdenv.hostPlatform.system}.hy3.override {
-            hyprland = patchedHyprland pkgs.stdenv.hostPlatform.system;
-          })}/lib/libhy3.so
+          # nixpkgs builds hyprlandPlugins.hy3 against pkgs.hyprland, so the
+          # plugin ABI matches the compositor by construction.
+          plugin = ${pkgs.hyprlandPlugins.hy3}/lib/libhy3.so
           source = /tmp/hypr-monitors.conf
         '';
       };
