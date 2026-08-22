@@ -87,10 +87,10 @@
       # The secret is read by literal path rather than
       # `config.sops.secrets.truenas_api_key.path`, and guarded with `-f`, so
       # this module evaluates on hosts that have no sops-nix at all — the
-      # devbox pod holds no key by design. Same pattern as the grafana, brave
-      # and n8n wrappers above. On a sops host the path is identical, so
-      # nothing changes there; without it the server starts unauthenticated
-      # and fails at first call instead of breaking eval for every host.
+      # devbox pod holds no key by design. Same pattern as the grafana and
+      # brave wrappers. On a sops host the path is identical, so nothing
+      # changes there; without it the server starts unauthenticated and
+      # fails at first call instead of breaking eval for every host.
       truenasMcpWrapper = pkgs.writeShellApplication {
         name = "run-truenas-mcp";
         runtimeInputs = [ truenasMcpServer ];
@@ -101,20 +101,6 @@
             export TRUENAS_API_KEY
           fi
           exec truenas-mcp "$@"
-        '';
-      };
-
-      # n8n MCP server wrapper (reads API key from sops secret)
-      n8nMcpWrapper = pkgs.writeShellApplication {
-        name = "run-n8n-mcp";
-        runtimeInputs = [ pkgs.nodejs ];
-        text = ''
-          SOPS_SECRET_PATH="$HOME/.config/sops-nix/secrets"
-          if [ -f "$SOPS_SECRET_PATH/n8n_api_key" ]; then
-            N8N_API_KEY=$(cat "$SOPS_SECRET_PATH/n8n_api_key")
-            export N8N_API_KEY
-          fi
-          exec npx -y n8n-mcp "$@"
         '';
       };
 
@@ -148,6 +134,38 @@
           fi
           exec npx -y mcp-remote "https://homeassistant.jevy.org/api/mcp" \
             --header "Authorization: Bearer $HA_TOKEN"
+        '';
+      };
+
+      # Hermes Agent MCP server. Hermes exposes its messaging bridge
+      # (conversations_list / messages_read / messages_send / events_poll ...)
+      # over **stdio only** — there is no HTTP endpoint, so the cluster Ingress
+      # at hermes.jevy.org is no help here. The bridge is therefore
+      # `kubectl exec -i` into the gateway pod, which is stdio end to end.
+      #
+      # Details that are load-bearing, all verified against the running pod
+      # (nousresearch/hermes-agent:v2026.8.3, server version 1.28.1):
+      #   * the CLI is not on PATH — it lives in the image's venv at
+      #     /opt/hermes/.venv/bin/hermes;
+      #   * `kubectl exec` lands as root (the s6-overlay image starts root and
+      #     drops to uid 1000 itself), so we `su` to `hermes` — otherwise the
+      #     session writes root-owned files into the /opt/data PVC that the
+      #     real gateway then can't touch;
+      #   * HERMES_HOME=/opt/data comes from the pod's env and is inherited by
+      #     the exec, so the bridge sees the same config and sessions as the
+      #     live agent;
+      #   * `-c hermes` picks the gateway container, not the mfp sidecar.
+      #
+      # Needs a working kubeconfig with exec rights in the hermes namespace, so
+      # it only makes sense on hosts that talk to the cluster. Read/poll tools
+      # work standalone; sending requires the gateway to be up, which it is by
+      # construction here (we are exec'ing into it).
+      hermesMcpWrapper = pkgs.writeShellApplication {
+        name = "run-hermes-mcp";
+        runtimeInputs = [ pkgs.kubectl ];
+        text = ''
+          exec kubectl -n hermes exec -i deploy/hermes -c hermes -- \
+            su -s /bin/sh hermes -c "exec /opt/hermes/.venv/bin/hermes mcp serve"
         '';
       };
 
@@ -193,15 +211,6 @@
             GRAFANA_URL = "https://grafana.jevy.org";
           };
         };
-        n8n = {
-          command = "${n8nMcpWrapper}/bin/run-n8n-mcp";
-          env = {
-            MCP_MODE = "stdio";
-            N8N_API_URL = "https://n8n.jevy.org";
-            LOG_LEVEL = "error";
-            DISABLE_CONSOLE_OUTPUT = "true";
-          };
-        };
         "brave-search" = {
           command = "${braveSearchMcpWrapper}/bin/run-brave-search-mcp";
         };
@@ -214,12 +223,8 @@
         homeassistant = {
           command = "${homeAssistantMcpWrapper}/bin/run-homeassistant-mcp";
         };
-        linear = {
-          # Linear removed the /sse endpoint (deprecated 2026-02, now 404s) in
-          # favor of the streamable-HTTP endpoint at /mcp. mcp-remote bridges it
-          # to stdio; --prefer-offline skips npx's per-launch registry check.
-          command = lib.getExe' pkgs.nodejs "npx";
-          args = [ "--prefer-offline" "-y" "mcp-remote" "https://mcp.linear.app/mcp" ];
+        hermes = {
+          command = "${hermesMcpWrapper}/bin/run-hermes-mcp";
         };
       };
     in
@@ -258,7 +263,7 @@
           # pi (pi-mcp-extension, declared in ./pi.nix): same server set at the
           # extension's global config path. Its per-server schema is a superset
           # of {command,args,env} — transport defaults to "stdio", which every
-          # server above is (linear/homeassistant ride mcp-remote over stdio).
+          # server above is (homeassistant rides mcp-remote over stdio).
           # Servers default to lifecycle "lazy": start one in pi with
           # `/mcp:start <name>`, or add `lifecycle = "eager"` to a server in
           # `servers` above to auto-start it on every pi session.
