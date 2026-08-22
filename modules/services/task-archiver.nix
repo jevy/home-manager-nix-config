@@ -28,6 +28,10 @@
           # Must be completed
           ${grep} -q '^completed: true' "$file" || continue
 
+          # Still waiting on someone else — my part is done but the concern is
+          # not closed. Archive on concern-close, not on my-part-close.
+          ${grep} -q '^status: waiting' "$file" && continue
+
           # Parse completed_at date from frontmatter
           completed_at=$(${grep} '^completed_at:' "$file" | ${sed} 's/^completed_at: *//' | head -1)
           [ -z "$completed_at" ] && continue
