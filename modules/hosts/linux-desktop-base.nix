@@ -47,7 +47,6 @@ in
         overlays.volsync
         overlays.hyprland
         overlays.mcpServers
-        overlays.llamaCpp
         overlays.bambuStudio
         overlays.goobookRelaxDeps
         overlays.powerProfilesDaemonSkipCheck
