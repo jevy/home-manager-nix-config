@@ -1,4 +1,5 @@
-# OpenCode AI coding agent with OpenRouter provider
+# OpenCode AI coding agent with OpenRouter provider (Linux) / Fireworks +
+# local llama-swap (mac-work).
 #
 # Codex auth (ChatGPT OAuth → GPT-5.x) is provided by the
 # `opencode-openai-codex-auth` plugin. The plugin is referenced by name in the
@@ -51,43 +52,6 @@ in
                 "minimax/minimax-m2.5" = { max_tokens = 32768; };
                 "google/gemini-2.0-flash-exp" = { max_tokens = 32768; };
                 "stepfun/step-3.5-flash:free" = { max_tokens = 32768; };
-              };
-            };
-            local = {
-              npm = "@ai-sdk/openai-compatible";
-              name = "llama-swap (local)";
-              options = {
-                baseURL = "http://127.0.0.1:9292/v1";
-              };
-              models = {
-                "qwen3-coder-30b" = {
-                  name = "Qwen3-Coder-30B";
-                  limit = {
-                    context = 32768;
-                    output = 32768;
-                  };
-                };
-                "dolphin3-qwen2.5-1.5b" = {
-                  name = "Dolphin3 Qwen2.5-1.5B";
-                  limit = {
-                    context = 32768;
-                    output = 32768;
-                  };
-                };
-                "dolphin3-qwen2.5-3b" = {
-                  name = "Dolphin3 Qwen2.5-3B";
-                  limit = {
-                    context = 32768;
-                    output = 32768;
-                  };
-                };
-                "dolphin-gemma2-2b" = {
-                  name = "Dolphin2.9.4 Gemma2-2B";
-                  limit = {
-                    context = 8192;
-                    output = 8192;
-                  };
-                };
               };
             };
           };

@@ -144,7 +144,7 @@ Three hosts, two base layers:
 
 | Host | Platform | Base | Purpose |
 |------|----------|------|---------|
-| `lenovo-p14s` | x86_64-linux | `linuxDesktopBase` | Daily driver laptop (OLED, Hyprland, llama-swap) |
+| `lenovo-p14s` | x86_64-linux | `linuxDesktopBase` | Daily driver laptop (OLED, Hyprland) |
 | `shop-sdr` | x86_64-linux | `linuxServerBase` | Headless ham radio station (IC-7300, SDRplay, WSPR) |
 | `mac-work` | aarch64-darwin | nix-darwin | Work Mac (nix-darwin + home-manager; `darwin-rebuild`, not standalone HM; llama-swap on Metal) |
 
@@ -165,6 +165,6 @@ All under `modules/`. Each file can define `flake.modules.nixos.*`, `flake.modul
 | `hardware/` | Hardware-specific: lenovo-p14s quirks |
 | `hosts/` | Host definitions + base layers (composition entry points) |
 | `secrets/` | sops-nix setup |
-| `services/` | Systemd services: backup, boot, docker, tailscale, kanata, ham radio, etc. `llama-swap.nix` holds both halves — the NixOS service (Vulkan, P14s) and `homeManager.llamaSwapMac` (Metal, launchd agent); local-model sizing and measured tok/s live in `docs/local-llm-setup.md`. |
+| `services/` | Systemd services: backup, boot, docker, tailscale, kanata, ham radio, etc. `llama-swap.nix` is mac-work only now (`homeManager.llamaSwapMac`, Metal, launchd agent) — the P14s Vulkan half was retired 2026-08; local-model sizing, measured tok/s and that retirement live in `docs/local-llm-setup.md`. |
 | `shell/` | Shell: zsh, ghostty, ranger, yazi, CLI tools, SSH config |
 | Infrastructure | `flake-parts.nix`, `nixos.nix`, `home.nix`, `systems.nix`, `overlays.nix`, `meta.nix`, `deploy.nix` |

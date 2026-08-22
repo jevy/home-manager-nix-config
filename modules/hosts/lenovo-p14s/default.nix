@@ -22,9 +22,6 @@ in
         # Auto-switch power profile (performance/balanced/power-saver)
         nixos.powerProfileSwitcher
 
-        # Local LLM inference via llama-swap + llama.cpp (Vulkan)
-        nixos.llamaSwap
-
         # NFS automount of navidrome music library (TrueNAS via democratic-csi PVC)
         nixos.musicNfs
 
