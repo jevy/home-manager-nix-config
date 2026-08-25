@@ -206,6 +206,10 @@ in
               homeManager.cliBase
               homeManager.ghostty
               homeManager.nosleepMac
+              # Same keys and sort order as the Linux hosts; openers go
+              # through `open` and there's no <C-d> drag. See the header of
+              # modules/shell/yazi.nix.
+              homeManager.yaziMac
 
               # Development
               homeManager.nixvim
