@@ -153,9 +153,14 @@
           # To resize, edit cpu/memory/disk here and rebuild — NOT `colima start
           # --cpu N`, which now writes to a read-only store symlink.
           settings = {
-            cpu = 2;
+            # SigNoz's ClickHouse (covenant-web's `signoz` devenv script) is the
+            # heaviest thing this VM runs: at 2GiB it capped out at a 1.72GiB RSS
+            # ceiling, threw MEMORY_LIMIT_EXCEEDED on every background merge and
+            # restart-looped ~90 times, which silently dropped the trace stream
+            # the collector was writing. Verify headroom with `docker stats`.
+            cpu = 6;
             disk = 100;
-            memory = 2;
+            memory = 8;
             arch = "aarch64";
             runtime = "docker";
             modelRunner = "docker";
