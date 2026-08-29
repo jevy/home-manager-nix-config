@@ -52,6 +52,7 @@
         sqlite
         uv # needed for linkedin-mcp profile creation
         google-cloud-sdk
+        (pkgs.callPackage ../../pkgs/linecast.nix { })
       ];
 
       programs.bat.enable = true;
