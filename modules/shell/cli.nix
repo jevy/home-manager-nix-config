@@ -66,6 +66,9 @@
         lt = "ls --tree";
         la = "ls -a";
         geoip = "curl ifconfig.co/json";
+        # Was a wttr.in curl, duplicated in cliLinux and desktopMac. linecast
+        # is in cliBase, so one cross-platform alias replaces both.
+        weather = "linecast weather";
         lg = "lazygit";
         lhead = "ls --sort created -r | head";
         # Machine-aware rebuild. Lives in cliBase (imported by every host) so it
@@ -147,7 +150,6 @@
 
       home.shellAliases = {
         tailscale-toronto = "sudo tailscale up --accept-routes --exit-node=ca-tor-wg-001.mullvad.ts.net";
-        weather = "${pkgs.curl}/bin/curl https://v2.wttr.in/ottawa";
         fdt = "f(){ fd $1 -t file -X ls -tr -l; };f";
       };
     };
