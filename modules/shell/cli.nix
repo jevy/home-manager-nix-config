@@ -69,6 +69,9 @@
         # Was a wttr.in curl, duplicated in cliLinux and desktopMac. linecast
         # is in cliBase, so one cross-platform alias replaces both.
         weather = "linecast weather";
+        # Pinned to Ottawa. linecast geocodes the IATA code, so `--location
+        # YOW` beats coordinates for readability; bare weather geolocates.
+        wyow = "linecast weather --location YOW";
         lg = "lazygit";
         lhead = "ls --sort created -r | head";
         # Machine-aware rebuild. Lives in cliBase (imported by every host) so it
