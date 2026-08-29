@@ -255,7 +255,10 @@
           programs.mcp.enable = true;
           programs.mcp.servers = selected;
 
-          # Claude Code: symlink to programs.mcp output
+          # Claude Code integration is handled by programs.claude-code's
+          # enableMcpIntegration (see ./claude-code.nix), which merges these
+          # servers into Claude Code's own config. The legacy ~/.mcp.json
+          # symlink below is kept for any other clients that read it directly.
           home.file.".mcp.json".source =
             config.lib.file.mkOutOfStoreSymlink
               "${config.xdg.configHome}/mcp/mcp.json";
