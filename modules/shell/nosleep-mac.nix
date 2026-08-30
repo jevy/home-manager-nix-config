@@ -5,10 +5,11 @@
 # inhibitor via a transient systemd unit, this backgrounds Apple's own
 # `caffeinate` with its built-in `-t` timeout and tracks the pid.
 #
-# Assertions taken: `-i` (no idle system sleep) + `-s` (no system sleep;
-# AC-power only, per caffeinate(8)). Deliberately NOT `-d`, so the display
-# still sleeps and locks on the normal schedule — matching the Linux
-# module, which inhibits sleep but not idle.
+# Assertions taken: `-i` (no idle system sleep), `-s` (no system sleep;
+# AC-power only, per caffeinate(8)) and `-d` (no display sleep). The `-d`
+# is the one deviation from the Linux module, which inhibits sleep but not
+# idle: on macOS `displaysleep` is 2 minutes on battery, so without it the
+# screen darkens and locks almost immediately while nosleep is "active".
 #
 # Caveat with no macOS equivalent: closing the lid still sleeps the machine.
 # Clamshell sleep is not an assertion caffeinate can hold off, so unlike
@@ -38,9 +39,9 @@
               cat <<HELP
             Usage: nosleep <duration|status|off>
 
-            Block system sleep for a fixed duration. The display still sleeps
-            and locks normally — only idle/system sleep is held off. Closing the
-            lid still sleeps the machine (macOS allows no override).
+            Block system and display sleep for a fixed duration. The screen
+            stays lit and unlocked for the whole window. Closing the lid still
+            sleeps the machine (macOS allows no override).
 
               nosleep 1h        Block sleep for 1 hour
               nosleep 30m       ...for 30 minutes
@@ -140,7 +141,7 @@
 
             # Detached so it outlives this shell and the terminal it ran in;
             # caffeinate's own -t exits it at the deadline, no cleanup needed.
-            /usr/bin/caffeinate -i -s -t "$sec" >/dev/null 2>&1 &
+            /usr/bin/caffeinate -i -s -d -t "$sec" >/dev/null 2>&1 &
             pid=$!
             disown "$pid" 2>/dev/null || true
 
@@ -148,7 +149,7 @@
             echo "$end" > "$DEADLINE_FILE"
 
             notify "Sleep blocked" \
-              "Won't sleep for $(fmt_remaining "$sec") (until $(date -d "@$end" '+%H:%M')). 'nosleep off' to cancel."
+              "Screen and system stay awake for $(fmt_remaining "$sec") (until $(date -d "@$end" '+%H:%M')). 'nosleep off' to cancel."
             echo "nosleep active for $(fmt_remaining "$sec") (until $(date -d "@$end" '+%H:%M'))."
           '';
         })
