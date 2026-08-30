@@ -180,6 +180,13 @@ in
         # AltTab needs BOTH Accessibility and Screen Recording
         # granted by hand, so it has to be pickable in those dialogs.
         alt-tab-macos
+        # Obsidian for the Second Brain vault (same package the Linux hosts get
+        # via homeManager.desktopApps). Unfree, hence allowUnfree above. Listed
+        # here rather than in home.packages so the Nix Apps aliaser makes it
+        # Spotlight-launchable; it needs no TCC grant, so the signature caveat
+        # in modules/desktop/monitorcontrol.nix does not apply. Its in-app
+        # updater cannot write to the store — update by bumping nixpkgs.
+        obsidian
       ];
 
       # useGlobalPkgs is intentionally left false: stylix's home-manager module
