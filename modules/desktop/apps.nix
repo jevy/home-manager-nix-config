@@ -267,8 +267,6 @@
         v = "setsid -f ${pkgs.neovide}/bin/neovide";
         screen-record = "${pkgs.wl-screenrec}/bin/wl-screenrec -g \"$(${pkgs.slurp}/bin/slurp)\" --filename=$HOME/Screenshots/latest-recording.mp4";
         screen-record-with-audio = "${pkgs.wl-screenrec}/bin/wl-screenrec --audio -g \"$(${pkgs.slurp}/bin/slurp)\" --filename=$HOME/Screenshots/latest-recording.mp4";
-        tailscale-us = "sudo tailscale up --accept-routes --exit-node \"us-tailscale\" --accept-dns";
-        tailscale-home = "sudo tailscale up --accept-routes --exit-node \"octoprint\" --accept-dns";
 
         # Ham radio — IC-7300 remote control via shop-sdr
         ic7300 = "ssh shop-sdr 'sudo systemctl stop wsjtx-wspr 2>/dev/null; sudo rm -rf /tmp/WSJT-X /tmp/WSJT-X.lock /tmp/qipc_sharedmemory_* /tmp/qipc_systemsem_*; sudo ipcrm --all=shm 2>/dev/null; mkdir -p /tmp/WSJT-X'; ssh -YC shop-sdr 'QT_SCALE_FACTOR=2 QT_XCB_GL_INTEGRATION=none wsjtx'";
