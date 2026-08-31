@@ -46,7 +46,6 @@ in
       nixpkgs.overlays = [
         overlays.volsync
         overlays.mcpServers
-        overlays.bambuStudio
         overlays.goobookRelaxDeps
         overlays.powerProfilesDaemonSkipCheck
         overlays.ddcciDriverFix

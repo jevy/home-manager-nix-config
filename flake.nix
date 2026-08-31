@@ -129,12 +129,6 @@
     # See x86_64-darwin note at the top of `inputs`
     pi-mono.inputs.bun2nix.inputs.systems.follows = "nix-systems-triplet";
 
-    # Declarative Flatpak app management. Needed for Bambu Studio: the nixpkgs
-    # build crashes loading the proprietary libbambu_networking.so plugin
-    # (free(): invalid pointer), so printer discovery/login never works. The
-    # Flathub build runs in an FHS-like sandbox where that blob loads cleanly.
-    nix-flatpak.url = "github:gmodena/nix-flatpak";
-
 };
 
   outputs = inputs:
