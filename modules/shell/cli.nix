@@ -149,10 +149,48 @@
 
       programs.zsh.initContent = ''
         export INNGEST_PROD_KEY=$(cat "${config.sops.secrets.inngest_prod_key.path}")
+
+        # Exit-node switcher backing the tailscale-* aliases below.
+        #
+        # Two things bit the old hardcoded aliases:
+        #   1. --exit-node resolves peer names against the *live netmap*. When
+        #      tailscaled is stopped there is no netmap, so even a valid name
+        #      fails with "must be IP or peer hostname". Hence the up-first guard.
+        #   2. Mullvad retires and renumbers servers, so pinning one hostname
+        #      (ca-tor-wg-001) is a time bomb. Match a region and pick a live
+        #      node instead.
+        ts-exit() {
+          local re="$1" node ip
+          if [ "$(${pkgs.tailscale}/bin/tailscale status --json | ${pkgs.jq}/bin/jq -r .BackendState)" != "Running" ]; then
+            sudo ${pkgs.tailscale}/bin/tailscale up --accept-routes --accept-dns || return 1
+          fi
+          if [ -z "$re" ]; then
+            sudo ${pkgs.tailscale}/bin/tailscale set --exit-node= && echo "exit node cleared"
+            return
+          fi
+          # ExitNodeOption filters out peers that do not actually advertise one
+          # (octoprint, the old tailscale-home target, never did).
+          node=$(${pkgs.tailscale}/bin/tailscale status --json | ${pkgs.jq}/bin/jq -r --arg re "$re" \
+            '.Peer | to_entries[] | .value
+             | select(.ExitNodeOption)
+             | select(.DNSName | test($re))
+             | "\(.DNSName | rtrimstr("."))\t\(.TailscaleIPs[0])"' | shuf -n1)
+          if [ -z "$node" ]; then
+            echo "no live exit node matching /$re/" >&2
+            return 1
+          fi
+          ip=''${node##*$'\t'}
+          sudo ${pkgs.tailscale}/bin/tailscale set --exit-node="$ip" \
+            && echo "exit node: ''${node%%$'\t'*}"
+        }
       '';
 
       home.shellAliases = {
-        tailscale-toronto = "sudo tailscale up --accept-routes --exit-node=ca-tor-wg-001.mullvad.ts.net";
+        # dream-machine-pro is the only tailnet peer advertising an exit node.
+        tailscale-home = "ts-exit 'dream-machine-pro'";
+        tailscale-us = "ts-exit '^us-.*mullvad'";
+        tailscale-toronto = "ts-exit '^ca-tor-.*mullvad'";
+        tailscale-off = "ts-exit ''";
         fdt = "f(){ fd $1 -t file -X ls -tr -l; };f";
       };
     };
