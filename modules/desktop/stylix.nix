@@ -53,6 +53,12 @@ in
       # regreet, so disable the target. TODO: drop once stylix migrates to the
       # new option path.
       stylix.targets.regreet.enable = false;
+
+      # The NixOS gtksourceview target overlays the library itself, forcing
+      # source rebuilds of virt-manager, xournalpp, papers and libspelling on
+      # every nixpkgs bump (stylix#2318). The home-manager module still themes
+      # gtksourceview at runtime via ~/.local/share, so nothing is lost.
+      stylix.targets.gtksourceview.enable = false;
     };
 
   # Home-manager stylix (for macOS standalone)
