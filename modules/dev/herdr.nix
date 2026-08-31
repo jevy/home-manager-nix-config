@@ -359,25 +359,38 @@
           # Spelling it out is the whole point of the panel when several agents
           # run at once.
           #
-          # "$cwd" is NOT a built-in. herdr's built-in token list is closed —
+          # "$tree" is NOT a built-in. herdr's built-in token list is closed —
           # state_icon, state_text, workspace, tab, pane, agent, terminal_title,
-          # terminal_title_stripped — and there is no directory token in it, even
-          # though the server tracks `cwd` and `foreground_cwd` per pane (see
-          # `herdr pane get <id>`). The only way to render a value herdr doesn't
-          # ship is to push it as pane metadata and reference it as $name; the
-          # zsh hook in `herdrCwdHook` below is what supplies this one. If that
-          # hook stops firing the row simply renders empty — it never errors.
+          # terminal_title_stripped — and there is no directory or worktree token
+          # in it, even though the server tracks `cwd` and `foreground_cwd` per
+          # pane (see `herdr pane get <id>`). The only way to render a value herdr
+          # doesn't ship is to push it as pane metadata and reference it as $name;
+          # the zsh hook in `herdrCwdHook` below supplies this one. If that hook
+          # stops firing the token renders empty — it never errors.
           #
           # Worth the plumbing because `workspace` is a label, not a location:
           # every worktree of one repo can carry the same workspace name, and a
           # `wt`-style worktree lives at a path the name says nothing about.
+          # $tree answers only the question the label can't: top-level checkout,
+          # rendered as its root path (~/code/covenant-web), or linked worktree,
+          # rendered as "(wt) <worktree-dir>". Empty outside a repo. On its own
+          # row, below the identity lines and above the status line.
+          #
+          # A FULL PATH ROW WAS TRIED FIRST and removed. The hook also reports a
+          # `cwd` token (still does — it is one row entry away if ever wanted),
+          # but rendering it was worse than useless: worktrees here live *inside*
+          # the repo (~/code/covenant-web/.worktrees/<name>), so a 26-column
+          # sidebar truncated every row to the same "~/code/covenant-web/.claude/
+          # wor…" and cut off precisely the segment that told them apart. Same
+          # repo prefix on every row, no information, one line each. Dropping the
+          # root from the worktree case is the same reasoning applied to $tree.
           sidebar.agents = {
             rows = [
               [
                 "state_icon"
                 "workspace"
               ]
-              [ "$cwd" ]
+              [ "$tree" ]
               [
                 "state_text"
                 "agent"
@@ -395,13 +408,42 @@
                 "workspace"
               ]
               [ "terminal_title_stripped" ]
-              [ "$cwd" ]
+              [ "$tree" ]
               [
                 "state_text"
                 "agent"
               ]
             ];
           };
+
+          # Space rows. Built-ins here are a different, smaller set than the
+          # agent rows above: state_icon, state_text, workspace, branch,
+          # git_status (no tab/pane/title tokens). Upstream default is
+          # [["state_icon" "workspace"] ["branch" "git_status"]], which is what
+          # the first two rows keep.
+          #
+          # The third row is the point: with four covenant-web spaces open, the
+          # rendered rows were identical down to the branch, and nothing said
+          # which of them was the top-level checkout and which were worktrees.
+          # $tree comes from workspace metadata (`herdr workspace report-metadata`),
+          # pushed by the same zsh hook that supplies the pane's $cwd/$tree.
+          #
+          # CAVEAT: a space's token is written by whichever of its panes last
+          # ran chpwd, so a space holding panes in two different worktrees shows
+          # only the most recent one. Harmless in this setup (a space is one
+          # task in one tree) and there is no per-space source of truth to use
+          # instead — herdr tracks cwd per pane, not per workspace.
+          sidebar.spaces.rows = [
+            [
+              "state_icon"
+              "workspace"
+            ]
+            [
+              "branch"
+              "git_status"
+            ]
+            [ "$tree" ]
+          ];
         };
 
         keys = {
@@ -529,11 +571,48 @@
       #
       # --source namespaces the metadata, so this can't collide with the agent
       # state the integration hooks report under `herdr:claude`.
+      #
+      # The `tree` token is the worktree answer. A linked worktree is exactly the
+      # case where `git rev-parse --git-dir` and `--git-common-dir` disagree: in
+      # the top-level checkout both are the repo's .git, while inside a worktree
+      # the first is .git/worktrees/<name> and the second is still .git. That
+      # test is the whole detection — no worktree list to parse, no assumption
+      # about where worktrees are kept (this setup has them under both
+      # .worktrees/ and .claude/worktrees/, and herdr's own prefix+shift+g puts
+      # them in ~/.herdr/worktrees).
+      #
+      # It goes to BOTH the pane and the workspace, because herdr keeps two
+      # separate metadata namespaces and the two sidebar panels read one each:
+      # agent rows resolve $tokens against pane metadata, space rows against
+      # workspace metadata. The workspace id is the pane id's prefix, so this
+      # costs a string strip rather than a second socket round trip.
+      #
+      # The workspace half is guarded on a non-empty value while the pane half is
+      # not, and the asymmetry is deliberate: a pane token describes that one
+      # pane, so blanking it outside a repo is correct, but every pane in a space
+      # writes the same space token, and a single shell sitting in ~/.claude or
+      # /tmp would otherwise wipe the marker for the whole space. Skipping the
+      # write keeps the last repo-shaped answer instead.
       herdrCwdHook = ''
         if [[ -n ''${HERDR_ENV-} && -n ''${HERDR_PANE_ID-} && -n ''${HERDR_SOCKET_PATH-} ]]; then
           _herdr_report_cwd() {
+            local -a _hr
+            _hr=("''${(@f)$(command git rev-parse --git-dir --git-common-dir --show-toplevel 2>/dev/null)}")
+            local _tree=""
+            if (( ''${#_hr} >= 3 )); then
+              if [[ ''${_hr[1]:A} == ''${_hr[2]:A} ]]; then
+                _tree="''${_hr[3]/#$HOME/~}"
+              else
+                _tree="(wt) ''${_hr[3]:t}"
+              fi
+            fi
             ${lib.getExe' herdr "herdr"} pane report-metadata "$HERDR_PANE_ID" \
-              --source zsh-cwd --token "cwd=''${PWD/#$HOME/~}" >/dev/null 2>&1 &|
+              --source zsh-cwd --token "cwd=''${PWD/#$HOME/~}" \
+              --token "tree=$_tree" >/dev/null 2>&1 &|
+            if [[ -n $_tree ]]; then
+              ${lib.getExe' herdr "herdr"} workspace report-metadata "''${HERDR_PANE_ID%%:*}" \
+                --source zsh-cwd --token "tree=$_tree" >/dev/null 2>&1 &|
+            fi
           }
           chpwd_functions+=(_herdr_report_cwd)
           _herdr_report_cwd
