@@ -55,7 +55,6 @@
         nmap
         immich-go
         orca-slicer
-        bambu-studio
         kdePackages.kdenlive
         qbittorrent
         myfitnesspal

@@ -27,10 +27,6 @@ in
 
         # SANE + ScanSnap S1300 (epjitsu backend)
         nixos.scanner
-
-        # Declarative Flatpak (Bambu Studio — nixpkgs build's network plugin
-        # is broken on NixOS; the Flathub build works)
-        nixos.flatpak
       ];
 
       networking.hostName = "lenovo-p14s";

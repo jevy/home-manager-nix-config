@@ -278,10 +278,5 @@
         s = "kitty +kitten ssh";
         colordropper = "grim -g \"$(slurp -p)\" -t ppm - | convert - -format '%[pixel:p{0,0}]' txt:-";
       };
-
-      # For Flakpak
-      xdg.systemDirs.data = [
-        "/var/lib/flatpak/exports/share"
-      ];
     };
 }
