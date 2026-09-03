@@ -1,7 +1,7 @@
 # herdr-hunk — a herdr plugin: an fzf picker that opens any diff in a hunk
 # pane (working tree, staged, last commit, any commit, a two-commit range,
-# branch vs upstream, a stash), plus an auto-open hook when an agent goes idle
-# with uncommitted changes.
+# branch vs main, branch vs its git-spice stack base, a stash), plus an
+# auto-open hook when an agent goes idle with uncommitted changes.
 #
 # Upstream is a plain script directory — `herdr-plugin.toml` plus five bash
 # scripts under `scripts/` — with NO `[[build]]` hook at all, so this
@@ -29,10 +29,23 @@
 #      the way upstream intends — see the note below on why those two are NOT
 #      baked.
 #
-#   2. `..` → `...` in the picker's "Branch vs upstream" row. With `..`, any
-#      commit the base picked up since you branched folds into "your" diff. The
-#      symmetric form stays anchored at the merge-base. Same reasoning as the
-#      `range=` line in modules/dev/git-spice.nix.
+#   2. Upstream's single "Branch vs upstream" row becomes TWO rows, because
+#      `@{upstream}` is the wrong base in both of the cases that matter here.
+#      On a plain branch it is that branch's own remote copy, so the diff is
+#      "what have I not pushed" — never what review wants. On a git-spice stack
+#      it is the branch's own tracking ref too, not the branch below it, so a
+#      branch four deep still shows dozens of unrelated commits. So:
+#        · "Branch vs main"       — origin/HEAD, else origin/main, origin/master,
+#                                   main, master (upstream's own fallback list,
+#                                   now the primary path).
+#        · "Branch vs stack base" — `gs ls --json` → `.down.name`, the base
+#                                   git-spice restacks onto. Same resolution as
+#                                   `gs-review` in modules/dev/git-spice.nix,
+#                                   which is why git-spice is baked into the
+#                                   PATH below.
+#      Both use `...`, not `..`: with `..` any commit the base picked up since
+#      you branched folds into "your" diff, while the symmetric form stays
+#      anchored at the merge-base. Same reasoning as `range=` in git-spice.nix.
 #
 #   3. The "not found" hint says `brew install hunk`, which is wrong advice on
 #      every host here.
@@ -77,6 +90,7 @@
   bash,
   jq,
   git,
+  git-spice,
   coreutils,
   fzf,
   perl,
@@ -91,6 +105,7 @@ let
   runtimePath = lib.makeBinPath [
     jq
     git
+    git-spice
     coreutils
     fzf
     perl
@@ -103,6 +118,73 @@ let
   pathLine = ''
     set -uo pipefail
     export PATH="${runtimePath}:''${PATH:-}"'';
+
+  # substituteInPlace anchors have to carry picker.sh's real indentation, and a
+  # Nix indented string cannot keep a common prefix — so the blocks below are
+  # written flush-left and re-indented here.
+  indent2 =
+    s:
+    lib.concatStringsSep "\n" (
+      map (l: if l == "" then l else "  " + l) (lib.splitString "\n" s)
+    );
+
+  upstreamCase = indent2 ''
+    'Branch vs upstream')
+      branch="$(git branch --show-current)"
+      [ -n "$branch" ] || branch="HEAD"
+      upstream="$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null)" || upstream=""
+      if [ -z "$upstream" ]; then
+        for candidate in origin/main origin/master main master; do
+          if git rev-parse --verify -q "$candidate" >/dev/null 2>&1; then
+            upstream="$candidate"
+            break
+          fi
+        done
+      fi
+      if [ -z "$upstream" ]; then
+        printf 'no upstream or base branch found\n'
+        read -r -n1 -s -p 'press any key to close'
+        exit 1
+      fi
+      view diff "$upstream..$branch"
+      ;;'';
+
+  branchCases = indent2 ''
+    'Branch vs main')
+      branch="$(git branch --show-current)"
+      [ -n "$branch" ] || branch="HEAD"
+      base="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null)" || base=""
+      if [ -z "$base" ]; then
+        for candidate in origin/main origin/master main master; do
+          if git rev-parse --verify -q "$candidate" >/dev/null 2>&1; then
+            base="$candidate"
+            break
+          fi
+        done
+      fi
+      if [ -z "$base" ]; then
+        printf 'no main branch found (tried origin/HEAD, origin/main, origin/master, main, master)\n'
+        read -r -n1 -s -p 'press any key to close'
+        exit 1
+      fi
+      view diff "$base...$branch"
+      ;;
+    'Branch vs stack base')
+      branch="$(git branch --show-current)"
+      [ -n "$branch" ] || branch="HEAD"
+      base="$(gs ls --json 2>/dev/null | jq -r 'select(.current == true) | .down.name // empty')" || base=""
+      if [ -z "$base" ]; then
+        printf 'not tracked by git-spice (gs branch track), or already at the bottom of the stack\n'
+        read -r -n1 -s -p 'press any key to close'
+        exit 1
+      fi
+      if ! git rev-parse --verify -q "$base^{commit}" >/dev/null 2>&1; then
+        printf 'git-spice base %s is not a commit-ish in this repo\n' "$base"
+        read -r -n1 -s -p 'press any key to close'
+        exit 1
+      fi
+      view diff "$base...$branch"
+      ;;'';
 
   # Patch 5. Pins the pane the picker's split hangs off (and, for the `tab`
   # placement, the workspace the tab lands in) to the one the key was pressed
@@ -198,9 +280,11 @@ stdenvNoCC.mkDerivation {
         'export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH"' \
         '# PATH is set at the top of this script by the Nix build.'
 
-    # 2. Symmetric difference for the branch-vs-upstream row.
+    # 2. Branch vs main, and branch vs the git-spice stack base, in place of
+    # upstream's branch-vs-@{upstream} row.
     substituteInPlace $out/scripts/picker.sh \
-      --replace-fail 'view diff "$upstream..$branch"' 'view diff "$upstream...$branch"'
+      --replace-fail "  'Branch vs upstream' \\" ${lib.escapeShellArg "  'Branch vs main' \\\n  'Branch vs stack base' \\"} \
+      --replace-fail ${lib.escapeShellArg upstreamCase} ${lib.escapeShellArg branchCases}
 
     # 3. Platform-correct hint.
     substituteInPlace $out/scripts/picker.sh \
@@ -258,7 +342,7 @@ stdenvNoCC.mkDerivation {
   '';
 
   meta = {
-    description = "herdr plugin: fzf picker opening any diff (working tree, staged, commit, range, stash) in a hunk pane";
+    description = "herdr plugin: fzf picker opening any diff (working tree, staged, commit, range, branch vs main or stack base, stash) in a hunk pane";
     homepage = "https://github.com/JacquesvanWyk/herdr-hunk";
     license = lib.licenses.mit;
     platforms = lib.platforms.unix;

@@ -12,7 +12,7 @@
         # Layout only — NO --preview here. FZF_DEFAULT_OPTS applies to every fzf
         # invocation on the system, including callers whose list items are
         # labels rather than paths; a global `bat {}` preview renders
-        # "[bat error]: 'Branch vs upstream': No such file or directory" beside
+        # "[bat error]: 'Branch vs main': No such file or directory" beside
         # their menu. herdr-hunk's picker hit exactly that.
         #
         # Nothing is lost: each of the three widgets below already declares its
