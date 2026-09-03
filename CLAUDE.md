@@ -30,14 +30,19 @@ of **`modules/dev/herdr.nix`** for hotkeys and the herdr plugin wiring:
 
 | Situation | Tool |
 |-----------|------|
-| Anything local — an agent's diff, your own work, a past commit | **hunk**, `prefix+d` → fzf picker → scope. `c` then **ctrl+s** writes a note; `prefix+shift+s` sends every note to the agent |
+| Anything local — an agent's diff, your own work, a past commit | **hunk**, `prefix+d` → fzf picker → scope (`prefix+t` for the same picker in its own tab, for a laptop screen). `c` then **ctrl+s** writes a note; `prefix+shift+s` sends every note to the agent |
 | Open PR/MR, comments must reach the forge | `tuicr pr <url>`, or Ctrl+click the link in herdr → pickr chooser → `t` |
-| **On a git-spice stack** | `gs-review` — diffs against the base `gs` tracks, not main (`gs-review hunk` for the read-only variant) |
+| **On a git-spice stack** | the picker's `branch vs stack base` row, or `gs-review` from a shell — both diff against the base `gs` tracks, not main (`gs-review hunk` for the read-only variant) |
 
 The picker's rows are: working tree (live), staged, last commit, pick commit,
-pick range, branch vs upstream, stash. Each one **re-points an already-open
-hunk pane** rather than opening a second, so `prefix+d` is both "open the
-review" and "change what it shows".
+pick range, branch vs main, branch vs stack base, stash. Each one
+**re-points an already-open hunk pane** rather than opening a second, so
+`prefix+d` is both "open the review" and "change what it shows".
+
+`branch vs main` resolves origin/HEAD (then origin/main, origin/master, main,
+master); `branch vs stack base` reads `gs ls --json` → `.down.name`, the branch
+immediately below in the stack. Both diff with `...`, so a base that moved
+after you branched doesn't leak into the diff.
 
 In hunk, `Enter` inserts a newline in a note — **ctrl+s saves it**. Notes stay
 local until `prefix+shift+s`, which pushes them into the agent's input and then
@@ -56,7 +61,7 @@ here: on a local diff tuicr cannot send comments back.
 
 HISTORY: `prefix+d` used to open the reviewr plugin (`u`/`b`/`t` scopes, `s` to
 send). It was replaced by hunk for two reasons — hunk separates staged from
-unstaged and offers seven scopes to reviewr's three, and hunk has a write API so
+unstaged and offers eight scopes to reviewr's three, and hunk has a write API so
 an agent can put a note *on a line* instead of only receiving one. The cost was
 reviewr's `last turn` scope, which has no hunk equivalent.
 

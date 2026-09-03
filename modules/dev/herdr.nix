@@ -46,7 +46,7 @@
 #
 # Prefix is ctrl+b. "prefix+x" means ctrl+b then x — not a simultaneous chord.
 #
-# EVERYTHING WE CHANGED, in full — five bindings, plus prefix+b listed only
+# EVERYTHING WE CHANGED, in full — six bindings, plus prefix+b listed only
 # because it is the one people assume we took. Nothing else differs from stock:
 #
 #   key             | ours                | upstream default there
@@ -54,12 +54,14 @@
 #   prefix+j        | next_workspace      | focus_pane_down    (now unbound)
 #   prefix+k        | previous_workspace  | focus_pane_up      (now unbound)
 #   prefix+tab      | last_pane           | cycle_pane_next    (now unbound)
-#   prefix+d        | hunk picker         | (free upstream)
+#   prefix+d        | hunk picker (split) | (free upstream)
+#   prefix+t        | hunk picker (tab)   | (free upstream)
 #   prefix+shift+s  | hunk-send           | (free upstream)
 #   prefix+b        | UNCHANGED           | toggle_sidebar
 #
 # So only THREE upstream bindings were displaced: focus_pane_down/up and
-# cycle_pane_next. prefix+d and prefix+shift+s took free keys. Rest is stock.
+# cycle_pane_next. prefix+d, prefix+t and prefix+shift+s took free keys. Rest is
+# stock.
 #
 # prefix+b is NOT ours: it toggles herdr's OWN sidebar (the workspace/tab
 # tree), and has nothing to do with reviewing. The review pane is prefix+d.
@@ -83,12 +85,16 @@
 #   since navigate_* is independent of focus_pane_*.
 #
 #   Panes — i.e. moving between the agent and a review pane (hunk, tuicr)
-#     prefix+d          hunk picker  ← ours. Opens the review, and re-scopes an
-#                       already-open one. See the plugin action below. It lands
-#                       in the tab you pressed the key in, and pulls a hunk pane
-#                       autodiff left in another tab over to yours rather than
-#                       reloading it out of sight — patches 5-6 in
-#                       pkgs/herdr-hunk.nix, neither of which upstream does.
+#     prefix+d          hunk picker, SPLIT beside the agent  ← ours. Opens the
+#                       review, and re-scopes an already-open one. See the
+#                       plugin action below. It lands in the tab you pressed the
+#                       key in, and pulls a hunk pane autodiff left in another
+#                       tab over to yours rather than reloading it out of sight
+#                       — patches 5-6 in pkgs/herdr-hunk.nix, neither of which
+#                       upstream does.
+#     prefix+t          same picker, OWN TAB  ← ours. For a laptop screen, where
+#                       a split leaves neither the agent nor the diff readable.
+#                       prefix+tab flips between the two, same as with a split.
 #     prefix+shift+s    send your hunk notes to the agent  ← ours (hunk-send)
 #     prefix+tab        back to the previous pane  ← ours (last_pane); the
 #                       agent↔review flip this setup uses most
@@ -108,8 +114,9 @@
 #   Inside the review tools themselves
 #     pickr chooser     t tuicr · h hunk · d plain diff · o browser · q cancel
 #     hunk picker (fzf) Working tree (live) · Staged · Last commit · Pick commit
-#                       · Pick range (TAB marks two) · Branch vs upstream ·
-#                       Stash. Esc cancels.
+#                       · Pick range (TAB marks two) · Branch vs main ·
+#                       Branch vs stack base (git-spice `.down.name`) · Stash.
+#                       Esc cancels.
 #     hunk              c write a note, then CTRL+S to save it (Esc cancels) —
 #                       Enter inserts a newline, it does NOT save · q quit.
 #                       Opened with --watch, so it follows the agent's edits.
@@ -120,6 +127,7 @@
 #
 #   THE LOCAL REVIEW LOOP, end to end:
 #     prefix+d          open hunk on the working tree (or pick another scope)
+#                       — prefix+t instead if you want it in its own tab
 #     c … ctrl+s        write a note on a line, repeat
 #     prefix+shift+s    push every note into the agent's input, focus it
 #     <type, Enter>     add a sentence if you like, then send
@@ -476,6 +484,15 @@
           # and so need a PR to exist. Free in upstream's map: only
           # prefix+shift+d (close workspace) is taken.
           #
+          # prefix+t ("tab") is the same picker through upstream's second
+          # action, which passes `tab` to open-hunk-picker.sh instead of
+          # `split`. On a laptop a side-by-side split gives the diff ~half of an
+          # already narrow screen; a tab gives it all of one, and prefix+tab
+          # (last_pane) still flips back to the agent. Also free upstream —
+          # tabs use prefix+c (new) and prefix+shift+t (rename), not prefix+t.
+          # Both actions share ONE hunk session per repo, so whichever key you
+          # press re-points the same review rather than opening a second.
+          #
           # The picker, not the plain `open-hunk-watch` toggle: each of its rows
           # reloads an already-live hunk session rather than stacking a second
           # pane, so one key both opens the review and re-scopes it. That is
@@ -490,6 +507,11 @@
               key = "prefix+d";
               type = "plugin_action";
               command = "herdr-hunk.open-hunk-picker";
+            }
+            {
+              key = "prefix+t";
+              type = "plugin_action";
+              command = "herdr-hunk.open-hunk-picker-tab";
             }
             {
               key = "prefix+shift+s";
@@ -661,7 +683,8 @@
       # Actions these expose (`herdr plugin action list`): herdr-hunk's
       # open-hunk-picker / open-hunk-picker-tab / open-hunk-watch /
       # toggle-autodiff, and pickr's route + toggle-auto. Only
-      # open-hunk-picker is bound (prefix+d, above); the rest are reachable
+      # open-hunk-picker and open-hunk-picker-tab are bound (prefix+d /
+      # prefix+t, above); the rest are reachable
       # through `herdr plugin action invoke` if ever wanted.
       #
       # NOTE: this only ADDS links. `herdr plugin link` replaces an entry with
