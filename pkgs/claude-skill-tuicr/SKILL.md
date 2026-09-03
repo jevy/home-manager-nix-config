@@ -31,9 +31,9 @@ specifically wants tuicr's UI, and that session *is* readable via the CLI below.
 ## On a stack, use gs-review
 
 If the repo uses git-spice, **the base is not main** and neither reviewer works
-it out: hunk and tuicr both take a range but will not compute one, and the
-picker's "Branch vs upstream" row resolves the *upstream*, not the stack base.
-A branch four deep reviewed against main shows dozens of unrelated commits.
+it out: hunk and tuicr both take a range but will not compute one. A branch four
+deep reviewed against main shows dozens of unrelated commits. The user can pick
+the hunk picker's "Branch vs stack base" row; from a shell, use `gs-review`.
 
 `gs-review` fixes this — it reads the base git-spice already tracks
 (`gs ls --json` → `.down.name`) and runs the tool against `base...HEAD`:
