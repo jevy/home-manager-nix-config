@@ -11,8 +11,11 @@ the header at the top is upstream's, verbatim.
 Under herdr (prefix is `ctrl+b`):
 
 - `prefix+d` — fzf picker: working tree (live) / staged / last commit / pick
-  commit / pick range / branch vs upstream / stash. Every row **re-points an
-  already-open hunk pane**, so this is also how they change scope.
+  commit / pick range / branch vs main / branch vs stack base / stash. Every row
+  **re-points an already-open hunk pane**, so this is also how they change
+  scope.
+- `prefix+t` — the same picker, opened in its own tab instead of a split
+  (laptop screens). Same one session per repo either way.
 - `prefix+shift+s` — pushes the notes they wrote into your input, then deletes
   them from the pane.
 - In hunk: `c` starts a note, **`ctrl+s` saves it** (Enter only inserts a
@@ -37,9 +40,9 @@ session the user is reviewing without polluting what they wrote.
 
 ## On a git-spice stack
 
-The base is not main, and hunk will not compute one — the picker's "Branch vs
-upstream" row resolves the *upstream*, not the stack base. Use `gs-review`,
-which reads the base git-spice tracks (`gs ls --json` → `.down.name`):
+The base is not main, and hunk will not compute one. The user has a picker row
+for it — "Branch vs stack base", which reads `gs ls --json` → `.down.name`. From
+a shell, the equivalent is `gs-review`:
 
 ```bash
 gs-review hunk       # this branch's own changes only
