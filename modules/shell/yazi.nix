@@ -22,6 +22,13 @@
 #   * setsid — not a macOS command. Detaching is yazi's own `orphan`/`--orphan`,
 #     which both platforms already rely on; the Linux `setsid -f` is belt and
 #     braces for X clients that re-parent themselves.
+#
+# Opener/`shell` argument syntax: `%s` (selected files, hovered if none), NOT
+# the old `"$@"`. Yazi deprecated `$n`/`$@` in favour of its own formatter
+# (upstream #3232) and the compat shim is broken for the quoted form: with
+# `zathura "$@"` the child is spawned with ZERO arguments, so zathura / papers /
+# imv / vlc all came up empty. `%s` is escaped by yazi itself, so paths with
+# spaces need no quoting here.
 { ... }:
 let
   # Shared across both platforms. `opener`/`plugins`/`extraKeys` are the seams.
@@ -69,7 +76,7 @@ let
             # NOTE: must go through `ya pub extract`, not `plugin extract` —
             # the native extract plugin is pub/sub based (ps.sub_remote), so a
             # bare `plugin extract` just subscribes and blocks forever.
-            { on = [ "e" "x" ]; run = ''shell 'ya pub extract --list "$@"' ''; desc = "Extract archive"; }
+            { on = [ "e" "x" ]; run = ''shell 'ya pub extract --list %s' ''; desc = "Extract archive"; }
             # Compress selection (replaces ranger `ec`)
             { on = [ "e" "c" ]; run = "plugin compress"; desc = "Compress selection"; }
             # Recursive fzf search across subdirs (like ranger <C-f>)
@@ -123,26 +130,26 @@ in
 
       opener = {
         pdf = [
-          { run = ''zathura "$@"''; orphan = true; desc = "Zathura"; }
-          { run = ''papers "$@"''; orphan = true; desc = "Papers"; }
-          { run = ''firefox "$@"''; orphan = true; desc = "Firefox"; }
+          { run = ''zathura %s''; orphan = true; desc = "Zathura"; }
+          { run = ''papers %s''; orphan = true; desc = "Papers"; }
+          { run = ''firefox %s''; orphan = true; desc = "Firefox"; }
         ];
         image = [
-          { run = ''imv "$@"''; orphan = true; desc = "imv"; }
-          { run = ''gimp "$@"''; orphan = true; desc = "GIMP"; }
+          { run = ''imv %s''; orphan = true; desc = "imv"; }
+          { run = ''gimp %s''; orphan = true; desc = "GIMP"; }
         ];
         video = [
-          { run = ''vlc "$@"''; orphan = true; desc = "VLC"; }
-          { run = ''firefox "$@"''; orphan = true; desc = "Firefox"; }
+          { run = ''vlc %s''; orphan = true; desc = "VLC"; }
+          { run = ''firefox %s''; orphan = true; desc = "Firefox"; }
         ];
         text = [
-          { run = ''setsid -f neovide "$@"''; orphan = true; desc = "Neovide"; }
-          { run = ''$EDITOR "$@"''; block = true; desc = "Editor"; }
+          { run = ''setsid -f neovide %s''; orphan = true; desc = "Neovide"; }
+          { run = ''$EDITOR %s''; block = true; desc = "Editor"; }
         ];
         fallback = [
-          { run = ''xdg-open "$@"''; orphan = true; desc = "xdg-open"; }
-          { run = ''setsid -f neovide "$@"''; orphan = true; desc = "Neovide"; }
-          { run = ''$EDITOR "$@"''; block = true; desc = "Editor"; }
+          { run = ''xdg-open %s''; orphan = true; desc = "xdg-open"; }
+          { run = ''setsid -f neovide %s''; orphan = true; desc = "Neovide"; }
+          { run = ''$EDITOR %s''; block = true; desc = "Editor"; }
         ];
       };
 
@@ -175,24 +182,24 @@ in
       # Every entry is a second choice on the same list, reachable with `O`.
       opener = {
         pdf = [
-          { run = ''open "$@"''; orphan = true; desc = "Default app"; }
-          { run = ''open -a Preview "$@"''; orphan = true; desc = "Preview"; }
+          { run = ''open %s''; orphan = true; desc = "Default app"; }
+          { run = ''open -a Preview %s''; orphan = true; desc = "Preview"; }
         ];
         image = [
-          { run = ''open "$@"''; orphan = true; desc = "Default app"; }
-          { run = ''open -a Preview "$@"''; orphan = true; desc = "Preview"; }
+          { run = ''open %s''; orphan = true; desc = "Default app"; }
+          { run = ''open -a Preview %s''; orphan = true; desc = "Preview"; }
         ];
         video = [
-          { run = ''open "$@"''; orphan = true; desc = "Default app"; }
-          { run = ''open -a QuickTime\ Player "$@"''; orphan = true; desc = "QuickTime"; }
+          { run = ''open %s''; orphan = true; desc = "Default app"; }
+          { run = ''open -a QuickTime\ Player %s''; orphan = true; desc = "QuickTime"; }
         ];
         text = [
-          { run = ''neovide "$@"''; orphan = true; desc = "Neovide"; }
-          { run = ''$EDITOR "$@"''; block = true; desc = "Editor"; }
+          { run = ''neovide %s''; orphan = true; desc = "Neovide"; }
+          { run = ''$EDITOR %s''; block = true; desc = "Editor"; }
         ];
         fallback = [
-          { run = ''open "$@"''; orphan = true; desc = "Default app"; }
-          { run = ''$EDITOR "$@"''; block = true; desc = "Editor"; }
+          { run = ''open %s''; orphan = true; desc = "Default app"; }
+          { run = ''$EDITOR %s''; block = true; desc = "Editor"; }
         ];
       };
 
