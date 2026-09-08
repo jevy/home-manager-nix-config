@@ -240,6 +240,9 @@
 #   * KEYS DO THE OLD THING, config provably right -> skhd serving its
 #     boot-time parse. Structurally fixed below (mkForce plists the keymap by
 #     store path), `skhd --reload` is the manual escape hatch.
+#   * KEYS DO NOTHING AT ALL, yabai itself fine -> skhd's own grant died
+#     (Accessibility, plus Input Monitoring) on a store-path change. Read
+#     /tmp/skhd_$USER.err.log — it exists for this, same as yabai's.
 #   * yabai DEAD, `failed to connect to socket` -> read /tmp/yabai_$USER.err.log
 #     (StandardErrorPath below). Accessibility grant and spans-displays are
 #     the usual suspects, in that order.
@@ -654,6 +657,15 @@
         "-c"
         "${pkgs.writeText "skhdrc" keymap}"
       ];
+
+      # THE SAME LOG yabai GOT, for the same reason: skhd's own failures (a
+      # keymap that will not parse, a dead Accessibility/Input Monitoring
+      # grant after a store-path change) are otherwise completely silent —
+      # the agent looks healthy and the keys just do nothing.
+      launchd.user.agents.skhd.serviceConfig.StandardErrorPath =
+        "/tmp/skhd_jevin.err.log";
+      launchd.user.agents.skhd.serviceConfig.StandardOutPath =
+        "/tmp/skhd_jevin.out.log";
 
       # DISABLE macOS'S OWN Ctrl+1..6 DESKTOP SWITCHING, so the meh key
       # (⌃⌥⌘ + 1..0) is the only way to change workspace. These were bound by
