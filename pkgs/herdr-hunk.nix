@@ -16,9 +16,9 @@
 # replaces reviewr's u/b/t keys, over a wider set of scopes.
 #
 # ── Patches ──────────────────────────────────────────────────────────────────
-# Six, all of them portability or correctness fixes upstream would want. 1–4
-# are one-liners; 5–6 are the "open it in the tab I am looking at" pair, which
-# gets its own section below.
+# Seven, all of them portability or correctness fixes upstream would want. 1–4
+# are one-liners; 5–7 are the "open it on the pane I pressed the key in"
+# family, which gets its own section below.
 #
 #   1. PATH. herdr runs plugin ACTIONS and EVENTS with a minimal PATH (the same
 #      constraint pkgs/herdr-reviewr.nix worked around), and upstream
@@ -53,9 +53,9 @@
 #   4. `--preview-window=hidden` on the top-level fzf menu, so a `--preview` in
 #      the inherited FZF_DEFAULT_OPTS can't render errors beside the rows.
 #
-# ── Patches 5–6: the review opens in the tab you are looking at ──────────────
-# Two unrelated reasons `prefix+d` could put the diff in a DIFFERENT TAB of the
-# same workspace:
+# ── Patches 5–7: the review opens on the pane you pressed the key in ─────────
+# Three unrelated reasons `prefix+d` could put the diff in a different tab of
+# the same workspace, or root it in a different repo:
 #
 #   5. NOTHING PINS THE SPLIT. `herdr plugin pane open` resolves an absent
 #      --target-pane at OPEN time, from whatever is focused then — and a plugin
@@ -76,6 +76,18 @@
 #      carry the title "hunk", and a session is per repo anyway, so a hunk pane
 #      sitting in the same repo in another tab is the one. Worst case it moves
 #      a hunk pane that was not the session's — visible, and harmless.
+#
+#   7. THE PICKER'S CWD HAS THE SAME RACE AS THE SPLIT TARGET. target_cwd()
+#      never consults HERDR_PANE_ID: it reads the context JSON and then falls
+#      back to whichever pane is FOCUSED WHEN THE DETACHED ACTION RUNS — later
+#      than the keypress, exactly the resolution patch 5 fixed for
+#      --target-pane. In a workspace whose panes sit in different worktrees,
+#      that roots the hunk session in the wrong one, permanently (`session
+#      reload` refuses a source outside the initial root), and a merged branch
+#      there renders it as an empty "branch vs main". Observed 2026-09-08. Fix:
+#      resolve HERDR_PANE_ID first via `pane get`, preferring foreground_cwd
+#      over the spawn-time cwd — the same idiom hunk-send uses
+#      (modules/dev/herdr.nix) — with upstream's chain kept as the fallback.
 #
 # ── What is deliberately NOT baked ───────────────────────────────────────────
 # `hunk` and `herdr` resolve from PATH. herdr passes its own path in
@@ -210,6 +222,52 @@ let
       esac
     fi'';
 
+  # Patch 7. Upstream's target_cwd(), verbatim, as the substitution anchor —
+  # an upstream rewrite fails the build instead of silently reviving the race.
+  upstreamTargetCwd = ''
+    target_cwd() {
+      local cwd=""
+      if command -v jq >/dev/null 2>&1; then
+        cwd="$(printf '%s' "''${HERDR_PLUGIN_CONTEXT_JSON:-}" | jq -r '
+          (.focused_pane_cwd // .workspace_cwd // .cwd // "")' 2>/dev/null)" || cwd=""
+        if [ -z "$cwd" ]; then
+          cwd="$("$herdr_bin" pane list 2>/dev/null | jq -r '
+            [.result.panes[]? | select(.focused == true)][0].cwd // ""' 2>/dev/null)" || cwd=""
+        fi
+      fi
+      [ -d "$cwd" ] || cwd="$HOME"
+      printf '%s' "$cwd"
+    }'';
+
+  # …and the replacement: the invoking pane (HERDR_PANE_ID) wins, upstream's
+  # context-JSON → focused-pane chain only fills in when that yields nothing.
+  # foreground_cwd before cwd for the same reason as hunk-send: the tracked
+  # cwd is spawn-time and only the zsh hook refreshes it, which an agent TUI
+  # never triggers. Same malformed-id guard as patch 5.
+  pickerTargetCwd = ''
+    target_cwd() {
+      local cwd=""
+      if command -v jq >/dev/null 2>&1; then
+        case "''${HERDR_PANE_ID:-}" in
+          "" | -* | *[!A-Za-z0-9_:.-]*) ;;
+          *)
+            cwd="$("$herdr_bin" pane get "$HERDR_PANE_ID" 2>/dev/null | jq -r '
+              .result.pane.foreground_cwd // .result.pane.cwd // ""' 2>/dev/null)" || cwd=""
+            ;;
+        esac
+        if [ -z "$cwd" ]; then
+          cwd="$(printf '%s' "''${HERDR_PLUGIN_CONTEXT_JSON:-}" | jq -r '
+            (.focused_pane_cwd // .workspace_cwd // .cwd // "")' 2>/dev/null)" || cwd=""
+        fi
+        if [ -z "$cwd" ]; then
+          cwd="$("$herdr_bin" pane list 2>/dev/null | jq -r '
+            [.result.panes[]? | select(.focused == true)][0].cwd // ""' 2>/dev/null)" || cwd=""
+        fi
+      fi
+      [ -d "$cwd" ] || cwd="$HOME"
+      printf '%s' "$cwd"
+    }'';
+
   # Patch 6. `session_here` replaces the bare `hunk session get` test in both
   # of picker.sh's reuse paths: same answer (is there a live session for this
   # repo?), but a hunk pane sitting in another tab is dragged here first, so
@@ -318,6 +376,10 @@ stdenvNoCC.mkDerivation {
         'extra=()
     [ "$placement" = "split" ] && extra=(--direction right)' \
         ${lib.escapeShellArg pickerPinPane}
+
+    # 7. Root the picker at the invoking pane's directory, for real.
+    substituteInPlace $out/scripts/open-hunk-picker.sh \
+      --replace-fail ${lib.escapeShellArg upstreamTargetCwd} ${lib.escapeShellArg pickerTargetCwd}
 
     # 6. Reuse a live session only after bringing its pane into this tab. The
     # anchor is the `session get` test, which appears in BOTH reuse paths
