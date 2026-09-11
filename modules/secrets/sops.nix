@@ -36,6 +36,9 @@
 
           # Backup
           restic_password = { };
+          # Laptop -> TrueNAS restic repo; also in 1Password
+          # ("Restic backup repo - lenovo-p14s Documents", Private vault)
+          restic_laptop_password = { };
 
           # TimeTagger
           timetagger_api_url = { };

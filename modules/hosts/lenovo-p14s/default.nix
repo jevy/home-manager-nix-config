@@ -1,7 +1,7 @@
 # Lenovo ThinkPad P14s Gen 6 AMD host definition
 { config, inputs, ... }:
 let
-  inherit (config.flake.modules) nixos;
+  inherit (config.flake.modules) nixos homeManager;
 in
 {
   configurations.nixos."lenovo-p14s".module =
@@ -27,20 +27,34 @@ in
 
         # SANE + ScanSnap S1300 (epjitsu backend)
         nixos.scanner
+
+        # Nightly restic backup of ~/Documents to the TrueNAS backups dataset
+        # (NFS mount here; the backup itself is homeManager.laptopBackup below)
+        nixos.laptopBackup
       ];
 
       networking.hostName = "lenovo-p14s";
 
       # LUKS
-      boot.initrd.luks.devices."cryptroot".device = "/dev/disk/by-uuid/93f39771-d83e-4b78-baa2-13c6f7f921f1";
+      boot.initrd.luks.devices."cryptroot".device =
+        "/dev/disk/by-uuid/93f39771-d83e-4b78-baa2-13c6f7f921f1";
 
       # Btrfs, not ZFS (NFS for the music share — see nixos.musicNfs)
       virtualisation.docker.storageDriver = "btrfs";
-      boot.supportedFilesystems = lib.mkForce [ "btrfs" "nfs" ];
+      boot.supportedFilesystems = lib.mkForce [
+        "btrfs"
+        "nfs"
+      ];
 
       # === TEMPORARY: disable hy3 plugin to isolate boot issue ===
 
       home-manager.users.jevin = {
+        imports = [
+          # Nightly restic backup of ~/Documents to TrueNAS (repo lives on the
+          # NFS mount declared by nixos.laptopBackup above)
+          homeManager.laptopBackup
+        ];
+
         # P14s OLED monitor: 2880x1800 @ 120Hz, scale 1.5 (→ 1920x1200 logical)
         wayland.windowManager.hyprland.settings.monitor = lib.mkForce "eDP-1,2880x1800@120,0x0,1.5";
         # Override the defaults from modules/desktop/hyprland.nix so the
@@ -50,7 +64,6 @@ in
           "HYPR_LAPTOP_MODE,2880x1800@120"
           "HYPR_LAPTOP_SCALE,1.5"
         ];
-
 
         # AMD GPU session variables
         home.sessionVariables = {
