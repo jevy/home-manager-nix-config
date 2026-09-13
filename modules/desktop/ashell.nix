@@ -18,6 +18,50 @@
         done
       '';
 
+      # ashell owns org.kde.StatusNotifierWatcher, the tray registry that every
+      # Qt/GTK app probes during GUI init. Seen on 0.9.0: that handler stops
+      # answering while ashell keeps the bus name, so the probe runs into
+      # D-Bus's 25s default timeout and *every* tray-aware app (VLC from yazi,
+      # etc.) takes 25s to show a window. The bar itself looks perfectly fine,
+      # which makes it near-impossible to attribute. Restarting ashell clears
+      # it. This watchdog does that automatically; drop it once upstream fixes
+      # the wedge (nothing in the 0.10.0 changelog names it).
+      tray-watchdog = pkgs.writeShellScript "ashell-tray-watchdog.sh" ''
+        set -u
+
+        SYSTEMCTL=${pkgs.systemd}/bin/systemctl
+
+        $SYSTEMCTL --user is-active --quiet ashell || exit 0
+
+        # Don't fight a bar that is still coming up: the ExecStartPre nm-online
+        # above can hold startup for 30s, and the tray name appears after that.
+        # Age comes from `ps -o etimes` (wall seconds since the process
+        # started). Do NOT compute it from systemd's *TimestampMonotonic minus
+        # /proc/uptime: systemd's monotonic clock excludes suspend time and
+        # /proc/uptime includes it, so on this laptop those two differ by days.
+        pid=$($SYSTEMCTL --user show ashell -p MainPID --value)
+        [ -n "$pid" ] && [ "$pid" != 0 ] || exit 0
+        age=$(${pkgs.procps}/bin/ps -o etimes= -p "$pid" 2>/dev/null | ${pkgs.coreutils}/bin/tr -d ' ')
+        [ -n "$age" ] || exit 0
+        [ "$age" -lt 90 ] && exit 0
+
+        # A healthy watcher answers in ~1ms, so 3s is generous. Two failures 5s
+        # apart, to ride out a momentary stall during tray re-registration.
+        probe() {
+          ${pkgs.coreutils}/bin/timeout 3 ${pkgs.systemd}/bin/busctl --user \
+            get-property org.kde.StatusNotifierWatcher /StatusNotifierWatcher \
+            org.kde.StatusNotifierWatcher IsStatusNotifierHostRegistered \
+            >/dev/null 2>&1
+        }
+
+        probe && exit 0
+        ${pkgs.coreutils}/bin/sleep 5
+        probe && exit 0
+
+        echo "ashell tray watcher unresponsive (2 probes, ashell up $age s); restarting" >&2
+        $SYSTEMCTL --user restart ashell
+      '';
+
       timetagger-listen = pkgs.writeShellScript "ashell-timetagger.sh" ''
         while true; do
           running_line=$(${pkgs.timetagger_cli}/bin/timetagger status 2>/dev/null | grep '^Running:')
@@ -125,6 +169,32 @@
           # race during rebuild leaves WiFi/Bluetooth widgets missing.
           ExecStartPre = "${pkgs.networkmanager}/bin/nm-online -s -q -t 30";
           RestartSec = "2s";
+        };
+      };
+
+      # See the tray-watchdog comment above for why this exists.
+      systemd.user.services.ashell-tray-watchdog = {
+        Unit = {
+          Description = "Restart ashell when its tray D-Bus watcher stops answering";
+          After = [ "graphical-session.target" ];
+        };
+        Service = {
+          Type = "oneshot";
+          # `busctl --user` needs the session bus address; user units reliably
+          # get XDG_RUNTIME_DIR (%t) but not always DBUS_SESSION_BUS_ADDRESS.
+          Environment = "DBUS_SESSION_BUS_ADDRESS=unix:path=%t/bus";
+          ExecStart = "${tray-watchdog}";
+        };
+      };
+
+      systemd.user.timers.ashell-tray-watchdog = {
+        Unit.Description = "Probe ashell's tray D-Bus watcher every minute";
+        Timer = {
+          OnCalendar = "minutely";
+          Persistent = false;
+        };
+        Install = {
+          WantedBy = [ "timers.target" ];
         };
       };
 
