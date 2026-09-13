@@ -214,6 +214,13 @@ in
           "npm:pi-lens"
           "npm:pi-secret-guard"
           "npm:pi-finder-subagent"
+          # LINE:HASH-anchored reads/edits — cheap models fumble line-number
+          # edits; content-hash anchors don't go stale between read and edit.
+          "npm:pi-readseek"
+          # Read-only plan mode; plan first, then execute in a fresh session.
+          "npm:@zhushanwen/pi-plan"
+          # Footer with context/token usage.
+          "npm:pi-powerline-footer"
           # MCP client — reads ~/.pi/agent/mcp.json, written by
           # ./mcp.nix from the same `programs.mcp.servers` Claude Code gets.
           "npm:pi-mcp-extension"
@@ -282,6 +289,11 @@ in
         packages = [
           "npm:pi-lens"
           "npm:pi-secret-guard"
+          # Same trio as the Linux block: hash-anchored edits matter even more
+          # for the local Qwen models, plan mode and the footer are model-free.
+          "npm:pi-readseek"
+          "npm:@zhushanwen/pi-plan"
+          "npm:pi-powerline-footer"
           # MCP client — reads ~/.pi/agent/mcp.json, written by
           # ./mcp.nix from the same `programs.mcp.servers` Claude Code gets.
           "npm:pi-mcp-extension"
