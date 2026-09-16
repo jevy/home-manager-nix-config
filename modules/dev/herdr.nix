@@ -658,6 +658,14 @@
         hunk-send
       ];
 
+      # Upstream's Claude Code skill, taken from the SAME source the installed
+      # binary is built from (pkgs.herdr.src, not the flake input — which may
+      # be ahead of nixpkgs) so skill and CLI can never drift. Used verbatim:
+      # unlike hunk's (see pkgs/claude-skill-hunk), its frontmatter gates
+      # correctly (explicit herdr mention + HERDR_ENV=1) and the body defers to
+      # `herdr --help` for syntax, so there is nothing local to fix.
+      home.file.".claude/skills/herdr".source = "${herdr.src}/skills/herdr";
+
       # ~/.config/herdr/plugins/config/<id>/ — the id maps to the directory
       # name verbatim.
       #
