@@ -45,7 +45,6 @@
         hypnotix
         talosctl
         esptool
-        freecad-wayland
         img2pdf
         yewtube
         pyradio
