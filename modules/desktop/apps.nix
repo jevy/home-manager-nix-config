@@ -152,11 +152,6 @@
         name = "Vanilla-DMZ";
       };
 
-      programs.vscode = {
-        enable = true;
-        package = pkgs.vscode.fhs;
-      };
-
       programs.obs-studio = {
         enable = true;
         plugins = [
@@ -179,9 +174,6 @@
         firefox = {
           enable = false;
           profileNames = [ "default" ];
-        };
-        vscode = {
-          enable = false;
         };
         # Stylix's GTK target overlays dark gruvbox values onto libadwaita's
         # named color tokens (window_bg_color, view_bg_color, …), which makes
