@@ -77,7 +77,14 @@ let
             # the native extract plugin is pub/sub based (ps.sub_remote), so a
             # bare `plugin extract` just subscribes and blocks forever.
             { on = [ "e" "x" ]; run = ''shell 'ya pub extract --list %s' ''; desc = "Extract archive"; }
-            # Compress selection (replaces ranger `ec`)
+            # Compress selection (replaces ranger `ec`).
+            # NOTE: the compress plugin rev must track yazi's `fs` API. Yazi 26
+            # renamed `fs.unique_name` -> `fs.unique`, and the plugin's call to
+            # the now-nil `fs.unique_name` does not surface as an error: the
+            # plugin task just never finishes, so the "Create archive:" prompt
+            # accepts a name and then nothing happens — no archive, no message,
+            # and `q` only gets you the "unfinished tasks" dialog. Pin >= the
+            # upstream `fs.unique` fix (748ebf3) whenever yazi is bumped.
             { on = [ "e" "c" ]; run = "plugin compress"; desc = "Compress selection"; }
             # Recursive fzf search across subdirs (like ranger <C-f>)
             { on = [ "<C-f>" ]; run = ''shell 'result="$(fd -H | fzf)"; [ -n "$result" ] && ya emit reveal "$result"' --block''; desc = "fzf search"; }
@@ -107,8 +114,8 @@ in
       compressPlugin = pkgs.fetchFromGitHub {
         owner = "KKV9";
         repo = "compress.yazi";
-        rev = "46a6b9f02ff2f8aced466a1f01a3fe241f1cd45f";
-        hash = "sha256-Mby185FCJY6nqHcHDQu+D5SLk+wGcyeUHK8yAvrd4TM=";
+        rev = "80e5268ec74c7ac17d4d739e13a9958cba4c70d3";
+        hash = "sha256-9cdA8D/TtwHcLqrtoyIixA0YJmTs+c8FSNrjxp8CYI0=";
       };
       dragPlugin = pkgs.fetchFromGitHub {
         owner = "Joao-Queiroga";
@@ -165,8 +172,8 @@ in
       compressPlugin = pkgs.fetchFromGitHub {
         owner = "KKV9";
         repo = "compress.yazi";
-        rev = "46a6b9f02ff2f8aced466a1f01a3fe241f1cd45f";
-        hash = "sha256-Mby185FCJY6nqHcHDQu+D5SLk+wGcyeUHK8yAvrd4TM=";
+        rev = "80e5268ec74c7ac17d4d739e13a9958cba4c70d3";
+        hash = "sha256-9cdA8D/TtwHcLqrtoyIixA0YJmTs+c8FSNrjxp8CYI0=";
       };
     in
     mkYazi {
