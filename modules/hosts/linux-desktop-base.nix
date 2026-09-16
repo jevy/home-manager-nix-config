@@ -39,6 +39,7 @@ in
         allowBroken = true;
         permittedInsecurePackages = [
           "electron-25.9.0"
+          "keybase-gui-6.5.1"
           "libsoup-2.74.3"
           "qtwebengine-5.15.19"
         ];
@@ -48,7 +49,6 @@ in
         overlays.mcpServers
         overlays.goobookRelaxDeps
         overlays.powerProfilesDaemonSkipCheck
-        overlays.ddcciDriverFix
         overlays.masterpdfeditorFix
       ];
 
