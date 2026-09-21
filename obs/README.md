@@ -40,7 +40,40 @@ Scarlett Solo (XLR mic), Hyprland/Wayland. Output target is YouTube screencasts.
 | ISOs write to `iso/%CCYY-%MM-%DD_%hh-%mm-%ss/{camera,screen}.mp4` | Per-take folders. The plugin calls `os_mkdirs`, so a subdirectory in `filename_formatting` works. Each filter stamps its own time, so a take starting on a second boundary can rarely split into two folders. |
 | `frame_rate_divisor: 2` on the **screen** ISO only | Three simultaneous encodes at 59.94 cost 16.8% of frames to compositor stalls. Halving just the screen ISO's encode rate took that to 2.3% over an 18-minute take while the camera and program stay 59.94. |
 | `scale: false` on both ISOs | Screen ISO keeps its native 2844x1714 while the program is 1080p, which is ~1.5x punch-in headroom for sharp zooms in post. That headroom is the whole point of the screen ISO. |
+| Screen ISO has **no audio** (`audio_track: 0`) | See "the 33ms echo" below. The camera ISO keeps audio; the screen ISO is video-only. |
 | Camera crop lives on the **scene items**, not on the source | A source-level crop would bake into `camera.mp4` too. Cropping the scene item keeps the ISO full-frame so the shot can be reframed per-cut in the edit. |
 
 Recordings go to `~/Documents/obsrecordings` (program) and `iso/` (masters).
 Capture level is deliberately ~-24 LUFS; normalise to -14 LUFS at export.
+
+## The 33 ms echo
+
+Both ISOs originally carried the `Mic/Aux` feed, so Descript could waveform-sync
+them and offer "combine into sequence" automatically. That produced an audible
+echo in every project, and the cause is specific:
+
+```
+screen.mp4 audio is offset from camera.mp4 by -33.4 ms
+33.367 ms = exactly one frame at 29.97 fps
+```
+
+`frame_rate_divisor: 2` makes the screen ISO timestamp its audio against its own
+halved video clock, so the audio lands exactly one of its frames late. It shows
+up in the container too: camera video runs `1070.719650` against screen's
+`1070.686283`, a difference of precisely 33.367 ms.
+
+For **video** that is 1 frame at 29.97 (2 at 59.94), imperceptible; the angles
+are fine. For **audio** 33 ms is textbook slapback delay, which is how you build
+an echo effect deliberately.
+
+Fixing it in the NLE is a per-project chore, and "Detach audio" leaves an
+orphaned audio clip behind that keeps echoing. So the screen ISO is video-only
+at the source instead. The cost is losing Descript's automatic combine prompt:
+select both files and use **Create sequence** from the right-click menu, one
+click.
+
+To strip audio from a take recorded before this change, losslessly:
+
+```
+ffmpeg -i screen.mp4 -map 0:v -c copy screen-noaudio.mp4
+```
