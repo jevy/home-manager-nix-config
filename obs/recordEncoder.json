@@ -1,0 +1,10 @@
+{
+    "bitrate": 2500,
+    "crf": 18,
+    "keyint_sec": 0,
+    "preset": "veryfast",
+    "profile": "high",
+    "rate_control": "CRF",
+    "tune": "",
+    "x264opts": ""
+}
