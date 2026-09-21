@@ -189,15 +189,14 @@
                     "versioned_id": "source_record_filter",
                     "settings": {
                         "record_mode": 3,
-                        "different_audio": true,
-                        "audio_track": 1,
+                        "different_audio": false,
+                        "audio_track": 0,
                         "scale": false,
                         "frame_rate_divisor": 2,
                         "path": "/home/jevin/Documents/obsrecordings/iso",
                         "filename_formatting": "%CCYY-%MM-%DD_%hh-%mm-%ss/screen",
                         "rec_format": "mp4",
-                        "encoder": "ffmpeg_vaapi_tex",
-                        "audio_source": "Mic/Aux"
+                        "encoder": "ffmpeg_vaapi_tex"
                     },
                     "mixers": 0,
                     "sync": 0,
