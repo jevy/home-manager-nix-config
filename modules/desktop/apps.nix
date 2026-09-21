@@ -157,6 +157,12 @@
         plugins = [
           pkgs.obs-studio-plugins.obs-pipewire-audio-capture
           pkgs.obs-studio-plugins.obs-backgroundremoval
+          # ISO recording: adds a "Source Record" filter that writes any one
+          # source to its own file alongside the main canvas recording, so the
+          # camera and the screen land as separate clips to composite in the
+          # edit. Set each filter's encoder to VAAPI so the iGPU carries them
+          # and x264 keeps the program recording to itself.
+          pkgs.obs-studio-plugins.obs-source-record
         ];
       };
 
