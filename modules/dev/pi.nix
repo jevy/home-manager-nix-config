@@ -53,6 +53,50 @@ let
         }
       ];
     };
+    # Local models via llama-swap on 127.0.0.1:9292
+    # (modules/services/llama-swap.nix, homeManager.llamaSwapLinux).
+    #
+    # ADDITIVE, NOT A REPLACEMENT. The cloud providers stay the default: these
+    # run at ~9 tok/s measured, which is fine for conversation and slow for an
+    # agent loop. They are here for the two things a cloud model cannot do —
+    # work with no network, and discuss personal material that should not leave
+    # the laptop. Reach for them deliberately via pi's model picker.
+    #
+    # IDs must match the model keys in llama-swap's settings.models, and
+    # contextWindow must mirror each entry's `-c` flag there. Do not raise one
+    # without the other: pi will pack a prompt llama-server then refuses.
+    providers.local = {
+      name = "llama-swap (local)";
+      baseUrl = "http://127.0.0.1:9292/v1";
+      api = "openai-completions";
+      apiKey = "no-key";
+      compat.supportsDeveloperRole = false;
+      models = [
+        # Qwen's agent-tuned MoE. Measured 9.40 tok/s on the Radeon 860M.
+        # The one to pick when a tool loop has to run offline.
+        {
+          id = "agentworld-35b-a3b";
+          name = "AgentWorld 35B-A3B (local, agent)";
+          reasoning = true;
+          input = [ "text" ];
+          contextWindow = 32768;
+          maxTokens = 32768;
+          cost = { input = 0; output = 0; cacheRead = 0; cacheWrite = 0; };
+        }
+        # Abliterated Gemma-4 26B-A4B. Measured 9.24 tok/s. Here for personal
+        # material, not code: stock Gemma scores 1.8/10 on willingness and
+        # deflects; this scores 8.2 without losing measurable intelligence.
+        {
+          id = "goetia-26b-a4b";
+          name = "Goetia 26B-A4B (local, private)";
+          reasoning = false;
+          input = [ "text" ];
+          contextWindow = 32768;
+          maxTokens = 32768;
+          cost = { input = 0; output = 0; cacheRead = 0; cacheWrite = 0; };
+        }
+      ];
+    };
     providers.deepseek = {
       models = [
         {
