@@ -21,6 +21,7 @@ lastmod rather than dates or mtimes.
 
 from __future__ import annotations
 
+import collections
 import email
 import email.policy
 import json
@@ -30,6 +31,7 @@ import sys
 import time
 from email.utils import parsedate_to_datetime
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import requests
 
@@ -59,6 +61,25 @@ def api(method: str, path: str, **kw):
     r = S.request(method, f"{URL}/api{path}", timeout=60, **kw)
     r.raise_for_status()
     return r.json() if r.content else None
+
+
+def next_path(url: str | None) -> str | None:
+    """The `next` link of a paginated response, as a path `api()` can take.
+
+    Paperless builds it with `request.build_absolute_uri()`, so behind the
+    ingress it comes back as `http://` while the configured URL is `https://`.
+    Stripping the configured prefix by string match is therefore a no-op, and
+    the next request becomes `https://host/api` + a whole absolute URL, which
+    the ingress happily answers with the SPA's HTML. Take the path and query and
+    throw the scheme and host away.
+    """
+    if not url:
+        return None
+    s = urlsplit(url)
+    path = s.path
+    if path.startswith("/api"):
+        path = path[len("/api"):]
+    return f"{path}?{s.query}" if s.query else path
 
 
 def notmuch(*args: str) -> str:
@@ -189,37 +210,46 @@ def msgid_field_id() -> int | None:
     return fld["results"][0]["id"] if fld["results"] else None
 
 
-def existing_attachments(msgids: list[str]) -> set[tuple[str, str]]:
-    """Which (Message-ID, filename) pairs paperless already holds.
+def existing_attachments(msgids: list[str]) -> dict[str, collections.Counter]:
+    """How many documents paperless already holds per (Message-ID, filename).
 
-    Keyed on the PAIR, not on the Message-ID alone: one email with two
-    attachments becomes two documents sharing a Message-ID (verified live), so a
-    msgid-only filter would permanently skip the second attachment of any email
-    whose first one landed and whose second one did not.
+    Counted, not a set of pairs. One email with two attachments becomes two
+    documents sharing a Message-ID (verified live), so a msgid-only filter would
+    permanently skip the second attachment of an email whose first one landed --
+    and two attachments in one email can share a FILENAME, so a set of pairs
+    would do the same thing one level down.
 
     This is a pre-filter, not the dedupe. Paperless rejects content duplicates by
     SHA-256 regardless -- but only AFTER the file has been uploaded, staged and
     queued, which is exactly the work worth not doing 1,200 times.
     """
     if not msgids:
-        return set()
+        return {}
     fid = msgid_field_id()
     if fid is None:
-        return set()
+        # Not an error on a genuine first run -- the field is created a few lines
+        # into sync(). It IS worth saying, because if the field is ever renamed
+        # or deleted this is the only signal before the whole window re-uploads.
+        print("  no 'Email Message-ID' field yet; nothing to pre-filter against")
+        return {}
 
-    seen: set[tuple[str, str]] = set()
+    seen: dict[str, collections.Counter] = {}
     for batch in chunks(sorted(set(msgids)), MSGID_BATCH):
-        page = "/documents/?page_size=100&custom_field_query=" + json.dumps(
+        # ordering=id, not the default -created: phase 1's uploads land WHILE
+        # this pages, and a new document sorts by its email Date -- in the middle
+        # of -created, pushing one unread row across the next page boundary. Ids
+        # are unique and only ever increase, so nothing can be shuffled past.
+        page = "/documents/?page_size=100&ordering=id&custom_field_query=" + json.dumps(
             ["Email Message-ID", "in", batch]
         )
         while page:
-            res = api("GET", page.replace(URL + "/api", ""))
+            res = api("GET", page)
             for doc in res["results"]:
                 name = doc.get("original_file_name")
                 for f in doc.get("custom_fields", []):
                     if f["field"] == fid and f.get("value") and name:
-                        seen.add((f["value"], name))
-            page = res.get("next")
+                        seen.setdefault(f["value"], collections.Counter())[name] += 1
+            page = next_path(res.get("next"))
     return seen
 
 
@@ -268,7 +298,14 @@ def sync() -> int:
     paths = [p for p in notmuch("search", "--output=files", query).splitlines() if p]
     print(f"{len(paths)} candidate message file(s)")
 
-    failed = 0
+    # `failed` is TRANSIENT failure only -- an upload paperless refused, a network
+    # drop -- and it is what holds the watermark back. `unreadable` is permanent:
+    # a maildir file that will not parse today will not parse tomorrow either, so
+    # blocking on it would freeze the window forever and leave systemd restarting
+    # the unit every 300s until StartLimitBurst trips. It is reported and skipped.
+    # If the file is ever repaired, notmuch reindexes it and its lastmod brings it
+    # back into a later window on its own.
+    failed = unreadable = unreconcilable = 0
 
     # -- phase 0: enumerate. Headers and attachment names only, no payloads and
     # nothing retained, so the reconciliation query below can be asked once for
@@ -280,13 +317,20 @@ def sync() -> int:
             msg = parse_message(path)
         except Exception as e:
             print(f"  ! unreadable {path}: {e}", file=sys.stderr)
-            failed += 1
+            unreadable += 1
             continue
 
         msgid = (msg.get("Message-ID") or "").strip("<> \t")
+        if not msgid:
+            # Without one the document can never be reconciled: it would be
+            # re-uploaded on every run forever, once per Gmail label, and the
+            # context pass would never find it either. Report it instead.
+            print(f"  ? no Message-ID, skipping: {path}", file=sys.stderr)
+            unreconcilable += 1
+            continue
         # lieer stores one file per Gmail label, so the same message appears at
         # several paths. Message-ID collapses them.
-        if msgid and msgid in seen_msgids:
+        if msgid in seen_msgids:
             continue
         seen_msgids.add(msgid)
 
@@ -296,9 +340,10 @@ def sync() -> int:
         if names:
             candidates.append((path, msgid, names))
 
-    already = existing_attachments([m for _, m, _ in candidates if m])
+    already = existing_attachments([m for _, m, _ in candidates])
+    held = sum(sum(c.values()) for c in already.values())
     print(f"{len(candidates)} message(s) from allowlisted senders; "
-          f"paperless already holds {len(already)} of their attachment(s)")
+          f"paperless already holds {held} of their attachment(s)")
 
     c_cache: dict = {}
     t_cache: dict = {}
@@ -314,15 +359,18 @@ def sync() -> int:
     # is what serialised the whole run behind OCR. The email body is attached by
     # the context pass below, keyed on Message-ID.
     for path, msgid, names in candidates:
-        wanted = [fn for fn in names if (msgid, fn) not in already]
+        # Multiset difference, not set difference: two attachments in one email
+        # can share a filename, and paperless holding one of them does not mean
+        # it holds both.
+        wanted = collections.Counter(names) - already.get(msgid, collections.Counter())
+        skipped += len(names) - sum(wanted.values())
         if not wanted:
-            skipped += len(names)
             continue
         try:
             msg = parse_message(path)
         except Exception as e:
             print(f"  ! unreadable {path}: {e}", file=sys.stderr)
-            failed += 1
+            unreadable += 1
             continue
 
         sender = msg.get("From", "")
@@ -340,9 +388,9 @@ def sync() -> int:
         subject = (msg.get("Subject") or "(no subject)").strip()
 
         for fn, payload in pdf_attachments(msg):
-            if fn not in wanted:
-                skipped += 1
+            if wanted[fn] <= 0:
                 continue
+            wanted[fn] -= 1
             data = {
                 "title": subject[:120],
                 "correspondent": str(corr),
@@ -385,7 +433,8 @@ def sync() -> int:
         )
     else:
         write_state(uuid_now, rev_now)
-    print(f"submitted={submitted} already-present={skipped} failed={failed}")
+    print(f"submitted={submitted} already-present={skipped} failed={failed} "
+          f"unreadable={unreadable} no-message-id={unreconcilable}")
 
     # -- phase 2: attach the email context to whatever has landed, including
     # uploads from earlier runs that were still in the OCR queue last time.
@@ -440,11 +489,13 @@ def context_pass() -> int:
         return 0
 
     fixed = missing = 0
-    page = "/documents/?page_size=100&custom_field_query=" + json.dumps(
+    # ordering=id for the same reason as the pre-filter query: the default
+    # -created ordering is neither unique nor stable while documents are landing.
+    page = "/documents/?page_size=100&ordering=id&custom_field_query=" + json.dumps(
         ["Email Message-ID", "exists", True]
     )
     while page:
-        res = api("GET", page.replace(URL + "/api", ""))
+        res = api("GET", page)
         for doc in res["results"]:
             if CONTEXT_MARKER in (doc.get("content") or ""):
                 continue
@@ -454,7 +505,12 @@ def context_pass() -> int:
             )
             if not msgid:
                 continue
-            paths = notmuch("search", "--output=files", f"id:{msgid}").splitlines()
+            # Quoted: notmuch query syntax is not shell syntax, but a Message-ID
+            # containing a space or an operator would parse as several terms and
+            # match a DIFFERENT message, whose body would then be PATCHed in.
+            paths = notmuch(
+                "search", "--output=files", 'id:"' + msgid.replace('"', '""') + '"'
+            ).splitlines()
             if not paths:
                 print(f"  ? doc {doc['id']}: message {msgid} not in notmuch")
                 missing += 1
@@ -465,7 +521,7 @@ def context_pass() -> int:
                       + context_block(msg, msgid)})
             fixed += 1
             print(f"  ~ attached context to doc {doc['id']}")
-        page = res.get("next")
+        page = next_path(res.get("next"))
     print(f"context attached={fixed} unmatched-in-notmuch={missing}")
     return 0
 
