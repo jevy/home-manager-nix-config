@@ -1,0 +1,441 @@
+diff --git a/llmfit-core/src/doctor.rs b/llmfit-core/src/doctor.rs
+index e97e576..fbe9f0a 100644
+--- a/llmfit-core/src/doctor.rs
++++ b/llmfit-core/src/doctor.rs
+@@ -86,10 +86,11 @@ fn sysfs_drm_summary() -> String {
+             })
+             .unwrap_or_else(|| "-".to_string());
+         cards.push(format!(
+-            "{name}: vendor={} device={} driver={driver} mem_info_vram_total={}",
++            "{name}: vendor={} device={} driver={driver} mem_info_vram_total={} mem_info_gtt_total={}",
+             read("vendor"),
+             read("device"),
+             read("mem_info_vram_total"),
++            read("mem_info_gtt_total"),
+         ));
+     }
+     if cards.is_empty() {
+diff --git a/llmfit-core/src/fit.rs b/llmfit-core/src/fit.rs
+index cd9ba2a..42c9686 100644
+--- a/llmfit-core/src/fit.rs
++++ b/llmfit-core/src/fit.rs
+@@ -576,7 +576,7 @@ impl ModelFit {
+             let gpu_bw = system
+                 .gpu_name
+                 .as_deref()
+-                .and_then(crate::hardware::gpu_memory_bandwidth_gbps);
++                .and_then(|n| crate::hardware::effective_memory_bandwidth_gbps(n, config.efficiency));
+             let method = if run_mode == RunMode::CpuOnly {
+                 "cpu_constant"
+             } else if gpu_bw.is_some() {
+@@ -1179,7 +1179,7 @@ pub(crate) fn estimate_tps(
+     runtime: InferenceRuntime,
+     config: &CalcConfig,
+ ) -> f64 {
+-    use crate::hardware::gpu_memory_bandwidth_gbps;
++    use crate::hardware::effective_memory_bandwidth_gbps;
+ 
+     // MoE models execute only active experts per token, so speed estimates should
+     // use active parameters when known; fit/memory paths still use full model size.
+@@ -1209,7 +1209,7 @@ pub(crate) fn estimate_tps(
+     //  - T4 (320 GB/s): 7B F16 → ~16 tok/s (ggerganov benchmark)
+     //  - Apple M1 Max (400 GB/s): 7B Q4_0 → ~61 tok/s (ggerganov benchmark)
+     let gpu_name = system.gpu_name.as_deref().unwrap_or("");
+-    let bandwidth = gpu_memory_bandwidth_gbps(gpu_name);
++    let bandwidth = effective_memory_bandwidth_gbps(gpu_name, config.efficiency);
+ 
+     if run_mode != RunMode::CpuOnly
+         && let Some(bw) = bandwidth
+diff --git a/llmfit-core/src/hardware.rs b/llmfit-core/src/hardware.rs
+index ff15460..50486df 100644
+--- a/llmfit-core/src/hardware.rs
++++ b/llmfit-core/src/hardware.rs
+@@ -850,6 +850,28 @@ impl SystemSpecs {
+     /// `/sys/class/drm`, groups identical models with a `count` (like the
+     /// ROCm and NVIDIA paths), and returns one `GpuInfo` per distinct model
+     /// so multi-GPU setups are reported in full.
++    ///
++    /// For integrated GPUs the reported pool is `mem_info_vram_total +
++    /// mem_info_gtt_total`. `mem_info_vram_total` alone is only the BIOS UMA
++    /// carveout (commonly 512 MB - 4 GB and often not user-configurable on
++    /// laptops); amdgpu additionally exposes a GTT aperture, defaulting to
++    /// roughly half of system RAM, which the iGPU can address at the same DDR
++    /// bandwidth as the carveout because both live in the same physical
++    /// memory. llama.cpp's Vulkan backend allocates model weights out of that
++    /// aperture, so the carveout alone understates the runnable model size by
++    /// an order of magnitude (e.g. 4 GB reported vs 25 GB addressable on a
++    /// Ryzen AI 7 PRO 350 / Radeon 860M with 42 GB of RAM).
++    ///
++    /// GTT is added for integrated cards only. A discrete card also exposes a
++    /// GTT aperture, but there it is host RAM reached over PCIe at a small
++    /// fraction of VRAM bandwidth, so folding it into the VRAM figure would
++    /// make a dGPU look far more capable than it is.
++    ///
++    /// `unified_memory` is deliberately left `false`. It stays reserved for
++    /// Ryzen AI MAX (see `is_amd_unified_memory_apu`), because setting it
++    /// disables the CpuOffload path entirely (`plan.rs`, `fit.rs`), and on a
++    /// non-MAX APU that path is still real: GTT is capped near half of RAM,
++    /// while llama.cpp on the CPU can use all of it.
+     fn detect_amd_gpu_sysfs_info() -> Vec<GpuInfo> {
+         if !cfg!(target_os = "linux") {
+             return Vec::new();
+@@ -862,6 +884,11 @@ impl SystemSpecs {
+ 
+         // Collect per-card (name, vram) pairs.
+         let mut cards: Vec<(String, Option<f64>)> = Vec::new();
++        // GTT aperture per integrated card, keyed by the same resolved name
++        // the grouping step uses, so it can be folded in afterwards without
++        // perturbing `group_and_filter_amd_sysfs_cards` (whose integrated-vs-
++        // discrete test keys off the raw carveout size).
++        let mut integrated_gtt_gb: BTreeMap<String, f64> = BTreeMap::new();
+ 
+         for entry in entries.flatten() {
+             let card_path = entry.path();
+@@ -891,6 +918,16 @@ impl SystemSpecs {
+                 vram_gb = Some(vram_bytes as f64 / (1024.0 * 1024.0 * 1024.0));
+             }
+ 
++            // GTT aperture, amdgpu-only and absent on older kernels.
++            let mut gtt_gb: Option<f64> = None;
++            let gtt_path = device_path.join("mem_info_gtt_total");
++            if let Ok(gtt_str) = std::fs::read_to_string(&gtt_path)
++                && let Ok(gtt_bytes) = gtt_str.trim().parse::<u64>()
++                && gtt_bytes > 0
++            {
++                gtt_gb = Some(gtt_bytes as f64 / (1024.0 * 1024.0 * 1024.0));
++            }
++
+             // Resolve this card's PCI slot so lspci yields a per-card name.
+             let mut slot_hints: Vec<String> = Vec::new();
+             if let Ok(uevent) = std::fs::read_to_string(device_path.join("uevent")) {
+@@ -913,10 +950,38 @@ impl SystemSpecs {
+                 }
+             }
+ 
++            if let Some(gtt) = gtt_gb
++                && Self::is_integrated_gpu_name(&name)
++            {
++                let slot = integrated_gtt_gb.entry(name.clone()).or_insert(0.0);
++                if gtt > *slot {
++                    *slot = gtt;
++                }
++            }
++
+             cards.push((name, vram_gb));
+         }
+ 
+-        Self::group_and_filter_amd_sysfs_cards(cards)
++        Self::fold_integrated_gtt(
++            Self::group_and_filter_amd_sysfs_cards(cards),
++            &integrated_gtt_gb,
++        )
++    }
++
++    /// Add each integrated card's GTT aperture to its VRAM carveout. Pure so
++    /// the APU pool sizing can be regression-tested without a live sysfs.
++    /// Cards absent from the map (discrete, or a kernel without
++    /// `mem_info_gtt_total`) are returned untouched.
++    fn fold_integrated_gtt(
++        mut gpus: Vec<GpuInfo>,
++        integrated_gtt_gb: &BTreeMap<String, f64>,
++    ) -> Vec<GpuInfo> {
++        for gpu in &mut gpus {
++            if let Some(gtt) = integrated_gtt_gb.get(&gpu.name) {
++                gpu.vram_gb = Some(gpu.vram_gb.unwrap_or(0.0) + gtt);
++            }
++        }
++        gpus
+     }
+ 
+     /// Group sysfs AMD cards by model name and drop integrated GPUs when a
+@@ -2659,6 +2724,148 @@ fn measure_ram_bandwidth_gbps() -> Option<f64> {
+     (2.0..=4000.0).contains(&total).then_some(total)
+ }
+ 
++/// Effective *read* streaming bandwidth in GB/s, measured once per process and
++/// cached. Companion to [`measured_ram_bandwidth_gbps`], which uses a memcpy
++/// (STREAM-copy convention: bytes read + bytes written).
++///
++/// Decode streams weights: every token reads the full weight set once and
++/// writes almost nothing. A copy loop is the wrong shape for that, and it also
++/// pays read-for-ownership traffic the byte count never sees, so it lands ~15%
++/// below a pure read on the same machine. Measured on a Ryzen AI 7 PRO 350
++/// (AC, performance profile): memcpy 34.4 GB/s, read 39.3 GB/s, and real
++/// llama.cpp Vulkan decode achieves 41.7 GB/s.
++///
++/// Kept separate rather than replacing the memcpy probe, because the
++/// MoE-offload path is calibrated against that one.
++pub fn measured_read_bandwidth_gbps() -> Option<f64> {
++    static MEASURED: std::sync::OnceLock<Option<f64>> = std::sync::OnceLock::new();
++    *MEASURED.get_or_init(measure_read_bandwidth_gbps)
++}
++
++fn measure_read_bandwidth_gbps() -> Option<f64> {
++    use std::time::{Duration, Instant};
++
++    // 64 MiB per thread is comfortably past a 16-32 MB L3, so this measures
++    // DRAM. Four independent accumulators keep the adds off the critical path
++    // so the loop stays memory-bound rather than latency-bound.
++    const BUF_WORDS: usize = 8 * 1024 * 1024; // 64 MiB of u64
++    const MEASURE_WINDOW: Duration = Duration::from_millis(120);
++
++    let threads = std::thread::available_parallelism()
++        .map(|n| n.get().min(8))
++        .unwrap_or(4);
++
++    let barrier = std::sync::Barrier::new(threads);
++    let per_thread_gbps: Vec<f64> = std::thread::scope(|scope| {
++        let barrier = &barrier;
++        let handles: Vec<_> = (0..threads)
++            .map(|_| {
++                scope.spawn(move || {
++                    let buf = vec![1u64; BUF_WORDS];
++                    // Warmup pass faults pages in before the timed window.
++                    let mut acc = 0u64;
++                    for w in &buf {
++                        acc = acc.wrapping_add(*w);
++                    }
++                    std::hint::black_box(acc);
++                    barrier.wait();
++                    let start = Instant::now();
++                    let mut passes = 0u64;
++                    while start.elapsed() < MEASURE_WINDOW {
++                        let (mut a, mut b, mut c, mut d) = (0u64, 0u64, 0u64, 0u64);
++                        for chunk in buf.chunks_exact(4) {
++                            a = a.wrapping_add(chunk[0]);
++                            b = b.wrapping_add(chunk[1]);
++                            c = c.wrapping_add(chunk[2]);
++                            d = d.wrapping_add(chunk[3]);
++                        }
++                        std::hint::black_box(a ^ b ^ c ^ d);
++                        passes += 1;
++                    }
++                    let secs = start.elapsed().as_secs_f64();
++                    (passes as f64) * (BUF_WORDS * 8) as f64 / secs / 1e9
++                })
++            })
++            .collect();
++        handles.into_iter().filter_map(|h| h.join().ok()).collect()
++    });
++
++    if per_thread_gbps.len() != threads {
++        return None;
++    }
++    let total: f64 = per_thread_gbps.iter().sum();
++    (2.0..=4000.0).contains(&total).then_some(total)
++}
++
++/// Effective memory bandwidth in GB/s for the device that will hold the
++/// weights, falling back to the measured system figure for integrated GPUs.
++///
++/// [`gpu_memory_bandwidth_gbps`] is a name lookup over discrete cards and the
++/// Strix Halo APUs. An ordinary mobile iGPU ("Radeon 840M / 860M Graphics",
++/// "Radeon 780M", Intel Iris/UHD) is in neither list, so it returns `None` and
++/// the caller drops to a run-mode constant calibrated on discrete GPUs — which
++/// on this class of hardware is wrong by several times, because an iGPU has no
++/// memory of its own. It streams weights from the same DDR as the CPU, over the
++/// same controller, so the system figure llmfit already measures *is* its
++/// bandwidth.
++///
++/// Measured on a Ryzen AI 7 PRO 350 / Radeon 860M (Krackan, RDNA 3.5):
++///   CPU, multithreaded memcpy (llmfit's own probe)   34 GB/s
++///   CPU, read-only stream (saturates at 4 threads)   34 GB/s
++///   iGPU, clpeak global memory bandwidth, rusticl    35.5 GB/s
++/// The GPU has no bandwidth advantage over the CPU here; both are limited by
++/// the same controller, not by their own path to it. Against that, the
++/// discrete-GPU constant had a dense 8B Q8 (8.2 GB of weights) at 16.1 tok/s,
++/// which would need ~130 GB/s.
++///
++/// Discrete cards missing from the table keep returning `None`: their VRAM
++/// bandwidth has no relationship to system DDR, so the old fallback is still
++/// the better guess there.
++pub fn effective_memory_bandwidth_gbps(name: &str, efficiency: f64) -> Option<f64> {
++    if let Some(bw) = gpu_memory_bandwidth_gbps(name) {
++        return Some(bw);
++    }
++    if SystemSpecs::is_integrated_gpu_name(name) && efficiency > 0.0 {
++        // The table stores spec-sheet peaks, which the caller derates by
++        // `efficiency`. The probe already reports an achieved figure, so
++        // returning it raw would derate twice. Pre-divide so the caller's
++        // multiply reconstructs the calibrated number, using the live config
++        // value rather than a hardcoded copy of its default.
++        return measured_read_bandwidth_gbps()
++            .map(|bw| bw * IGPU_DECODE_BANDWIDTH_FACTOR / efficiency);
++    }
++    None
++}
++
++/// Ratio of achieved llama.cpp Vulkan decode bandwidth to this process's CPU
++/// read probe on an integrated GPU. Slightly above 1.0 because the GPU
++/// saturates the same controller a little better than the CPU cores do.
++///
++/// Calibrated on a Ryzen AI 7 PRO 350 / Radeon 860M (AC, performance profile,
++/// llama.cpp b10809 Vulkan, `llama-bench -n 128 -ngl 99 -r 3`), over a 7.3x
++/// span of weight sizes and two quantizations:
++///
++///   qwen3   1.7B Q4_K_M  1.19 GiB  34.00 tok/s  ->  43.4 GB/s
++///   qwen2.5 1.5B Q4_K_M  1.04 GiB  38.15 tok/s  ->  42.4 GB/s
++///   qwen2.5 3B   Q4_K_M  1.95 GiB  20.29 tok/s  ->  42.6 GB/s
++///   qwen2.5 7B   Q4_K_M  4.36 GiB   8.51 tok/s  ->  39.8 GB/s
++///   qwen2.5 7B   Q8_0    7.54 GiB   4.99 tok/s  ->  40.3 GB/s
++///
++/// Mean achieved 41.7 GB/s against a 39.3 GB/s read probe on the same run.
++/// A single constant reproduces every row above to within 4.8%, so the
++/// bandwidth term itself is good to about +/-5%.
++///
++/// The shipped value is 0.96 rather than that raw 1.06 ratio, because the
++/// estimator multiplies this by a parameter count taken from the catalogue,
++/// and those counts exclude the token-embedding matrix while the GGUF includes
++/// it. The gap is size-dependent (Qwen2.5-1.5B: catalogue 1.50B vs GGUF
++/// 1.777B, 1.19x; Qwen2.5-7B: 7.6B vs 7.616B, 1.00x), so no constant can fix
++/// it — 0.96 is the value that bounds worst-case end-to-end error across the
++/// ladder instead of letting small models run 18% optimistic. The cost is
++/// ~2.5% conservatism on models whose catalogue count is right, which is the
++/// safer direction for a speed estimate to err.
++const IGPU_DECODE_BANDWIDTH_FACTOR: f64 = 0.96;
++
+ /// Estimate GPU memory bandwidth in GB/s from the GPU model name.
+ ///
+ /// Token generation in LLM inference is memory-bandwidth-bound (each token
+@@ -3359,6 +3566,70 @@ fn estimate_vram_from_name(name: &str) -> f64 {
+ #[cfg(test)]
+ mod tests {
+     use super::SystemSpecs;
++    use std::collections::BTreeMap;
++
++    // A non-MAX AMD APU (Ryzen AI 7 PRO 350 / Radeon 860M, 42 GB RAM) exposes
++    // a 4 GB BIOS UMA carveout in mem_info_vram_total and a ~21 GB GTT
++    // aperture in mem_info_gtt_total. llama.cpp's Vulkan backend can allocate
++    // weights out of both, so the reported pool must be their sum.
++    #[test]
++    fn test_integrated_gtt_folded_into_vram() {
++        let gpus = SystemSpecs::group_and_filter_amd_sysfs_cards(vec![(
++            "Radeon 840M / 860M Graphics".to_string(),
++            Some(4.0),
++        )]);
++        let mut gtt = BTreeMap::new();
++        gtt.insert("Radeon 840M / 860M Graphics".to_string(), 21.4);
++        let gpus = SystemSpecs::fold_integrated_gtt(gpus, &gtt);
++        assert_eq!(gpus.len(), 1);
++        assert_eq!(gpus[0].vram_gb, Some(25.4));
++        // Reserved for Ryzen AI MAX; folding GTT must not flip it, or the
++        // CpuOffload path disappears (plan.rs / fit.rs).
++        assert!(!gpus[0].unified_memory);
++    }
++
++    // An iGPU has no memory of its own, so its bandwidth is the system's.
++    // The name-table lookup misses it; effective_memory_bandwidth_gbps must
++    // not, or the estimator drops to a discrete-GPU constant.
++    #[test]
++    fn test_integrated_gpu_bandwidth_falls_back_to_measured_ram() {
++        let measured = super::measured_read_bandwidth_gbps().expect("probe should succeed");
++        assert!(super::gpu_memory_bandwidth_gbps("Radeon 840M / 860M Graphics").is_none());
++        // Returned pre-divided, so bw * efficiency == the calibrated figure.
++        let bw = super::effective_memory_bandwidth_gbps("Radeon 840M / 860M Graphics", 0.55)
++            .expect("integrated GPU should fall back to the system figure");
++        let expected = measured * super::IGPU_DECODE_BANDWIDTH_FACTOR;
++        assert!((bw * 0.55 - expected).abs() < 1e-6);
++    }
++
++    // Strix Halo has a real table entry (256 GB/s, 256-bit LPDDR5X); the
++    // system-RAM fallback must not shadow it.
++    #[test]
++    fn test_strix_halo_keeps_table_bandwidth() {
++        assert_eq!(
++            super::effective_memory_bandwidth_gbps("AMD Radeon 8060S Graphics", 0.55),
++            Some(256.0)
++        );
++    }
++
++    // A discrete card's VRAM bandwidth has no relation to system DDR, so an
++    // unknown one must keep returning None rather than borrow the RAM figure.
++    #[test]
++    fn test_unknown_discrete_gpu_bandwidth_stays_none() {
++        assert!(super::effective_memory_bandwidth_gbps("Radeon RX 9999 XT", 0.55).is_none());
++    }
++
++    // A discrete card also has a GTT aperture, but it is host RAM over PCIe.
++    // It never enters the map, so its VRAM figure must be untouched.
++    #[test]
++    fn test_discrete_vram_untouched_by_gtt_fold() {
++        let gpus = SystemSpecs::group_and_filter_amd_sysfs_cards(vec![(
++            "Radeon RX 9060 XT".to_string(),
++            Some(16.0),
++        )]);
++        let gpus = SystemSpecs::fold_integrated_gtt(gpus, &BTreeMap::new());
++        assert_eq!(gpus[0].vram_gb, Some(16.0));
++    }
+ 
+     // Regression for #303 (wezm): Granite Ridge iGPU ("Radeon Graphics",
+     // 2 GB UMA carve-out) enumerated alongside an RX 9060 XT. The iGPU must
+diff --git a/llmfit-core/src/models.rs b/llmfit-core/src/models.rs
+index e033756..25ac540 100644
+--- a/llmfit-core/src/models.rs
++++ b/llmfit-core/src/models.rs
+@@ -63,21 +63,40 @@ pub fn quant_speed_multiplier(quant: &str) -> f64 {
+ 
+ /// Bytes per parameter for a given quantization format.
+ /// Used by the bandwidth-based tok/s estimator to compute model size in GB.
++/// Measured bytes per parameter, against the GGUF's own `general.parameter_count`
++/// (`llama-bench` `model_n_params` / `model_size`):
++///
++///   qwen3   1.7B Q4_K_M  0.628 B/param (5.03 bits)
++///   qwen2.5 1.5B Q4_K_M  0.625 B/param (5.00 bits)
++///   qwen2.5 3B   Q4_K_M  0.618 B/param (4.94 bits)
++///   qwen2.5 7B   Q4_K_M  0.614 B/param (4.91 bits)
++///   qwen2.5 7B   Q8_0    1.063 B/param (8.50 bits)
++///
++/// Q4_K_M is not 4 bits per weight: llama.cpp's K-quants mix Q4_K with Q6_K
++/// for the attention and feed-forward tensors that matter most, and store the
++/// token embedding higher still, landing at 4.9-5.0 bits across a 4.3x span of
++/// model sizes (spread only +/-1.1%). Q8_0 carries a per-block fp16 scale, so
++/// it is 8.5 bits, not 8. Using the nominal widths understated weight bytes by
++/// 24% and 6% respectively, and decode is weight-streaming bound, so that error
++/// passed straight into every tok/s estimate.
+ pub fn quant_bytes_per_param(quant: &str) -> f64 {
+     match quant {
+         "F16" | "BF16" => 2.0,
+-        "Q8_0" => 1.0,
++        // Q8_0 and Q4_K_M are measured from real GGUFs rather than taken from
++        // the nominal bit width; see the note below. The others keep their
++        // nominal values because no measurement was taken for them.
++        "Q8_0" => 1.063,
+         "Q6_K" => 0.75,
+         "Q5_K_M" => 0.625,
+-        "Q4_K_M" | "Q4_0" => 0.5,
++        "Q4_K_M" | "Q4_0" => 0.621,
+         "Q3_K_M" => 0.375,
+         "Q2_K" => 0.25,
+         "UD-Q2_K_XL" | "UD-Q2_K_L" | "UD-Q2_K_M" | "UD-Q2_K_S" => 0.25,
+         "UD-Q3_K_XL" | "UD-Q3_K_L" | "UD-Q3_K_M" | "UD-Q3_K_S" => 0.375,
+-        "UD-Q4_K_XL" | "UD-Q4_K_L" | "UD-Q4_K_M" | "UD-Q4_K_S" => 0.5,
++        "UD-Q4_K_XL" | "UD-Q4_K_L" | "UD-Q4_K_M" | "UD-Q4_K_S" => 0.621,
+         "UD-Q5_K_XL" | "UD-Q5_K_L" | "UD-Q5_K_M" | "UD-Q5_K_S" => 0.625,
+         "UD-Q6_K_XL" | "UD-Q6_K_L" | "UD-Q6_K_M" | "UD-Q6_K_S" => 0.75,
+-        "UD-Q8_K_XL" | "UD-Q8_K_L" | "UD-Q8_K_M" | "UD-Q8_K_S" => 1.0,
++        "UD-Q8_K_XL" | "UD-Q8_K_L" | "UD-Q8_K_M" | "UD-Q8_K_S" => 1.063,
+         "mlx-4bit" => 0.5,
+         "mlx-8bit" => 1.0,
+         "AWQ-4bit" | "GPTQ-Int4" | "AutoRound-4bit" => 0.5,
+diff --git a/llmfit-core/src/plan.rs b/llmfit-core/src/plan.rs
+index 2bdfcc1..850ec20 100644
+--- a/llmfit-core/src/plan.rs
++++ b/llmfit-core/src/plan.rs
+@@ -216,7 +216,7 @@ fn estimate_tps_with_gpu(
+     config: &CalcConfig,
+ ) -> f64 {
+     use crate::fit::InferenceRuntime;
+-    use crate::hardware::gpu_memory_bandwidth_gbps;
++    use crate::hardware::effective_memory_bandwidth_gbps;
+ 
+     let params = model.params_b().max(0.1);
+ 
+@@ -234,7 +234,7 @@ fn estimate_tps_with_gpu(
+     if path != PlanRunPath::CpuOnly
+         && let Some(specs) = system
+         && let Some(name) = specs.gpu_name.as_deref()
+-        && gpu_memory_bandwidth_gbps(name).is_some()
++        && effective_memory_bandwidth_gbps(name, config.efficiency).is_some()
+     {
+         return crate::fit::estimate_tps(
+             model,
