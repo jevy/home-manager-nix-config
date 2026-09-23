@@ -83,7 +83,17 @@
 # MoE verified separately, since every row above is dense and MoE takes a
 # different path through the estimator (active experts only, not full weights):
 #
-#   Qwen-AgentWorld-35B-A3B  Q3_K_M     8.99       9.40   -4.4%
+#   Qwen-AgentWorld-35B-A3B  Q3_K_M     8.99       9.40   -4.4%   qwen3_5_moe
+#   Goetia-26B-A4B  (gemma4) Q4_K_M     7.54       9.24  -18.4%   gemma4 MoE
+#
+# MoE is NOT inside the +/-10% the dense ladder holds to. Both points are
+# under-predictions and the error is architecture-dependent, so treat a MoE
+# tok/s figure as a floor, not an estimate. Two points is too few to calibrate
+# against without overfitting, so nothing here corrects for it.
+#
+# Both landed at ~9.2-9.4 tok/s despite 35B vs 26B totals, because active
+# experts (3B vs 4B) plus the always-read attention and embeddings dominate;
+# total parameter count barely matters for MoE decode speed on this machine.
 #
 # That run also killed a plausible-sounding wrong model. A naive
 # "reads only the active params" roofline predicts 21.5 tok/s for a 35B-A3B and
