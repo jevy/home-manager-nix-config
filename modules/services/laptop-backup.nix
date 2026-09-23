@@ -31,7 +31,10 @@
 # ALSO: encryption does not protect against deletion. A bad `restic forget`, or
 # ransomware reaching the NFS mount, can destroy the repo. A ZFS periodic
 # snapshot task on orignal-disks/backups is the guard for that, configured in
-# the TrueNAS UI. As of 2026-09-11 that dataset had no snapshot task.
+# the TrueNAS UI (not here -- nothing in this flake manages TrueNAS). It has
+# been taking daily `auto-*` snapshots at 05:00 since 2026-09-12, keeping ~11.
+# 05:00 is deliberately after the 03:30 backup, so each snapshot captures that
+# night's run. Verified 2026-09-22.
 #
 # History: this replaces a `services.restic` block in modules/services/backup.nix
 # that declared a repo but no `paths`. The upstream module gates on
@@ -98,14 +101,29 @@ in
         # re-init over an existing repo.
         initialize = true;
 
-        # Touching the path triggers the automount, then bail out rather than
-        # writing a fresh repo onto the laptop's own disk if the mount failed.
+        # Wait for the automount, then bail out rather than writing a fresh repo
+        # onto the laptop's own disk if the mount never came up.
+        #
+        # `ls` inside the directory is the trigger: a bare stat of an autofs
+        # mountpoint does not always fire it, a readdir within it does. Polling
+        # rather than trying once is the point -- see the Persistent=true note
+        # in the timerConfig below.
+        #
+        # mkdir comes after the mount is confirmed. Doing it first, as this used
+        # to, wrote into (or was denied by) the root-owned autofs stub directory
+        # and buried the real error.
         backupPrepareCommand = ''
+          tries=0
+          until ${pkgs.util-linux}/bin/mountpoint -q ${mountPoint}; do
+            ls ${mountPoint} >/dev/null 2>&1 || true
+            tries=$((tries + 1))
+            if [ "$tries" -ge 24 ]; then
+              echo "${mountPoint} did not mount after ~2min; refusing to touch the local disk" >&2
+              exit 1
+            fi
+            ${pkgs.coreutils}/bin/sleep 5
+          done
           mkdir -p ${repoPath}
-          if ! ${pkgs.util-linux}/bin/mountpoint -q ${mountPoint}; then
-            echo "${mountPoint} is not mounted; refusing to touch the local disk" >&2
-            exit 1
-          fi
         '';
 
         # Retention. Runs after the backup, so "keep 7 daily" includes today's.
@@ -126,6 +144,32 @@ in
           # A laptop is asleep at 03:30 more often than not; catch up on wake.
           Persistent = true;
           RandomizedDelaySec = "15m";
+        };
+      };
+
+      # Retry, because Persistent=true fires the catch-up run in the same second
+      # systemd finishes resuming from suspend -- before Wi-Fi is associated and
+      # long before NFS is reachable. Between 2026-09-14 and 2026-09-22 every
+      # single run failed that way (the attempt timestamps matched the
+      # "Finished System Suspend" timestamps exactly, to the second), and with no
+      # retry each failure burned the whole day: nine days, zero snapshots.
+      #
+      # The wait loop in backupPrepareCommand covers a slow network; this covers
+      # a network that is not there yet at all (lid opened out of the house,
+      # VPN/Wi-Fi still negotiating). on-failure is legal on Type=oneshot --
+      # only always/on-success are rejected.
+      #
+      # The start limit caps it at 6 attempts per hour. Past that the unit sits
+      # failed until the next timer firing, and a manual `systemctl --user start`
+      # needs a `reset-failed` first.
+      systemd.user.services."restic-backups-truenas-documents" = {
+        Unit = {
+          StartLimitIntervalSec = 3600;
+          StartLimitBurst = 6;
+        };
+        Service = {
+          Restart = "on-failure";
+          RestartSec = 300;
         };
       };
     };
