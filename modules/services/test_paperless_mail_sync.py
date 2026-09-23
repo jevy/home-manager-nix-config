@@ -404,3 +404,126 @@ class PaginationTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def dup_task(survivor_id, msgid, sender="a@b.com", tags=(783,), corr=7):
+    """A consume task paperless rejected as a SHA-256 duplicate."""
+    return {
+        "status": "failure",
+        "result_data": {"duplicate_of": survivor_id},
+        "input_data": {
+            "filename": "x.pdf",
+            "overrides": {
+                "title": "the email subject",
+                "created": "2005-09-11",
+                "tag_ids": list(tags),
+                "correspondent_id": corr,
+                "custom_fields": {"1": sender, "2": msgid},
+            },
+        },
+    }
+
+
+class DedupePassRouter:
+    """Answers /tasks/ from a page list and /documents/<id>/ from a dict."""
+
+    def __init__(self, task_pages, docs):
+        self.task_pages = list(task_pages)
+        self.docs = docs
+        self.patches = []
+
+    def __call__(self, method, path, **kw):
+        if method == "PATCH":
+            did = int(path.strip("/").split("/")[-1])
+            self.patches.append((did, kw.get("json")))
+            return {}
+        if path.startswith("/custom_fields/"):
+            return {"results": [{"id": 2, "name": "Email Message-ID"}]}
+        if path.startswith("/tasks/"):
+            return self.task_pages.pop(0)
+        if path.startswith("/documents/"):
+            return self.docs[int(path.strip("/").split("/")[-1])]
+        raise AssertionError(f"unexpected {method} {path}")
+
+
+class DedupePassTest(unittest.TestCase):
+    def setUp(self):
+        self._api = pms.api
+
+    def tearDown(self):
+        pms.api = self._api
+
+    def survivor(self, did, tags, corr, fields):
+        return {"id": did, "tags": list(tags), "correspondent": corr,
+                "custom_fields": list(fields), "title": "my filed title",
+                "created": "2019-01-01"}
+
+    def test_stamps_a_survivor_that_has_no_message_id(self):
+        r = DedupePassRouter(
+            [{"results": [dup_task(42, "MSG-1", "vendor@x.com", (783, 785), 7)],
+              "next": None}],
+            {42: self.survivor(42, [1, 26], None, [])},
+        )
+        pms.api = r
+        pms.dedupe_pass()
+        self.assertEqual(len(r.patches), 1)
+        did, body = r.patches[0]
+        self.assertEqual(did, 42)
+        self.assertEqual(body["tags"], [1, 26, 783, 785])
+        self.assertEqual(body["correspondent"], 7)
+        vals = {f["field"]: f["value"] for f in body["custom_fields"]}
+        self.assertEqual(vals[2], "MSG-1")
+        self.assertEqual(vals[1], "vendor@x.com")
+
+    def test_never_touches_created_or_title(self):
+        r = DedupePassRouter(
+            [{"results": [dup_task(42, "MSG-1")], "next": None}],
+            {42: self.survivor(42, [1], None, [])},
+        )
+        pms.api = r
+        pms.dedupe_pass()
+        _, body = r.patches[0]
+        self.assertNotIn("created", body)
+        self.assertNotIn("title", body)
+
+    def test_skips_a_survivor_that_already_has_a_message_id(self):
+        r = DedupePassRouter(
+            [{"results": [dup_task(42, "MSG-1")], "next": None}],
+            {42: self.survivor(42, [1, 783], 7,
+                               [{"field": 2, "value": "MSG-1"}])},
+        )
+        pms.api = r
+        pms.dedupe_pass()
+        self.assertEqual(r.patches, [])
+
+    def test_does_not_overwrite_an_existing_correspondent(self):
+        r = DedupePassRouter(
+            [{"results": [dup_task(42, "MSG-1", corr=7)], "next": None}],
+            {42: self.survivor(42, [1], 99, [])},
+        )
+        pms.api = r
+        pms.dedupe_pass()
+        _, body = r.patches[0]
+        self.assertNotIn("correspondent", body)
+
+    def test_ignores_failures_that_are_not_duplicates(self):
+        r = DedupePassRouter(
+            [{"results": [{"status": "failure", "result_data": {"traceback": "boom"},
+                           "input_data": {}}], "next": None}],
+            {},
+        )
+        pms.api = r
+        pms.dedupe_pass()
+        self.assertEqual(r.patches, [])
+
+    def test_paginates_task_history(self):
+        r = DedupePassRouter(
+            [{"results": [dup_task(42, "MSG-1")],
+              "next": "http://paperless.example/api/tasks/?page=2"},
+             {"results": [dup_task(43, "MSG-2")], "next": None}],
+            {42: self.survivor(42, [1], None, []),
+             43: self.survivor(43, [2], None, [])},
+        )
+        pms.api = r
+        pms.dedupe_pass()
+        self.assertEqual(sorted(d for d, _ in r.patches), [42, 43])

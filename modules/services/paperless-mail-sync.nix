@@ -23,6 +23,16 @@
 # `paperless-mail-repair` is that same context pass on its own, still the right
 # tool after a bulk reprocess wipes `content`.
 #
+# THE DEDUPE RACE: a PDF that arrives by email and is then filed into
+# ~/Documents gets ingested twice. The file copy usually lands first, so the
+# mail upload is rejected on its SHA-256 and paperless discards the overrides
+# that came with it. The survivor is then a mail document with no Message-ID,
+# which the pre-filter cannot see, so every later run re-uploads and re-fails it
+# forever. Phase 3 reads those rejected payloads back out of paperless's own
+# task history and merges them onto the survivor, which both restores the email
+# tags and stops the loop. `paperless-mail-dedupe` runs it on its own. 170 such
+# documents existed when this was written.
+#
 # HOW IT KNOWS WHAT IS NEW: notmuch's `lastmod` database revision, not dates and
 # not file mtimes. The Date: header is sender-controlled, so backdated mail would
 # be missed forever; lieer rewrites maildir files on every label change, so mtime
@@ -139,9 +149,10 @@ in
       sync = mkTool "paperless-mail-sync" "${syncScript} sync";
       unmatched = mkTool "paperless-mail-unmatched" "${syncScript} unmatched";
       repair = mkTool "paperless-mail-repair" "${syncScript} repair";
+      dedupe = mkTool "paperless-mail-dedupe" "${syncScript} dedupe";
     in
     {
-      home.packages = [ sync unmatched repair ];
+      home.packages = [ sync unmatched repair dedupe ];
 
       systemd.user.services.paperless-mail-sync = {
         Unit = {
