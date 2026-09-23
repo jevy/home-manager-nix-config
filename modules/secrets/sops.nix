@@ -60,6 +60,13 @@
 
           # Navidrome (music streaming) — templated into ratune & ferrosonic configs
           navidrome_password = { };
+
+          # Paperless-ngx REST API token (jevin superuser, minted in the UI under
+          # My Profile > API Auth Token). Used by homeManager.paperlessMailSync to
+          # POST mail attachments with their metadata. The same token is in the
+          # cluster repo at secrets/homepage/secret.sops.yaml for the dashboard
+          # widget — rotating it means updating both.
+          paperless_api_token = { };
         };
       };
     };
