@@ -17,7 +17,9 @@
 # documents. The rest is a node_modules tree, Arduino sketches, desktop
 # backgrounds and an AICamera dump. The find filter below is the whole scoping
 # mechanism -- there is no directory allowlist to maintain, only a type filter
-# plus two explicit secret-bearing directories.
+# plus two explicit secret-bearing directories and a denylist for build
+# detritus (node_modules, dot-directories) that the type filter cannot scope
+# out on its own.
 #
 # Why the stamp file: paperless DELETES each file from consume/ once it has
 # ingested it, so the destination is empty by design. A plain `rsync ~/Documents/`
@@ -131,6 +133,21 @@ in
           # extensions outright, and ~/Documents holds ~1.3k of each that would
           # only generate failed-consume noise.
           #
+          # node_modules and dot-directories are excluded because the TYPE filter
+          # alone does not scope them out: a node_modules tree is full of
+          # LICENSE.txt, usage.txt and test fixtures, and .devenv/ holds
+          # imports.txt. 50 such files were reaching paperless, where
+          # CONSUMER_SUBDIRS_AS_TAGS turned their paths into ~35 junk tags
+          # (node_modules, cliui, yargs-parser, tough-cookie, grunt-zip, ...)
+          # permanently polluting the tag vocabulary.
+          #
+          # The patterns match at ANY depth, unlike the three above them: the
+          # real tree is ./Presentations/PTA_Auctria/node_modules/..., so a
+          # './node_modules/*' rule anchored at the root would miss every one.
+          # '*/.*/*' covers every hidden directory in one rule rather than
+          # naming .devenv, .git, .venv and whatever comes next; ~/Documents is
+          # a human document tree, so a dot-directory in it is always tooling.
+          #
           # Paths MUST be relative to $DOCS. rsync's --files-from resolves every
           # entry against the source root, so feeding it absolute paths makes it
           # prepend the root to a path that already has it:
@@ -145,6 +162,8 @@ in
             -not -path './1Password/*'
             -not -path './Accounts:Passwords/*'
             -not -path './JevinsSecrets/*'
+            -not -path '*/node_modules/*'
+            -not -path '*/.*/*'
           )
           if [ -e "$STAMP" ]; then
             echo "Incremental: files changed since $(date -r "$STAMP" '+%Y-%m-%d %H:%M')"
