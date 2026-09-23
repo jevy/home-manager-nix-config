@@ -145,7 +145,18 @@ in
           { run = ''imv %s''; orphan = true; desc = "imv"; }
           { run = ''gimp %s''; orphan = true; desc = "GIMP"; }
         ];
+        # mpv leads, not VLC. ashell owns org.kde.StatusNotifierWatcher and
+        # its handler stops answering once a tray client registers, while the
+        # bus name stays claimed, so Qt's tray probe during platform init gets
+        # no reply and runs into D-Bus's 25s default timeout. VLC decodes the
+        # file immediately but shows no window for 25s. mpv is not a Qt app and
+        # never probes the watcher, so it opens instantly. VLC stays as the
+        # second choice on `O`. See modules/desktop/ashell.nix for the wedge
+        # itself and the watchdog that papers over it; drop this ordering once
+        # ashell stops wedging (unfixed as of 0.10.0, tray dbus.rs untouched
+        # since 2026-06-27).
         video = [
+          { run = ''mpv %s''; orphan = true; desc = "mpv"; }
           { run = ''vlc %s''; orphan = true; desc = "VLC"; }
           { run = ''firefox %s''; orphan = true; desc = "Firefox"; }
         ];
