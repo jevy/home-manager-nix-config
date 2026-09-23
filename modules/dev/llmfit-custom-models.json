@@ -1,0 +1,393 @@
+[
+  {
+    "name": "google/gemma-4-12B-it",
+    "provider": "Google",
+    "parameter_count": "12.0B",
+    "parameters_raw": 11959730224,
+    "min_ram_gb": 6.8,
+    "recommended_ram_gb": 11.2,
+    "min_vram_gb": 6.1,
+    "quantization": "Q4_K_M",
+    "format": "gguf",
+    "context_length": 262144,
+    "use_case": "Instruction following, chat",
+    "capabilities": [
+      "tool_use"
+    ],
+    "languages": [
+      "en"
+    ],
+    "pipeline_tag": "text-generation",
+    "architecture": "gemma4_unified",
+    "hf_downloads": 2347292,
+    "hf_likes": 1595,
+    "release_date": "2026-07-20",
+    "num_hidden_layers": 48,
+    "num_attention_heads": 16,
+    "num_key_value_heads": 8,
+    "head_dim": 256,
+    "hidden_size": 3840,
+    "vocab_size": 262144,
+    "moe_intermediate_size": 15360,
+    "shared_expert_intermediate_size": null,
+    "license": "apache-2.0",
+    "gguf_sources": [
+      {
+        "repo": "unsloth/gemma-4-12b-it-GGUF",
+        "provider": "unsloth"
+      },
+      {
+        "repo": "unsloth/gemma-4-12B-it-qat-GGUF",
+        "provider": "unsloth"
+      },
+      {
+        "repo": "google/gemma-4-12B-it-qat-q4_0-gguf",
+        "provider": "google"
+      }
+    ]
+  },
+  {
+    "name": "mistralai/Ministral-3-8B-Instruct-2512",
+    "provider": "Mistral AI",
+    "parameter_count": "8.9B",
+    "parameters_raw": 8918026716,
+    "min_ram_gb": 5.0,
+    "recommended_ram_gb": 8.3,
+    "min_vram_gb": 4.6,
+    "quantization": "Q4_K_M",
+    "format": "gguf",
+    "context_length": 262144,
+    "use_case": "Instruction following, chat",
+    "capabilities": [
+      "tool_use"
+    ],
+    "languages": [
+      "en"
+    ],
+    "pipeline_tag": "text-generation",
+    "architecture": "mistral3",
+    "hf_downloads": 75250,
+    "hf_likes": 205,
+    "release_date": "2026-07-15",
+    "num_hidden_layers": 34,
+    "num_attention_heads": 32,
+    "num_key_value_heads": 8,
+    "head_dim": 128,
+    "hidden_size": 4096,
+    "vocab_size": 131072,
+    "moe_intermediate_size": 14336,
+    "shared_expert_intermediate_size": null,
+    "license": "apache-2.0",
+    "gguf_sources": [
+      {
+        "repo": "mistralai/Ministral-3-8B-Instruct-2512-GGUF",
+        "provider": "mistralai"
+      },
+      {
+        "repo": "unsloth/Ministral-3-8B-Instruct-2512-GGUF",
+        "provider": "unsloth"
+      },
+      {
+        "repo": "lmstudio-community/Ministral-3-8B-Instruct-2512-GGUF",
+        "provider": "lmstudio-community"
+      }
+    ]
+  },
+  {
+    "name": "mistralai/Ministral-3-3B-Instruct-2512",
+    "provider": "Mistral AI",
+    "parameter_count": "3.8B",
+    "parameters_raw": 3849090048,
+    "min_ram_gb": 2.2,
+    "recommended_ram_gb": 3.6,
+    "min_vram_gb": 2.0,
+    "quantization": "Q4_K_M",
+    "format": "gguf",
+    "context_length": 262144,
+    "use_case": "Instruction following, chat",
+    "capabilities": [
+      "tool_use"
+    ],
+    "languages": [
+      "en"
+    ],
+    "pipeline_tag": "text-generation",
+    "architecture": "mistral3",
+    "hf_downloads": 111276,
+    "hf_likes": 284,
+    "release_date": "2026-07-15",
+    "num_hidden_layers": 26,
+    "num_attention_heads": 32,
+    "num_key_value_heads": 8,
+    "head_dim": 128,
+    "hidden_size": 3072,
+    "vocab_size": 131072,
+    "moe_intermediate_size": 9216,
+    "shared_expert_intermediate_size": null,
+    "license": "apache-2.0",
+    "gguf_sources": [
+      {
+        "repo": "lmstudio-community/Ministral-3-3B-Instruct-2512-GGUF",
+        "provider": "lmstudio-community"
+      },
+      {
+        "repo": "mistralai/Ministral-3-3B-Instruct-2512-GGUF",
+        "provider": "mistralai"
+      },
+      {
+        "repo": "bartowski/mistralai_Ministral-3-3B-Instruct-2512-GGUF",
+        "provider": "bartowski"
+      }
+    ]
+  },
+  {
+    "name": "llmfan46/gemma-4-26B-A4B-it-ultra-uncensored-heretic",
+    "provider": "llmfan46",
+    "parameter_count": "25.8B",
+    "parameters_raw": 25805933872,
+    "min_ram_gb": 14.6,
+    "recommended_ram_gb": 24.1,
+    "min_vram_gb": 13.2,
+    "quantization": "Q4_K_M",
+    "format": "gguf",
+    "context_length": 262144,
+    "use_case": "Uncensored chat [UGI 52.4 W/10 10.0 NatInt 35.7 Writing 45.9]",
+    "capabilities": [
+      "tool_use"
+    ],
+    "languages": [
+      "en"
+    ],
+    "pipeline_tag": "text-generation",
+    "architecture": "gemma4",
+    "hf_downloads": 841,
+    "hf_likes": 41,
+    "release_date": "2026-05-05",
+    "num_hidden_layers": 30,
+    "num_attention_heads": 16,
+    "num_key_value_heads": 8,
+    "head_dim": 256,
+    "hidden_size": 2816,
+    "vocab_size": 262144,
+    "moe_intermediate_size": 704,
+    "shared_expert_intermediate_size": null,
+    "license": "apache-2.0",
+    "gguf_sources": [
+      {
+        "repo": "mradermacher/gemma-4-26B-A4B-it-ultra-uncensored-heretic-i1-GGUF",
+        "provider": "mradermacher"
+      },
+      {
+        "repo": "llmfan46/gemma-4-26B-A4B-it-ultra-uncensored-heretic-GGUF",
+        "provider": "llmfan46"
+      },
+      {
+        "repo": "mradermacher/gemma-4-26B-A4B-it-ultra-uncensored-heretic-GGUF",
+        "provider": "mradermacher"
+      }
+    ],
+    "is_moe": true,
+    "num_experts": 128,
+    "active_experts": 8
+  },
+  {
+    "name": "Naphula/Goetia-26B-A4B-v1.3-Absolute-Heretic-ARA",
+    "provider": "Naphula",
+    "parameter_count": "25.8B",
+    "parameters_raw": 25805933872,
+    "min_ram_gb": 14.6,
+    "recommended_ram_gb": 24.1,
+    "min_vram_gb": 13.2,
+    "quantization": "Q4_K_M",
+    "format": "gguf",
+    "context_length": 262144,
+    "use_case": "Uncensored chat, creative [UGI 44.1 W/10 9.5 NatInt 33.5 Writing 47.9]",
+    "capabilities": [
+      "tool_use"
+    ],
+    "languages": [
+      "en"
+    ],
+    "pipeline_tag": "text-generation",
+    "architecture": "gemma4",
+    "hf_downloads": 3024,
+    "hf_likes": 49,
+    "release_date": "2026-08-04",
+    "num_hidden_layers": 30,
+    "num_attention_heads": 16,
+    "num_key_value_heads": 8,
+    "head_dim": 256,
+    "hidden_size": 2816,
+    "vocab_size": 262144,
+    "moe_intermediate_size": 704,
+    "shared_expert_intermediate_size": null,
+    "license": "apache-2.0",
+    "gguf_sources": [
+      {
+        "repo": "mradermacher/Goetia-26B-A4B-v1.3-Absolute-Heretic-ARA-i1-GGUF",
+        "provider": "mradermacher"
+      },
+      {
+        "repo": "mradermacher/Goetia-26B-A4B-v1.3-Absolute-Heretic-ARA-GGUF",
+        "provider": "mradermacher"
+      },
+      {
+        "repo": "26B-Suite/Goetia-26B-A4B-v1.3-Absolute-Heretic-ARA-GGUF",
+        "provider": "26B-Suite"
+      }
+    ],
+    "is_moe": true,
+    "num_experts": 128,
+    "active_experts": 8
+  },
+  {
+    "name": "llmfan46/Qwen3.5-35B-A3B-uncensored-heretic",
+    "provider": "llmfan46",
+    "parameter_count": "35.1B",
+    "parameters_raw": 35107181936,
+    "min_ram_gb": 19.9,
+    "recommended_ram_gb": 32.8,
+    "min_vram_gb": 18.0,
+    "quantization": "Q4_K_M",
+    "format": "gguf",
+    "context_length": 262144,
+    "use_case": "Uncensored chat [UGI 49.6 W/10 10.0 NatInt 35.6 Writing 43.2]",
+    "capabilities": [
+      "tool_use"
+    ],
+    "languages": [
+      "en"
+    ],
+    "pipeline_tag": "text-generation",
+    "architecture": "qwen3_5_moe",
+    "hf_downloads": 285,
+    "hf_likes": 17,
+    "release_date": "2026-05-24",
+    "num_hidden_layers": 40,
+    "num_attention_heads": 16,
+    "num_key_value_heads": 2,
+    "head_dim": 256,
+    "hidden_size": 2048,
+    "vocab_size": 248320,
+    "moe_intermediate_size": 512,
+    "shared_expert_intermediate_size": 512,
+    "license": "apache-2.0",
+    "gguf_sources": [
+      {
+        "repo": "llmfan46/Qwen3.5-35B-A3B-ultra-uncensored-heretic-GGUF",
+        "provider": "llmfan46"
+      },
+      {
+        "repo": "llmfan46/Qwen3.5-35B-A3B-uncensored-heretic-GGUF",
+        "provider": "llmfan46"
+      },
+      {
+        "repo": "llmfan46/Qwen3.5-35B-A3B-uncensored-heretic-v2-Native-MTP-Preserved-GGUF",
+        "provider": "llmfan46"
+      }
+    ],
+    "is_moe": true,
+    "num_experts": 256,
+    "active_experts": 8
+  },
+  {
+    "name": "ArliAI/Qwen3.5-35B-A3B-Derestricted",
+    "provider": "ArliAI",
+    "parameter_count": "36.0B",
+    "parameters_raw": 35951822704,
+    "min_ram_gb": 20.3,
+    "recommended_ram_gb": 33.6,
+    "min_vram_gb": 18.4,
+    "quantization": "Q4_K_M",
+    "format": "gguf",
+    "context_length": 262144,
+    "use_case": "Uncensored chat [UGI 50.8 W/10 10.0 NatInt 28.1 Writing 39.2]",
+    "capabilities": [
+      "tool_use"
+    ],
+    "languages": [
+      "en"
+    ],
+    "pipeline_tag": "text-generation",
+    "architecture": "qwen3_5_moe",
+    "hf_downloads": 161,
+    "hf_likes": 12,
+    "release_date": "2026-03-18",
+    "num_hidden_layers": 40,
+    "num_attention_heads": 16,
+    "num_key_value_heads": 2,
+    "head_dim": 256,
+    "hidden_size": 2048,
+    "vocab_size": 248320,
+    "moe_intermediate_size": 512,
+    "shared_expert_intermediate_size": 512,
+    "license": "apache-2.0",
+    "gguf_sources": [
+      {
+        "repo": "mradermacher/Qwen3.5-35B-A3B-Derestricted-i1-GGUF",
+        "provider": "mradermacher"
+      },
+      {
+        "repo": "mradermacher/Qwen3.5-35B-A3B-Derestricted-GGUF",
+        "provider": "mradermacher"
+      },
+      {
+        "repo": "jorge-erdb/Qwen3.5-35B-A3B-Derestricted-GGUF",
+        "provider": "jorge-erdb"
+      }
+    ],
+    "is_moe": true,
+    "num_experts": 256,
+    "active_experts": 8
+  },
+  {
+    "name": "huihui-ai/Huihui-GLM-4.7-Flash-abliterated",
+    "provider": "huihui-ai",
+    "parameter_count": "31.2B",
+    "parameters_raw": 31221488576,
+    "min_ram_gb": 17.7,
+    "recommended_ram_gb": 29.2,
+    "min_vram_gb": 16.0,
+    "quantization": "Q4_K_M",
+    "format": "gguf",
+    "context_length": 202752,
+    "use_case": "Uncensored chat [UGI 41.2 W/10 9.0 NatInt 23.6 Writing 17.3]",
+    "capabilities": [
+      "tool_use"
+    ],
+    "languages": [
+      "en"
+    ],
+    "pipeline_tag": "text-generation",
+    "architecture": "glm4_moe_lite",
+    "hf_downloads": 2573,
+    "hf_likes": 88,
+    "release_date": "2026-01-25",
+    "num_hidden_layers": 47,
+    "num_attention_heads": 20,
+    "num_key_value_heads": 20,
+    "head_dim": null,
+    "hidden_size": 2048,
+    "vocab_size": 154880,
+    "moe_intermediate_size": 1536,
+    "shared_expert_intermediate_size": null,
+    "license": "mit",
+    "gguf_sources": [
+      {
+        "repo": "mradermacher/Huihui-GLM-4.7-Flash-abliterated-i1-GGUF",
+        "provider": "mradermacher"
+      },
+      {
+        "repo": "mradermacher/Huihui-GLM-4.7-Flash-abliterated-GGUF",
+        "provider": "mradermacher"
+      },
+      {
+        "repo": "mradermacher/Huihui-GLM-4.7-Flash-abliterated-60B_DEPTHONLY-i1-GGUF",
+        "provider": "mradermacher"
+      }
+    ],
+    "is_moe": true,
+    "num_experts": 64,
+    "active_experts": 4
+  }
+]
