@@ -129,7 +129,20 @@
             text = ''
               OPENROUTER_API_KEY=$(cat "${config.sops.secrets.openrouter_api_key.path}")
               export OPENROUTER_API_KEY
-              exec ask "$@"
+              # Upstream's baked-in default is anthropic/claude-sonnet-4.6:nitro.
+              # DeepSeek V4.1 Flash beats it on wall clock for the one-liner
+              # answers this tool is for (measured 2026-09-21, same prompt, 3
+              # runs: deepseek 1.96/0.55/0.82s vs sonnet 1.05/1.14/2.73s), and
+              # the answers are better for shell/CLI questions.
+              #
+              # Keep :nitro. Without it OpenRouter routed to DeepInfra at
+              # ~60 tok/s; with it, Together at ~144 tok/s.
+              #
+              # Injecting -m here rather than patching the script is safe
+              # because ask parses flags left to right and each -m/-s/-d
+              # overwrites MODEL. User args land after ours, so `ask -s ...`
+              # still reaches Sonnet and `ask -h` still prints help.
+              exec ask -m deepseek/deepseek-v4.1-flash:nitro "$@"
             '';
           })
         ];
