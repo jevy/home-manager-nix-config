@@ -71,6 +71,12 @@ in
           # Runs at 04:30, an hour after the restic backup above.
           homeManager.paperlessSync
 
+          # Nightly push of PDF attachments from the notmuch mail mirror into
+          # paperless-ngx via its REST API (no NFS mount involved). Runs at
+          # 05:30, after the document sync. Also provides the
+          # paperless-mail-unmatched and paperless-mail-repair commands.
+          homeManager.paperlessMailSync
+
           # Local LLM proxy on 127.0.0.1:9292 (Vulkan, Radeon 860M). Host-level
           # rather than in linux-desktop-base because it is specific to this
           # machine's iGPU sizing -- see the module header for the 25.38 GB pool
