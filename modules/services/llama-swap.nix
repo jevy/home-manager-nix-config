@@ -1,4 +1,4 @@
-# llama-swap + llama.cpp for local LLM inference — mac-work only.
+# llama-swap + llama.cpp for local LLM inference — mac-work and lenovo-p14s.
 #
 # HISTORY: the Lenovo P14s ran the same proxy on Vulkan (Radeon 860M, RDNA3.5
 # iGPU) via `flake.overlays.llamaCpp` + `flake.modules.nixos.llamaSwap`. Both
@@ -18,6 +18,134 @@
 # /dev/dri access and Vulkan shader JIT would work at all.
 { ... }:
 {
+  # ── lenovo-p14s (Vulkan) ─────────────────────────────────────────────────
+  #
+  # Restored 2026-09 after llmfit was calibrated on this machine and turned up
+  # a model worth serving. Deliberately NOT the shape it had before.
+  #
+  # A HOME-MANAGER USER SERVICE, NOT `services.llama-swap`. The entire sandbox
+  # fight in the history note above — PrivateUsers=false, SupplementaryGroups,
+  # MemoryDenyWriteExecute=false — exists only because the upstream NixOS
+  # module runs under `DynamicUser`. A user service runs as jevin, who already
+  # has what it needs, and /dev/dri/renderD128 is mode 0666 on this machine
+  # anyway (`crw-rw-rw- root render`), so even the render group is moot. None
+  # of those overrides are carried over; do not re-add them without first
+  # checking whether the service actually runs unprivileged.
+  #
+  # It also mirrors the mac half, which is a launchd user agent for the same
+  # reason, so both hosts now have one shape and one port.
+  #
+  # THE COMPILE IS REAL AND IS THE RECURRING COST. `vulkanSupport = true` is
+  # not the nixpkgs default, so this llama-cpp is not in cache.nixos.org and
+  # every nixpkgs bump rebuilds it locally. That was half of why the old setup
+  # was retired. The other half — `GGML_NATIVE=ON` for Zen 5 AVX-512 — is NOT
+  # reinstated: inference here is GPU-bound and bandwidth-limited (measured
+  # ~41.7 GB/s, see modules/dev/llmfit.nix), so CPU vectorisation buys nothing
+  # for a fully offloaded model and only made the rebuild worse.
+  #
+  # THE MESA WARMUP HANG IS MOOT. It needed Mesa < 26.1.3; this host is on
+  # 26.2.2. The KV cache is q8_0 regardless, which both halves the KV footprint
+  # and avoids the f16 path that triggered it.
+  #
+  # SIZING. The iGPU addresses 25.38 GB (4 GB BIOS carveout + 21.4 GB GTT — see
+  # pkgs/llmfit-amd-igpu-gtt.patch). Both models below are ~15.6 GiB of weights;
+  # at 32k context with q8_0 KV that lands near 20 GB, leaving ~5 GB for
+  # Hyprland and the rest. Raising -c to 64k does not fit. Only one model is
+  # resident at a time; llama-swap evicts on demand, which is the point.
+  #
+  # Both figures below are measured on this machine with `llama-bench -n 128
+  # -ngl 99 -r 3`, on AC and the performance power profile. On battery expect
+  # roughly half: the same model measured 19.27 vs 34.00 tok/s across that
+  # switch during calibration.
+  flake.modules.homeManager.llamaSwapLinux =
+    { config, pkgs, lib, ... }:
+    let
+      llamaCppVulkan = pkgs.llama-cpp.override { vulkanSupport = true; };
+      llama-server = lib.getExe' llamaCppVulkan "llama-server";
+      modelsDir = "${config.home.homeDirectory}/models";
+
+      yaml = pkgs.formats.yaml { };
+      configFile = yaml.generate "llama-swap.yaml" {
+        # 16.8 GB off a btrfs root plus Vulkan shader compilation on first load;
+        # the NixOS default of 120s false-negatives here the same way it did on
+        # the Mac.
+        healthCheckTimeout = 180;
+        logLevel = "info";
+
+        models = {
+          # THERAPY / PERSONAL. Gemma-4 26B-A4B, abliterated. Chosen off the UGI
+          # leaderboard for willingness without the edgelord lean that makes most
+          # "uncensored" merges useless for this: W/10 8.2, NatInt 29.7, Writing
+          # 40.9 (the highest in its class), dark score 2.20 (the lowest), and
+          # readability grade 6.3. Stock google/gemma-4-26B-A4B-it scores W/10
+          # 1.8 and will redirect you to a professional almost every turn, which
+          # is why the abliterated build is the one here; it costs no measurable
+          # intelligence (NatInt 34.44 stock vs 35.71 abliterated).
+          #
+          # Measured: 9.24 +/- 0.78 tok/s. llmfit predicted 7.54, i.e. MoE
+          # estimates run conservative — treat them as a floor.
+          #
+          # NO THINKING PREFILL. UGI's better scores for this model come from a
+          # <|channel>thought prefill worth +4 NatInt and +7 Writing, but it
+          # spends ~5156 chars (~1289 tokens) thinking per turn. At 9.2 tok/s
+          # that is over two minutes of silence before every reply. Not worth it
+          # for conversation; add it per-request if a question earns the wait.
+          #
+          # Requires ${modelsDir}/Goetia-26B-A4B-v1.3-Absolute-Heretic-ARA.i1-Q4_K_M.gguf
+          "goetia-26b-a4b" = {
+            cmd = "${llama-server} --port \${PORT} -m ${modelsDir}/Goetia-26B-A4B-v1.3-Absolute-Heretic-ARA.i1-Q4_K_M.gguf -ngl 99 -c 32768 -t 8 -np 1 --jinja --no-webui --cache-type-k q8_0 --cache-type-v q8_0";
+            ttl = 600;
+          };
+
+          # AGENT / TOOL WORK. Qwen's purpose-built agent MoE, 35B total but
+          # only 3B active. Measured 9.40 +/- 1.10 tok/s — indistinguishable
+          # from the 26B above, because on this chip active experts plus the
+          # always-read attention and embeddings dominate and total parameter
+          # count barely matters. Pick between these two on behaviour, not size.
+          #
+          # Q3_K_XL rather than Q4: Q4_K_M is 22.1 GB and would leave ~3 GB for
+          # KV and the desktop inside the 25.38 GB pool.
+          #
+          # Requires ${modelsDir}/Qwen-AgentWorld-35B-A3B-UD-Q3_K_XL.gguf
+          "agentworld-35b-a3b" = {
+            cmd = "${llama-server} --port \${PORT} -m ${modelsDir}/Qwen-AgentWorld-35B-A3B-UD-Q3_K_XL.gguf -ngl 99 -c 32768 -t 8 -np 1 --jinja --no-webui --cache-type-k q8_0 --cache-type-v q8_0";
+            ttl = 600;
+          };
+        };
+      };
+    in
+    {
+      # llama-cpp is here for llama-server (spawned by llama-swap) and for
+      # llama-bench, which is how any number in this file gets re-checked.
+      home.packages = [
+        llamaCppVulkan
+        pkgs.llama-swap
+      ];
+
+      # GGUFs are hand-fetched, not Nix-managed — same as the mac half. Only
+      # the directory is declared.
+      home.activation.llamaSwapModelsDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        run mkdir -p "${modelsDir}"
+      '';
+
+      # 127.0.0.1 only, on the same 9292 the Mac uses so a client config is
+      # portable between the two machines.
+      systemd.user.services.llama-swap = {
+        Unit = {
+          Description = "llama-swap (local LLM proxy, Vulkan)";
+          After = [ "graphical-session.target" ];
+        };
+        Service = {
+          ExecStart = "${pkgs.llama-swap}/bin/llama-swap --listen=127.0.0.1:9292 --config=${configFile}";
+          Restart = "on-failure";
+          RestartSec = 5;
+          # llama-server loads ~16 GB before it answers a health check.
+          TimeoutStartSec = 300;
+        };
+        Install.WantedBy = [ "default.target" ];
+      };
+    };
+
   # ── mac-work ─────────────────────────────────────────────────────────────
   #
   # nix-darwin has no `services.llama-swap` (nor `services.ollama`), so the
