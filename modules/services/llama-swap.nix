@@ -35,13 +35,22 @@
   # It also mirrors the mac half, which is a launchd user agent for the same
   # reason, so both hosts now have one shape and one port.
   #
-  # THE COMPILE IS REAL AND IS THE RECURRING COST. `vulkanSupport = true` is
-  # not the nixpkgs default, so this llama-cpp is not in cache.nixos.org and
-  # every nixpkgs bump rebuilds it locally. That was half of why the old setup
-  # was retired. The other half — `GGML_NATIVE=ON` for Zen 5 AVX-512 — is NOT
-  # reinstated: inference here is GPU-bound and bandwidth-limited (measured
-  # ~41.7 GB/s, see modules/dev/llmfit.nix), so CPU vectorisation buys nothing
-  # for a fully offloaded model and only made the rebuild worse.
+  # NO COMPILE, UNLIKE LAST TIME. This is `pkgs.llama-cpp-vulkan`, a named
+  # nixpkgs attribute, so Hydra builds it and it substitutes from
+  # cache.nixos.org — verified, and byte-identical to
+  # `llama-cpp.override { vulkanSupport = true; }`. Prefer the named attribute
+  # precisely because it is the one Hydra builds; an equivalent override is
+  # only cached for as long as it keeps hashing to the same thing.
+  #
+  # This is what made the old setup expensive, and it was never vulkanSupport:
+  # it was `flake.overlays.llamaCpp` setting `GGML_NATIVE=ON` for Zen 5
+  # AVX-512, which defeats the binary cache by construction. That overlay is
+  # NOT reinstated, and not only for build cost — inference here is GPU-bound
+  # and bandwidth-limited (measured ~41.7 GB/s, see modules/dev/llmfit.nix), so
+  # CPU vectorisation buys nothing for a fully offloaded model.
+  #
+  # If a future bump does force a rebuild, check `pkgs.llama-cpp-vulkan` still
+  # exists before reaching for an override; the override is the fragile path.
   #
   # THE MESA WARMUP HANG IS MOOT. It needed Mesa < 26.1.3; this host is on
   # 26.2.2. The KV cache is q8_0 regardless, which both halves the KV footprint
@@ -60,7 +69,7 @@
   flake.modules.homeManager.llamaSwapLinux =
     { config, pkgs, lib, ... }:
     let
-      llamaCppVulkan = pkgs.llama-cpp.override { vulkanSupport = true; };
+      llamaCppVulkan = pkgs.llama-cpp-vulkan;
       llama-server = lib.getExe' llamaCppVulkan "llama-server";
       modelsDir = "${config.home.homeDirectory}/models";
 
