@@ -206,6 +206,19 @@ in
       systemd.user.services.paperless-sync = {
         Unit = {
           Description = "Ship new ~/Documents files into the paperless consume share";
+          # Do NOT let home-manager restart this on a config change.
+          #
+          # sd-switch restarts any unit whose definition changed, and
+          # `systemctl start` on a Type=oneshot BLOCKS until the unit finishes.
+          # This one runs for minutes to hours, so a rebuild that happens while
+          # it is mid-run leaves home-manager-jevin.service waiting on it, and
+          # `rebuildhm` hangs at "restarting sysinit-reactivation.target" with no
+          # indication why. Observed 2026-09-23 during the first mail backfill.
+          #
+          # `keep-old` is correct rather than merely expedient: this is timer-driven,
+          # so there is nothing to restart into -- the next firing picks up the
+          # new definition on its own.
+          "X-SwitchMethod" = "keep-old";
           # Retry, because Persistent=true fires the catch-up run in the same
           # second systemd finishes resuming from suspend -- before Wi-Fi is
           # associated and long before NFS is reachable. This is the exact
