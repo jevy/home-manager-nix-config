@@ -192,6 +192,7 @@ in
         Unit = {
           StartLimitIntervalSec = 3600;
           StartLimitBurst = 6;
+          OnFailure = "backup-failed@%n.service";
         };
         Service = {
           Restart = "on-failure";
@@ -208,6 +209,9 @@ in
           Description = "Weekly restic structural check of the mail repo";
           StartLimitIntervalSec = 3600;
           StartLimitBurst = 4;
+          # A check failure means repo corruption, which is the single most
+          # important thing here to hear about immediately.
+          OnFailure = "backup-failed@%n.service";
         };
         Service = {
           Type = "oneshot";
