@@ -53,6 +53,11 @@ in
           # Nightly restic backup of ~/Documents to TrueNAS (repo lives on the
           # NFS mount declared by nixos.laptopBackup above)
           homeManager.laptopBackup
+
+          # Nightly restic backup of the lieer/notmuch Gmail mirror, to its own
+          # repo on that same NFS mount (no nixos.* half -- the mount is
+          # already declared by nixos.laptopBackup)
+          homeManager.mailBackup
         ];
 
         # P14s OLED monitor: 2880x1800 @ 120Hz, scale 1.5 (→ 1920x1200 logical)
