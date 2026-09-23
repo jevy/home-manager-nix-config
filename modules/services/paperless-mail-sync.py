@@ -439,6 +439,12 @@ def sync() -> int:
     # -- phase 2: attach the email context to whatever has landed, including
     # uploads from earlier runs that were still in the OCR queue last time.
     context_pass()
+
+    # -- phase 3: reclaim the metadata of uploads this run (or an earlier one)
+    # lost to a SHA-256 collision with a copy already filed from ~/Documents.
+    # Without it those documents never gain a Message-ID, so the pre-filter
+    # cannot see them and every future run re-uploads and re-fails them.
+    dedupe_pass()
     return 1 if failed else 0
 
 
@@ -526,6 +532,94 @@ def context_pass() -> int:
     return 0
 
 
+def dedupe_pass() -> int:
+    """Recover mail metadata that a SHA-256 dedupe race threw away.
+
+    A PDF that arrives by email AND gets filed into ~/Documents is ingested
+    twice. The file copy usually lands first, so the mail upload is rejected as
+    a duplicate and paperless discards its overrides. The survivor then has no
+    Email Message-ID, so `existing_attachments()` cannot see it, so this script
+    re-uploads it on the next run -- and every run after that, forever.
+
+    The rejection cannot be caught at upload time: `post_document` returns a
+    task UUID, and the duplicate is only detected later inside the consumer. So
+    the recovery has to read it back out of paperless's task history, which is
+    where the whole discarded payload is still sitting:
+
+        result_data = {"duplicate_of": <survivor id>}
+        input_data.overrides = {tag_ids, correspondent_id, custom_fields, ...}
+
+    Merged onto the survivor:
+
+        tags           union, nothing removed
+        Email From     custom field 1, only if absent
+        Email Msg-ID   custom field 2, only if absent  <- stops the re-upload
+        correspondent  only if currently null
+        created        never
+        title          never
+
+    `created` and `title` stay untouched because the survivor came in as a file
+    the user deliberately filed and named; the email's versions are not better.
+
+    Correspondent is resolved from the sender's ADDRESS, so mail relayed by a
+    billing platform (QuickBooks, Xero) files under the platform rather than the
+    vendor named in the body. That is a known wart, accepted because the raw
+    `From:` is preserved in custom field 1 and the AI workflow can overwrite it.
+
+    Idempotent: a survivor that already carries a Message-ID is skipped without
+    a PATCH, so running this twice costs pagination and nothing else.
+    """
+    fid = msgid_field_id()
+    if fid is None:
+        print("No 'Email Message-ID' field yet - nothing to reconcile.")
+        return 0
+
+    payloads: dict[int, dict] = {}
+    page = "/tasks/?page_size=100&ordering=-date_created"
+    while page:
+        res = api("GET", page)
+        for task in res["results"]:
+            result = task.get("result_data") or {}
+            if task.get("status") != "failure" or "duplicate_of" not in result:
+                continue
+            overrides = (task.get("input_data") or {}).get("overrides") or {}
+            if (overrides.get("custom_fields") or {}).get("2"):
+                payloads[result["duplicate_of"]] = overrides
+        page = next_path(res.get("next"))
+
+    merged = skipped = 0
+    for doc_id, overrides in sorted(payloads.items()):
+        doc = api("GET", f"/documents/{doc_id}/")
+        fields = list(doc.get("custom_fields", []))
+        present = {f["field"] for f in fields}
+        if fid in present:
+            skipped += 1
+            continue
+
+        patch: dict = {}
+        tags = sorted(set(doc.get("tags") or []) | set(overrides.get("tag_ids") or []))
+        if tags != sorted(doc.get("tags") or []):
+            patch["tags"] = tags
+        for field_id, key in ((1, "1"), (fid, "2")):
+            value = (overrides.get("custom_fields") or {}).get(key)
+            if value and field_id not in present:
+                fields.append({"field": field_id, "value": value})
+                patch["custom_fields"] = fields
+        if doc.get("correspondent") is None and overrides.get("correspondent_id"):
+            patch["correspondent"] = overrides["correspondent_id"]
+        if not patch:
+            skipped += 1
+            continue
+
+        api("PATCH", f"/documents/{doc_id}/", json=patch)
+        merged += 1
+        print(f"  = merged mail metadata into doc {doc_id}")
+
+    print(f"dedupe merged={merged} already-stamped={skipped}")
+    return 0
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "sync"
-    sys.exit({"sync": sync, "unmatched": unmatched, "repair": context_pass}[cmd]())
+    sys.exit({"sync": sync, "unmatched": unmatched, "repair": context_pass,
+           "dedupe": dedupe_pass}[cmd]())
