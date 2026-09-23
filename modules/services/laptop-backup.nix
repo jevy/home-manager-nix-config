@@ -166,6 +166,9 @@ in
         Unit = {
           StartLimitIntervalSec = 3600;
           StartLimitBurst = 6;
+          # Fires only once the retries above are exhausted and the unit really
+          # enters `failed`. See modules/services/backup-notify.nix.
+          OnFailure = "backup-failed@%n.service";
         };
         Service = {
           Restart = "on-failure";

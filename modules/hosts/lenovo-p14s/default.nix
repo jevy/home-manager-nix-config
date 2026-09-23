@@ -31,6 +31,10 @@ in
         # Nightly restic backup of ~/Documents to the TrueNAS backups dataset
         # (NFS mount here; the backup itself is homeManager.laptopBackup below)
         nixos.laptopBackup
+
+        # NFS automount of the paperless-ngx consume share (the sync itself is
+        # homeManager.paperlessSync below)
+        nixos.paperlessSync
       ];
 
       networking.hostName = "lenovo-p14s";
@@ -58,6 +62,20 @@ in
           # repo on that same NFS mount (no nixos.* half -- the mount is
           # already declared by nixos.laptopBackup)
           homeManager.mailBackup
+
+          # OnFailure notifier both backup jobs above hang their failures on
+          homeManager.backupNotify
+
+          # Nightly one-way sync of new ~/Documents PDFs/text into the
+          # paperless-ngx consume share (mount from nixos.paperlessSync above).
+          # Runs at 04:30, an hour after the restic backup above.
+          homeManager.paperlessSync
+
+          # Local LLM proxy on 127.0.0.1:9292 (Vulkan, Radeon 860M). Host-level
+          # rather than in linux-desktop-base because it is specific to this
+          # machine's iGPU sizing -- see the module header for the 25.38 GB pool
+          # the model quants are chosen against.
+          homeManager.llamaSwapLinux
         ];
 
         # P14s OLED monitor: 2880x1800 @ 120Hz, scale 1.5 (→ 1920x1200 logical)
