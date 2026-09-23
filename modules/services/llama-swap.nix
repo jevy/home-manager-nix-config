@@ -94,15 +94,28 @@
           # Measured: 9.24 +/- 0.78 tok/s. llmfit predicted 7.54, i.e. MoE
           # estimates run conservative — treat them as a floor.
           #
-          # NO THINKING PREFILL. UGI's better scores for this model come from a
-          # <|channel>thought prefill worth +4 NatInt and +7 Writing, but it
-          # spends ~5156 chars (~1289 tokens) thinking per turn. At 9.2 tok/s
-          # that is over two minutes of silence before every reply. Not worth it
-          # for conversation; add it per-request if a question earns the wait.
+          # `--reasoning off` IS LOAD-BEARING, NOT A PREFERENCE. This GGUF's
+          # jinja template turns thinking on by default, and llama-server routes
+          # it to `message.reasoning_content` — so without this flag
+          # `message.content` comes back EMPTY and finish_reason is "length".
+          # Measured: asked to "say hello in one short sentence", it spent all
+          # 120 tokens deliberating and never answered. Any OpenAI-shaped client
+          # (pi included) reads content and sees nothing.
+          #
+          # Turning it off also skips the cost UGI records for the thinking
+          # variant: +4 NatInt and +7 Writing, for ~5156 chars (~1289 tokens) of
+          # thinking per turn. At 9.2 tok/s that is over two minutes of silence
+          # before every reply. Re-enable per request if a question earns it.
+          #
+          # `--reasoning off` is the switch; `--reasoning-budget` (what the mac
+          # half uses) caps thinking tokens instead and still exists in b10809.
+          # Budget is the right tool when you want thinking but bounded; off is
+          # right here, because this model thinks on every turn including
+          # trivial ones.
           #
           # Requires ${modelsDir}/Goetia-26B-A4B-v1.3-Absolute-Heretic-ARA.i1-Q4_K_M.gguf
           "goetia-26b-a4b" = {
-            cmd = "${llama-server} --port \${PORT} -m ${modelsDir}/Goetia-26B-A4B-v1.3-Absolute-Heretic-ARA.i1-Q4_K_M.gguf -ngl 99 -c 32768 -t 8 -np 1 --jinja --no-webui --cache-type-k q8_0 --cache-type-v q8_0";
+            cmd = "${llama-server} --port \${PORT} -m ${modelsDir}/Goetia-26B-A4B-v1.3-Absolute-Heretic-ARA.i1-Q4_K_M.gguf -ngl 99 -c 32768 -t 8 -np 1 --jinja --no-webui --reasoning off --cache-type-k q8_0 --cache-type-v q8_0";
             ttl = 600;
           };
 
