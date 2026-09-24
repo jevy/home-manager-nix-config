@@ -17,9 +17,12 @@
 
       services.cliphist.enable = true;
 
+      # $mod is defined in modules/desktop/hyprland.nix (Ctrl+Alt+Super).
+      # hyprlang variables are global to the parsed config, so it resolves here
+      # even though these binds are merged in from another module.
       wayland.windowManager.hyprland.settings.bind = [
-        "SUPER, V, exec, ${pkgs.cliphist}/bin/cliphist list | rofi -dmenu -p clipboard | ${pkgs.cliphist}/bin/cliphist decode | ${pkgs.wl-clipboard}/bin/wl-copy"
-        "SUPER, period, exec, rofi -modes emoji -show emoji"
+        "$mod, V, exec, ${pkgs.cliphist}/bin/cliphist list | rofi -dmenu -p clipboard | ${pkgs.cliphist}/bin/cliphist decode | ${pkgs.wl-clipboard}/bin/wl-copy"
+        "$mod, period, exec, rofi -modes emoji -show emoji"
       ];
     };
 }
