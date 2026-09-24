@@ -15,10 +15,16 @@
 # because same-hand chords (e.g. Ctrl+Shift+V, Meta+Shift+1) can't be
 # expressed via home-row mods.
 #
-# RightAlt → LeftMeta: gives a right-thumb Super key. Hyprland uses Super
-# for workspace switching (Super+1..4 = ~210/day in the keystroke log), so
-# moving that load off the left ring finger onto the right thumb is the
+# RightAlt → Ctrl+Alt+Super: gives a right-thumb $mod key. Hyprland uses
+# Super for workspace switching (Super+1..4 = ~210/day in the keystroke log),
+# so moving that load off the left ring finger onto the right thumb is the
 # single biggest ergonomic win available.
+#
+# It sends all three because hyprland's $mod became Ctrl+Alt+Super, matching
+# the mac's ctrl-alt-cmd (see modules/desktop/hyprland.nix). Bare lmet here
+# would no longer fire any window bind. The internal keyboard has no single
+# key that expands to the stack the way the Voyager does, so kanata
+# synthesises it with `multi`.
 #
 # SCOPE: this covers the INTERNAL keyboard only — linux-dev below pins it to
 # platform-i8042-serio-0-event-kbd. The Voyager is firmware-owned (Oryx) on
@@ -96,7 +102,7 @@ let
     )
     (deflayer base
      @cec @a  @s  @d  @e  @f  h   @j  @k  @l  @;  u      i
-     lmet
+     (multi lctl lalt lmet)
     )
     (deflayer nav
      _   _   _   _   _   _   left down up   right _   C-bspc bspc

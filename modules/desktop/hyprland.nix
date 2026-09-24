@@ -439,7 +439,7 @@ MONEOF
             # Windows land on the named workspace "share" (pinned to the output
             # below). wl-mirror renders the otherwise-invisible output into a
             # window so you can see what you're presenting.
-            #   $mod CTRL  S  → toggle the share desktop on/off
+            #   $mod       X  → toggle the share desktop on/off
             #   $mod SHIFT S  → throw the focused window onto it
             # Share by picking the "share" monitor in the screenshare picker
             # (or share the wl-mirror window itself if the app only does windows).
@@ -606,7 +606,16 @@ MONEOF
               "name:share, monitor:share, default:false"
             ];
 
-            "$mod" = "SUPER";
+            # Ctrl+Alt+Super, matching the mac: modules/desktop/aerospace.nix
+            # binds ctrl-alt-cmd, and the Voyager has one key that expands to
+            # exactly that set, so the same physical gesture drives both hosts
+            # off a single keyboard layout.
+            #
+            # This spends every modifier there is. $mod and $mod SHIFT are the
+            # only two tiers available now — a former "$mod CTRL" tier folds
+            # into $mod (CTRL is already in there) and silently shadows it, so
+            # nothing below may add CTRL, ALT or SUPER on top of $mod.
+            "$mod" = "SUPER ALT CTRL";
 
             exec-once = [
               "${pkgs.hyprpaper}/bin/hyprpaper"
@@ -653,11 +662,13 @@ MONEOF
               "$mod SHIFT, 9, movetoworkspace, 9"
               "$mod SHIFT, 0, movetoworkspace, 10"
 
-              # Workspace movement
-              "$mod CTRL SHIFT, L, movecurrentworkspacetomonitor, r"
-              "$mod CTRL SHIFT, H, movecurrentworkspacetomonitor, l"
-              "$mod CTRL SHIFT, J, movecurrentworkspacetomonitor, d"
-              "$mod CTRL SHIFT, K, movecurrentworkspacetomonitor, u"
+              # HISTORY: $mod CTRL SHIFT + H/J/K/L used to move the current
+              # workspace between monitors. Dropped when $mod became
+              # Ctrl+Alt+Super: that tier now collapses onto $mod SHIFT and
+              # would shadow the movewindow binds below. Rarely used in
+              # practice — moving a window to a workspace covers it. Monitor
+              # moves are still reachable via `hyprctl dispatch
+              # movecurrentworkspacetomonitor l|r|u|d`.
 
               # Launch programs
               "$mod, Return, exec, ghostty"
@@ -720,7 +731,9 @@ MONEOF
               "$mod, S, exec, ${scaleToggle}"
 
               # Screenshare scratch desktop (headless output + mirror window)
-              "$mod CTRL, S, exec, ${shareDesktop}/bin/share-desktop"
+              # X, not $mod CTRL S: CTRL lives inside $mod now, so that
+              # bind would have shadowed $mod S (the scale toggle).
+              "$mod, X, exec, ${shareDesktop}/bin/share-desktop"
               "$mod SHIFT, S, movetoworkspacesilent, name:share"
 
               # Notifications
