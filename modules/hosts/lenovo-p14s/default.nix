@@ -77,6 +77,11 @@ in
           # paperless-mail-unmatched and paperless-mail-repair commands.
           homeManager.paperlessMailSync
 
+          # MeshCore LoRa mesh clients: the meshy GUI (built from pkgs/) plus
+          # the official meshcore-cli. Here rather than in linux-desktop-base
+          # because the companion radio lives on this laptop.
+          homeManager.meshcore
+
           # Local LLM proxy on 127.0.0.1:9292 (Vulkan, Radeon 860M). Host-level
           # rather than in linux-desktop-base because it is specific to this
           # machine's iGPU sizing -- see the module header for the 25.38 GB pool
