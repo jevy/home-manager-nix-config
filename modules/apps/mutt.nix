@@ -19,6 +19,21 @@
 
       };
 
+      # Named notmuch query matching Gmail's Primary tab.
+      #
+      # lieer syncs Gmail *labels*, and Gmail's category tabs (Promotions,
+      # Social, Forums) still carry the INBOX label while being hidden from the
+      # Primary view. So `tag:inbox` counts ~96k messages where Gmail shows
+      # ~284. This query reproduces what the Gmail UI actually displays.
+      #
+      # `updates` is deliberately NOT excluded: the Updates tab is turned off on
+      # this account, so CATEGORY_UPDATES mail lands in Primary. Excluding it
+      # undercounts by 147.
+      #
+      # Use as `query:primary` in notmuch and neomutt.
+      programs.notmuch.extraConfig.query.primary =
+        "tag:inbox and not tag:promotions and not tag:social and not tag:forums";
+
       # Personal macros (module provides Gmail + goobook defaults)
       programs.neomutt.macros = [
         { map = ["index" "pager"]; key = "b"; action = "<resend-message>"; }
