@@ -3,17 +3,24 @@
 #
 # Layout summary:
 #   CapsLock        → Esc (no hold; Ctrl-on-hold removed to spare left pinky)
-#   Home row holds  → a=alt, s=meta, d=shift, e=nav-layer, f=ctrl
-#                     j=ctrl, k=shift, l=meta, ;=alt
+#   Home row holds  → a=alt, s=$mod, d=shift, e=nav-layer, f=ctrl
+#                     j=ctrl, k=shift, l=$mod, ;=alt
+#   LeftMeta        → $mod  (bottom-left, was native Super)
+#   RightAlt        → $mod  (right thumb)
 #   j+k chord       → Esc  (vim-friendly, works alongside home row mods)
 #   Nav layer (hold e):
 #     h = Left, j = Down, k = Up, l = Right (vim hjkl arrows)
 #     u = Ctrl+Backspace (delete word), i = Backspace
 #
 # Ulnar-nerve note (2026-05): CapsLock's hold-as-Ctrl was removed to spare
-# the left pinky. Physical LeftShift/LeftCtrl/LeftMeta are kept native
-# because same-hand chords (e.g. Ctrl+Shift+V, Meta+Shift+1) can't be
-# expressed via home-row mods.
+# the left pinky. Physical LeftShift/LeftCtrl are kept native because
+# same-hand chords (e.g. Ctrl+Shift+V) can't be expressed via home-row mods.
+#
+# LeftMeta used to be native for the same reason (Meta+Shift+1). It isn't
+# any more: bare Super stopped being a modifier anything binds once $mod
+# became Ctrl+Alt+Super, so the key was dead. It now sends the whole stack,
+# which makes Meta+Shift+1 into $mod+Shift+1 — the same move-to-workspace
+# it always was.
 #
 # RightAlt → Ctrl+Alt+Super: gives a right-thumb $mod key. Hyprland uses
 # Super for workspace switching (Super+1..4 = ~210/day in the keystroke log),
@@ -24,7 +31,13 @@
 # the mac's ctrl-alt-cmd (see modules/desktop/hyprland.nix). Bare lmet here
 # would no longer fire any window bind. The internal keyboard has no single
 # key that expands to the stack the way the Voyager does, so kanata
-# synthesises it with `multi`.
+# synthesises it with `multi`, via the @mod alias.
+#
+# Four keys reach $mod, for different hand positions: the right thumb
+# (RightAlt), the bottom-left LeftMeta, and s-hold / l-hold on the home row.
+# s and l held the now-dead bare Super, so nothing was displaced. Note that
+# l-hold cannot produce $mod+L (focus right) — it is the same key — so use
+# the thumb, LeftMeta or s-hold for the hjkl focus binds.
 #
 # SCOPE: this covers the INTERNAL keyboard only — linux-dev below pins it to
 # platform-i8042-serio-0-event-kbd. The Voyager is firmware-owned (Oryx) on
@@ -63,7 +76,7 @@ let
      linux-dev /dev/input/by-path/platform-i8042-serio-0-event-kbd)
     (defsrc
      caps a s d e f h j k l ; u i
-     ralt
+     lmet ralt
     )
     (defvar
      tap-time 150
@@ -85,15 +98,20 @@ let
      ;; CapsLock: tap = Esc only. Ctrl-on-hold removed — use f-hold.
      cec esc
 
+     ;; Hyprland's $mod, as one action: Ctrl+Alt+Super (see
+     ;; modules/desktop/hyprland.nix). Left-hand variants on both hands so the
+     ;; modmask is identical whichever key produced it.
+     mod (multi lctl lalt lmet)
+
      ;; Home row mods
      a (tap-hold-release-keys $tap-time $hold-time a lalt $left-hand-keys)
-     s (tap-hold-release-keys $tap-time $hold-time s lmet $left-hand-keys)
+     s (tap-hold-release-keys $tap-time $hold-time s @mod $left-hand-keys)
      d (tap-hold-release-keys $tap-time $hold-time d lsft $left-hand-keys)
      e (tap-hold-release-keys $tap-time $hold-time e (layer-while-held nav) $left-hand-keys)
      f (tap-hold-release-keys $tap-time $hold-time f lctl $left-hand-keys)
      j (tap-hold-release-keys $tap-time $hold-time j rctl $right-hand-keys)
      k (tap-hold-release-keys $tap-time $hold-time k rsft $right-hand-keys)
-     l (tap-hold-release-keys $tap-time $hold-time l rmet $right-hand-keys)
+     l (tap-hold-release-keys $tap-time $hold-time l @mod $right-hand-keys)
      ; (tap-hold-release-keys $tap-time $hold-time ; ralt $right-hand-keys)
     )
     ;; j+k chord = esc
@@ -102,11 +120,11 @@ let
     )
     (deflayer base
      @cec @a  @s  @d  @e  @f  h   @j  @k  @l  @;  u      i
-     (multi lctl lalt lmet)
+     @mod @mod
     )
     (deflayer nav
      _   _   _   _   _   _   left down up   right _   C-bspc bspc
-     _
+     _    _
     )
   '';
 in
@@ -122,8 +140,27 @@ in
   # User side: run kanata inside the graphical session, after login.
   flake.modules.homeManager.kanata =
     { pkgs, ... }:
+    let
+      # The config goes in the store and ExecStart names that store path
+      # directly. NOT %h/.config/kanata/config.kbd.
+      #
+      # kanata reads its config once at startup and has no hot-reload, so a
+      # keymap edit only takes effect when the service restarts. home-manager
+      # has startServices = true, which restarts units whose UNIT FILE changed
+      # — and with a %h path the unit file is byte-identical no matter what the
+      # keymap says, so the symlink underneath silently changed while the old
+      # process kept running the config it read at boot. Cost an hour of
+      # "I rebuilt but s-hold does nothing" on 2026-09-24.
+      #
+      # Naming the store path puts the config's hash in ExecStart, so any
+      # keymap edit changes the unit and sd-switch restarts it.
+      cfg = pkgs.writeText "kanata-config.kbd" configFile;
+    in
     {
-      xdg.configFile."kanata/config.kbd".text = configFile;
+      # Kept so the config is readable at a stable path for inspection and
+      # `kanata --cfg ~/.config/kanata/config.kbd --check`. It is NOT what the
+      # service reads.
+      xdg.configFile."kanata/config.kbd".source = cfg;
 
       systemd.user.services.kanata = {
         Unit = {
@@ -132,7 +169,7 @@ in
           PartOf = [ "graphical-session.target" ];
         };
         Service = {
-          ExecStart = "${pkgs.kanata}/bin/kanata --cfg %h/.config/kanata/config.kbd";
+          ExecStart = "${pkgs.kanata}/bin/kanata --cfg ${cfg}";
           Restart = "on-failure";
           RestartSec = 2;
         };
