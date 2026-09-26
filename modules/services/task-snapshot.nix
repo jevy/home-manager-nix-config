@@ -2,10 +2,10 @@
 #
 # The scorer used to live here as ./task_snapshot.py. It moved to
 # github.com/jevy/task-snapshot (PRIVATE) on 2026-09-26, because THIS repo
-# is public and the area weights carry comments naming three children,
-# their redacted, a redacted and an open redacted. The extraction also
-# gives the Hermes MCP sidecar an image to build from, but the privacy
-# problem is why it happened when it did.
+# is public and the area weights carry personal content that has no
+# business being published. This repo's history was rewritten the same day
+# to remove it. The extraction also gives the Hermes MCP sidecar an image
+# to build from, but the privacy problem is why it happened when it did.
 #
 # The input is private, so `nix flake` operations here need SSH access to
 # that repo. Nothing else evaluates this flake, which makes that an

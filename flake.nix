@@ -123,10 +123,10 @@
     };
     # task-snapshot — scoring and ranking over the Obsidian task notes.
     #
-    # PRIVATE, and reached over ssh on purpose: its config module holds the
-    # area weights, whose comments name three children, their redacted, a
-    # redacted and an open redacted. That content sat in THIS public repo
-    # as modules/services/task_snapshot.py until 2026-09-26.
+    # PRIVATE, and reached over ssh on purpose: its config module carries
+    # personal content that does not belong in a public repo. That content sat
+    # in THIS repo until 2026-09-26; the history was rewritten the same day.
+    # The private repo's own README says what and why.
     #
     # The consequence to know about: this flake no longer evaluates without
     # read access to that repo. Nothing but my own machines evaluates it.
