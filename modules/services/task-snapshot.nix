@@ -22,8 +22,55 @@
 
         import frontmatter
 
+
+        def _birthtimes(d: Path):
+            """name -> creation date, via one stat(1) call.
+
+            Linux stores birthtime but CPython does not expose it, and st_mtime
+            is not a substitute: adding a reframe note to a task would reset its
+            age and drop it out of the climb. %W is 0 when unknown.
+            """
+            import subprocess
+            out = {}
+            files = sorted(d.glob("*.md"))
+            if not files:
+                return out
+            try:
+                r = subprocess.run(
+                    ["stat", "-c", "%W|%n", *[str(f) for f in files]],
+                    capture_output=True, text=True, check=True,
+                )
+            except (OSError, subprocess.CalledProcessError):
+                return out
+            for line in r.stdout.splitlines():
+                ts, _, name = line.partition("|")
+                try:
+                    epoch = int(ts)
+                except ValueError:
+                    continue
+                if epoch > 0:
+                    out[Path(name).name] = date.fromtimestamp(epoch)
+            return out
+
         TASKS_DIR = Path("${tasksDir}")
+
+        # Area groups, one per file. The area IS the file it belongs to, not the
+        # topic: the old `health` bucket held two kids' med files plus my own
+        # screening, so my body disappeared into theirs on every glance.
+        FILES = [
+            ("Rosalyn (med file + Section 23 school file)", {"rosalyn"}),
+            ("Savannah (med file + reassessment + environment)", {"savannah"}),
+            ("Jackson (new dx + forms)", {"jackson"}),
+            ("Family (cross-kid, Ashley, shared rules)", {"family"}),
+            ("Body (mine — screening, mole, movement, light, hair)", {"body"}),
+            ("Money (CRA, invoices, claims, Kirk CPA)", {"money"}),
+            ("House (admin, maintenance, basement rental)", {"house"}),
+            ("Client (paid Quickjack work)", {"client"}),
+            ("Covenant", {"covenant"}),
+            ("Recharge (load-bearing, not optional)", {"recharge"}),
+        ]
         TODAY = date.today()
+        BIRTH = _birthtimes(TASKS_DIR)
 
 
         # ── Colors ───────────────────────────────────────────────────────
@@ -53,6 +100,10 @@
                 self.today = meta.get("today", False) is True
                 self.area = meta.get("area", "") or ""
                 self.spoons = meta.get("spoons", 0) or 0
+
+                # Mirrors Bases file.ctime. Falls back to mtime only when the
+                # filesystem has no birthtime, which understates age (safe).
+                self.ctime = BIRTH.get(path.name) or date.fromtimestamp(path.stat().st_mtime)
 
                 raw_due = meta.get("due")
                 self.due = self._parse_date(raw_due)
@@ -114,8 +165,36 @@
                 return 20 if self.today else 0
 
             @property
+            def age_days(self):
+                return (TODAY - self.ctime).days
+
+            @property
+            def age_score(self):
+                """Important, not urgent, and getting old? Climb.
+
+                The important+not-urgent gate is what makes this safe: age lifts
+                only what has already been declared to matter, so clutter stays
+                at 10 forever no matter how long it sits. This is the fix for
+                no-deadline files (body, recharge) scoring the same on day 1 and
+                day 200.
+                """
+                if not self.important or self.urgent:
+                    return 0
+                d = self.age_days
+                if d >= 84:
+                    return 20
+                if d >= 56:
+                    return 15
+                if d >= 42:
+                    return 10
+                if d >= 28:
+                    return 5
+                return 0
+
+            @property
             def score(self):
-                return self.priority_weight + self.urgency_score + self.today_bonus
+                return (self.priority_weight + self.urgency_score
+                        + self.today_bonus + self.age_score)
 
             @property
             def quadrant(self):
@@ -234,6 +313,8 @@
                         "score": t.score,
                         "spoons": t.spoons,
                         "quadrant": t.quadrant,
+                        "age_score": t.age_score,
+                        "age_days": t.age_days,
                         "due": iso(t.due),
                         "today": t.today,
                     }
@@ -261,6 +342,18 @@
         # ── Main ─────────────────────────────────────────────────────────
         def main():
             as_json = "--json" in sys.argv
+            spoon_cap = None
+            for i, a in enumerate(sys.argv):
+                if a == "--spoons" and i + 1 < len(sys.argv):
+                    try:
+                        spoon_cap = float(sys.argv[i + 1])
+                    except ValueError:
+                        pass
+                elif a.startswith("--spoons="):
+                    try:
+                        spoon_cap = float(a.split("=", 1)[1])
+                    except ValueError:
+                        pass
             no_color = "--no-color" in sys.argv or as_json
             init_colors(force_off=no_color)
 
@@ -344,6 +437,14 @@
             inbox = [t for t in active if not t.area]
             or_none([f"  {t.name}" for t in inbox])
 
+            # ── Needs Triage ──
+            # An area alone is not triage. Without spoons a task cannot be
+            # scheduled against a real day, and it sits at Defer/10 forever.
+            section("Needs Triage (has an area, no spoons yet)")
+            untriaged = sorted([t for t in active if t.area and not t.spoons],
+                               key=lambda t: (t.area, t.name))
+            or_none([f"  [{t.area:<10s}] {t.name}" for t in untriaged])
+
             # ── Area group views ──
             def area_view(title, areas):
                 section(title)
@@ -356,11 +457,35 @@
                     for t in tasks
                 ])
 
-            area_view("Business (covenant / quickjack / typestream / biz-dev)",
-                       {"covenant", "quickjack", "typestream", "biz-dev"})
-            area_view("Home Life (finances / taxes / health / family / home / rentals)",
-                       {"finances", "taxes", "health", "family", "home", "rentals"})
-            area_view("Fun", {"fun"})
+            for title, areas in FILES:
+                area_view(title, areas)
+
+            # ── Areas going quiet ──
+            # Bases formulas are per-row and cannot aggregate, so this lives
+            # here: the safety net for files that have no deadline and no one
+            # waiting, which is exactly how body and recharge vanish.
+            section("Areas Going Quiet (no completion in 21+ days)")
+            last_done = {}
+            for t in all_tasks:
+                if t.completed_at and t.area:
+                    prev = last_done.get(t.area)
+                    if prev is None or t.completed_at > prev:
+                        last_done[t.area] = t.completed_at
+            quiet = []
+            for area in sorted({t.area for t in active if t.area}):
+                live = [t for t in active if t.area == area]
+                if not any(t.important for t in live):
+                    continue
+                done = last_done.get(area)
+                days = (TODAY - done).days if done else None
+                if days is None or days >= 21:
+                    quiet.append((days if days is not None else 10**6, area, len(live)))
+            or_none([
+                f"  {C.YELLOW}{area:<10s}{C.RESET} "
+                + ("never completed" if d >= 10**6 else f"{d} days since last completion")
+                + f" · {n} active"
+                for d, area, n in sorted(quiet, reverse=True)
+            ])
 
             # ── Completed Today ──
             section("Completed Today")
@@ -378,11 +503,26 @@
             total_spoons = sum(t.spoons for t in active if t.spoons)
             print(f"  Total spoons across all active tasks: {total_spoons:.1f}")
 
+            # ── Fits today ──
+            if spoon_cap is not None:
+                section(f"Fits Today (<= {spoon_cap:g} spoons)")
+                fits = sorted(
+                    [t for t in active
+                     if t.spoons and t.spoons <= spoon_cap
+                     and not t.is_waiting
+                     and (not t.earliest_start or t.earliest_start <= TODAY)],
+                    key=lambda t: (-t.score, t.spoons),
+                )
+                or_none([
+                    f"  [{t.area:<10s}] {t.name:<40s} {t.spoons} sp  score:{t.score}"
+                    for t in fits
+                ])
+
             # ── TODAY — last on purpose: this is what stays on screen ──
-            today_view(today_active, completed_today, waiting)
+            today_view(today_active, completed_today, waiting, spoon_cap)
 
 
-        def today_view(today_active, completed_today, waiting=()):
+        def today_view(today_active, completed_today, waiting=(), spoon_cap=None):
             """The one section meant to be read, so it prints last."""
             rule = "─" * 66
             print(f"\n{C.BOLD}{rule}")
@@ -410,6 +550,13 @@
             done = len(completed_today)
             print(f"\n  {C.CYAN}{len(todo)} to do{C.RESET} · {spoons:.1f} spoons"
                   f" · {C.GREEN}{done} done today{C.RESET}")
+
+            if spoon_cap is not None:
+                left = spoon_cap - spoons
+                if left < 0:
+                    print(f"  {C.RED}over budget by {-left:.1f} spoons{C.RESET}")
+                else:
+                    print(f"  {C.GREEN}{left:.1f} of {spoon_cap:g} spoons left{C.RESET}")
 
             stale = sum(1 for t in waiting if t.is_stale)
             if stale:
