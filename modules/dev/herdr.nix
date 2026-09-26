@@ -199,6 +199,9 @@
       herdr = pkgs.herdr;
       herdr-pickr = pkgs.callPackage ../../pkgs/herdr-pickr.nix { src = inputs.herdr-pickr; };
       herdr-hunk = pkgs.callPackage ../../pkgs/herdr-hunk.nix { src = inputs.herdr-hunk; };
+      # Owns the `tree` sidebar token; the service below runs it. See the
+      # package header for why the zsh hook alone cannot keep that token true.
+      herdr-tree-sync = pkgs.callPackage ../../pkgs/herdr-tree-sync.nix { inherit herdr; };
 
       # ── hunk-send ────────────────────────────────────────────────────────────
       # The one thing hunk has no answer for. hunk's note flow is pull-based:
@@ -594,47 +597,30 @@
       # --source namespaces the metadata, so this can't collide with the agent
       # state the integration hooks report under `herdr:claude`.
       #
-      # The `tree` token is the worktree answer. A linked worktree is exactly the
-      # case where `git rev-parse --git-dir` and `--git-common-dir` disagree: in
-      # the top-level checkout both are the repo's .git, while inside a worktree
-      # the first is .git/worktrees/<name> and the second is still .git. That
-      # test is the whole detection — no worktree list to parse, no assumption
-      # about where worktrees are kept (this setup has them under both
-      # .worktrees/ and .claude/worktrees/, and herdr's own prefix+shift+g puts
-      # them in ~/.herdr/worktrees).
+      # It writes `cwd` ONLY. The `tree` token this same hook used to write now
+      # belongs to herdr-tree-sync (pkgs/herdr-tree-sync.nix, service below),
+      # because a shell hook is structurally unable to keep that token true:
       #
-      # It goes to BOTH the pane and the workspace, because herdr keeps two
-      # separate metadata namespaces and the two sidebar panels read one each:
-      # agent rows resolve $tokens against pane metadata, space rows against
-      # workspace metadata. The workspace id is the pane id's prefix, so this
-      # costs a string strip rather than a second socket round trip.
+      #   * chpwd reports where the SHELL stands. An agent that cds on its own
+      #     never fires it — Claude Code working in <repo>/.claude/worktrees/x
+      #     leaves the pane's login shell parked in the top-level checkout, so
+      #     the hook reported the checkout while the agent edited a worktree.
+      #   * The workspace half was guarded on a non-empty value (a space's panes
+      #     share one token, and a shell sitting in ~/.claude or /tmp would
+      #     otherwise wipe it). For a space whose directory is not a repo that
+      #     guard never released: ~/Second Brain Obsidian/Second Brain kept the
+      #     "(wt) sure-writer" its shell reported from its FIRST cwd, forever,
+      #     with no event that could ever clear it.
       #
-      # The workspace half is guarded on a non-empty value while the pane half is
-      # not, and the asymmetry is deliberate: a pane token describes that one
-      # pane, so blanking it outside a repo is correct, but every pane in a space
-      # writes the same space token, and a single shell sitting in ~/.claude or
-      # /tmp would otherwise wipe the marker for the whole space. Skipping the
-      # write keeps the last repo-shaped answer instead.
+      # Both are the same root cause — the shell is the wrong observer — and the
+      # sync fixes both by reading each pane's foreground_cwd from herdr every
+      # few seconds. Keeping `tree` here too would only let the two writers
+      # fight over one key on every cd.
       herdrCwdHook = ''
         if [[ -n ''${HERDR_ENV-} && -n ''${HERDR_PANE_ID-} && -n ''${HERDR_SOCKET_PATH-} ]]; then
           _herdr_report_cwd() {
-            local -a _hr
-            _hr=("''${(@f)$(command git rev-parse --git-dir --git-common-dir --show-toplevel 2>/dev/null)}")
-            local _tree=""
-            if (( ''${#_hr} >= 3 )); then
-              if [[ ''${_hr[1]:A} == ''${_hr[2]:A} ]]; then
-                _tree="''${_hr[3]/#$HOME/~}"
-              else
-                _tree="(wt) ''${_hr[3]:t}"
-              fi
-            fi
             ${lib.getExe' herdr "herdr"} pane report-metadata "$HERDR_PANE_ID" \
-              --source zsh-cwd --token "cwd=''${PWD/#$HOME/~}" \
-              --token "tree=$_tree" >/dev/null 2>&1 &|
-            if [[ -n $_tree ]]; then
-              ${lib.getExe' herdr "herdr"} workspace report-metadata "''${HERDR_PANE_ID%%:*}" \
-                --source zsh-cwd --token "tree=$_tree" >/dev/null 2>&1 &|
-            fi
+              --source zsh-cwd --token "cwd=''${PWD/#$HOME/~}" >/dev/null 2>&1 &|
           }
           chpwd_functions+=(_herdr_report_cwd)
           _herdr_report_cwd
@@ -656,7 +642,52 @@
       home.packages = [
         herdr
         hunk-send
+        herdr-tree-sync
       ];
+
+      # ── herdr-tree-sync service ──────────────────────────────────────────────
+      # One pass every 5 seconds: read each pane's foreground_cwd from the herdr
+      # socket, derive the `tree` token, write back only what changed (see the
+      # package header). A poll rather than an event subscription because herdr
+      # exposes no event for "this pane's process cd'd" — foreground_cwd is read
+      # live from /proc when asked, and `herdr api` has no subscribe verb. Each
+      # pass is one socket round trip plus a git call per pane; writes only
+      # happen on an actual change, so an idle session is silent and the sidebar
+      # does not repaint.
+      #
+      # 5s is the lag between an agent entering a worktree and the sidebar
+      # saying so. Lower it if a conflict scan ever races it; the cost is linear.
+      #
+      # Not a herdr PLUGIN because plugin events (pane.agent_status_changed and
+      # friends) only fire at agent state transitions — an agent that cds
+      # mid-run, which is the exact case this exists for, fires nothing.
+      systemd.user.services.herdr-tree-sync = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
+        Unit = {
+          Description = "Keep herdr's tree sidebar token in step with each pane's real directory";
+          # Nothing to talk to before a graphical session; the script no-ops
+          # when the socket is absent, so this is ordering, not a dependency.
+          PartOf = [ "graphical-session.target" ];
+        };
+        Service = {
+          ExecStart = "${lib.getExe herdr-tree-sync} --watch 5";
+          Restart = "always";
+          RestartSec = 5;
+        };
+        Install.WantedBy = [ "default.target" ];
+      };
+
+      # launchd has no Restart=always for a long-running loop worth trusting, so
+      # the darwin half runs the ONE-PASS form on a 5s StartInterval instead —
+      # same cadence, and a crashed pass is retried by definition.
+      launchd.agents.herdr-tree-sync = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
+        enable = true;
+        config = {
+          ProgramArguments = [ (lib.getExe herdr-tree-sync) ];
+          StartInterval = 5;
+          RunAtLoad = true;
+          ProcessType = "Background";
+        };
+      };
 
       # Upstream's Claude Code skill, taken from the SAME source the installed
       # binary is built from (pkgs.herdr.src, not the flake input — which may
