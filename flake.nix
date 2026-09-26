@@ -121,6 +121,19 @@
       url = "github:jevy/typing-analysis";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # task-snapshot — scoring and ranking over the Obsidian task notes.
+    #
+    # PRIVATE, and reached over ssh on purpose: its config module holds the
+    # area weights, whose comments name three children, their redacted, a
+    # redacted and an open redacted. That content sat in THIS public repo
+    # as modules/services/task_snapshot.py until 2026-09-26.
+    #
+    # The consequence to know about: this flake no longer evaluates without
+    # read access to that repo. Nothing but my own machines evaluates it.
+    task-snapshot = {
+      url = "git+ssh://git@github.com/jevy/task-snapshot";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     typestream = {
       url = "github:typestreamio/typestream/v0.3.6";
       inputs.nixpkgs.follows = "nixpkgs";

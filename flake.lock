@@ -987,6 +987,7 @@
         "sops-nix": "sops-nix",
         "spicetify-nix": "spicetify-nix",
         "stylix": "stylix",
+        "task-snapshot": "task-snapshot",
         "tuicr": "tuicr",
         "typestream": "typestream",
         "typing-analysis": "typing-analysis"
@@ -1265,6 +1266,26 @@
         "owner": "nix-systems",
         "repo": "default",
         "type": "github"
+      }
+    },
+    "task-snapshot": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790460988,
+        "narHash": "sha256-QGK01SIT8pSHPoFov0rYaVeEt5iJRh/6rhaXN5FcmmI=",
+        "ref": "refs/heads/main",
+        "rev": "7169a7f2759fdf5c7b9c602971533256f00afc60",
+        "revCount": 1,
+        "type": "git",
+        "url": "ssh://git@github.com/jevy/task-snapshot"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/jevy/task-snapshot"
       }
     },
     "tinted-kitty": {
