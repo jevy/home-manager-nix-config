@@ -21,6 +21,22 @@
         # Only process .md files
         case "$file" in *.md) ;; *) exit 0 ;; esac
 
+        today="$(${date} +%Y-%m-%d)"
+
+        # today_set: stamp the date the today flag was raised, so it can expire.
+        # Jevin ticks ONE boolean in Obsidian; the date is never hand-written.
+        if ${grep} -q '^today: true' "$file" 2>/dev/null; then
+          existing_ts="$(${grep} '^today_set:' "$file" 2>/dev/null | ${sed} 's/^today_set: *//')"
+          if [ -z "$existing_ts" ]; then
+            if ${grep} -q '^today_set:' "$file" 2>/dev/null; then
+              ${sed} -i "s/^today_set:.*$/today_set: $today/" "$file"
+            else
+              ${sed} -i "s/^today: true$/today: true\ntoday_set: $today/" "$file"
+            fi
+            echo "Stamped today_set: $today on $(${basename} "$file" .md)"
+          fi
+        fi
+
         # Must have completed: true
         ${grep} -q '^completed: true' "$file" 2>/dev/null || exit 0
 
@@ -32,7 +48,6 @@
 
         # Guard: file mtime must be today (skip stale events)
         file_date="$(${date} -d "@$(${stat} --format='%Y' "$file")" +%Y-%m-%d)"
-        today="$(${date} +%Y-%m-%d)"
         if [ "$file_date" != "$today" ]; then
           exit 0
         fi
