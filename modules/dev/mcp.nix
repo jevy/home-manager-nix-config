@@ -256,6 +256,41 @@
           programs.mcp.enable = true;
           programs.mcp.servers = selected;
 
+          # Re-emit ~/.config/mcp/mcp.json with `disabled = true` alongside the
+          # `enabled = false` that home-manager writes.
+          #
+          # Both keys mean the same thing; the clients disagree about spelling.
+          # home-manager's transform normalises everything onto `enabled` and
+          # strips `disabled` outright, but pi (pi-mcp-adapter) reads this file
+          # as its "shared-global" layer and only ever looks at `disabled`
+          # (`isServerDisabled`: strictly `disabled === true`) — it honours
+          # `enabled` solely when parsing an opencode-shaped config. So without
+          # this, a server marked off here would still be dialled by pi.
+          #
+          # The mapping reuses home-manager's own `transformMcpServer` on the
+          # evaluated option rather than re-deriving the file shape, so it
+          # cannot drift from upstream; it only adds the second key.
+          #
+          # Off is not hidden: the entry stays in the file, so pi lists it and
+          # `disabled` flips per project into `.pi/mcp.json` — pi's toggle
+          # writes an explicit `disabled = false` precisely because a
+          # lower-precedence layer (this one) disabled it.
+          xdg.configFile."mcp/mcp.json".source = lib.mkForce (
+            (pkgs.formats.json { }).generate "mcp.json" {
+              mcpServers = lib.mapAttrs (
+                _: server:
+                let
+                  transformed = lib.hm.mcp.transformMcpServer {
+                    inherit server;
+                    extraTransforms = [ lib.hm.mcp.addType ];
+                    exclude = [ "serverUrl" ];
+                  };
+                in
+                transformed // lib.optionalAttrs (transformed.enabled or true == false) { disabled = true; }
+              ) config.programs.mcp.servers;
+            }
+          );
+
           # Claude Code integration is handled by programs.claude-code's
           # enableMcpIntegration (see ./claude-code.nix), which merges these
           # servers into Claude Code's own config. The legacy ~/.mcp.json
