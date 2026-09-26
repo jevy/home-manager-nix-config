@@ -226,6 +226,33 @@
         hermes = {
           command = "${hermesMcpWrapper}/bin/run-hermes-mcp";
         };
+        # Sure (self-hosted personal finance, `apps/sure` in the homelab).
+        # The only *remote* server here: Sure speaks streamable HTTP MCP at
+        # /mcp and is its own OAuth authorization server, advertising dynamic
+        # client registration (/.well-known/oauth-authorization-server →
+        # /register, /oauth/authorize, /oauth/token, scope `read_write`). So
+        # there is no token to keep in sops — the client registers itself and
+        # runs the browser flow on first connect.
+        #
+        # The chart's own Ingress wraps the whole host in the
+        # `apps-authentik-forward-auth` middleware, which used to break this:
+        # /mcp *and* the OAuth discovery documents 302'd to auth.jevy.org and
+        # the client got an HTML login page instead of JSON ("Unexpected
+        # content type: text/html"). Fixed 2026-09-26 by a second, middleware-
+        # free Ingress (`apps/sure/ingress-mcp.yaml` in home-infrastructure-
+        # flux, not this repo) covering only the machine-to-machine legs:
+        # /mcp, /register, /oauth/token and /.well-known/oauth-*. Traefik
+        # prefers the longer path prefix, so the `/` router is untouched and
+        # the UI — /oauth/authorize included — stays behind authentik. Sure
+        # authenticates the exposed paths itself (POST /mcp with no token ->
+        # 401 + `www-authenticate: Bearer resource_metadata=...`), so this
+        # does not make them public.
+        #
+        # If this ever reverts to an HTML content-type error, check that
+        # Ingress still exists before touching anything here.
+        sure = {
+          url = "https://sure.jevy.org/mcp";
+        };
       };
     in
     {
