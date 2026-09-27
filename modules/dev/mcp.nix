@@ -16,8 +16,8 @@
         text = ''exec mcp-server-kubernetes "$@"'';
       };
 
-      # Grafana MCP server (build from source with Go 1.25)
-      grafanaMcpServer = pkgs.buildGo125Module rec {
+      # Grafana MCP server (build from source; default Go, buildGo125Module was removed with Go 1.25 EOL)
+      grafanaMcpServer = pkgs.buildGoModule rec {
         pname = "mcp-grafana";
         version = "0.7.10";
 

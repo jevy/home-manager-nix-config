@@ -86,7 +86,7 @@ in
           # rather than in linux-desktop-base because it is specific to this
           # machine's iGPU sizing -- see the module header for the 25.38 GB pool
           # the model quants are chosen against.
-          homeManager.llamaSwapLinux
+          # homeManager.llamaSwapLinux  # parked 2026-09-27 alongside llmfit; re-enable together
         ];
 
         # P14s OLED monitor: 2880x1800 @ 120Hz, scale 1.5 (→ 1920x1200 logical)

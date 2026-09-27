@@ -71,7 +71,7 @@ in
             homeManager.yazi
             homeManager.cliBase
             homeManager.cliLinux
-            homeManager.llmfit
+            # homeManager.llmfit  # parked 2026-09-27: pkgs/llmfit-amd-igpu-gtt.patch does not apply to llmfit 1.1.16 in current nixpkgs; rebase the patch before re-enabling
             homeManager.audio
             homeManager.nixvim
             homeManager.mcp
