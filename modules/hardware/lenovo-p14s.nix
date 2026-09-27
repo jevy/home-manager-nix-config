@@ -1,8 +1,13 @@
 # Lenovo ThinkPad P14s Gen 6 AMD hardware configuration
-{ ... }:
+{ inputs, ... }:
 {
   flake.modules.nixos.lenovoP14sHardware =
     { pkgs, ... }:
+    let
+      # Kernel + linux-firmware from the last known-clean nixpkgs (see the
+      # "PINNED 2026-09-27" block below and the nixpkgs-p14s-clean input).
+      clean = inputs.nixpkgs-p14s-clean.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+    in
     {
       # Kernel UNPINNED 2026-07-27 (was 7.0.6 via the retired nixpkgs-kernel706
       # input, to dodge the 7.1 MT7925 list_add-corruption hard-locks — see the
@@ -19,7 +24,59 @@
       # xdg-desktop-portal /proc/<pid>/root breakage is version-independent
       # (CVE-2026-46333 get_dumpable tightening); the CAP_SYS_PTRACE shim below
       # handles it regardless of kernel version.
-      boot.kernelPackages = pkgs.linuxPackages_latest;
+      #
+      # ── PINNED 2026-09-27: kernel 7.2.2 + linux-firmware 20260810 ─────────────
+      # Three hard freezes in the wake path (screens-off → wake, or s2idle → wake)
+      # after the 2026-09-23 bump: Sep 24 17:01 (never woke from suspend), Sep 27
+      # 14:46 (stuck on hyprlock, hard reset), plus Aug 30 on 7.1.8. No panic, no
+      # OOM, no MCE, pstore empty — the CPU wedged before it could write. The
+      # bump moved THREE things at once vs generation 378 (clean 17 days):
+      #   kernel 7.2.2 → 7.2.5, DCN 3.5 DMCUB firmware 0.1.68 → 0.1.74
+      #   (linux-firmware 20260810 → 20260910), aquamarine 0.14 → 0.15.
+      # Prime suspect is the DMCUB (display microcontroller) firmware: 20260910
+      # is a known-bad AMD display firmware release downstream, and the DMCUB
+      # release notes between the good and bad blob are all IPS/HW-lock hang
+      # fixes. Kernel 7.2.x itself also has open 880M/890M display-off hang
+      # reports. So we pin BOTH to the clean combo rather than chase HEAD.
+      # Blob → release mapping verified by sha256 against linux-firmware.git:
+      #   0.1.68 (495465e0, Jul 27) = gen 378 clean
+      #   0.1.74 (ed94b355, Sep  4) = gen 405–416 crashing
+      #   0.1.75 (6f47eb9e, Sep 11) = linux-firmware 20260916 (untested here)
+      # UNPIN when these are closed / fixed, then soak 2 weeks before trusting:
+      #   https://discussion.fedoraproject.org/t/warning-new-kernel-7-2-breaks-certain-amd-gpu-support/195477
+      #     (kernel 7.2.x: 880M/890M "REG_WAIT timeout optc*_disable_crtc" hangs)
+      #   https://github.com/CachyOS/linux-cachyos/issues/1055
+      #     (890M on 7.2.6: same OPTC timeout freeze, no root cause yet)
+      #   https://bugs.launchpad.net/ubuntu/+source/linux-firmware/+bug/2163311
+      #     (DMCUB regression on Strix Point: inbox1 stops advancing → soft lockup)
+      #   https://discuss.cachyos.org/t/regression-linux-firmware-amdgpu-20260910-1-dmcub-fails-to-load-on-amd-radeon-680m-rembrandt-causing-slow-boot-and-visual-glitches/35623
+      #   https://github.com/ublue-os/bazzite/issues/5820
+      #     (linux-firmware 20260910 DMCUB regressions; distros shipped reverts)
+      #   https://gitlab.com/kernel-firmware/linux-firmware/-/commits/main/amdgpu/dcn_3_5_dmcub.bin
+      #     (DMCUB release notes; look for a release that says the hang is fixed)
+      #   https://gitlab.freedesktop.org/drm/amd/-/issues/4941
+      #     (the OLED/PSR issue behind dcdebugmask=0x10, still open)
+      # If it freezes even on this pin: add 0x800 (DC_DISABLE_IPS) to
+      # amdgpu.dcdebugmask (→ 0x810), one variable at a time.
+      # Was: boot.kernelPackages = pkgs.linuxPackages_latest;
+      # ddcci-driver (pulled in by services.ddccontrol) calls strncpy(), which
+      # kernel 7.2 dropped from <linux/string.h>; GCC 15 hard-errors. This is the
+      # ddcciDriverFix overlay that generation 378 ran with (dropped from
+      # modules/overlays.nix on 2026-09-16), re-applied to the pinned package
+      # set only. Drop it together with the pin.
+      boot.kernelPackages = clean.linuxPackages_latest.extend (
+        _self: super: {
+          ddcci-driver = super.ddcci-driver.overrideAttrs (old: {
+            postPatch = (old.postPatch or "") + ''
+              substituteInPlace ./ddcci/ddcci.c \
+                --replace-fail 'strncpy(buf, device->' 'strscpy(buf, device->'
+            '';
+          });
+        }
+      );
+      nixpkgs.overlays = [
+        (_final: _prev: { linux-firmware = clean.linux-firmware; })
+      ];
 
       # amdgpu.dcdebugmask=0x10: fix OLED/PSR screen flickering / display idle
       # hang on RDNA 3.5 (Strix Point, 890M). Still open upstream as of

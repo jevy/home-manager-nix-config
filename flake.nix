@@ -23,6 +23,15 @@
     # cached. Drop this input (and the override in modules/shell/cli.nix) once
     # `nix path-info --store https://cache.nixos.org` finds our cachix again.
     nixpkgs-devenv.url = "github:NixOS/nixpkgs/d2f67949798825fe853f7c5d0492b8bf016d3f88";
+
+    # nixpkgs-p14s-clean — the nixpkgs behind lenovo-p14s generation 378, the last
+    # build that ran 17 days (2026-09-06 → 09-23, 82 suspends, 221 DPMS cycles)
+    # without a hard freeze. Used ONLY for boot.kernelPackages and linux-firmware
+    # on the P14s (see modules/hardware/lenovo-p14s.nix for the forensics). It
+    # gives kernel 7.2.2 + linux-firmware 20260810 (DCN 3.5 DMCUB 0.1.68).
+    # Cost: the P14s kernel stops getting security updates until this is dropped.
+    # TODO: drop this input when the tracked issues in lenovo-p14s.nix close.
+    nixpkgs-p14s-clean.url = "github:NixOS/nixpkgs/d2f67949798825fe853f7c5d0492b8bf016d3f88";
     home-manager.url = "github:nix-community/home-manager/master";
 
     # macOS system management (mac-work host). Runs with nix.enable = false —
