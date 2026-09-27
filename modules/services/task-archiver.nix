@@ -19,22 +19,10 @@
 
         mkdir -p "$ARCHIVE_DIR"
 
-        TODAY="$(${date} +%Y-%m-%d)"
-
-        # Clear yesterday's today flags. Picking today's work is a daily act, so
-        # the flag has to expire on its own; otherwise last Tuesday's pick keeps
-        # sitting in the Today view forever. This runs at 00:00 with the archive
-        # sweep rather than as its own service.
-        for file in "$TASKS_DIR"/*.md; do
-          [ -f "$file" ] || continue
-          ${grep} -q '^today: true' "$file" || continue
-          ts=$(${grep} '^today_set:' "$file" | ${sed} 's/^today_set: *//' | head -1)
-          [ -z "$ts" ] && continue
-          if [[ "$ts" < "$TODAY" ]]; then
-            ${sed} -i -e 's/^today: true$/today: false/' -e 's/^today_set:.*$/today_set:/' "$file"
-            echo "Cleared stale today flag: $(basename "$file" .md) (set $ts)"
-          fi
-        done
+        # This script NEVER touches `today:` or `today_set:`. The today flag is
+        # Jevin's own hand-managed pick and stays set until he clears it. A
+        # block here used to expire flags set before midnight, which on
+        # 2026-09-27 wiped 11 fresh picks before the 6am brief ran.
 
         for file in "$TASKS_DIR"/*.md; do
           [ -f "$file" ] || continue
