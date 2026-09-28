@@ -16,6 +16,13 @@
     # `nix-systems-triplet` input and the follows on hunk/pi-mono below).
     # ─────────────────────────────────────────────────────────────────────────
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+
+    # devenv on darwin only. nixpkgs-unstable moved cachix to 1.12.1, which
+    # Hydra has not built for aarch64-darwin — devenv then drags a ~1h GHC build
+    # into every mac-work rebuild. Linux keeps devenv from `nixpkgs` (cached). This older pin resolves to cachix 1.12.0, which IS
+    # cached. Drop this input (and the override in modules/shell/cli.nix) once
+    # `nix path-info --store https://cache.nixos.org` finds our cachix again.
+    nixpkgs-devenv.url = "github:NixOS/nixpkgs/d2f67949798825fe853f7c5d0492b8bf016d3f88";
     home-manager.url = "github:nix-community/home-manager/master";
 
     # macOS system management (mac-work host). Runs with nix.enable = false —

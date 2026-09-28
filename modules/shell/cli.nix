@@ -45,7 +45,12 @@
         sops
         age
         awscli2
-        devenv
+        (
+          if pkgs.stdenv.hostPlatform.isDarwin then
+            inputs.nixpkgs-devenv.legacyPackages.${pkgs.stdenv.hostPlatform.system}.devenv
+          else
+            devenv
+        )
         repomix
         poppler-utils
         bc
