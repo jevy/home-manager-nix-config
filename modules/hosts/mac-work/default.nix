@@ -257,6 +257,7 @@ in
               homeManager.desktopMac
               homeManager.altTab
               homeManager.monoMic
+              homeManager.meetingbarWatchdog
               homeManager.macFonts
               homeManager.stylix
 
