@@ -113,6 +113,68 @@
 # REMOVE THIS once upstream lands a refresh timeout. The tell is
 # CalendarSync.swift gaining a watchdog around the fetch, or the Google
 # URLSessionConfiguration gaining timeoutIntervalForResource.
+#
+# ── THE BOOT RESTART, AND WHY IT IS A GUESS ──────────────────────────────────
+#
+# A SECOND, UNRELATED FAILURE: launched at login, MeetingBar claims its slot in
+# the menu bar and then draws nothing into it. Observed 2026-09-29.
+#
+# The app is not wedged — this is the opposite of the sync deadlock above. Its
+# model is live and correct; only the pixels are missing:
+#
+#   pid 835, started 08:50:37 (boot was 08:50:03)
+#   AX title: "MCP Specification White-boar... in 1h 18min"   <- correct, live
+#   AX frame: x=835pt w=305pt h=24pt                          <- slot held
+#   screencapture of exactly that rect: empty menu bar
+#
+# So the cache watchdog above cannot see it: the cache was advancing on the
+# 3-minute interval the whole time. Data healthy, render dead. Restarting the
+# app fixes it until the next boot.
+#
+# THE CAUSE IS NOT KNOWN, and two plausible ones have already been falsified by
+# diffing the 08:50 launch against a healthy 09:43 one:
+#
+#   NOT a login-item race for the status item host. Control Center was pid 663
+#   from 08:50:36 — 1.8s BEFORE MeetingBar — and never restarted. Both launches
+#   request the same FBSScene from com.apple.controlcenter.statusitems, realize
+#   the same __NSStatusItemSceneHostSettings__, and log the same
+#   "Dropping transition context because the scene is reconnecting" (in fact 4x
+#   in the WORKING launch, 1x in the broken one).
+#
+#   NOT an appearance mismatch. "(HLTB: 1), (SLS: 0)" and the resolved
+#   NSCompositeAppearance are identical in both.
+#
+# The only measured difference is that the boot launch had no network —
+# `configd: en0: no SSID`, `DHCP en0: INACTIVE`, and a storm of
+# NSURLErrorDomain -1009 across every process including this one. That fits the
+# waitsForConnectivity mechanism documented above, but it does NOT explain a
+# correct title with no pixels, so it is a correlation and not a diagnosis.
+#
+# WHY THE FIX IS A BLUNT RESTART RATHER THAN A CONDITION. There is nothing to
+# hang a real dependency on. Checked against launchd.plist(5) on macOS 26:
+#
+#   KeepAlive.NetworkState      "no longer implemented as it never acted how
+#                                most users expected"
+#   KeepAlive.OtherJobEnabled   "only evaluates whether the job is loaded, not
+#                                whether it is running... highly discouraged"
+#   KeepAlive.PathState         "inherently race-prone and lossy"
+#   wait4path                   filesystem paths only (see yabai.nix)
+#
+# and none of them apply anyway, because MeetingBar starts from its own
+# SMAppService Launch at Login registration, which accepts no conditions at
+# all. Detecting the blank render directly would need an Accessibility grant,
+# and TCC keys grants to the binary — every rebuild moves the store path and
+# silently revokes it (the trap in alt-tab.nix, one layer down).
+#
+# So: if MeetingBar's process is younger than BOOT_WINDOW seconds measured from
+# kern.boottime, restart it exactly once, keyed on the boot epoch ALONE so it
+# cannot loop — keying it on the pid too looks tighter and is a restart loop,
+# because the restart is what changes the pid. Costs one invisible relaunch per boot, including the boots where
+# it would have rendered fine. That is the price of not knowing the cause.
+#
+# REMOVE THIS the moment the cause is actually found. The cheap experiment
+# nobody has run yet: reboot with Wi-Fi off, then reboot with Wi-Fi on, and see
+# whether the blank item tracks the network.
 { ... }:
 {
   flake.modules.darwin.meetingbar =
@@ -127,6 +189,7 @@
       staleSeconds = 600;
       strikesNeeded = 2;
       cooldownSeconds = 1800;
+      bootWindowSeconds = 180;
       checkInterval = 300;
 
       # macOS-specific tools are called by absolute path: writeShellApplication
@@ -139,16 +202,48 @@
           STALE=${toString staleSeconds}
           STRIKES_NEEDED=${toString strikesNeeded}
           COOLDOWN=${toString cooldownSeconds}
+          BOOT_WINDOW=${toString bootWindowSeconds}
 
           PROC='MeetingBar.app/Contents/MacOS/MeetingBar'
           state_dir="$HOME/Library/Caches/meetingbar-watchdog"
           strikes_file="$state_dir/strikes"
           restart_file="$state_dir/last-restart"
+          bootfix_file="$state_dir/bootfix"
           mkdir -p "$state_dir"
 
           log() { echo "$(date '+%Y-%m-%d %H:%M:%S') $*"; }
           running() { pgrep -f "$PROC" >/dev/null 2>&1; }
           reset_strikes() { echo 0 > "$strikes_file"; }
+
+          restart_meetingbar() {
+            /usr/bin/osascript -e 'tell application id "leits.MeetingBar" to quit' \
+              >/dev/null 2>&1 || true
+            for _ in 1 2 3 4 5 6 7 8 9 10; do
+              running || break
+              sleep 1
+            done
+            if running; then
+              log "graceful quit timed out - terminating"
+              /usr/bin/pkill -x MeetingBar || true
+              sleep 2
+            fi
+
+            /usr/bin/open -b leits.MeetingBar \
+              || /usr/bin/open -a "/Applications/Nix Apps/MeetingBar.app"
+
+            date +%s > "$restart_file"
+            reset_strikes
+            log "MeetingBar relaunched"
+          }
+
+          # Elapsed seconds for a pid: macOS ps has no `etimes`, only the
+          # [[dd-]hh:]mm:ss `etime` this unpacks.
+          elapsed_of() {
+            ps -o etime= -p "$1" 2>/dev/null | tr -d ' ' | awk -F'[-:]' '
+              NF==2 { print $1*60 + $2 }
+              NF==3 { print $1*3600 + $2*60 + $3 }
+              NF==4 { print $1*86400 + $2*3600 + $3*60 + $4 }'
+          }
 
           if ! running; then
             reset_strikes
@@ -159,6 +254,21 @@
               https://connectivitycheck.gstatic.com/generate_204; then
             reset_strikes
             exit 0
+          fi
+
+          mb_pid=$(pgrep -f "$PROC" | head -1)
+          boot=$(sysctl -n kern.boottime | sed -n 's/.*{ sec = \([0-9]*\).*/\1/p')
+          elapsed=$(elapsed_of "$mb_pid")
+          if [ -n "$elapsed" ] && [ -n "$boot" ]; then
+            since_boot=$(( $(date +%s) - elapsed - boot ))
+            if [ "$since_boot" -lt "$BOOT_WINDOW" ]; then
+              if [ "$(cat "$bootfix_file" 2>/dev/null)" != "$boot" ]; then
+                echo "$boot" > "$bootfix_file"
+                log "MeetingBar started ''${since_boot}s into boot - restarting once"
+                restart_meetingbar
+                exit 0
+              fi
+            fi
           fi
 
           newest=0
@@ -200,24 +310,7 @@
           fi
 
           log "MeetingBar is wedged - restarting"
-          /usr/bin/osascript -e 'tell application id "leits.MeetingBar" to quit' \
-            >/dev/null 2>&1 || true
-          for _ in 1 2 3 4 5 6 7 8 9 10; do
-            running || break
-            sleep 1
-          done
-          if running; then
-            log "graceful quit timed out - terminating"
-            /usr/bin/pkill -x MeetingBar || true
-            sleep 2
-          fi
-
-          /usr/bin/open -b leits.MeetingBar \
-            || /usr/bin/open -a "/Applications/Nix Apps/MeetingBar.app"
-
-          date +%s > "$restart_file"
-          reset_strikes
-          log "MeetingBar relaunched"
+          restart_meetingbar
         '';
       };
     in
