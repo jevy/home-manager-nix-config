@@ -117,6 +117,24 @@ in
         rev = "80e5268ec74c7ac17d4d739e13a9958cba4c70d3";
         hash = "sha256-9cdA8D/TtwHcLqrtoyIixA0YJmTs+c8FSNrjxp8CYI0=";
       };
+      # `markup img.png` -> swappy (the same arrows/text/blur tool that the
+      # Print screenshot binding uses). `-o` makes swappy write the result to
+      # img-markup.png next to the original when the window closes, so the
+      # marked-up copy stays beside its source instead of only landing in
+      # ~/Screenshots. Ctrl+S still also saves there (swappy config save_dir)
+      # and Ctrl+C copies to the clipboard. The original is never overwritten.
+      # Closing without drawing still writes an (identical) -markup copy.
+      # Several files open one after another; swappy -f takes only one.
+      markup = pkgs.writeShellApplication {
+        name = "markup";
+        runtimeInputs = [ pkgs.swappy ];
+        text = ''
+          [ $# -gt 0 ] || { echo "usage: markup IMAGE..." >&2; exit 1; }
+          for f in "$@"; do
+            swappy -f "$f" -o "''${f%.*}-markup.png"
+          done
+        '';
+      };
       dragPlugin = pkgs.fetchFromGitHub {
         owner = "Joao-Queiroga";
         repo = "drag.yazi";
@@ -128,6 +146,7 @@ in
       packages = with pkgs; [
         ripdrag
         p7zip
+        markup
       ];
 
       plugins = {
@@ -143,6 +162,7 @@ in
         ];
         image = [
           { run = ''imv %s''; orphan = true; desc = "imv"; }
+          { run = ''markup %s''; orphan = true; desc = "Mark up (swappy)"; }
           { run = ''gimp %s''; orphan = true; desc = "GIMP"; }
         ];
         # mpv leads, not VLC. ashell owns org.kde.StatusNotifierWatcher and
@@ -174,6 +194,8 @@ in
       extraKeys = [
         # Drag and drop (replaces ranger <C-d>). Linux only — see header.
         { on = [ "<C-d>" ]; run = "plugin drag"; desc = "Drag and drop"; }
+        # Mark up image with swappy (also the second entry on `O` for images).
+        { on = [ "e" "m" ]; run = ''shell 'markup %s' --orphan''; desc = "Mark up image"; }
       ];
     };
 
