@@ -67,7 +67,7 @@ let
     "owlpractice.ca" = "Owl Practice";
     "janeapp.com" = "Jane";
     "mcallisterdentistry.ca" = "McAllister Dentistry";
-    "navigators.ca" = "Navigators Insurance";
+    "navigators.ca" = "The Navigators of Canada";
     "ottawa.ca" = "City of Ottawa";
     "canada.ca" = "Corporations Canada";
 
@@ -104,8 +104,11 @@ let
     "Health" = [
       "ocdsb.ca" "ocsb.ca" "schoolconnectsweb.com"
       "deltapsychology.ca" "deltapsychologists@on.aibn.com" "owlpractice.ca"
-      "janeapp.com" "mcallisterdentistry.ca" "navigators.ca" "ottawa.ca" "canada.ca"
+      "janeapp.com" "mcallisterdentistry.ca" "ottawa.ca" "canada.ca"
     ];
+    # Board packs, financial statements and donation receipts from serving on
+    # the Navigators of Canada board.
+    "Volunteer" = [ "navigators.ca" ];
     "Finance" = [
       "notification.intuit.com" "homedepot.com" "order.homedepot.com"
       "xero.com" "post.xero.com" "stripe.com" "logankatz.com" "kirkcpa.ca"
