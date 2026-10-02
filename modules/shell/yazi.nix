@@ -135,6 +135,23 @@ in
           done
         '';
       };
+      # `c b` in yazi: copy the selected paths, one per line, each wrapped in
+      # backticks. Plain `c c` paths of images get swallowed by Claude Code's
+      # prompt: on paste it splits the text on newlines (and on a space before
+      # `/`), strips surrounding '"' / "'" quotes, and any piece ending in
+      # .png/.jpe?g/.gif/.webp that exists on disk becomes an [Image #N]
+      # attachment (regex /\.(png|jpe?g|gif|webp)$/i, read from the 2.1.283
+      # binary). Quotes are stripped first so they don't help; a trailing
+      # backtick fails the `$` anchor, so the paste stays text.
+      copyPathsBackticked = pkgs.writeShellApplication {
+        name = "yazi-copy-paths-backticked";
+        runtimeInputs = [ pkgs.wl-clipboard ];
+        # SC2016: the backticks are literal output, not command substitution.
+        excludeShellChecks = [ "SC2016" ];
+        text = ''
+          for f in "$@"; do printf '`%s`\n' "$f"; done | wl-copy -n
+        '';
+      };
       dragPlugin = pkgs.fetchFromGitHub {
         owner = "Joao-Queiroga";
         repo = "drag.yazi";
@@ -147,6 +164,7 @@ in
         ripdrag
         p7zip
         markup
+        copyPathsBackticked
       ];
 
       plugins = {
@@ -196,6 +214,8 @@ in
         { on = [ "<C-d>" ]; run = "plugin drag"; desc = "Drag and drop"; }
         # Mark up image with swappy (also the second entry on `O` for images).
         { on = [ "e" "m" ]; run = ''shell 'markup %s' --orphan''; desc = "Mark up image"; }
+        # Copy paths in `backticks` so Claude Code keeps them as text (see above).
+        { on = [ "c" "b" ]; run = ''shell 'yazi-copy-paths-backticked %s' ''; desc = "Copy paths (backticked, for Claude Code)"; }
       ];
     };
 
