@@ -162,6 +162,12 @@
           scrollback_lines = 10000;
           enable_audio_bell = false;
           visual_bell_duration = "0.1";
+          # kitty saves "window-state": "maximized" into ~/.cache/kitty/main.json
+          # alongside the size. Once one window closed maximized, every new
+          # kitty asked Hyprland to maximize, covering the whole workspace,
+          # and re-saved the state on exit. (Hit yazi/ranger back when
+          # $mod+G/$mod+T launched them in kitty; they use ghostty now.)
+          remember_window_size = false;
         };
       };
 
