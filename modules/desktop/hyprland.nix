@@ -284,8 +284,8 @@ MONEOF
                 { key = "s"; desc = "Sound"; cmd = "${pkgs.pavucontrol}/bin/pavucontrol"; }
                 { key = "o"; desc = "Toggle Audio Output"; cmd = "${toggleAudioOutput}"; }
                 { key = "b"; desc = "Bluetooth"; cmd = "${pkgs.blueman}/bin/blueman-manager"; }
-                { key = "t"; desc = "Files (Ranger)"; cmd = "kitty -- ${pkgs.ranger}/bin/ranger ~/Downloads"; }
-                { key = "g"; desc = "Files (Yazi)"; cmd = "kitty -- yazi ~/Downloads"; }
+                { key = "t"; desc = "Files (Ranger)"; cmd = "ghostty -e ${pkgs.ranger}/bin/ranger ~/Downloads"; }
+                { key = "g"; desc = "Files (Yazi)"; cmd = "ghostty -e yazi ~/Downloads"; }
                 { key = "a"; desc = "Claude"; cmd = "firefox https://claude.ai"; }
               ];
             };
@@ -680,8 +680,8 @@ MONEOF
               "$mod, C, exec, rofi -modes calc -show calc"
               "$mod, B, exec, firefox"
               "$mod, A, exec, firefox https://claude.ai"
-              "$mod, T, exec, kitty -- ${pkgs.ranger}/bin/ranger ~/Downloads"
-              "$mod, G, exec, kitty -- yazi ~/Downloads"
+              "$mod, T, exec, ghostty -e ${pkgs.ranger}/bin/ranger ~/Downloads"
+              "$mod, G, exec, ghostty -e yazi ~/Downloads"
               "$mod, I, exec, ${pkgs.blueman}/bin/blueman-manager"
               "$mod, P, exec, ${pkgs.hyprlock}/bin/hyprlock"
               "$mod, M, exec, ${pkgs.wl-kbptr}/bin/wl-kbptr -o modes=floating,click -o mode_floating.source=detect"
