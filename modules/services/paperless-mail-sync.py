@@ -29,7 +29,7 @@ import os
 import subprocess
 import sys
 import time
-from email.utils import parsedate_to_datetime
+from email.utils import parseaddr, parsedate_to_datetime
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -144,6 +144,21 @@ def write_state(uuid: str, lastmod: int) -> None:
 # -------------------------------------------------------------------- mail ---
 def domain_of(addr: str) -> str:
     return addr.rsplit("@", 1)[-1].strip(">").strip().lower() if "@" in addr else ""
+
+
+def sender_key(addr: str) -> str:
+    """The map key a sender files under: its whole address if that is listed,
+    otherwise its domain.
+
+    Address keys exist for shared ISP domains, where one mailbox is a
+    correspondent and every other mailbox on the domain is a stranger. Keying
+    on.aibn.com as a domain filed a 2005 print shop's poster quotes under
+    Delta Psychology.
+    """
+    address = parseaddr(addr)[1].lower()
+    if address in DOMAIN_CATEGORY:
+        return address
+    return domain_of(address)
 
 
 def parse_message(path: str):
@@ -334,7 +349,7 @@ def sync() -> int:
             continue
         seen_msgids.add(msgid)
 
-        if not DOMAIN_CATEGORY.get(domain_of(msg.get("From", ""))):
+        if not DOMAIN_CATEGORY.get(sender_key(msg.get("From", ""))):
             continue
         names = pdf_filenames(msg)
         if names:
@@ -374,7 +389,7 @@ def sync() -> int:
             continue
 
         sender = msg.get("From", "")
-        dom = domain_of(sender)
+        dom = sender_key(sender)
         category = DOMAIN_CATEGORY[dom]
         corr_name = CFG["correspondents"].get(dom, dom)
         corr = ensure("correspondents", corr_name, c_cache)
@@ -463,7 +478,7 @@ def unmatched() -> int:
         if not line.strip():
             continue
         n, addr = line.split("\t", 1) if "\t" in line else line.split(None, 1)
-        dom = domain_of(addr)
+        dom = sender_key(addr)
         if dom and dom not in known:
             counts[dom] = counts.get(dom, 0) + int(n)
 

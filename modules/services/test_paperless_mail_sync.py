@@ -58,6 +58,38 @@ def doc(doc_id, msgid, filename, field_id=2, content=""):
     }
 
 
+class SenderKeyTest(unittest.TestCase):
+    """A map key can be a whole address, for a shared ISP domain where only one
+    mailbox on it belongs to the correspondent."""
+
+    def setUp(self):
+        self._saved = dict(pms.DOMAIN_CATEGORY)
+        pms.DOMAIN_CATEGORY.update({"shared.example": "Health",
+                                    "clinic@isp.example": "Health"})
+
+    def tearDown(self):
+        pms.DOMAIN_CATEGORY.clear()
+        pms.DOMAIN_CATEGORY.update(self._saved)
+
+    def test_domain_key(self):
+        self.assertEqual(pms.sender_key("A <a@Shared.Example>"), "shared.example")
+
+    def test_address_key_wins(self):
+        self.assertEqual(pms.sender_key("Clinic <Clinic@isp.example>"),
+                         "clinic@isp.example")
+
+    def test_other_mailbox_on_address_keyed_domain_is_unknown(self):
+        key = pms.sender_key("Someone <someone@isp.example>")
+        self.assertEqual(key, "isp.example")
+        self.assertNotIn(key, pms.DOMAIN_CATEGORY)
+
+    def test_bare_address(self):
+        self.assertEqual(pms.sender_key("clinic@isp.example"), "clinic@isp.example")
+
+    def test_no_address(self):
+        self.assertEqual(pms.sender_key("undisclosed-recipients"), "")
+
+
 class ChunksTest(unittest.TestCase):
     def test_splits_into_batches_of_the_given_size(self):
         self.assertEqual(

@@ -52,14 +52,18 @@ let
   paperlessUrl = "https://paperless.jevy.org";
 
   # domain -> correspondent name. Several domains deliberately map onto one
-  # correspondent: on.aibn.com is the same psychologists as deltapsychology.ca on
-  # their older domain, and Home Depot and Porter each send from two.
+  # correspondent: Home Depot and Porter each send from two.
+  #
+  # A key can also be a whole address, which wins over its domain. Use that for
+  # a shared ISP domain: on.aibn.com is Delta Psychology's older mailbox, but it
+  # is an ISP, and keying the whole domain also filed a stranger's 2005 poster
+  # quotes under Delta.
   correspondents = {
     "ocdsb.ca" = "OCDSB";
     "ocsb.ca" = "OCSB";
     "schoolconnectsweb.com" = "OCDSB";
     "deltapsychology.ca" = "Delta Psychology";
-    "on.aibn.com" = "Delta Psychology";
+    "deltapsychologists@on.aibn.com" = "Delta Psychology";
     "owlpractice.ca" = "Owl Practice";
     "janeapp.com" = "Jane";
     "mcallisterdentistry.ca" = "McAllister Dentistry";
@@ -99,8 +103,8 @@ let
   categories = {
     "Health" = [
       "ocdsb.ca" "ocsb.ca" "schoolconnectsweb.com"
-      "deltapsychology.ca" "on.aibn.com" "owlpractice.ca" "janeapp.com"
-      "mcallisterdentistry.ca" "navigators.ca" "ottawa.ca" "canada.ca"
+      "deltapsychology.ca" "deltapsychologists@on.aibn.com" "owlpractice.ca"
+      "janeapp.com" "mcallisterdentistry.ca" "navigators.ca" "ottawa.ca" "canada.ca"
     ];
     "Finance" = [
       "notification.intuit.com" "homedepot.com" "order.homedepot.com"
