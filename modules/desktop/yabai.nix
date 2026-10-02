@@ -201,6 +201,11 @@
 #      now has a StandardErrorPath (set below), which the shell-snap era
 #      lacked and badly missed. The classic message is
 #      `yabai: 'display has separate spaces' is disabled! abort..`
+#      AN EMPTY err LOG IS A DIFFERENT BUG: launchd never exec'd the binary
+#      at all, because /nix was not mounted yet. `log show --predicate
+#      'eventMessage CONTAINS "Missing executable"'` confirms it. The
+#      waitForStore wrapper below is the fix; if it is ever removed, this is
+#      the symptom that comes back.
 #   4. CREATE THE TEN SPACES BY HAND in Mission Control. SPACE_SEL indices
 #      are numbered ACROSS displays — check with
 #        yabai -m query --spaces | jq '.[] | {index, display}'
@@ -276,6 +281,54 @@
       yabaiPkg = pkgs.yabai.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [ ../../pkgs/yabai-master-center.patch ];
       });
+
+      # WAIT FOR THE /nix MOUNT BEFORE exec'ing A STORE PATH. Not a nicety:
+      # /nix is its own APFS volume, mounted by the org.nixos.darwin-store
+      # DAEMON, while these two are user AGENTS — and on 2026-09-29 the agents
+      # won that race by 1.1s. Measured, from `log show`:
+      #
+      #   08:50:37.845 E launchd [gui/501/org.nixos.yabai]:
+      #       Missing executable detected. Executable: '/nix/store/...'
+      #   08:50:37.857 E   the same for org.nixos.skhd
+      #   08:50:38.955     service inactive: org.nixos.darwin-store
+      #
+      # THE FAILURE IS PERMANENT, which is the part that bites: launchd files
+      # a missing executable as EX_CONFIG (78) — misconfiguration, not a
+      # crash — so KeepAlive does NOT retry. The job parks at `spawn
+      # scheduled` forever, `launchctl kickstart -k` HANGS on it (measured:
+      # >120s, no return), and only bootout + bootstrap revives it. The
+      # StandardErrorPath below is empty in this case because the process
+      # never started, so the runbook's `'display has separate spaces' is
+      # disabled` hunt sends you the wrong way: AN EMPTY err LOG MEANS
+      # launchd NEVER exec'd THE BINARY.
+      #
+      # /bin/sh and /bin/wait4path are on the root volume and always present,
+      # so launchd can always exec — the wait then happens inside a process
+      # that exists. This is exactly what nix-darwin does for its OWN
+      # daemons (activate-system: `/bin/sh -c "/bin/wait4path /nix/store &&
+      # exec ..."`); it just does not do it for launchd.user.agents.
+      #
+      # The store paths stay embedded in the -c string, so the plist still
+      # changes whenever the package or the config does — the skhd
+      # keymap-reload property established below survives the wrapping.
+      waitForStore = argv: [
+        "/bin/sh"
+        "-c"
+        "/bin/wait4path /nix/store && exec ${lib.escapeShellArgs argv}"
+      ];
+
+      # REBUILT UPSTREAM'S yabairc EXPRESSION, byte for byte, because the
+      # forced ProgramArguments below needs the path and nix-darwin keeps it
+      # in a module-private let. Identical content means Nix hands back the
+      # identical store path, so nothing is duplicated — if that ever stops
+      # being true the plist would point at a second, equal file, which is
+      # harmless but worth noticing.
+      yabairc = pkgs.writeScript "yabairc" (
+        lib.concatStringsSep "\n" (
+          lib.mapAttrsToList (p: v: "yabai -m config ${p} ${toString v}")
+            config.services.yabai.config
+        )
+      );
 
       # DIRECTIONAL FOCUS THAT ALSO WORKS IN A STACK, for $mod+H/J/K/L.
       #
@@ -619,6 +672,10 @@
       # a store-path change — i.e. after every patch edit) is invisible: the
       # agent sits at `spawn scheduled` and every command says `failed to
       # connect to socket`. Now the reason is one cat away.
+      launchd.user.agents.yabai.serviceConfig.ProgramArguments = lib.mkForce (
+        waitForStore [ "${yabaiPkg}/bin/yabai" "-c" "${yabairc}" ]
+      );
+
       launchd.user.agents.yabai.serviceConfig.StandardErrorPath =
         "/tmp/yabai_jevin.err.log";
       launchd.user.agents.yabai.serviceConfig.StandardOutPath =
@@ -652,11 +709,13 @@
       # stays enabled so /etc/skhdrc is still written — it is the obvious
       # place to inspect the live keymap, and an empty skhdConfig would drop
       # -c entirely.
-      launchd.user.agents.skhd.serviceConfig.ProgramArguments = lib.mkForce [
-        "${config.services.skhd.package}/bin/skhd"
-        "-c"
-        "${pkgs.writeText "skhdrc" keymap}"
-      ];
+      launchd.user.agents.skhd.serviceConfig.ProgramArguments = lib.mkForce (
+        waitForStore [
+          "${config.services.skhd.package}/bin/skhd"
+          "-c"
+          "${pkgs.writeText "skhdrc" keymap}"
+        ]
+      );
 
       # THE SAME LOG yabai GOT, for the same reason: skhd's own failures (a
       # keymap that will not parse, a dead Accessibility/Input Monitoring
