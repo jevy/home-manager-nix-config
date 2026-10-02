@@ -317,17 +317,26 @@
         "/bin/wait4path /nix/store && exec ${lib.escapeShellArgs argv}"
       ];
 
-      # REBUILT UPSTREAM'S yabairc EXPRESSION, byte for byte, because the
-      # forced ProgramArguments below needs the path and nix-darwin keeps it
-      # in a module-private let. Identical content means Nix hands back the
-      # identical store path, so nothing is duplicated — if that ever stops
-      # being true the plist would point at a second, equal file, which is
-      # harmless but worth noticing.
+      # REBUILT UPSTREAM'S yabairc EXPRESSION, byte for byte — INCLUDING the
+      # extraConfig tail — because the forced ProgramArguments below needs the
+      # path and nix-darwin keeps it in a module-private let. Identical content
+      # means Nix hands back the identical store path, so nothing is
+      # duplicated; if that ever stops being true the plist would point at a
+      # second, equal file, which is harmless but worth noticing.
+      #
+      # THE extraConfig HALF IS NOT OPTIONAL. The signal registrations below
+      # live there, and a copy of this expression that only walked
+      # services.yabai.config would hand the plist a yabairc with NO SIGNALS
+      # while `cat /etc/...`/the option value still showed them — the exact
+      # "the config is correct but the daemon does the old thing" trap the skhd
+      # keymap wiring further down exists to avoid.
       yabairc = pkgs.writeScript "yabairc" (
         lib.concatStringsSep "\n" (
           lib.mapAttrsToList (p: v: "yabai -m config ${p} ${toString v}")
             config.services.yabai.config
         )
+        + lib.optionalString (config.services.yabai.extraConfig != "")
+          ("\n" + config.services.yabai.extraConfig + "\n")
       );
 
       # DIRECTIONAL FOCUS THAT ALSO WORKS IN A STACK, for $mod+H/J/K/L.
@@ -420,6 +429,113 @@
           else
             yabai -m space --layout master_center
           fi
+        '';
+      };
+
+      # ---- DOCK / UNDOCK RECOVERY -------------------------------------
+      #
+      # THE PROBLEM, measured on 2026-10-02 after ~3 days of plugging the
+      # ultrawide in and out. yabai was alive the whole time (up 2d23h, exit
+      # 0, empty err log) and skhd was delivering keys, but every move key
+      # logged `could not locate a eastward managed window.` or `could not
+      # locate the window to act on!`. Two distinct kinds of damage, both from
+      # display changes:
+      #
+      #   1. STALE AX REFERENCES. Windows that lived on the external display
+      #      came back with role/subrole EMPTY (a healthy managed window is
+      #      always AXStandardWindow) and frames from the dead geometry —
+      #      Ghostty was still 5104x1393 on a 1512x982 panel. yabai also filed
+      #      Slack under space 1 when it was really on space 8. Such a window
+      #      is listed by `query --windows` but is NOT in the space's bsp
+      #      tree, so a space that looks like it holds three windows offers
+      #      --warp exactly one, and every direction fails.
+      #
+      #      ONLY A RESTART CLEARS THIS. No layout command, no `space
+      #      --balance` (which on master_center answers `cannot balance a
+      #      non-managed space` — balance is bsp-only), nothing short of a
+      #      fresh process re-querying the AX tree.
+      #
+      #   2. SPACES LEFT IN stack. A restart resets each space to the
+      #      `layout` default, but only for spaces yabai rebuilds cleanly;
+      #      measured across two restarts, spaces holding >=2 windows came
+      #      back as stack while empty ones came back as master_center. stack
+      #      has no geometry, so --warp cannot work there either — the first
+      #      symptom and the one that looks like "yabai died".
+      #
+      # THE SHAPE OF THE FIX, and why it is split across three pieces:
+      #
+      #   display_added / display_removed signal   (registered in yabairc)
+      #     -> trigger: launchctl kickstart of the agent below
+      #       -> launchd runs yabai-display-resync  (NOT a child of yabai)
+      #         -> settle, restart yabai, wait for the socket, sweep layouts
+      #
+      # launchd HAS TO OWN THE RESYNC. A signal action is a child of yabai, so
+      # a script that restarts yabai from inside a signal is killing its own
+      # parent and gets torn down mid-flight by the same kickstart -k. Routing
+      # through an agent makes the restart survive it: `launchctl kickstart`
+      # returns immediately, and the job runs in launchd's own tree.
+      #
+      # ONLY added/removed. display_changed fires on every focus move BETWEEN
+      # displays, which is constant in normal use; display_moved/_resized
+      # would catch a resolution change but have never been the failure here.
+      resyncLabel = "org.nixos.yabai-display-resync";
+
+      resyncTrigger = pkgs.writeShellApplication {
+        name = "yabai-display-resync-trigger";
+        text = ''
+          # kickstart WITHOUT -k: a resync already running is left alone,
+          # which debounces the burst of signals a dock emits.
+          exec /bin/launchctl kickstart "gui/$(id -u)/${resyncLabel}"
+        '';
+      };
+
+      displayResync = pkgs.writeShellApplication {
+        name = "yabai-display-resync";
+        runtimeInputs = [
+          yabaiPkg
+          pkgs.jq
+          pkgs.coreutils
+        ];
+        text = ''
+          # THE COOLDOWN IS A LOOP BREAKER, not an optimisation. If a future
+          # macOS ever fires display_added for displays that already exist at
+          # yabai startup, the chain below would be restart -> signal ->
+          # restart forever. 30s of refusal makes that terminate.
+          STAMP=/tmp/yabai-display-resync.stamp
+          NOW=$(date +%s)
+          if [ -r "$STAMP" ] && [ "$(( NOW - $(cat "$STAMP") ))" -lt 30 ]; then
+            echo "resync: within cooldown, skipping"
+            exit 0
+          fi
+          printf '%s' "$NOW" > "$STAMP"
+
+          # macOS is still moving windows between displays for a second or two
+          # after the signal; restarting inside that window just captures the
+          # same mess.
+          sleep 4
+
+          # `|| true` because errexit must not skip the sweep below: kickstart
+          # answers nonzero for a job that was already being torn down, and
+          # the sweep is still the right thing to run afterwards.
+          /bin/launchctl kickstart -k "gui/$(id -u)/org.nixos.yabai" || true
+
+          # The socket outlives the process by a moment, so poll a real query
+          # rather than sleeping a guessed amount.
+          for _ in $(seq 1 40); do
+            yabai -m query --displays >/dev/null 2>&1 && break
+            sleep 0.25
+          done
+
+          # The sweep is what fixes damage (2). Per space rather than `config
+          # layout`, which would also rewrite the global default and lose the
+          # distinction between "the default" and "what this space is now".
+          yabai -m query --spaces | jq -r '.[].index' | while read -r idx; do
+            yabai -m space "$idx" --padding abs:${toString gapOuter}:${toString gapOuter}:${toString gapOuter}:${toString gapOuter} 2>/dev/null || true
+            yabai -m space "$idx" --gap abs:${toString gapInner} 2>/dev/null || true
+            yabai -m space "$idx" --layout master_center 2>/dev/null || true
+          done
+
+          echo "resync: done at $(date -Iseconds)"
         '';
       };
 
@@ -665,6 +781,36 @@
           window_shadow = "on";
           window_opacity = "off";
         };
+
+        # DOCK / UNDOCK RECOVERY — see the resync block in the let above for
+        # the measured damage these two repair. This lands in the SAME yabairc
+        # the forced ProgramArguments points at only because the yabairc
+        # expression up there replicates the extraConfig tail; keep them in
+        # step.
+        #
+        # The action is a store path, so editing it changes yabairc, which
+        # changes the plist — the keymap-reload property, applied to signals.
+        extraConfig = ''
+          yabai -m signal --add label=resync_display_added \
+            event=display_added \
+            action="${resyncTrigger}/bin/yabai-display-resync-trigger"
+          yabai -m signal --add label=resync_display_removed \
+            event=display_removed \
+            action="${resyncTrigger}/bin/yabai-display-resync-trigger"
+        '';
+      };
+
+      # THE RESYNC AGENT. RunAtLoad/KeepAlive both off: it exists purely to be
+      # a launchd-owned target for `launchctl kickstart`, so that restarting
+      # yabai does not kill the thing doing the restarting. Its own log is the
+      # first place to look when a dock cycle did not heal — the script echoes
+      # both the cooldown skip and the completion.
+      launchd.user.agents.yabai-display-resync.serviceConfig = {
+        ProgramArguments = [ "${displayResync}/bin/yabai-display-resync" ];
+        RunAtLoad = false;
+        KeepAlive = false;
+        StandardErrorPath = "/tmp/yabai-display-resync.err.log";
+        StandardOutPath = "/tmp/yabai-display-resync.out.log";
       };
 
       # THE ERROR LOG THE SHELL-SNAP ERA WISHED FOR. Without it, a yabai that
