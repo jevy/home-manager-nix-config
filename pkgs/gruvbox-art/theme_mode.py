@@ -29,9 +29,6 @@ ART_PALETTE = "gruvbox-art"  # Noctalia custom palette name
 GRUVBOX_PALETTE = "stylix"  # written by stylix.targets.noctalia
 
 
-# Warm near-black whatever the painting: reads as black on OLED but keeps
-# gruvbox's moderate text contrast (10.6:1 vs 12.8:1 on pure black).
-ART_BACKGROUND = "#1b1a17"
 DEFAULT_ROLES = ["base0D", "base0E", "base0C"]  # stylix's primary/secondary/tertiary
 ART_ROLES = ["primary", "secondary", "tertiary"]  # extra keys gruvbox-art writes
 
@@ -154,9 +151,9 @@ def art_colours():
         capture_output=True, text=True, check=True,
     ).stdout
     (STATE / "art.yaml").write_text(yaml)
-    c = read_base16(STATE / "art.yaml")
-    c["base00"] = ART_BACKGROUND
-    return c, title
+    # Background keeps gruvbox's lightness (see BG_CHROMA in gruvbox_art.py):
+    # near-black #1b1a17 was tried and was harsher (10.6:1 vs gruvbox's 8:1).
+    return read_base16(STATE / "art.yaml"), title
 
 
 def apply(mode):
