@@ -4,8 +4,8 @@
 { ... }:
 {
   flake.modules.homeManager.mako =
-    { ... }:
-    {
+    { config, lib, ... }:
+    lib.mkIf (config.desktopShell == "legacy") {
       services.mako = {
         enable = true;
         settings = {

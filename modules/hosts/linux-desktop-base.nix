@@ -6,7 +6,7 @@ let
 in
 {
   flake.modules.nixos.linuxDesktopBase =
-    { pkgs, lib, ... }:
+    { pkgs, lib, config, ... }:
     {
       imports = [
         # Feature modules (dendritic)
@@ -19,6 +19,8 @@ in
         nixos.audio
         nixos.fonts
         nixos.hyprland
+        nixos.desktopShell
+        nixos.noctaliaLock
         nixos.tailscale
         nixos.kanata
         nixos.docker
@@ -55,6 +57,9 @@ in
 
       system.stateVersion = "24.11";
 
+      # Desktop shell (modules/desktop/desktop-shell.nix). "legacy" rolls back.
+      desktopShell = "noctalia";
+
       # Home-manager integration
       home-manager = {
         useGlobalPkgs = true;
@@ -88,8 +93,11 @@ in
             homeManager.clipboard
             homeManager.desktopApps
             homeManager.linuxDesktop
+            homeManager.desktopShell
+            homeManager.noctalia
             homeManager.ashell
             homeManager.wallpaper
+            homeManager.gcalNotify
             homeManager.mako
             homeManager.hyprSession
             homeManager.ssh
@@ -110,6 +118,9 @@ in
 
             inputs.typing-analysis.homeManagerModules.default
           ];
+
+          # Mirror of the NixOS-side switch (modules/desktop/desktop-shell.nix).
+          desktopShell = config.desktopShell;
 
           home.stateVersion = "24.11";
 

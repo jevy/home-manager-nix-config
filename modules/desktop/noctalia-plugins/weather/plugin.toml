@@ -1,0 +1,17 @@
+# Weather from waybar/polybar/openweathermap-forecast.sh.
+# widget.luau is generated from ../stream-widget.luau by modules/desktop/noctalia.nix.
+id = "jevin/weather"
+name = "Weather"
+version = "1.0.0"
+# Measured on 5.1.0: noctalia's plugin loader rejects plugin_api outside
+# 3-30 ("targets plugin API 1; supported range is 3-30"); 3 is the lowest
+# accepted.
+plugin_api = 3
+author = "jevin"
+license = "MIT"
+dependencies = []
+description = "OpenWeatherMap forecast; click for the wttr.in picture."
+
+[[widget]]
+id = "forecast"
+entry = "widget.luau"

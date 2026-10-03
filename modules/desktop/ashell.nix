@@ -2,7 +2,7 @@
 { ... }:
 {
   flake.modules.homeManager.ashell =
-    { config, pkgs, ... }:
+    { config, lib, pkgs, ... }:
     let
       weather-listen = pkgs.writeShellScript "ashell-weather.sh" ''
         export KEY_FILE="${config.sops.secrets.openweathermap_api_key.path}"
@@ -81,7 +81,7 @@
         done
       '';
     in
-    {
+    lib.mkIf (config.desktopShell == "legacy") {
       home.packages = [ pkgs.libnotify ];
       programs.ashell = {
         enable = true;
@@ -192,31 +192,6 @@
         Timer = {
           OnCalendar = "minutely";
           Persistent = false;
-        };
-        Install = {
-          WantedBy = [ "timers.target" ];
-        };
-      };
-
-      # Calendar notification service - checks gcalcli agenda every minute
-      # with file-based dedup and tiered urgency (18m, 15m, 10m, 5m, now)
-      systemd.user.services.gcal-notify = {
-        Unit = {
-          Description = "Google Calendar notification check";
-          After = [ "graphical-session.target" ];
-        };
-        Service = {
-          Type = "oneshot";
-          Environment = "PATH=${pkgs.gcalcli}/bin:${pkgs.libnotify}/bin:${pkgs.coreutils}/bin:${pkgs.gnused}/bin:${pkgs.gawk}/bin:${pkgs.findutils}/bin";
-          ExecStart = "${pkgs.bash}/bin/bash /home/jevin/.config/nixpkgs/waybar/polybar/gcal-notify.sh";
-        };
-      };
-
-      systemd.user.timers.gcal-notify = {
-        Unit.Description = "Run Google Calendar notifications every minute";
-        Timer = {
-          OnCalendar = "minutely";
-          Persistent = true;
         };
         Install = {
           WantedBy = [ "timers.target" ];

@@ -75,6 +75,7 @@
   # Home-manager hyprland configuration
   flake.modules.homeManager.hyprland =
     {
+      config,
       pkgs,
       lib,
       osConfig,
@@ -97,7 +98,7 @@
       wayland.windowManager.hyprland = {
         enable = true;
         configType = "hyprlang";
-        systemd.enable = true; # Required for hyprland-session.target (ashell depends on it)
+        systemd.enable = true; # Required for hyprland-session.target (ashell binds to it; Noctalia uses graphical-session.target, home-manager's default; see modules/desktop/noctalia.nix)
         # xwayland.enable = true;
         # hy3 is NOT loaded via the `plugins` option: home-manager renders that
         # as `exec-once=hyprctl plugin load`, which runs AFTER the config is
@@ -111,6 +112,12 @@
 
         settings =
           let
+            noctalia = config.desktopShell == "noctalia";
+            noctaliaMsg = "${pkgs.noctalia}/bin/noctalia msg";
+            # Appended to a brightness command on the SAME line, so legacy
+            # renders byte-identical (empty string, no extra newline).
+            brightnessOsd = value: lib.optionalString noctalia " && ${noctaliaMsg} brightness-osd ${value}";
+
             layoutAware =
               dispatcher: direction:
               ''exec, sh -c 'cur=$(hyprctl -j getoption general:layout | ${pkgs.jq}/bin/jq -r .str); if [ "$cur" = "hy3" ]; then hyprctl dispatch hy3:${dispatcher} ${direction}; else hyprctl dispatch ${dispatcher} ${direction}; fi' '';
@@ -127,9 +134,9 @@
               case $MONITOR in
                 eDP-1)
                   if [ $CHANGE -lt 0 ]; then
-                    ${pkgs.brightnessctl}/bin/brightnessctl set "''${CHANGE#-}%-"
+                    ${pkgs.brightnessctl}/bin/brightnessctl set "''${CHANGE#-}%-"${brightnessOsd "$(${pkgs.brightnessctl}/bin/brightnessctl -m | ${pkgs.coreutils}/bin/cut -d, -f4)"}
                   else
-                    ${pkgs.brightnessctl}/bin/brightnessctl set "''${CHANGE}%+"
+                    ${pkgs.brightnessctl}/bin/brightnessctl set "''${CHANGE}%+"${brightnessOsd "$(${pkgs.brightnessctl}/bin/brightnessctl -m | ${pkgs.coreutils}/bin/cut -d, -f4)"}
                   fi
                   ;;
                 DP-*)
@@ -146,7 +153,7 @@
                   NEW=$((CURRENT + CHANGE))
                   [ $NEW -lt 0 ] && NEW=0
                   [ $NEW -gt 100 ] && NEW=100
-                  ${pkgs.ddcutil}/bin/ddcutil --bus $BUS --noverify setvcp 10 $NEW
+                  ${pkgs.ddcutil}/bin/ddcutil --bus $BUS --noverify setvcp 10 $NEW${brightnessOsd "$NEW"}
                   ;;
               esac
             '';
@@ -687,14 +694,14 @@ MONEOF
               "$mod, W, hy3:makegroup, tab"
               "$mod, E, hy3:changegroup, tab"
               "$mod SHIFT, W, hy3:changegroup, untab"
-              "$mod, R, exec, rofi -modes run -show run"
-              "$mod, C, exec, rofi -modes calc -show calc"
+              (if noctalia then "$mod, R, exec, ${noctaliaMsg} panel-toggle launcher" else "$mod, R, exec, rofi -modes run -show run")
+              (if noctalia then "$mod, C, exec, ${noctaliaMsg} panel-toggle launcher '/calc '" else "$mod, C, exec, rofi -modes calc -show calc")
               "$mod, B, exec, firefox"
               "$mod, A, exec, firefox https://claude.ai"
               "$mod, T, exec, ghostty -e ${pkgs.ranger}/bin/ranger ~/Downloads"
               "$mod, G, exec, ghostty -e yazi ~/Downloads"
               "$mod, I, exec, ${pkgs.blueman}/bin/blueman-manager"
-              "$mod, P, exec, ${pkgs.hyprlock}/bin/hyprlock"
+              (if noctalia then "$mod, P, exec, ${noctaliaMsg} session lock" else "$mod, P, exec, ${pkgs.hyprlock}/bin/hyprlock")
               "$mod, M, exec, ${pkgs.wl-kbptr}/bin/wl-kbptr -o modes=floating,click -o mode_floating.source=detect"
 
               # Window and group management
@@ -718,14 +725,14 @@ MONEOF
               "$mod SHIFT, U, hy3:movewindow, l, once"
 
               # Media controls
-              # Volume keys route through ashell's IPC so its OSD overlay shows
-              # (ashell performs the PipeWire change itself). Step is set by
-              # settings.volume_step in modules/desktop/ashell.nix.
-              ", XF86AudioMute, exec, ${pkgs.ashell}/bin/ashell msg volume-toggle-mute"
+              # Volume keys route through the shell's IPC so its OSD overlay
+              # shows (the shell performs the PipeWire change itself). Step 10
+              # matches ashell's settings.volume_step in modules/desktop/ashell.nix.
+              (if noctalia then ", XF86AudioMute, exec, ${noctaliaMsg} volume-mute" else ", XF86AudioMute, exec, ${pkgs.ashell}/bin/ashell msg volume-toggle-mute")
               # Mic mute keeps the custom mute-all-sources script (no OSD).
               ", XF86AudioMicMute, exec, ${micMuteAll}"
-              ", XF86AudioLowerVolume, exec, ${pkgs.ashell}/bin/ashell msg volume-down"
-              ", XF86AudioRaiseVolume, exec, ${pkgs.ashell}/bin/ashell msg volume-up"
+              (if noctalia then ", XF86AudioLowerVolume, exec, ${noctaliaMsg} volume-down 10" else ", XF86AudioLowerVolume, exec, ${pkgs.ashell}/bin/ashell msg volume-down")
+              (if noctalia then ", XF86AudioRaiseVolume, exec, ${noctaliaMsg} volume-up 10" else ", XF86AudioRaiseVolume, exec, ${pkgs.ashell}/bin/ashell msg volume-up")
               ", XF86AudioPlay, exec, ${pkgs.playerctl}/bin/playerctl play-pause"
               ", XF86AudioNext, exec, ${pkgs.playerctl}/bin/playerctl next"
               ", XF86AudioPrev, exec, ${pkgs.playerctl}/bin/playerctl previous"
@@ -733,8 +740,9 @@ MONEOF
               "SHIFT, Print, exec, ${screenRecord}"
               ", 164, exec, ${pkgs.playerctl}/bin/playerctl play-pause"
               # Brightness stays on brightnessAdjust: it's cursor-aware and drives
-              # external monitors via DDC/ddcutil, which ashell's brightness IPC
-              # can't do. Trade-off: no OSD for brightness (volume still gets it).
+              # external monitors via DDC/ddcutil, which the shells' brightness
+              # IPC can't do. On noctalia it then calls `brightness-osd` with the
+              # new value for an OSD; on legacy there is no brightness OSD.
               ", 232, exec, ${brightnessAdjust} -15"
               ", 233, exec, ${brightnessAdjust} +15"
 
@@ -747,8 +755,9 @@ MONEOF
               "$mod, X, exec, ${shareDesktop}/bin/share-desktop"
               "$mod SHIFT, S, movetoworkspacesilent, name:share"
 
-              # Notifications
-              "$mod, N, exec, ${pkgs.mako}/bin/makoctl dismiss"
+              # Notifications. Noctalia has no "dismiss newest": this clears
+              # every visible toast (they stay in control-center history).
+              (if noctalia then "$mod, N, exec, ${noctaliaMsg} notification-clear-active" else "$mod, N, exec, ${pkgs.mako}/bin/makoctl dismiss")
 
               # TimeTagger (macropad buttons 8/9 → F15/F16)
               ", XF86Launch6, exec, ${timetaggerCtl}/bin/timetagger-ctl start"
@@ -844,7 +853,6 @@ MONEOF
         enable = true;
         settings = {
           general = {
-            lock_cmd = "pidof hyprlock || hyprlock";
             unlock_cmd = "hyprctl dispatch dpms on";
             before_sleep_cmd = "loginctl lock-session";
             # NOTE: fingerprint auth silently fails after resume because hyprlock
@@ -859,17 +867,36 @@ MONEOF
             # unreviewed; not in v0.9.6. An earlier attempt (#971) was rejected
             # in favor of fixing fprintd's PrepareForSleep handling.
             after_sleep_cmd = "hyprctl dispatch dpms on && sleep 1 && hyprctl reload";
-            # Wait for hyprlock to fully lock the session before allowing suspend.
-            # Prevents race where suspend interleaves with fprint verification.
-            # https://github.com/hyprwm/hyprlock/issues/577
+            # Wait for the session to actually be locked before allowing
+            # suspend (hyprlock on legacy, or Noctalia's own locker on
+            # noctalia). Prevents a race where suspend interleaves with
+            # fprint verification. https://github.com/hyprwm/hyprlock/issues/577
             inhibit_sleep = 3;
+            # On noctalia, Noctalia itself answers logind's Lock signal
+            # ("`loginctl lock-session` uses the same path when Noctalia is
+            # running", v5.1.0 IPC docs), so this lock_cmd never actually
+            # runs there: no second locker opens. It only matters as a
+            # fallback for when Noctalia isn't running (e.g. crashed, or
+            # still restarting after a failure): then hypridle has no other
+            # way to lock, so it falls back to hyprlock directly, which
+            # stays configured in both modes. Kept inline (not an
+            # optionalAttrs union) so attr ordering, and legacy's rendered
+            # config, are unaffected.
+            lock_cmd =
+              if config.desktopShell == "noctalia" then
+                "${pkgs.systemd}/bin/systemctl --user is-active --quiet noctalia || hyprlock"
+              else
+                "pidof hyprlock || hyprlock";
           };
           listener = [
             {
               timeout = 120;
-              # Use loginctl lock-session instead of launching hyprlock directly.
-              # This triggers hypridle's lock_cmd via the systemd lock protocol,
-              # preventing duplicate instances more reliably.
+              # loginctl lock-session routes through the systemd lock
+              # protocol rather than launching a locker directly, so
+              # whichever side is responsible handles it: Noctalia answers
+              # the Lock signal itself when it's running; otherwise this
+              # triggers hypridle's lock_cmd above (hyprlock), avoiding
+              # duplicate instances more reliably than calling hyprlock here.
               on-timeout = "loginctl lock-session";
             }
             {
