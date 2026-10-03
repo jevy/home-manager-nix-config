@@ -6,14 +6,18 @@
 //
 // Zoom (on an empty workspace, where the wallpaper gets the pointer): touchpad
 // pinch or Ctrl+scroll, drag or two-finger scroll to pan, double-click to
-// reset. Past ~1.3x it loads the full-resolution scan (<id>.full.jpg, which
-// the script downloads next to the small one) over the small image; ~30 s
-// after you are back at 1x it unloads it again, so all day only the small
-// image is in memory.
+// reset. Cropped parts are scrollable at 1x too. Once the small image would
+// be drawn bigger than it is (zooming in, or a wide painting filling the
+// ultrawide) it loads the full-resolution scan (<id>.full.jpg, which the
+// script downloads next to the small one) over it; ~30 s after that stops it
+// unloads again, so otherwise only the small image is in memory. Screens
+// whose shape would hide over half the painting hang it on a wall instead.
 //
 // @...@ placeholders are filled by replaceVars in modules/desktop/wallpaper.nix.
 import QtQuick
+import QtQuick.Effects
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 
@@ -82,37 +86,80 @@ ShellRoot {
             }
             color: "black"
 
-            readonly property real zoom: flick.width > 0 ? flick.contentWidth / flick.width : 1
-            property bool wantFull: false
-
-            // Stop at 2 screen pixels per scan pixel; past that it's just blur.
-            // Images cover the screen, so the scan's scale at 1x is the larger
-            // of the two axis ratios. 10x until the full scan has loaded.
-            readonly property real maxZoom: {
-                if (full.status !== Image.Ready || flick.width <= 0)
-                    return 10;
-                const fit = Math.max(flick.width / full.implicitWidth, flick.height / full.implicitHeight);
-                const dpr = (screen && screen.devicePixelRatio) || 1;
-                return Math.max(2, 2 / (fit * dpr));
+            // Load the full scan whenever the small image would be drawn
+            // bigger than it is (zoomed in, or filling the 5120px ultrawide
+            // with a wide painting), so nothing is ever upscaled. Kept for
+            // 30 s after it stops being needed, to avoid reloading while you
+            // zoom in and out.
+            readonly property bool needFull: outputScale > 0 && front.sourceSize.width > 0 && front.paintedWidth * outputScale > front.sourceSize.width * 1.1
+            // Real output pixels per logical pixel. Qt's devicePixelRatio
+            // says 2 on the 1.5x laptop (it draws at 2x and Hyprland scales
+            // down), which would load the full scan there all day. 0 until
+            // Hyprland's IPC answers, and needFull waits for it.
+            readonly property real outputScale: {
+                const m = Hyprland.monitorFor(screen);
+                return m && m.scale > 0 ? m.scale : 0;
             }
-            onMaxZoomChanged: if (zoom > maxZoom)
-                zoomAt(maxZoom / zoom, Qt.point(flick.width / 2, flick.height / 2))
-
-            onZoomChanged: {
-                if (zoom > 1.3) {
-                    wantFull = true;
+            property bool holdFull: false
+            onNeedFullChanged: {
+                if (needFull) {
+                    holdFull = true;
                     unload.stop();
-                } else if (zoom < 1.001) {
+                } else {
                     unload.restart();
                 }
             }
+
+            // Two layouts per screen:
+            //   fill: the painting covers the screen. The part that doesn't
+            //     fit is scrollable even at 1x (drag or two-finger scroll),
+            //     starting centred.
+            //   wall: when filling would hide more than half the painting
+            //     (a 4:3 painting on the 32:9 ultrawide hides 63%, and the
+            //     small image got stretched 1.5x), hang it whole on a wall
+            //     with a margin and shadow. Zooming in from there gets you
+            //     back to cropped-and-scrollable.
+            readonly property real paintingAspect: front.sourceSize.height > 0 ? front.sourceSize.width / front.sourceSize.height : 0
+            readonly property bool wall: {
+                if (paintingAspect <= 0 || flick.height <= 0)
+                    return false;
+                const screenAspect = flick.width / flick.height;
+                return Math.min(paintingAspect, screenAspect) / Math.max(paintingAspect, screenAspect) < 0.5;
+            }
+            // Content size at 1x: the screen on the wall; in fill mode the
+            // painting at the scale that just covers the screen, so content
+            // has the painting's shape and the overflow can be scrolled.
+            readonly property real baseW: wall || paintingAspect <= 0 ? flick.width : Math.max(flick.width, flick.height * paintingAspect)
+            readonly property real baseH: wall || paintingAspect <= 0 ? flick.height : Math.max(flick.height, flick.width / paintingAspect)
+            onBaseWChanged: reset()
+            onBaseHChanged: reset()
+            readonly property real zoom: baseW > 0 ? flick.contentWidth / baseW : 1
+            // Muted colour from the painting (art-wallpaper's `wall`).
+            readonly property color wallColour: root.info && root.info.wall ? root.info.wall : "#@base00@"
+            readonly property real wallMargin: flick.height * 0.08
+            // The painting's rectangle on screen at 1x, for the wall label.
+            readonly property real paintRight: (flick.width + front.paintedWidth / zoom) / 2
+            readonly property real paintBottom: (flick.height + front.paintedHeight / zoom) / 2
+
+            // Stop at 2 screen pixels per scan pixel; past that it's just blur.
+            // Filling the screen, the scan's scale at 1x is content width over
+            // scan width; on the wall it's the smaller axis ratio inside the
+            // margin. 10x until the full scan has loaded.
+            readonly property real maxZoom: {
+                if (full.status !== Image.Ready || flick.width <= 0)
+                    return 10;
+                const fit = wall ? Math.min((flick.width - 2 * wallMargin) / full.implicitWidth, (flick.height - 2 * wallMargin) / full.implicitHeight) : baseW / full.implicitWidth;
+                return Math.max(2, 2 / (fit * (outputScale || 1)));
+            }
+            onMaxZoomChanged: if (zoom > maxZoom)
+                zoomAt(maxZoom / zoom, Qt.point(flick.width / 2, flick.height / 2))
 
             function zoomAt(factor, p) {
                 const z = Math.max(1, Math.min(maxZoom, zoom * factor));
                 if (z === zoom)
                     return;
                 // Keep the point under the cursor/fingers fixed on screen.
-                flick.resizeContent(flick.width * z, flick.height * z, Qt.point(p.x + flick.contentX, p.y + flick.contentY));
+                flick.resizeContent(baseW * z, baseH * z, Qt.point(p.x + flick.contentX, p.y + flick.contentY));
                 flick.returnToBounds();
             }
 
@@ -121,22 +168,23 @@ ShellRoot {
             }
 
             function reset() {
-                flick.resizeContent(flick.width, flick.height, Qt.point(0, 0));
-                flick.contentX = 0;
-                flick.contentY = 0;
+                flick.resizeContent(baseW, baseH, Qt.point(0, 0));
+                // Start centred on the painting; the overflow is scrollable.
+                flick.contentX = (baseW - flick.width) / 2;
+                flick.contentY = (baseH - flick.height) / 2;
             }
 
             Timer {
                 id: unload
                 interval: 30000
-                onTriggered: win.wantFull = false
+                onTriggered: win.holdFull = false
             }
 
             Connections {
                 target: root
                 function onImageChanged() {
                     win.reset();
-                    win.wantFull = false;
+                    win.holdFull = false;
                 }
                 function onZoomRequested(factor) {
                     win.zoomAt(factor, Qt.point(flick.width / 2, flick.height / 2));
@@ -182,52 +230,82 @@ ShellRoot {
                     width: flick.contentWidth
                     height: flick.contentHeight
 
-                    // back holds the previous painting while front fades the new one in.
-                    Image {
-                        id: back
+                    Rectangle {
                         anchors.fill: parent
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                    }
-
-                    Image {
-                        id: front
-                        anchors.fill: parent
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        source: root.image
-                        onSourceChanged: opacity = 0
-                        onStatusChanged: if (status === Image.Ready) fade.restart()
-
-                        NumberAnimation {
-                            id: fade
-                            target: front
-                            property: "opacity"
-                            to: 1
-                            duration: 1500
-                            easing.type: Easing.InOutQuad
-                            onFinished: back.source = front.source
+                        visible: win.wall
+                        color: win.wallColour
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 1500
+                            }
                         }
                     }
 
-                    // Full-resolution scan, only while zoomed. Same crop as
-                    // front, so it lands exactly on top and just sharpens.
-                    Image {
-                        id: full
+                    // Everything below scales with the content, so the
+                    // margin and shadow zoom along with the painting.
+                    Item {
+                        id: frame
                         anchors.fill: parent
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        // Scaled well below 1:1 just past 1.3x; mipmaps stop
-                        // the fine canvas texture shimmering there.
-                        mipmap: true
-                        source: win.wantFull ? root.fullImage : ""
-                        // Qt's pixmap cache would keep the decoded scan
-                        // after unload; skip it so unloading frees memory.
-                        cache: false
-                        opacity: status === Image.Ready ? 1 : 0
-                        Behavior on opacity {
+                        anchors.margins: win.wall ? win.wallMargin * win.zoom : 0
+
+                        RectangularShadow {
+                            visible: win.wall && front.status === Image.Ready
+                            anchors.centerIn: parent
+                            width: front.paintedWidth
+                            height: front.paintedHeight
+                            blur: 48
+                            offset: Qt.vector2d(0, 14)
+                            color: "#a0000000"
+                        }
+
+                        // back holds the previous painting while front fades the new one in.
+                        Image {
+                            id: back
+                            anchors.fill: parent
+                            fillMode: win.wall ? Image.PreserveAspectFit : Image.PreserveAspectCrop
+                            asynchronous: true
+                        }
+
+                        Image {
+                            id: front
+                            anchors.fill: parent
+                            fillMode: win.wall ? Image.PreserveAspectFit : Image.PreserveAspectCrop
+                            asynchronous: true
+                            source: root.image
+                            onSourceChanged: opacity = 0
+                            onStatusChanged: if (status === Image.Ready)
+                                fade.restart()
+
                             NumberAnimation {
-                                duration: 400
+                                id: fade
+                                target: front
+                                property: "opacity"
+                                to: 1
+                                duration: 1500
+                                easing.type: Easing.InOutQuad
+                                onFinished: back.source = front.source
+                            }
+                        }
+
+                        // Full-resolution scan, only while zoomed. Same crop as
+                        // front, so it lands exactly on top and just sharpens.
+                        Image {
+                            id: full
+                            anchors.fill: parent
+                            fillMode: win.wall ? Image.PreserveAspectFit : Image.PreserveAspectCrop
+                            asynchronous: true
+                            // Often drawn well below 1:1 when it loads; mipmaps stop
+                            // the fine canvas texture shimmering there.
+                            mipmap: true
+                            source: win.needFull || win.holdFull ? root.fullImage : ""
+                            // Qt's pixmap cache would keep the decoded scan
+                            // after unload; skip it so unloading frees memory.
+                            cache: false
+                            opacity: status === Image.Ready ? 1 : 0
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: 400
+                                }
                             }
                         }
                     }
@@ -279,11 +357,13 @@ ShellRoot {
                         duration: 300
                     }
                 }
-                anchors {
-                    left: parent.left
-                    bottom: parent.bottom
-                    margins: 32
-                }
+                // On the wall it sits beside the painting's lower right like
+                // a museum label, if there's room for the open panel; else
+                // (and when filling the screen) in the bottom-left corner.
+                // Grows upward either way.
+                readonly property bool asLabel: win.wall && flick.width - win.paintRight >= openWidth + 80
+                x: asLabel ? win.paintRight + 40 : 32
+                y: (asLabel ? win.paintBottom : win.height - 32) - height
                 width: open ? openWidth : caption.implicitWidth + 2 * pad
                 height: open ? Math.min(win.height * 0.72, caption.implicitHeight + more.contentHeight + 3 * pad + 4) : caption.implicitHeight + 24
                 radius: open ? 14 : 8
@@ -390,26 +470,6 @@ ShellRoot {
                         NumberAnimation {
                             duration: 240
                         }
-                    }
-
-                    component Label: Text {
-                        width: parent.width
-                        color: "#@base04@"
-                        font.family: "Inter"
-                        font.weight: Font.DemiBold
-                        font.pixelSize: 12
-                        font.capitalization: Font.AllUppercase
-                        font.letterSpacing: 1.6
-                        bottomPadding: -4
-                    }
-
-                    component Body: Text {
-                        width: parent.width
-                        wrapMode: Text.WordWrap
-                        color: "#@base05@"
-                        font.family: "Source Serif 4"
-                        font.pixelSize: 17
-                        lineHeight: 1.35
                     }
 
                     Column {
@@ -589,5 +649,25 @@ ShellRoot {
                 }
             }
         }
+    }
+
+    component Label: Text {
+        width: parent.width
+        color: "#@base04@"
+        font.family: "Inter"
+        font.weight: Font.DemiBold
+        font.pixelSize: 12
+        font.capitalization: Font.AllUppercase
+        font.letterSpacing: 1.6
+        bottomPadding: -4
+    }
+
+    component Body: Text {
+        width: parent.width
+        wrapMode: Text.WordWrap
+        color: "#@base05@"
+        font.family: "Source Serif 4"
+        font.pixelSize: 17
+        lineHeight: 1.35
     }
 }
