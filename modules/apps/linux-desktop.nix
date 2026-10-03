@@ -22,7 +22,6 @@
     in
     {
       home.packages = with pkgs; [
-        hyprpaper
         upower
         wrappedLlm
         synology-drive-client

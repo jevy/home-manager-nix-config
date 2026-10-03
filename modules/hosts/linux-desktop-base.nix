@@ -15,6 +15,7 @@ in
         nixos.zsh
         nixos.nixvim
         nixos.stylix
+        nixos.wallpaper
         nixos.audio
         nixos.fonts
         nixos.hyprland
@@ -88,6 +89,7 @@ in
             homeManager.desktopApps
             homeManager.linuxDesktop
             homeManager.ashell
+            homeManager.wallpaper
             homeManager.mako
             homeManager.hyprSession
             homeManager.ssh

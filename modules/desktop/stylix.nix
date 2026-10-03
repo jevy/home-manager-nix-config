@@ -2,12 +2,14 @@
 { inputs, ... }:
 let
   stylixConfig =
-    { pkgs, ... }:
+    { lib, pkgs, ... }:
     {
       stylix = {
         enable = true;
-        image = pkgs.callPackage ../../pkgs/lowpoly-wallpaper { };
-        base16Scheme = "${pkgs.base16-schemes}/share/themes/gruvbox-material-dark-soft.yaml";
+        # Defaults: wallpaper.strategy = "art-pinned" (desktop/wallpaper.nix)
+        # overrides the image, and with themeFromArt the scheme too.
+        image = lib.mkDefault (pkgs.callPackage ../../pkgs/lowpoly-wallpaper { });
+        base16Scheme = lib.mkDefault "${pkgs.base16-schemes}/share/themes/gruvbox-material-dark-soft.yaml";
         opacity.popups = 0.9;
 
         fonts = {

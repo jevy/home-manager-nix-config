@@ -39,6 +39,9 @@ in
 
       networking.hostName = "lenovo-p14s";
 
+      # Random CC0 painting + caption, new one daily (desktop/wallpaper.nix)
+      wallpaper.strategy = "art-rotate";
+
       # LUKS
       boot.initrd.luks.devices."cryptroot".device =
         "/dev/disk/by-uuid/93f39771-d83e-4b78-baa2-13c6f7f921f1";

@@ -202,8 +202,10 @@ MONEOF
                 hyprctl --batch "keyword general:layout hy3; keyword monitor eDP-1,''${LAPTOP_MODE},0x0,''${LAPTOP_SCALE}; keyword monitor $MONITOR,preferred,''${LAPTOP_LOGICAL}x0,1"
               fi
 
-              # Reload hyprpaper to apply wallpaper to new monitor
-              killall hyprpaper; sleep 0.5; ${pkgs.hyprpaper}/bin/hyprpaper &
+              # wallpaper.strategy = "static": hyprpaper needs a restart to
+              # cover a new monitor. No-op when the unit isn't running (the
+              # art strategies draw with quickshell, which follows screens).
+              systemctl --user try-restart hyprpaper.service 2>/dev/null || true
             '';
 
             monitorDetached = pkgs.writeShellScript "monitor-detached" ''
@@ -230,8 +232,7 @@ MONEOF
                 [ "$UP" = "1" ] && break
                 sleep 1
               done
-              # Reload hyprpaper to apply wallpaper
-              killall hyprpaper; sleep 0.5; ${pkgs.hyprpaper}/bin/hyprpaper &
+              systemctl --user try-restart hyprpaper.service 2>/dev/null || true
             '';
             scaleToggle = pkgs.writeShellScript "scale-toggle" ''
               JQ="${pkgs.jq}/bin/jq"
@@ -618,7 +619,6 @@ MONEOF
             "$mod" = "SUPER ALT CTRL";
 
             exec-once = [
-              "${pkgs.hyprpaper}/bin/hyprpaper"
               "${pkgs.hyprland-monitor-attached}/bin/hyprland-monitor-attached ${monitorAttached} ${monitorDetached}"
               # Run initial setup based on current monitor state (hyprland-monitor-attached only handles events)
               "sh -c 'sleep 3; ext=$(hyprctl monitors -j | ${pkgs.jq}/bin/jq -r \".[] | select(.name != \\\"eDP-1\\\") | .name\" | head -1); if [ -n \"$ext\" ]; then ${monitorAttached} \"$ext\"; else ${monitorDetached}; fi'"
