@@ -152,6 +152,11 @@
 
           lockscreen.fingerprint = true;
 
+          # 12-hour time in Noctalia's own displays (Control Center home and
+          # calendar tabs, lock screen). Default is "{:%H:%M}". The bar clock
+          # has its own format below.
+          shell.time_format = "%-I:%M %p";
+
           # Close to Noctalia's own default layout: a quiet bar of icons, with
           # details in the Control Center panel (media, weather forecast,
           # notifications, audio). The meetings widget is ours and hides
