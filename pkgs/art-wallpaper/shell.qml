@@ -4,6 +4,13 @@
 // the art-wallpaper script's cache (art-rotate) or a store path holding the
 // pinned painting (art-pinned). Black, with no caption, until a painting loads.
 //
+// Zoom (on an empty workspace, where the wallpaper gets the pointer): touchpad
+// pinch or Ctrl+scroll, drag or two-finger scroll to pan, double-click to
+// reset. Past ~1.3x it loads the full-resolution scan (<id>.full.jpg, which
+// the script downloads next to the small one) over the small image; ~30 s
+// after you are back at 1x it unloads it again, so all day only the small
+// image is in memory.
+//
 // @...@ placeholders are filled by replaceVars in modules/desktop/wallpaper.nix.
 import QtQuick
 import Quickshell
@@ -16,6 +23,7 @@ ShellRoot {
     readonly property string dir: "@dir@"
     property var info: null
     readonly property string image: info ? "file://" + dir + "/" + info.file : ""
+    readonly property string fullImage: info && info.full ? "file://" + dir + "/" + info.full : ""
 
     FileView {
         id: meta
@@ -34,6 +42,21 @@ ShellRoot {
         }
     }
 
+    // `quickshell ipc call wallpaper zoom 3` / `... reset`: keyboard or script
+    // access to the same zoom, centred on each screen.
+    signal zoomRequested(real factor)
+    signal resetRequested
+
+    IpcHandler {
+        target: "wallpaper"
+        function zoom(factor: real): void {
+            root.zoomRequested(factor);
+        }
+        function reset(): void {
+            root.resetRequested();
+        }
+    }
+
     Timer {
         id: retry
         interval: 5000
@@ -44,6 +67,7 @@ ShellRoot {
         model: Quickshell.screens
 
         PanelWindow {
+            id: win
             required property var modelData
             screen: modelData
 
@@ -58,36 +82,160 @@ ShellRoot {
             }
             color: "black"
 
-            // back holds the previous painting while front fades the new one in.
-            Image {
-                id: back
-                anchors.fill: parent
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
+            readonly property real zoom: flick.width > 0 ? flick.contentWidth / flick.width : 1
+            property bool wantFull: false
+
+            // Stop at 2 screen pixels per scan pixel; past that it's just blur.
+            // Images cover the screen, so the scan's scale at 1x is the larger
+            // of the two axis ratios. 10x until the full scan has loaded.
+            readonly property real maxZoom: {
+                if (full.status !== Image.Ready || flick.width <= 0)
+                    return 10;
+                const fit = Math.max(flick.width / full.implicitWidth, flick.height / full.implicitHeight);
+                const dpr = (screen && screen.devicePixelRatio) || 1;
+                return Math.max(2, 2 / (fit * dpr));
+            }
+            onMaxZoomChanged: if (zoom > maxZoom)
+                zoomAt(maxZoom / zoom, Qt.point(flick.width / 2, flick.height / 2))
+
+            onZoomChanged: {
+                if (zoom > 1.3) {
+                    wantFull = true;
+                    unload.stop();
+                } else if (zoom < 1.001) {
+                    unload.restart();
+                }
             }
 
-            Image {
-                id: front
-                anchors.fill: parent
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-                source: root.image
-                onSourceChanged: opacity = 0
-                onStatusChanged: if (status === Image.Ready) fade.restart()
+            function zoomAt(factor, p) {
+                const z = Math.max(1, Math.min(maxZoom, zoom * factor));
+                if (z === zoom)
+                    return;
+                // Keep the point under the cursor/fingers fixed on screen.
+                flick.resizeContent(flick.width * z, flick.height * z, Qt.point(p.x + flick.contentX, p.y + flick.contentY));
+                flick.returnToBounds();
+            }
 
-                NumberAnimation {
-                    id: fade
-                    target: front
-                    property: "opacity"
-                    to: 1
-                    duration: 1500
-                    easing.type: Easing.InOutQuad
-                    onFinished: back.source = front.source
+            function reset() {
+                flick.resizeContent(flick.width, flick.height, Qt.point(0, 0));
+                flick.contentX = 0;
+                flick.contentY = 0;
+            }
+
+            Timer {
+                id: unload
+                interval: 30000
+                onTriggered: win.wantFull = false
+            }
+
+            Connections {
+                target: root
+                function onImageChanged() {
+                    win.reset();
+                    win.wantFull = false;
+                }
+                function onZoomRequested(factor) {
+                    win.zoomAt(factor, Qt.point(flick.width / 2, flick.height / 2));
+                }
+                function onResetRequested() {
+                    win.reset();
+                }
+            }
+
+            Flickable {
+                id: flick
+                anchors.fill: parent
+                boundsBehavior: Flickable.StopAtBounds
+                contentWidth: width
+                contentHeight: height
+                onWidthChanged: win.reset()
+                onHeightChanged: win.reset()
+
+                // Zoom around the mouse cursor. A touchpad pinch's centroid
+                // doesn't follow the pointer, so track it separately.
+                HoverHandler {
+                    id: hover
+                }
+
+                WheelHandler {
+                    acceptedModifiers: Qt.ControlModifier
+                    onWheel: event => win.zoomAt(Math.pow(1.0015, event.angleDelta.y), hover.point.position)
+                }
+
+                PinchHandler {
+                    target: null
+                    onScaleChanged: delta => win.zoomAt(delta, hover.point.position)
+                }
+
+                TapHandler {
+                    onDoubleTapped: win.reset()
+                }
+
+                Item {
+                    width: flick.contentWidth
+                    height: flick.contentHeight
+
+                    // back holds the previous painting while front fades the new one in.
+                    Image {
+                        id: back
+                        anchors.fill: parent
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                    }
+
+                    Image {
+                        id: front
+                        anchors.fill: parent
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                        source: root.image
+                        onSourceChanged: opacity = 0
+                        onStatusChanged: if (status === Image.Ready) fade.restart()
+
+                        NumberAnimation {
+                            id: fade
+                            target: front
+                            property: "opacity"
+                            to: 1
+                            duration: 1500
+                            easing.type: Easing.InOutQuad
+                            onFinished: back.source = front.source
+                        }
+                    }
+
+                    // Full-resolution scan, only while zoomed. Same crop as
+                    // front, so it lands exactly on top and just sharpens.
+                    Image {
+                        id: full
+                        anchors.fill: parent
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                        // Scaled well below 1:1 just past 1.3x; mipmaps stop
+                        // the fine canvas texture shimmering there.
+                        mipmap: true
+                        source: win.wantFull ? root.fullImage : ""
+                        // Qt's pixmap cache would keep the decoded scan
+                        // after unload; skip it so unloading frees memory.
+                        cache: false
+                        opacity: status === Image.Ready ? 1 : 0
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: 400
+                            }
+                        }
+                    }
                 }
             }
 
             Rectangle {
                 visible: root.info !== null
+                // Out of the way while exploring.
+                opacity: win.zoom > 1.01 ? 0 : 1
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 300
+                    }
+                }
                 anchors {
                     left: parent.left
                     bottom: parent.bottom

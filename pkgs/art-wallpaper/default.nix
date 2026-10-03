@@ -8,6 +8,8 @@ pkgs.writeShellApplication {
     coreutils
     findutils
     xdg-utils
+    vips
+    imagemagick
   ];
   text = builtins.readFile ./art-wallpaper.sh;
 }
