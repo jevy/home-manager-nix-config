@@ -244,21 +244,32 @@ ShellRoot {
             // labels. Fonts come from desktop/wallpaper.nix.
             Rectangle {
                 id: bubble
-                readonly property bool hasMore: !!(root.info && (root.info.did_you_know || root.info.description || root.info.commentary))
+                // Structured guide from art-wallpaper (hook, why, find,
+                // deeper). Older paintings may only have `commentary`.
+                readonly property var guide: root.info && root.info.guide ? root.info.guide : null
+                readonly property bool hasMore: !!(root.info && (guide || root.info.did_you_know || root.info.description || root.info.commentary))
                 property bool open: false
+                // Second layer ("More"): the long AI write-up and the
+                // museum's own words. Hidden by default to keep it scannable.
+                property bool deep: false
+                // Ticked "find it" items for the current painting.
+                property var found: [false, false, false]
+
+                function esc(t) {
+                    return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                }
+
+                Connections {
+                    target: root
+                    function onImageChanged() {
+                        bubble.found = [false, false, false];
+                        bubble.deep = false;
+                    }
+                }
                 // Fixed open width (a ~70 character measure for the body),
                 // so text doesn't reflow while the bubble grows.
                 readonly property real openWidth: Math.min(660, win.width - 64)
                 property real pad: open ? 24 : 16
-
-                // The model writes "Look closer" as a markdown heading or
-                // bold line; split there so it gets the same label style as
-                // the other sections. Falls back to one block if absent.
-                readonly property var commentaryParts: {
-                    const c = root.info && root.info.commentary ? root.info.commentary : "";
-                    const parts = c.split(/\n[#*_\s]*look closer[*_:\s]*\n/i);
-                    return parts.length === 2 ? parts : [c, ""];
-                }
 
                 visible: root.info !== null && opacity > 0
                 // Out of the way while exploring.
@@ -323,7 +334,10 @@ ShellRoot {
                 Timer {
                     id: shrink
                     interval: 350
-                    onTriggered: bubble.open = false
+                    onTriggered: {
+                        bubble.open = false;
+                        bubble.deep = false;
+                    }
                 }
 
                 Column {
@@ -352,7 +366,7 @@ ShellRoot {
                     }
 
                     Text {
-                        text: root.info ? root.info.artist + (root.info.date ? "  ·  " + root.info.date : "") : ""
+                        text: root.info ? [root.info.artist, root.info.date, root.info.size].filter(x => x).join("  ·  ") : ""
                         color: "#@base04@"
                         font.family: "Inter"
                         font.weight: Font.Medium
@@ -403,67 +417,173 @@ ShellRoot {
                         width: more.width
                         spacing: 10
 
-                        Label {
-                            visible: didYouKnow.visible
-                            text: "Did you know"
-                        }
+                        // Layer 1, the guide: hook, why it matters, find it.
                         Text {
-                            id: didYouKnow
-                            visible: text !== ""
-                            text: root.info && root.info.did_you_know ? root.info.did_you_know : ""
+                            visible: bubble.guide !== null
+                            text: bubble.guide ? bubble.guide.hook : ""
                             width: parent.width
                             wrapMode: Text.WordWrap
                             color: "#@base06@"
-                            font.family: "Cormorant Garamond"
+                            font.family: "Source Serif 4"
                             font.weight: Font.Medium
-                            font.pixelSize: 23
-                            lineHeight: 1.1
-                            bottomPadding: 8
+                            font.pixelSize: 21
+                            lineHeight: 1.25
+                            bottomPadding: 10
                         }
 
                         Label {
-                            visible: museum.visible
-                            text: "From the museum"
+                            visible: bubble.guide !== null
+                            text: "Why it matters"
                         }
-                        Body {
-                            id: museum
-                            visible: text !== ""
-                            text: root.info && root.info.description ? root.info.description : ""
-                            bottomPadding: 8
+                        Repeater {
+                            model: bubble.guide ? bubble.guide.why : []
+
+                            Body {
+                                required property var modelData
+                                textFormat: Text.StyledText
+                                text: "<b>" + bubble.esc(modelData.lead) + "</b>  " + bubble.esc(modelData.text)
+                                leftPadding: 16
+
+                                Rectangle {
+                                    x: 3
+                                    y: 10
+                                    width: 5
+                                    height: 5
+                                    radius: 2.5
+                                    color: "#@base04@"
+                                }
+                            }
                         }
 
                         Label {
-                            visible: commentary.visible
-                            text: "Commentary"
+                            visible: bubble.guide !== null
+                            text: "Find it  ·  zoom in"
+                            topPadding: 10
                         }
-                        Body {
-                            id: commentary
-                            visible: text !== ""
-                            text: bubble.commentaryParts[0]
-                            textFormat: Text.MarkdownText
-                        }
+                        Repeater {
+                            model: bubble.guide ? bubble.guide.find : []
 
-                        Label {
-                            visible: lookCloser.visible
-                            text: "Look closer"
-                            topPadding: 4
-                        }
-                        Body {
-                            id: lookCloser
-                            visible: text !== ""
-                            text: bubble.commentaryParts[1]
-                            textFormat: Text.MarkdownText
+                            // Click to tick it off once you've found it.
+                            Item {
+                                id: findItem
+                                required property var modelData
+                                required property int index
+                                readonly property bool done: bubble.found[index] === true
+                                width: moreText.width
+                                height: findText.implicitHeight
+
+                                Rectangle {
+                                    y: 4
+                                    width: 16
+                                    height: 16
+                                    radius: 4
+                                    border.width: 1.5
+                                    border.color: findItem.done ? "#@base0B@" : "#@base04@"
+                                    color: findItem.done ? "#55@base0B@" : "transparent"
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        visible: findItem.done
+                                        text: "✓"
+                                        color: "#@base06@"
+                                        font.pixelSize: 12
+                                    }
+                                }
+
+                                Body {
+                                    id: findText
+                                    x: 28
+                                    width: parent.width - 28
+                                    text: findItem.modelData
+                                    color: findItem.done ? "#@base04@" : "#@base05@"
+                                    font.strikeout: findItem.done
+                                }
+
+                                TapHandler {
+                                    onTapped: {
+                                        const f = bubble.found.slice();
+                                        f[findItem.index] = !f[findItem.index];
+                                        bubble.found = f;
+                                    }
+                                }
+                                HoverHandler {
+                                    cursorShape: Qt.PointingHandCursor
+                                }
+                            }
                         }
 
                         Text {
-                            visible: commentary.visible
-                            text: "Commentary written by AI (" + (root.info && root.info.commentaryModel ? root.info.commentaryModel : "unknown model") + "). It can get details wrong."
+                            visible: bubble.guide !== null
+                            text: bubble.deep ? "Less  ▴" : "More  ▸"
+                            color: "#@base05@"
+                            font.family: "Inter"
+                            font.weight: Font.DemiBold
+                            font.pixelSize: 12
+                            font.capitalization: Font.AllUppercase
+                            font.letterSpacing: 1.6
+                            topPadding: 12
+
+                            TapHandler {
+                                onTapped: bubble.deep = !bubble.deep
+                            }
+                            HoverHandler {
+                                cursorShape: Qt.PointingHandCursor
+                            }
+                        }
+
+                        // Layer 2: under "More", or straight away when a
+                        // painting has no guide (no key, or fetched earlier).
+                        Column {
+                            visible: bubble.guide === null || bubble.deep
+                            width: parent.width
+                            spacing: 10
+                            topPadding: 8
+
+                            Label {
+                                visible: deeper.visible
+                                text: "Going deeper  ·  AI"
+                            }
+                            Body {
+                                id: deeper
+                                visible: text !== ""
+                                text: bubble.guide ? bubble.guide.deeper : (root.info && root.info.commentary ? root.info.commentary : "")
+                                textFormat: Text.MarkdownText
+                                bottomPadding: 8
+                            }
+
+                            Label {
+                                visible: didYouKnow.visible || museum.visible
+                                text: "In the museum's words"
+                            }
+                            Text {
+                                id: didYouKnow
+                                visible: text !== ""
+                                text: root.info && root.info.did_you_know ? root.info.did_you_know : ""
+                                width: parent.width
+                                wrapMode: Text.WordWrap
+                                color: "#@base06@"
+                                font.family: "Cormorant Garamond"
+                                font.weight: Font.Medium
+                                font.pixelSize: 23
+                                lineHeight: 1.1
+                                bottomPadding: 4
+                            }
+                            Body {
+                                id: museum
+                                visible: text !== ""
+                                text: root.info && root.info.description ? root.info.description : ""
+                            }
+                        }
+
+                        Text {
+                            visible: !!(root.info && (root.info.guide || root.info.commentary))
+                            text: "Guide written by AI (" + (root.info && (root.info.guideModel || root.info.commentaryModel) || "unknown model") + "). It can get details wrong."
                             width: parent.width
                             wrapMode: Text.WordWrap
                             color: "#@base03@"
                             font.family: "Inter"
                             font.pixelSize: 12
-                            topPadding: 6
+                            topPadding: 10
                         }
                     }
                 }

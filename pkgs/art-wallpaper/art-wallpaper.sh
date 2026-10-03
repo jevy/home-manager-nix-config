@@ -6,11 +6,11 @@
 #   <id>.full.jpg  the full-resolution scan (up to ~12000px), converted from
 #                  CMA's TIFF because quickshell's Qt has no TIFF reader;
 #                  quickshell loads it only while you zoom in
-#   current.json   {id,title,artist,date,url,image,fullImage,description,
-#                  did_you_know,technique,tombstone,file[,commentary][,full]};
-#                  quickshell watches this file, so it is renamed into place,
-#                  once with the small image and again as each of
-#                  `commentary` and `full` arrives
+#   current.json   {id,title,artist,date,size,url,image,webImage,fullImage,
+#                  description,did_you_know,technique,tombstone,file
+#                  [,guide,guideModel][,full]}; quickshell watches this file,
+#                  so it is renamed into place, once with the small image and
+#                  again as each of `guide` and `full` arrives
 #   history.jsonl  one line per painting shown, to find one you liked again
 #
 # Why Cleveland: the Art Institute of Chicago's image server sits behind a
@@ -22,10 +22,13 @@
 # --new, a fresh random one) plus its hash to FILE, by default the repo's
 # pkgs/art-wallpaper/pinned.json, for the art-pinned strategy to fetchurl.
 #
-# Commentary: an OpenRouter model ($model, ~$0.0002 and ~5 s per painting)
-# writes a short docent-style note grounded in the museum's own text, shown
-# in the quickshell caption bubble on hover. The key file is baked in by
-# default.nix from sops; without it, paintings just have the museum text.
+# Guide: an OpenRouter model ($model, ~$0.0005 and ~6 s per painting) gets
+# the museum record plus the 900px image and returns a structured guide
+# (hook, 3 why-it-matters points, 3 details to find by zooming, a longer
+# "deeper" write-up) for the quickshell caption bubble. Laid out for quick
+# scanning: short, fixed shape, no repeats of the museum text. The key file
+# is baked in by default.nix from sops; without it, paintings just have the
+# museum text.
 
 cache="${XDG_CACHE_HOME:-$HOME/.cache}/art-wallpaper"
 api="https://openaccess-api.clevelandart.org/api/artworks/"
@@ -57,6 +60,14 @@ next() {
               date: (.creation_date // ""),
               url,
               image: .images.print.url,
+              webImage: (.images.web.url // ""),
+              # Size of the painting itself, not its mount or album page:
+              # first label that matches, in this order, else the first
+              # measurement in cm.
+              size: ((.tombstone // "") as $t
+                | first(("image", "each painting", "painting", "unframed", "sheet", "overall")
+                    | . as $l | $t | capture($l + ": (?<d>[0-9.]+ x [0-9.]+ cm)").d)
+                  // first($t | capture("(?<d>[0-9.]+ x [0-9.]+ cm)").d) // ""),
               fullImage: (.images.full.url // ""),
               description: ((.description // "") | gsub("<[^>]*>"; "")),
               did_you_know: ((.did_you_know // "") | gsub("<[^>]*>"; "")),
@@ -94,12 +105,12 @@ next() {
 
   info
 
-  # The wallpaper is already up; commentary and the full scan are extras, so
-  # a failure in either is logged, not fatal. Commentary first: it's quicker
+  # The wallpaper is already up; the guide and the full scan are extras, so
+  # a failure in either is logged, not fatal. The guide first: it's quicker
   # (~5 s) than a big scan. Typical scan: 126 MB TIFF, ~3 s download, <1 s
   # to convert, 12 MB JPEG.
-  if ! fetch_commentary "$id"; then
-    echo "art-wallpaper: commentary failed for $id" >&2
+  if ! fetch_guide "$id"; then
+    echo "art-wallpaper: guide failed for $id" >&2
   fi
   if ! fetch_full "$id" "$backdrop"; then
     echo "art-wallpaper: full-resolution download failed for $id" >&2
@@ -151,44 +162,77 @@ fetch_full() {
   set_current "$id" full "$id.full.jpg"
 }
 
-# Add key=value to current.json, unless another `next` has replaced the
-# painting meanwhile.
+# Add key=value to current.json (--arg for a string, --argjson for JSON),
+# unless another `next` has replaced the painting meanwhile.
 set_current() {
-  local id=$1 key=$2 value=$3
-  jq --argjson id "$id" --arg key "$key" --arg value "$value" \
+  local id=$1 key=$2 value=$3 kind=${4:---arg}
+  jq --argjson id "$id" --arg key "$key" "$kind" value "$value" \
     'if .id == $id then .[$key] = $value else . end' \
     "$cache/current.json" >"$cache/current.json.tmp"
   mv "$cache/current.json.tmp" "$cache/current.json"
 }
 
-fetch_commentary() {
-  local id=$1 record body text
+fetch_guide() {
+  local id=$1 record image content body guide
   if [ ! -r "$keyfile" ]; then
-    echo "art-wallpaper: no OpenRouter key at $keyfile, skipping commentary" >&2
+    echo "art-wallpaper: no OpenRouter key at $keyfile, skipping the guide" >&2
     return 0
   fi
-  record=$(jq '{title, artist, date, technique, tombstone, description, did_you_know}' "$cache/current.json")
-  body=$(jq -n --arg model "$model" --arg sys "$docent" --arg rec "$record" \
-    '{model: $model, max_tokens: 1200, reasoning: {effort: "low"},
-      messages: [{role: "system", content: $sys}, {role: "user", content: $rec}]}')
+  record=$(jq '{title, artist, date, size, technique, tombstone, description, did_you_know}' "$cache/current.json")
+  image=$(jq -r '.webImage // ""' "$cache/current.json")
+  # With the image the model can point at details that are really there.
+  content=$(jq -n --arg rec "$record" --arg img "$image" \
+    '[{type: "text", text: $rec}] + (if $img != "" then [{type: "image_url", image_url: {url: $img}}] else [] end)')
+  body=$(jq -n --arg model "$model" --arg sys "$guide_prompt" --argjson content "$content" \
+    --argjson schema "$guide_schema" \
+    '{model: $model, max_tokens: 2000, reasoning: {effort: "low"},
+      response_format: {type: "json_schema", json_schema: {name: "guide", strict: true, schema: $schema}},
+      messages: [{role: "system", content: $sys}, {role: "user", content: $content}]}')
   # Key goes in via a header file so it never shows up in `ps`.
-  text=$(curl -fsS --retry 2 https://openrouter.ai/api/v1/chat/completions \
+  guide=$(curl -fsS --retry 2 https://openrouter.ai/api/v1/chat/completions \
     -H @<(printf 'Authorization: Bearer %s\n' "$(<"$keyfile")") \
     -H 'Content-Type: application/json' -H 'X-Title: art-wallpaper' -d "$body" \
-    | jq -r '.choices[0].message.content // ""')
-  [ -n "$text" ] || return 1
-  set_current "$id" commentary "$text"
-  set_current "$id" commentaryModel "$model"
+    | jq -c '.choices[0].message.content // "" | fromjson? // empty
+        | select(.hook and .why and .find and .deeper)
+        | .why |= .[:3] | .find |= .[:3]')
+  [ -n "$guide" ] || return 1
+  set_current "$id" guide "$guide" --argjson
+  set_current "$id" guideModel "$model"
 }
 
-docent='You are a museum docent writing for a curious non-specialist who has this painting as their desktop wallpaper and can zoom into it. Plain English, no puffery, no em dashes. Ground everything in the museum record given. You may add well-established general context about the tradition, period or artist, but never invent specifics about this object (dates, provenance, owners, attributions); if something is uncertain, say so. Markdown, under 220 words: a paragraph on why it matters, a paragraph of context, then a "Look closer" heading with 2 or 3 bullets naming specific details worth zooming into.'
+guide_prompt='You are a museum docent writing a quick guide for a smart reader with ADHD who has this painting as their desktop wallpaper and can zoom into it. You get the museum record and the image.
+
+Rules: plain English, concrete, no puffery, no em dashes. Ground facts in the museum record and what is visible in the image. You may add well-established general context about the tradition, period or artist, but never invent specifics about this object (dates, provenance, owners, attributions); if uncertain, say so.
+
+Fields:
+- hook: one sentence, under 20 words, the single most interesting thing about this painting.
+- why: exactly 3 items. lead is 1 to 3 words naming the point; text is under 15 words.
+- find: exactly 3 visible details worth zooming into, each under 15 words, saying where to look (e.g. "upper left"). Only details you can see in the image.
+- deeper: 150 to 250 words of markdown for going further: the tradition and period, how this work fits, what the museum text says that the bullets left out. No headings. 3 or 4 short paragraphs, each starting with a bold lead-in of 2 to 4 words. Do not repeat the bullets.'
+
+guide_schema='{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["hook", "why", "find", "deeper"],
+  "properties": {
+    "hook": {"type": "string"},
+    "why": {"type": "array", "minItems": 3, "maxItems": 3, "items": {
+      "type": "object", "additionalProperties": false, "required": ["lead", "text"],
+      "properties": {"lead": {"type": "string"}, "text": {"type": "string"}}}},
+    "find": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "string"}},
+    "deeper": {"type": "string"}
+  }
+}'
 
 about() {
   info
   jq -r '[
+      (.guide // empty | "\n\(.hook)",
+        "\nWHY IT MATTERS", (.why[] | "- \(.lead): \(.text)"),
+        "\nFIND IT", (.find[] | "- \(.)"),
+        "\nGOING DEEPER (AI)", .deeper),
       (if .did_you_know != "" then "\nDid you know: \(.did_you_know)" else empty end),
-      (if .description != "" then "\n\(.description)" else empty end),
-      (if .commentary then "\nCommentary (\(.commentaryModel), AI-written):\n\(.commentary)" else empty end)
+      (if .description != "" then "\n\(.description)" else empty end)
     ] | join("\n")' "$cache/current.json"
 }
 
@@ -204,7 +248,7 @@ pin() {
   out="${1:-$HOME/.config/nixpkgs/pkgs/art-wallpaper/pinned.json}"
   # Same bytes fetchurl will download, so this hash is the one it checks.
   hash=$(nix hash file --type sha256 --sri "$cache/$(jq -r '.file' "$cache/current.json")")
-  jq --arg hash "$hash" '{id, title, artist, date, url, image, description, did_you_know, technique, tombstone, commentary, commentaryModel, hash: $hash}' \
+  jq --arg hash "$hash" '{id, title, artist, date, size, url, image, webImage, description, did_you_know, technique, tombstone, guide, guideModel, hash: $hash}' \
     "$cache/current.json" >"$out"
   echo "pinned to $out:"
   info
@@ -214,14 +258,14 @@ case "${1:-next}" in
   next) next ;;
   info) info ;;
   about) about ;;
-  comment) fetch_commentary "$(jq -r '.id' "$cache/current.json")" && about ;;
+  guide) fetch_guide "$(jq -r '.id' "$cache/current.json")" && about ;;
   pin)
     shift
     pin "$@"
     ;;
   open) xdg-open "$(jq -r '.url' "$cache/current.json")" ;;
   *)
-    echo "usage: art-wallpaper [next|info|about|comment|open|pin [--new] [FILE]]" >&2
+    echo "usage: art-wallpaper [next|info|about|guide|open|pin [--new] [FILE]]" >&2
     exit 2
     ;;
 esac

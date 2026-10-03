@@ -131,6 +131,7 @@
           base04
           base05
           base06
+          base0B
           ;
       };
     in
