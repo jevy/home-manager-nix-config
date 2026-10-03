@@ -234,8 +234,33 @@ ShellRoot {
                 }
             }
 
+            // Caption bubble. Hover it and it grows into a panel with the
+            // museum's text and the AI commentary (art-wallpaper writes both
+            // into current.json); move away and it shrinks back.
+            //
+            // Type, set like a museum wall label: Cormorant Garamond (upright)
+            // for the title and the "did you know" pull quote, Source Serif 4
+            // for reading, Inter in spaced capitals for metadata and section
+            // labels. Fonts come from desktop/wallpaper.nix.
             Rectangle {
-                visible: root.info !== null
+                id: bubble
+                readonly property bool hasMore: !!(root.info && (root.info.did_you_know || root.info.description || root.info.commentary))
+                property bool open: false
+                // Fixed open width (a ~70 character measure for the body),
+                // so text doesn't reflow while the bubble grows.
+                readonly property real openWidth: Math.min(660, win.width - 64)
+                property real pad: open ? 24 : 16
+
+                // The model writes "Look closer" as a markdown heading or
+                // bold line; split there so it gets the same label style as
+                // the other sections. Falls back to one block if absent.
+                readonly property var commentaryParts: {
+                    const c = root.info && root.info.commentary ? root.info.commentary : "";
+                    const parts = c.split(/\n[#*_\s]*look closer[*_:\s]*\n/i);
+                    return parts.length === 2 ? parts : [c, ""];
+                }
+
+                visible: root.info !== null && opacity > 0
                 // Out of the way while exploring.
                 opacity: win.zoom > 1.01 ? 0 : 1
                 Behavior on opacity {
@@ -248,32 +273,198 @@ ShellRoot {
                     bottom: parent.bottom
                     margins: 32
                 }
-                width: caption.implicitWidth + 32
-                height: caption.implicitHeight + 24
-                radius: 8
-                color: "#cc@base00@"
+                width: open ? openWidth : caption.implicitWidth + 2 * pad
+                height: open ? Math.min(win.height * 0.72, caption.implicitHeight + more.contentHeight + 3 * pad + 4) : caption.implicitHeight + 24
+                radius: open ? 14 : 8
+                color: open ? "#f2@base00@" : "#cc@base00@"
+                clip: true
+
+                Behavior on width {
+                    NumberAnimation {
+                        duration: 300
+                        easing.type: Easing.OutCubic
+                    }
+                }
+                Behavior on height {
+                    NumberAnimation {
+                        duration: 300
+                        easing.type: Easing.OutCubic
+                    }
+                }
+                Behavior on radius {
+                    NumberAnimation {
+                        duration: 300
+                    }
+                }
+                Behavior on pad {
+                    NumberAnimation {
+                        duration: 300
+                        easing.type: Easing.OutCubic
+                    }
+                }
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 300
+                    }
+                }
+
+                HoverHandler {
+                    onHoveredChanged: {
+                        if (hovered) {
+                            shrink.stop();
+                            bubble.open = bubble.hasMore;
+                        } else {
+                            shrink.restart();
+                        }
+                    }
+                }
+
+                // Grace period, so brushing the edge doesn't snap it shut.
+                Timer {
+                    id: shrink
+                    interval: 350
+                    onTriggered: bubble.open = false
+                }
 
                 Column {
                     id: caption
-                    anchors.centerIn: parent
-                    spacing: 4
-
-                    Text {
-                        text: root.info ? root.info.title : ""
-                        color: "#@base05@"
-                        font.family: "@serif@"
-                        font.italic: true
-                        font.pixelSize: 20
-                        // Some CMA titles run long; cap the caption width.
-                        width: Math.min(implicitWidth, 720)
-                        elide: Text.ElideRight
+                    x: bubble.pad
+                    y: bubble.open ? 20 : 12
+                    spacing: 5
+                    Behavior on y {
+                        NumberAnimation {
+                            duration: 300
+                            easing.type: Easing.OutCubic
+                        }
                     }
 
                     Text {
-                        text: root.info ? root.info.artist + (root.info.date ? ", " + root.info.date : "") : ""
+                        text: root.info ? root.info.title : ""
+                        color: "#@base06@"
+                        font.family: "Cormorant Garamond"
+                        font.weight: Font.Medium
+                        font.pixelSize: 30
+                        // Long CMA titles: one elided line when closed, wrap when open.
+                        width: bubble.open ? bubble.openWidth - 48 : Math.min(implicitWidth, 720)
+                        wrapMode: bubble.open ? Text.WordWrap : Text.NoWrap
+                        elide: bubble.open ? Text.ElideNone : Text.ElideRight
+                        lineHeight: 0.95
+                    }
+
+                    Text {
+                        text: root.info ? root.info.artist + (root.info.date ? "  ·  " + root.info.date : "") : ""
                         color: "#@base04@"
-                        font.family: "@serif@"
-                        font.pixelSize: 14
+                        font.family: "Inter"
+                        font.weight: Font.Medium
+                        font.pixelSize: 13
+                        font.capitalization: Font.AllUppercase
+                        font.letterSpacing: 1.4
+                    }
+                }
+
+                Flickable {
+                    id: more
+                    x: 24
+                    y: caption.y + caption.implicitHeight + 22
+                    width: bubble.openWidth - 48
+                    height: bubble.height - y - 24
+                    contentHeight: moreText.implicitHeight
+                    boundsBehavior: Flickable.StopAtBounds
+                    clip: true
+                    opacity: bubble.open ? 1 : 0
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 240
+                        }
+                    }
+
+                    component Label: Text {
+                        width: parent.width
+                        color: "#@base04@"
+                        font.family: "Inter"
+                        font.weight: Font.DemiBold
+                        font.pixelSize: 12
+                        font.capitalization: Font.AllUppercase
+                        font.letterSpacing: 1.6
+                        bottomPadding: -4
+                    }
+
+                    component Body: Text {
+                        width: parent.width
+                        wrapMode: Text.WordWrap
+                        color: "#@base05@"
+                        font.family: "Source Serif 4"
+                        font.pixelSize: 17
+                        lineHeight: 1.35
+                    }
+
+                    Column {
+                        id: moreText
+                        width: more.width
+                        spacing: 10
+
+                        Label {
+                            visible: didYouKnow.visible
+                            text: "Did you know"
+                        }
+                        Text {
+                            id: didYouKnow
+                            visible: text !== ""
+                            text: root.info && root.info.did_you_know ? root.info.did_you_know : ""
+                            width: parent.width
+                            wrapMode: Text.WordWrap
+                            color: "#@base06@"
+                            font.family: "Cormorant Garamond"
+                            font.weight: Font.Medium
+                            font.pixelSize: 23
+                            lineHeight: 1.1
+                            bottomPadding: 8
+                        }
+
+                        Label {
+                            visible: museum.visible
+                            text: "From the museum"
+                        }
+                        Body {
+                            id: museum
+                            visible: text !== ""
+                            text: root.info && root.info.description ? root.info.description : ""
+                            bottomPadding: 8
+                        }
+
+                        Label {
+                            visible: commentary.visible
+                            text: "Commentary"
+                        }
+                        Body {
+                            id: commentary
+                            visible: text !== ""
+                            text: bubble.commentaryParts[0]
+                            textFormat: Text.MarkdownText
+                        }
+
+                        Label {
+                            visible: lookCloser.visible
+                            text: "Look closer"
+                            topPadding: 4
+                        }
+                        Body {
+                            id: lookCloser
+                            visible: text !== ""
+                            text: bubble.commentaryParts[1]
+                            textFormat: Text.MarkdownText
+                        }
+
+                        Text {
+                            visible: commentary.visible
+                            text: "Commentary written by AI (" + (root.info && root.info.commentaryModel ? root.info.commentaryModel : "unknown model") + "). It can get details wrong."
+                            width: parent.width
+                            wrapMode: Text.WordWrap
+                            color: "#@base03@"
+                            font.family: "Inter"
+                            font.pixelSize: 12
+                            topPadding: 6
+                        }
                     }
                 }
             }

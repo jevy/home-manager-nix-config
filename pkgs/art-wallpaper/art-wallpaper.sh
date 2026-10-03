@@ -6,9 +6,11 @@
 #   <id>.full.jpg  the full-resolution scan (up to ~12000px), converted from
 #                  CMA's TIFF because quickshell's Qt has no TIFF reader;
 #                  quickshell loads it only while you zoom in
-#   current.json   {id,title,artist,date,url,image,fullImage,file[,full]};
+#   current.json   {id,title,artist,date,url,image,fullImage,description,
+#                  did_you_know,technique,tombstone,file[,commentary][,full]};
 #                  quickshell watches this file, so it is renamed into place,
-#                  once with the small image and again when `full` is ready
+#                  once with the small image and again as each of
+#                  `commentary` and `full` arrives
 #   history.jsonl  one line per painting shown, to find one you liked again
 #
 # Why Cleveland: the Art Institute of Chicago's image server sits behind a
@@ -19,11 +21,18 @@
 # `art-wallpaper pin [--new] [FILE]` writes the current painting (or, with
 # --new, a fresh random one) plus its hash to FILE, by default the repo's
 # pkgs/art-wallpaper/pinned.json, for the art-pinned strategy to fetchurl.
+#
+# Commentary: an OpenRouter model ($model, ~$0.0002 and ~5 s per painting)
+# writes a short docent-style note grounded in the museum's own text, shown
+# in the quickshell caption bubble on hover. The key file is baked in by
+# default.nix from sops; without it, paintings just have the museum text.
 
 cache="${XDG_CACHE_HOME:-$HOME/.cache}/art-wallpaper"
 api="https://openaccess-api.clevelandart.org/api/artworks/"
 filter="type=Painting&has_image=1&cc0=1"
 ua="art-wallpaper (personal desktop wallpaper)"
+keyfile="${ART_WALLPAPER_KEY_FILE:-@keyfile@}"
+model="${ART_WALLPAPER_MODEL:-z-ai/glm-5.3-flash}"
 
 fetch() { curl -fsS --retry 3 --retry-all-errors -A "$ua" "$@"; }
 
@@ -35,7 +44,7 @@ next() {
   pick=""
   for _ in 1 2 3 4 5; do
     skip=$(shuf -i "0-$((total - 100))" -n 1)
-    pick=$(fetch "$api?$filter&limit=100&skip=$skip&fields=id,title,creation_date,creators,culture,images,url" \
+    pick=$(fetch "$api?$filter&limit=100&skip=$skip&fields=id,title,creation_date,creators,culture,images,url,description,did_you_know,technique,tombstone" \
       | jq -c '.data[]
           | select(.images.print != null)
           | (.images.print.width | tonumber) as $w
@@ -48,7 +57,11 @@ next() {
               date: (.creation_date // ""),
               url,
               image: .images.print.url,
-              fullImage: (.images.full.url // "")
+              fullImage: (.images.full.url // ""),
+              description: ((.description // "") | gsub("<[^>]*>"; "")),
+              did_you_know: ((.did_you_know // "") | gsub("<[^>]*>"; "")),
+              technique: (.technique // ""),
+              tombstone: (.tombstone // "")
             }' \
       | shuf -n 1)
     [ -n "$pick" ] && break
@@ -81,9 +94,13 @@ next() {
 
   info
 
-  # The wallpaper is already up; the full scan is a bonus for zooming, so a
-  # failure here is logged, not fatal. Typical: 126 MB TIFF, ~3 s download,
-  # <1 s to convert, 12 MB JPEG.
+  # The wallpaper is already up; commentary and the full scan are extras, so
+  # a failure in either is logged, not fatal. Commentary first: it's quicker
+  # (~5 s) than a big scan. Typical scan: 126 MB TIFF, ~3 s download, <1 s
+  # to convert, 12 MB JPEG.
+  if ! fetch_commentary "$id"; then
+    echo "art-wallpaper: commentary failed for $id" >&2
+  fi
   if ! fetch_full "$id" "$backdrop"; then
     echo "art-wallpaper: full-resolution download failed for $id" >&2
   fi
@@ -131,11 +148,48 @@ fetch_full() {
     fill_backdrop "$cache/$id.full.part.jpg" "$backdrop"
   fi
   mv "$cache/$id.full.part.jpg" "$cache/$id.full.jpg"
-  # Another `next` may have replaced the painting meanwhile.
-  jq --argjson id "$id" --arg full "$id.full.jpg" \
-    'if .id == $id then . + {full: $full} else . end' \
+  set_current "$id" full "$id.full.jpg"
+}
+
+# Add key=value to current.json, unless another `next` has replaced the
+# painting meanwhile.
+set_current() {
+  local id=$1 key=$2 value=$3
+  jq --argjson id "$id" --arg key "$key" --arg value "$value" \
+    'if .id == $id then .[$key] = $value else . end' \
     "$cache/current.json" >"$cache/current.json.tmp"
   mv "$cache/current.json.tmp" "$cache/current.json"
+}
+
+fetch_commentary() {
+  local id=$1 record body text
+  if [ ! -r "$keyfile" ]; then
+    echo "art-wallpaper: no OpenRouter key at $keyfile, skipping commentary" >&2
+    return 0
+  fi
+  record=$(jq '{title, artist, date, technique, tombstone, description, did_you_know}' "$cache/current.json")
+  body=$(jq -n --arg model "$model" --arg sys "$docent" --arg rec "$record" \
+    '{model: $model, max_tokens: 1200, reasoning: {effort: "low"},
+      messages: [{role: "system", content: $sys}, {role: "user", content: $rec}]}')
+  # Key goes in via a header file so it never shows up in `ps`.
+  text=$(curl -fsS --retry 2 https://openrouter.ai/api/v1/chat/completions \
+    -H @<(printf 'Authorization: Bearer %s\n' "$(<"$keyfile")") \
+    -H 'Content-Type: application/json' -H 'X-Title: art-wallpaper' -d "$body" \
+    | jq -r '.choices[0].message.content // ""')
+  [ -n "$text" ] || return 1
+  set_current "$id" commentary "$text"
+  set_current "$id" commentaryModel "$model"
+}
+
+docent='You are a museum docent writing for a curious non-specialist who has this painting as their desktop wallpaper and can zoom into it. Plain English, no puffery, no em dashes. Ground everything in the museum record given. You may add well-established general context about the tradition, period or artist, but never invent specifics about this object (dates, provenance, owners, attributions); if something is uncertain, say so. Markdown, under 220 words: a paragraph on why it matters, a paragraph of context, then a "Look closer" heading with 2 or 3 bullets naming specific details worth zooming into.'
+
+about() {
+  info
+  jq -r '[
+      (if .did_you_know != "" then "\nDid you know: \(.did_you_know)" else empty end),
+      (if .description != "" then "\n\(.description)" else empty end),
+      (if .commentary then "\nCommentary (\(.commentaryModel), AI-written):\n\(.commentary)" else empty end)
+    ] | join("\n")' "$cache/current.json"
 }
 
 info() {
@@ -150,7 +204,7 @@ pin() {
   out="${1:-$HOME/.config/nixpkgs/pkgs/art-wallpaper/pinned.json}"
   # Same bytes fetchurl will download, so this hash is the one it checks.
   hash=$(nix hash file --type sha256 --sri "$cache/$(jq -r '.file' "$cache/current.json")")
-  jq --arg hash "$hash" '{id, title, artist, date, url, image, hash: $hash}' \
+  jq --arg hash "$hash" '{id, title, artist, date, url, image, description, did_you_know, technique, tombstone, commentary, commentaryModel, hash: $hash}' \
     "$cache/current.json" >"$out"
   echo "pinned to $out:"
   info
@@ -159,13 +213,15 @@ pin() {
 case "${1:-next}" in
   next) next ;;
   info) info ;;
+  about) about ;;
+  comment) fetch_commentary "$(jq -r '.id' "$cache/current.json")" && about ;;
   pin)
     shift
     pin "$@"
     ;;
   open) xdg-open "$(jq -r '.url' "$cache/current.json")" ;;
   *)
-    echo "usage: art-wallpaper [next|info|open|pin [--new] [FILE]]" >&2
+    echo "usage: art-wallpaper [next|info|about|comment|open|pin [--new] [FILE]]" >&2
     exit 2
     ;;
 esac

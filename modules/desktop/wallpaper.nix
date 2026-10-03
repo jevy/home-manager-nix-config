@@ -60,6 +60,14 @@
       };
 
       config = lib.mkMerge [
+        (lib.mkIf (cfg.strategy != "static") {
+          # The caption bubble's type (pkgs/art-wallpaper/shell.qml).
+          fonts.packages = with pkgs; [
+            cormorant
+            source-serif
+            inter
+          ];
+        })
         (lib.mkIf (cfg.strategy == "art-pinned") {
           stylix.image = cfg.art.pinnedImage;
         })
@@ -89,7 +97,9 @@
     let
       cfg = osConfig.wallpaper;
       isArt = cfg.strategy != "static";
-      artWallpaper = pkgs.callPackage ../../pkgs/art-wallpaper { };
+      artWallpaper = pkgs.callPackage ../../pkgs/art-wallpaper {
+        openrouterKeyFile = config.sops.secrets.openrouter_api_key.path;
+      };
       pin = lib.importJSON ../../pkgs/art-wallpaper/pinned.json;
 
       # Same layout the script writes: <id>.jpg + current.json naming it.
@@ -115,8 +125,13 @@
       shellQml = pkgs.replaceVars ../../pkgs/art-wallpaper/shell.qml {
         dir =
           if cfg.strategy == "art-pinned" then "${pinnedDir}" else "${config.xdg.cacheHome}/art-wallpaper";
-        serif = config.stylix.fonts.serif.name;
-        inherit (colors) base00 base04 base05;
+        inherit (colors)
+          base00
+          base03
+          base04
+          base05
+          base06
+          ;
       };
     in
     lib.mkMerge [
