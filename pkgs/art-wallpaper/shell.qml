@@ -18,9 +18,13 @@ ShellRoot {
     readonly property string image: info ? "file://" + dir + "/" + info.file : ""
 
     FileView {
+        id: meta
         path: root.dir + "/current.json"
         watchChanges: true
         onFileChanged: reload()
+        // watchChanges only follows a file that exists, so on a first run
+        // (empty cache) poll until art-wallpaper writes it.
+        onLoadFailed: retry.start()
         onLoaded: {
             try {
                 root.info = JSON.parse(text());
@@ -28,6 +32,12 @@ ShellRoot {
                 console.warn("art-wallpaper: bad current.json", e);
             }
         }
+    }
+
+    Timer {
+        id: retry
+        interval: 5000
+        onTriggered: meta.reload()
     }
 
     Variants {
