@@ -555,6 +555,35 @@ MONEOF
                   render_text = true;
                   text_center = true;
                   text_height = 8;
+
+                  # Stylix has no hy3 target, so without these the tabs keep
+                  # hy3's blue/grey defaults. Same mapping as theme-mode's art
+                  # mode (pkgs/gruvbox-art/theme_mode.py, hy3_tabs).
+                  colors =
+                    let
+                      c = config.lib.stylix.colors;
+                      rgb = s: "rgb(${c.${s}})";
+                    in
+                    {
+                      active = rgb "base0D";
+                      active_border = rgb "base0D";
+                      active_text = rgb "base00";
+                      focused = rgb "base02";
+                      focused_border = rgb "base0D";
+                      focused_text = rgb "base05";
+                      inactive = rgb "base01";
+                      inactive_border = rgb "base02";
+                      inactive_text = rgb "base04";
+                      active_alt_monitor = rgb "base02";
+                      active_alt_monitor_border = rgb "base03";
+                      active_alt_monitor_text = rgb "base05";
+                      urgent = rgb "base08";
+                      urgent_border = rgb "base08";
+                      urgent_text = rgb "base00";
+                      locked = rgb "base0C";
+                      locked_border = rgb "base0C";
+                      locked_text = rgb "base00";
+                    };
                 };
               };
             };

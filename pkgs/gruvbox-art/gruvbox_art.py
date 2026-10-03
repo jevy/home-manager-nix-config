@@ -36,6 +36,8 @@ MAX_ACCENT_SHIFT = 40.0
 SLOT_MAX_SHIFT = {"base08": 15.0}
 ACCENT_WINDOW = 50.0  # how far an accent looks for a painting hue to follow
 MIN_ACCENT_MASS = 0.01  # less painting than this near an accent: leave it alone
+PRESENT_MASS = 0.05  # this much painting near an accent counts as fully present
+ABSENT_MUTE = 0.7  # chroma cut for an absent hue at strength 1 (0.42 at 0.6)
 MIN_CONTRAST = 4.5  # WCAG AA, accent on base00
 
 
@@ -215,6 +217,11 @@ def tint(base, art, strength):
         pull = strength if mass > MIN_ACCENT_MASS else 0.0
         cap = SLOT_MAX_SHIFT.get(slot, MAX_ACCENT_SHIFT)
         shift = max(-cap, min(cap, hue_delta(h, target)))
+        # Hues the painting lacks recede: same hue (magenta still reads as
+        # magenta) but less chroma, so gruvbox pink doesn't shout over a brown
+        # painting. Red is exempt: errors stay loud.
+        absent = 0.0 if slot == "base08" else 1 - min(1.0, mass / PRESENT_MASS)
+        C *= 1 - strength * ABSENT_MUTE * absent
         hx = lch_to_hex(L, C * sat, h + shift * pull)
         # Keep gruvbox's own contrast (capped at WCAG AA) on the new background.
         # Some gruvbox accents (base0F) start below 4.5:1; forcing them up would
@@ -241,8 +248,47 @@ def read_base16(path):
     return pal
 
 
-def to_yaml(pal, name):
-    lines = ['system: "base16"', f'name: "{name}"', 'author: "gruvbox-art"', 'variant: "dark"', "palette:"]
+def accent_rank(base, art):
+    """Accents ordered by how much of the painting sits near them, most first.
+
+    A UI's main accent slots (Noctalia's primary/secondary) should be the
+    painting's main colours; base16 fixes them to blue and magenta, which a
+    brown painting never moves. Red is left out so errors still read as errors.
+    Ties keep slot order (sorted is stable), so the ranking is deterministic.
+    """
+    mass = {
+        s: accent_target(art["hist"], hex_to_lch(base[s])[2])[1] for s in ACCENTS if s != "base08"
+    }
+    rank = sorted(mass, key=lambda s: -mass[s])
+    # A grey painting has nothing to rank by: callers keep their default roles.
+    return rank if mass[rank[0]] > MIN_ACCENT_MASS else []
+
+
+ROLE_SLOTS = ["base0D", "base0E", "base0C"]  # gruvbox's primary/secondary/tertiary
+
+
+def ui_roles(base, tinted, rank):
+    """Primary/secondary/tertiary UI colours: the painting's hues, gruvbox's quiet.
+
+    Each role takes the hue of a top-ranked accent but the lightness and chroma
+    of the gruvbox slot it stands in for. Gruvbox gives its large surfaces
+    (tabs, active pill, borders) its most muted accents (base0D is C 0.055);
+    promoting yellow at its own chroma (0.113) made those surfaces glare.
+    """
+    if not rank:
+        return {}
+    out = {}
+    for name, role, src in zip(("primary", "secondary", "tertiary"), ROLE_SLOTS, rank):
+        L, C, _ = hex_to_lch(base[role])
+        out[name] = lch_to_hex(L, C, hex_to_lch(tinted[src])[2])
+    return out
+
+
+def to_yaml(pal, name, roles=None):
+    lines = ['system: "base16"', f'name: "{name}"', 'author: "gruvbox-art"', 'variant: "dark"']
+    # Extra top-level keys; base16 tools read only `palette`.
+    lines += [f'{k}: "{v}"' for k, v in (roles or {}).items()]
+    lines.append("palette:")
     lines += [f'  {k}: "{pal[k]}"' for k in NEUTRALS + ACCENTS]
     return "\n".join(lines) + "\n"
 
@@ -298,8 +344,9 @@ def main():
     p.add_argument("--preview")
     a = p.parse_args()
     base = read_base16(a.base)
-    tinted = tint(base, analyse(a.image), max(0.0, min(1.0, a.strength)))
-    sys.stdout.write(to_yaml(tinted, a.name))
+    art = analyse(a.image)
+    tinted = tint(base, art, max(0.0, min(1.0, a.strength)))
+    sys.stdout.write(to_yaml(tinted, a.name, ui_roles(base, tinted, accent_rank(base, art))))
     if a.preview:
         preview(a.image, base, tinted, a.preview)
 
