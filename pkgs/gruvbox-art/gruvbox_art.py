@@ -29,7 +29,9 @@ ACCENTS = ["base08", "base09", "base0A", "base0B", "base0C", "base0D", "base0E",
 THUMB = 96  # longest side for sampling; fixed so results don't depend on scan size
 HUE_BINS = 72  # 5 degrees each
 DARK_L, LIGHT_L = 0.5, 0.7  # OKLab lightness splitting shadows / highlights
-BG_CHROMA = (0.015, 0.045)  # chroma range base00-03 may take from the shadows
+# Chroma range base00-03 may take from the shadows. Kept near gruvbox's own
+# (base00 is 0.003): at 0.015-0.045 the background read as brown, not grey.
+BG_CHROMA = (0.006, 0.010)
 FG_CHROMA = (0.02, 0.07)  # chroma range base04-07 may take from the highlights
 MAX_ACCENT_SHIFT = 40.0
 # Red marks errors; 40 degrees turns it orange, which reads as a warning.
