@@ -306,7 +306,18 @@ MONEOF
                 key = "w";
                 desc = "New Wallpaper";
                 cmd = "systemctl --user start art-wallpaper.service";
-              };
+              }
+              # Gruvbox ⇄ painting-tinted theme (desktop/wallpaper.nix).
+              ++ lib.optional
+                (
+                  (osConfig.wallpaper.strategy or "static") != "static"
+                  && (config.desktopShell or null) == "noctalia"
+                )
+                {
+                  key = "c";
+                  desc = "Theme: gruvbox / art";
+                  cmd = "theme-mode toggle";
+                };
             };
             toggleAudioOutput = pkgs.writeShellScript "toggle-audio-output" ''
               pactl="${pkgs.pulseaudio}/bin/pactl"

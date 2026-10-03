@@ -11,6 +11,16 @@
 #               wallpaper.art.themeFromArt, stylix also generates the colour
 #               scheme from it instead of using gruvbox.
 #
+# Theme mode (art strategies + Noctalia): Meta+D → c, or `theme-mode toggle`,
+# switches the live desktop between stylix's gruvbox and gruvbox tinted by the
+# painting on screen (pkgs/gruvbox-art, strength 0.6). No rebuild: it reaches
+# only Noctalia, Hyprland borders and ghostty. GTK is light Adwaita on purpose
+# (desktop/apps.nix) and Qt/Kvantum and nvim keep build-time gruvbox.
+# `noctalia msg color-scheme-set` persists a [theme] table into Noctalia's
+# settings.toml (the CONFIG DRIFT file in noctalia.nix), so once toggled that
+# file, not config.toml, picks the palette. Gruvbox mode writes the same
+# values Nix does, but a future Nix theme change needs that table deleted.
+#
 # The art strategies replace hyprpaper with quickshell, so stylix's hyprpaper
 # target is off for them. Black shows until a painting loads.
 #
@@ -122,9 +132,25 @@
       ];
 
       inherit (config.lib.stylix) colors;
+
+      artDir =
+        if cfg.strategy == "art-pinned" then "${pinnedDir}" else "${config.xdg.cacheHome}/art-wallpaper";
+
+      # theme-mode needs Noctalia for its palette switch.
+      themeMode = pkgs.callPackage ../../pkgs/gruvbox-art/theme-mode.nix {
+        inherit artDir;
+        hyprland = config.wayland.windowManager.hyprland.finalPackage;
+        noctalia = config.programs.noctalia.package;
+        gruvboxScheme = pkgs.writeText "stylix-scheme.yaml" (
+          lib.concatMapStrings (n: "${n}: \"${colors.${n}}\"\n") (
+            map (i: "base0${i}") (lib.stringToCharacters "0123456789ABCDEF")
+          )
+        );
+      };
+      hasThemeMode = isArt && (config.desktopShell or null) == "noctalia";
+
       shellQml = pkgs.replaceVars ../../pkgs/art-wallpaper/shell.qml {
-        dir =
-          if cfg.strategy == "art-pinned" then "${pinnedDir}" else "${config.xdg.cacheHome}/art-wallpaper";
+        dir = artDir;
         inherit (colors)
           base00
           base03
@@ -158,6 +184,38 @@
         # scans pass from ~8200x8200 up (9727x7430 = 289 MB failed, leaving
         # the zoom blurry). Largest seen so far is ~460 MB.
         systemd.user.services.quickshell.Service.Environment = [ "QT_IMAGEIO_MAXALLOC=1024" ];
+      })
+
+      # Live gruvbox ⇄ painting-tinted theme (Meta+D → c). See the header.
+      (lib.mkIf hasThemeMode {
+        home.packages = [ themeMode ];
+
+        # Empty in gruvbox mode; "?" makes a missing file fine. Loaded after
+        # the stylix theme, so its colours win.
+        programs.ghostty.settings.config-file = "?${config.xdg.stateHome}/theme-mode/ghostty";
+
+        # Hyprland's keywords reset on restart; Noctalia's choice persists in
+        # its settings.toml but the palette file may predate a new painting.
+        systemd.user.services.theme-mode = {
+          Unit = {
+            Description = "Re-apply the gruvbox/art theme mode";
+            After = [
+              "graphical-session.target"
+              "noctalia.service"
+            ];
+            PartOf = [ "graphical-session.target" ];
+          };
+          Service = {
+            Type = "oneshot";
+            ExecStart = "${lib.getExe themeMode} refresh";
+          };
+          Install.WantedBy = [ "graphical-session.target" ];
+        };
+      })
+
+      (lib.mkIf (hasThemeMode && cfg.strategy == "art-rotate") {
+        # A new painting re-tints when art mode is on (no-op in gruvbox mode).
+        systemd.user.services.art-wallpaper.Service.ExecStartPost = "${lib.getExe themeMode} refresh";
       })
 
       (lib.mkIf (cfg.strategy == "art-rotate") {
