@@ -7,7 +7,8 @@ The base scheme keeps its structure. Every slot keeps its OKLCH lightness, so
 contrast between background, text and accents stays what gruvbox tuned it to.
 Only hue and chroma move:
 
-  base00-07  neutrals lean toward the painting's overall colour cast
+  base00-03  backgrounds take the colour of the painting's shadows
+  base04-07  text takes the colour of the painting's highlights
   base08-0F  each accent drifts toward the painting's nearest strong hue,
              but never more than MAX_ACCENT_SHIFT degrees, so red stays red
 
@@ -27,9 +28,14 @@ ACCENTS = ["base08", "base09", "base0A", "base0B", "base0C", "base0D", "base0E",
 
 THUMB = 96  # longest side for sampling; fixed so results don't depend on scan size
 HUE_BINS = 72  # 5 degrees each
-MAX_NEUTRAL_SHIFT = 90.0
-MAX_ACCENT_SHIFT = 30.0
-ACCENT_WINDOW = 45.0  # how far an accent looks for a painting hue to follow
+DARK_L, LIGHT_L = 0.5, 0.7  # OKLab lightness splitting shadows / highlights
+BG_CHROMA = (0.015, 0.045)  # chroma range base00-03 may take from the shadows
+FG_CHROMA = (0.02, 0.07)  # chroma range base04-07 may take from the highlights
+MAX_ACCENT_SHIFT = 40.0
+# Red marks errors; 40 degrees turns it orange, which reads as a warning.
+SLOT_MAX_SHIFT = {"base08": 15.0}
+ACCENT_WINDOW = 50.0  # how far an accent looks for a painting hue to follow
+MIN_ACCENT_MASS = 0.01  # less painting than this near an accent: leave it alone
 MIN_CONTRAST = 4.5  # WCAG AA, accent on base00
 
 
@@ -120,16 +126,29 @@ def hue_delta(frm, to):
 # --- reading the painting ----------------------------------------------------
 
 
+def _tone(sa, sb, n):
+    """Average (a, b) of a pixel group as (hue, chroma); grey if the group is empty."""
+    if n == 0:
+        return 0.0, 0.0
+    _, c, h = lab_to_lch(0, sa / n, sb / n)
+    return h, c
+
+
 def analyse(path):
     img = Image.open(path).convert("RGB")
     img.thumbnail((THUMB, THUMB), Image.Resampling.BOX)
     hist = [0.0] * HUE_BINS
-    sum_a = sum_b = sum_c = 0.0
+    dark = [0.0, 0.0, 0]  # sum a, sum b, count
+    light = [0.0, 0.0, 0]
+    sum_c = 0.0
     n = 0
     for r, g, b in img.get_flattened_data():
         L, a, bb = rgb_to_oklab(r / 255, g / 255, b / 255)
         _, C, h = lab_to_lch(L, a, bb)
-        sum_a, sum_b, sum_c, n = sum_a + a, sum_b + bb, sum_c + C, n + 1
+        sum_c, n = sum_c + C, n + 1
+        group = dark if L < DARK_L else light if L > LIGHT_L else None
+        if group:
+            group[0], group[1], group[2] = group[0] + a, group[1] + bb, group[2] + 1
         if C > 0.03 and 0.15 < L < 0.95:  # ignore greys, black and paper white
             hist[int(h / (360 / HUE_BINS)) % HUE_BINS] += C
     # Circular [1, 2, 1] smoothing so one noisy bin doesn't win.
@@ -137,11 +156,10 @@ def analyse(path):
         (hist[i - 1] + 2 * hist[i] + hist[(i + 1) % HUE_BINS]) / 4 for i in range(HUE_BINS)
     ]
     total = sum(hist) or 1.0
-    _, cast_c, cast_h = lab_to_lch(0, sum_a / n, sum_b / n)
     return {
         "hist": [w / total for w in hist],
-        "cast_hue": cast_h,
-        "cast_chroma": cast_c,
+        "dark": _tone(*dark),
+        "light": _tone(*light),
         "mean_chroma": sum_c / n,
     }
 
@@ -167,15 +185,26 @@ def accent_target(hist, hue):
 # --- building the scheme -----------------------------------------------------
 
 
+def _toward(L, C, h, tone, c_range, t):
+    """Move a neutral toward a painting tone in (a, b), keeping lightness.
+
+    Rotating the hue of a near-grey is invisible, so chroma moves too: the
+    target is the tone's hue at its own chroma, clamped to `c_range`.
+    """
+    th, tc = tone
+    tc = min(c_range[1], max(c_range[0], tc))
+    _, a0, b0 = lch_to_lab(L, C, h)
+    _, a1, b1 = lch_to_lab(L, tc, th)
+    return lab_to_lch(L, a0 + (a1 - a0) * t, b0 + (b1 - b0) * t)
+
+
 def tint(base, art, strength):
     out = {}
 
-    # Neutrals: how far they lean depends on how strong the painting's cast is.
-    cast_pull = strength * min(1.0, art["cast_chroma"] / 0.03)
+    # Backgrounds take the painting's shadows, text takes its highlights.
     for slot in NEUTRALS:
-        L, C, h = hex_to_lch(base[slot])
-        shift = max(-MAX_NEUTRAL_SHIFT, min(MAX_NEUTRAL_SHIFT, hue_delta(h, art["cast_hue"])))
-        out[slot] = lch_to_hex(L, C, h + shift * cast_pull)
+        tone, c_range = (art["dark"], BG_CHROMA) if slot <= "base03" else (art["light"], FG_CHROMA)
+        out[slot] = lch_to_hex(*_toward(*hex_to_lch(base[slot]), tone, c_range, strength))
 
     # Accents: muted paintings mute the accents a little, vivid ones lift them.
     sat = min(1.15, max(0.75, art["mean_chroma"] / 0.06))
@@ -183,11 +212,15 @@ def tint(base, art, strength):
     for slot in ACCENTS:
         L, C, h = hex_to_lch(base[slot])
         target, mass = accent_target(art["hist"], h)
-        pull = strength * min(1.0, mass / 0.08)
-        shift = max(-MAX_ACCENT_SHIFT, min(MAX_ACCENT_SHIFT, hue_delta(h, target)))
+        pull = strength if mass > MIN_ACCENT_MASS else 0.0
+        cap = SLOT_MAX_SHIFT.get(slot, MAX_ACCENT_SHIFT)
+        shift = max(-cap, min(cap, hue_delta(h, target)))
         hx = lch_to_hex(L, C * sat, h + shift * pull)
-        # Keep accents readable on the background, raising lightness if needed.
-        while contrast(hx, out["base00"]) < MIN_CONTRAST and L < 0.98:
+        # Keep gruvbox's own contrast (capped at WCAG AA) on the new background.
+        # Some gruvbox accents (base0F) start below 4.5:1; forcing them up would
+        # change them identically for every painting.
+        need = min(MIN_CONTRAST, contrast(base[slot], base["base00"]))
+        while contrast(hx, out["base00"]) < need and L < 0.98:
             L += 0.005
             hx = lch_to_hex(L, C * sat, h + shift * pull)
         out[slot] = hx
