@@ -74,7 +74,12 @@
 
   # Home-manager hyprland configuration
   flake.modules.homeManager.hyprland =
-    { pkgs, lib, ... }:
+    {
+      pkgs,
+      lib,
+      osConfig,
+      ...
+    }:
     {
       services.hyprpolkitagent.enable = true;
 
@@ -288,7 +293,13 @@ MONEOF
                 { key = "t"; desc = "Files (Ranger)"; cmd = "ghostty -e ${pkgs.ranger}/bin/ranger ~/Downloads"; }
                 { key = "g"; desc = "Files (Yazi)"; cmd = "ghostty -e yazi ~/Downloads"; }
                 { key = "a"; desc = "Claude"; cmd = "firefox https://claude.ai"; }
-              ];
+              ]
+              # New random painting (desktop/wallpaper.nix, art-rotate only).
+              ++ lib.optional ((osConfig.wallpaper.strategy or "static") == "art-rotate") {
+                key = "w";
+                desc = "New Wallpaper";
+                cmd = "systemctl --user start art-wallpaper.service";
+              };
             };
             toggleAudioOutput = pkgs.writeShellScript "toggle-audio-output" ''
               pactl="${pkgs.pulseaudio}/bin/pactl"
