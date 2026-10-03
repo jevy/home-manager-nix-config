@@ -120,6 +120,12 @@ fetch_full() {
   [ -n "$url" ] || return 0
   fetch -o "$cache/$id.full.tif" "$url"
   vips colourspace "$cache/$id.full.tif" "$cache/$id.full.part.jpg[Q=90,optimize_coding]" srgb
+  # A GPU texture tops out at 16384px a side; quickshell can't show more.
+  if [ "$(vipsheader -f width "$cache/$id.full.part.jpg")" -gt 16384 ] \
+    || [ "$(vipsheader -f height "$cache/$id.full.part.jpg")" -gt 16384 ]; then
+    vips thumbnail "$cache/$id.full.part.jpg" "$cache/$id.full.small.jpg[Q=90,optimize_coding]" 16384 --size down
+    mv "$cache/$id.full.small.jpg" "$cache/$id.full.part.jpg"
+  fi
   rm -f "$cache/$id.full.tif"
   if [ -n "$backdrop" ]; then
     fill_backdrop "$cache/$id.full.part.jpg" "$backdrop"

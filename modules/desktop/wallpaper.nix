@@ -137,6 +137,11 @@
           activeConfig = "art-wallpaper";
           systemd.enable = true;
         };
+
+        # Qt refuses to decode an image needing more than 256 MB, which full
+        # scans pass from ~8200x8200 up (9727x7430 = 289 MB failed, leaving
+        # the zoom blurry). Largest seen so far is ~460 MB.
+        systemd.user.services.quickshell.Service.Environment = [ "QT_IMAGEIO_MAXALLOC=1024" ];
       })
 
       (lib.mkIf (cfg.strategy == "art-rotate") {
