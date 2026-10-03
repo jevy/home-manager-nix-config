@@ -91,14 +91,16 @@ next() {
 
 # A dark painting photographed on the museum's light backdrop (an oval canvas,
 # a panel with margins) gets a bright frame around a dark wallpaper. If the
-# centre is dark and the corner light, print a dark fill colour taken from the
-# painting; otherwise print nothing and leave the image alone.
+# centre is dark and the corner light, print the painting's most common colour
+# (5 clusters, measured on the centre so the backdrop can't win); otherwise
+# print nothing and leave the image alone.
 backdrop_fill() {
   local f=$1 centre corner
   centre=$(magick "$f" -gravity center -crop 50%x50%+0+0 -colorspace Gray -format '%[fx:mean]' info:)
   corner=$(magick "$f" -crop 2%x2%+0+0 -colorspace Gray -format '%[fx:mean]' info:)
   awk -v m="$centre" -v c="$corner" 'BEGIN { exit !(m < 0.35 && c > 0.6) }' || return 0
-  magick "$f" -gravity center -crop 50%x50%+0+0 -scale '1x1!' -evaluate multiply 0.5 -format '#%[hex:p{0,0}]' info:
+  magick "$f" -gravity center -crop 50%x50%+0+0 +repage -scale 200x200 -colors 5 -depth 8 \
+    -format %c histogram:info: | sort -rn | awk 'NR == 1 { print $3 }'
 }
 
 # Flood the backdrop in one pass from a 1px frame in the corner colour, which

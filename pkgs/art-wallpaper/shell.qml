@@ -116,6 +116,10 @@ ShellRoot {
                 flick.returnToBounds();
             }
 
+            function cursor() {
+                return flick.mapFromItem(hover.parent, hover.point.position);
+            }
+
             function reset() {
                 flick.resizeContent(flick.width, flick.height, Qt.point(0, 0));
                 flick.contentX = 0;
@@ -153,18 +157,21 @@ ShellRoot {
 
                 // Zoom around the mouse cursor. A touchpad pinch's centroid
                 // doesn't follow the pointer, so track it separately.
+                // Handlers declared in a Flickable attach to its moving
+                // contentItem, so point.position is in content coordinates;
+                // cursor() maps it back to the view.
                 HoverHandler {
                     id: hover
                 }
 
                 WheelHandler {
                     acceptedModifiers: Qt.ControlModifier
-                    onWheel: event => win.zoomAt(Math.pow(1.0015, event.angleDelta.y), hover.point.position)
+                    onWheel: event => win.zoomAt(Math.pow(1.0015, event.angleDelta.y), win.cursor())
                 }
 
                 PinchHandler {
                     target: null
-                    onScaleChanged: delta => win.zoomAt(delta, hover.point.position)
+                    onScaleChanged: delta => win.zoomAt(delta, win.cursor())
                 }
 
                 TapHandler {
