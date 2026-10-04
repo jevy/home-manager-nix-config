@@ -137,6 +137,35 @@
         '';
       };
 
+      # UniFi Network MCP server (sirkirby/unifi-mcp), talking to the UDM Pro.
+      # Upstream only ships PyPI wheels, so this runs through uvx — pinned to an
+      # exact version rather than `@latest`, which would hit PyPI on every
+      # launch and risk Claude Code's 30s MCP startup budget (the reason brave
+      # and kubernetes moved off npx). Python comes from nixpkgs because the
+      # package needs >=3.13 and uv-downloaded interpreters are unreliable on
+      # NixOS.
+      #
+      # The password never touches the Nix store or sops: the server runs
+      # UNIFI_NETWORK_PASSWORD_COMMAND (shlex-split, no shell, 30s timeout,
+      # stderr discarded) itself. `--account` is load-bearing — both the
+      # personal and Covenant 1Password accounts have a vault called
+      # "Private", and without it `op` resolves the work one and fails with
+      # "isn't an item in the Private vault". `op` is the setuid wrapper from
+      # programs._1password, so the desktop app must be unlocked (or will
+      # prompt) when the server starts. Hosts without that wrapper fail at
+      # startup (exit 6), not at eval.
+      #
+      # Auth is the local admin `claude-mcp` (no MFA, local access only);
+      # an API key alone would limit the server to inventory reads.
+      unifiNetworkMcpWrapper = pkgs.writeShellApplication {
+        name = "run-unifi-network-mcp";
+        runtimeInputs = [ pkgs.uv ];
+        text = ''
+          exec uvx --python ${lib.getExe pkgs.python313} \
+            unifi-network-mcp==0.36.2 "$@"
+        '';
+      };
+
       # Hermes Agent MCP server. Hermes exposes its messaging bridge
       # (conversations_list / messages_read / messages_send / events_poll ...)
       # over **stdio only** — there is no HTTP endpoint, so the cluster Ingress
@@ -225,6 +254,20 @@
         };
         hermes = {
           command = "${hermesMcpWrapper}/bin/run-hermes-mcp";
+        };
+        # Writes are allowed (upstream default gates) but `confirm` makes every
+        # mutation a two-step preview-then-apply. VERIFY_SSL is off because
+        # the UDM Pro serves a self-signed cert on 192.168.1.1: still
+        # encrypted, but the controller's identity is not checked.
+        "unifi-network" = {
+          command = "${unifiNetworkMcpWrapper}/bin/run-unifi-network-mcp";
+          env = {
+            UNIFI_NETWORK_HOST = "192.168.1.1";
+            UNIFI_NETWORK_USERNAME = "claude-mcp";
+            UNIFI_NETWORK_PASSWORD_COMMAND = ''/run/wrappers/bin/op read --account my.1password.com "op://Private/Unifi Claude MCP/password"'';
+            UNIFI_NETWORK_VERIFY_SSL = "false";
+            UNIFI_NETWORK_TOOL_PERMISSION_MODE = "confirm";
+          };
         };
         # Sure (self-hosted personal finance, `apps/sure` in the homelab).
         # The only *remote* server here: Sure speaks streamable HTTP MCP at
