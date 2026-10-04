@@ -14,8 +14,9 @@
 # Theme mode (art strategies + Noctalia): Meta+D → c, or `theme-mode toggle`,
 # switches the live desktop between stylix's gruvbox and gruvbox tinted by the
 # painting on screen (pkgs/gruvbox-art, strength 0.6). No rebuild: it reaches
-# only Noctalia, Hyprland borders and ghostty. GTK is light Adwaita on purpose
-# (desktop/apps.nix) and Qt/Kvantum and nvim keep build-time gruvbox.
+# only Noctalia, Hyprland borders, ghostty and the Obsidian vaults that
+# stylix.targets.obsidian themes (apps/obsidian.nix). GTK is light Adwaita on
+# purpose (desktop/apps.nix) and Qt/Kvantum and nvim keep build-time gruvbox.
 # `noctalia msg color-scheme-set` persists a [theme] table into Noctalia's
 # settings.toml (the CONFIG DRIFT file in noctalia.nix), so once toggled that
 # file, not config.toml, picks the palette. Gruvbox mode writes the same
@@ -136,11 +137,18 @@
       artDir =
         if cfg.strategy == "art-pinned" then "${pinnedDir}" else "${config.xdg.cacheHome}/art-wallpaper";
 
+      # Vaults with the stylix snippet get theme-mode's override next to it.
+      obsidianVaults = lib.optionals (
+        config.programs.obsidian.enable && config.stylix.targets.obsidian.enable
+      ) config.stylix.targets.obsidian.vaultNames;
+
       # theme-mode needs Noctalia for its palette switch.
       themeMode = pkgs.callPackage ../../pkgs/gruvbox-art/theme-mode.nix {
         inherit artDir;
         hyprland = config.wayland.windowManager.hyprland.finalPackage;
         noctalia = config.programs.noctalia.package;
+        obsidianCli = if obsidianVaults != [ ] then "${pkgs.obsidian}/bin/obsidian-cli" else null;
+        inherit obsidianVaults;
         gruvboxScheme = pkgs.writeText "stylix-scheme.yaml" (
           lib.concatMapStrings (n: "${n}: \"${colors.${n}}\"\n") (
             map (i: "base0${i}") (lib.stringToCharacters "0123456789ABCDEF")
@@ -193,6 +201,24 @@
         # Empty in gruvbox mode; "?" makes a missing file fine. Loaded after
         # the stylix theme, so its colours win.
         programs.ghostty.settings.config-file = "?${config.xdg.stateHome}/theme-mode/ghostty";
+
+        # Listed after "Stylix Config" in the read-only appearance.json, so
+        # it is enabled; the placeholder text is swapped for a symlink to the
+        # file theme-mode rewrites (empty in gruvbox mode).
+        programs.obsidian.vaults = lib.genAttrs obsidianVaults (_: {
+          settings.cssSnippets = lib.mkAfter [
+            {
+              name = "theme-mode";
+              text = "";
+            }
+          ];
+        });
+        home.file = lib.listToAttrs (
+          map (vault: {
+            name = "${config.programs.obsidian.vaults.${vault}.target}/.obsidian/snippets/theme-mode.css";
+            value.source = config.lib.file.mkOutOfStoreSymlink "${config.xdg.stateHome}/theme-mode/obsidian.css";
+          }) obsidianVaults
+        );
 
         # Hyprland's keywords reset on restart; Noctalia's choice persists in
         # its settings.toml but the palette file may predate a new painting.

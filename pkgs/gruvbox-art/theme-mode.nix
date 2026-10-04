@@ -11,6 +11,9 @@
   procps,
   systemd,
   noctalia ? null,
+  # obsidian-cli for the snippet reload, and the vault names to reload.
+  obsidianCli ? null,
+  obsidianVaults ? [ ],
   # base16 YAML of the scheme stylix is using (gruvbox mode).
   gruvboxScheme,
   # Directory with current.json naming the painting (art-wallpaper's layout).
@@ -45,5 +48,9 @@ writeShellScriptBin "theme-mode" ''
     else
       "/dev/null"
   }
+  ${lib.optionalString (obsidianCli != null) ''
+    export THEME_MODE_OBSIDIAN_CLI=${obsidianCli}
+    export THEME_MODE_OBSIDIAN_VAULTS=${lib.escapeShellArg (builtins.toJSON obsidianVaults)}
+  ''}
   exec ${script} "$@"
 ''

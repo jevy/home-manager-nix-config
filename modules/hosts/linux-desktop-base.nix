@@ -92,6 +92,7 @@ in
             homeManager.ncspot
             homeManager.clipboard
             homeManager.desktopApps
+            homeManager.obsidian
             homeManager.linuxDesktop
             homeManager.desktopShell
             homeManager.noctalia

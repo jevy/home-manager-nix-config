@@ -4,9 +4,11 @@ current painting, without a rebuild.
   theme-mode toggle | gruvbox | art | refresh | status
 
 Reaches only what can recolour live: Noctalia (custom palette), Hyprland
-borders (hyprctl keyword) and ghostty (an optional config-file override plus a
-reload). Everything else stays stylix's build-time gruvbox. Colour mappings
-copy stylix's own targets, so gruvbox mode matches a fresh login.
+borders (hyprctl keyword), ghostty (an optional config-file override plus a
+reload) and Obsidian (a CSS snippet the vaults symlink to, empty in gruvbox
+mode, plus a snippet reload through obsidian-cli). Everything else stays
+stylix's build-time gruvbox. Colour mappings copy stylix's own targets, so
+gruvbox mode matches a fresh login.
 
 `refresh` re-applies art mode (after a new painting, and at login since
 Hyprland keywords don't survive a restart); in gruvbox mode it does nothing.
@@ -15,6 +17,7 @@ Configured by the Nix wrapper through env vars:
   THEME_MODE_GRUVBOX   base16 YAML of stylix's scheme
   THEME_MODE_ART_DIR   directory holding current.json + the painting
   THEME_MODE_GRUVBOX_ART, THEME_MODE_GHOSTTY_RELOAD   helper commands
+  THEME_MODE_OBSIDIAN_CLI, THEME_MODE_OBSIDIAN_VAULTS (JSON list)   optional
 """
 
 import json
@@ -99,6 +102,22 @@ def ghostty_override(c):
     return "# Written by theme-mode (art). Overrides the stylix theme.\n" + "\n".join(lines) + "\n"
 
 
+def obsidian_snippet(c):
+    # body.theme-* outranks the stylix snippet's bare .theme-light/.theme-dark
+    # whichever loads first, and covers either polarity it was built with.
+    # Accent takes the secondary slot: stylix uses base0E there.
+    _, accent, _ = roles(c)
+    base = {
+        "00": "base00", "05": "base00", "10": "base00", "20": "base01", "25": "base01",
+        "30": "base02", "35": "base02", "40": "base03", "50": "base03", "60": "base04",
+        "70": "base04", "100": "base05",
+    }
+    lines = [f"  --color-base-{k}: {c[s]};" for k, s in base.items()]
+    lines += [f"  --color-accent: {c[accent]};", f"  --color-accent-1: {c[accent]};"]
+    return ("/* Written by theme-mode (art). Overrides the stylix snippet. */\n"
+            "body.theme-light, body.theme-dark {\n" + "\n".join(lines) + "\n}\n")
+
+
 def hy3_tabs(c, rgb, primary, tertiary, focus):
     # Same mapping as plugin.hy3.tabs.colors in modules/desktop/hyprland.nix,
     # except the borders that mark focus, which take gruvbox-art's highlight.
@@ -139,6 +158,18 @@ def hyprland_batch(c):
     return ";".join(f"keyword {k} {v}" for k, v in settings.items())
 
 
+def obsidian_reload():
+    # A change behind the snippet symlink may not reach Obsidian's watcher,
+    # so ask for a reload (requestLoadSnippets exists as of 2026-10).
+    # Silent when Obsidian isn't running: the CLI just can't find its socket.
+    cli = os.environ.get("THEME_MODE_OBSIDIAN_CLI")
+    if not cli:
+        return
+    js = "const c = app.customCss; (c.requestLoadSnippets || c.loadSnippets).call(c)"
+    for vault in json.loads(os.environ.get("THEME_MODE_OBSIDIAN_VAULTS", "[]")):
+        subprocess.run([cli, "eval", f"vault={vault}", f"code={js}"], capture_output=True)
+
+
 # --- modes -------------------------------------------------------------------
 
 
@@ -163,6 +194,7 @@ def art_colours():
 def apply(mode):
     STATE.mkdir(parents=True, exist_ok=True)
     ghostty = STATE / "ghostty"
+    obsidian = STATE / "obsidian.css"
     if mode == "art":
         c, title = art_colours()
         PALETTES.mkdir(parents=True, exist_ok=True)
@@ -172,14 +204,18 @@ def apply(mode):
         tmp.replace(PALETTES / f"{ART_PALETTE}.json")
         run("noctalia", "msg", "color-scheme-set", "custom", ART_PALETTE)
         ghostty.write_text(ghostty_override(c))
+        obsidian.write_text(obsidian_snippet(c))
         label = f"art · {title}"
     else:
         c = read_base16(os.environ["THEME_MODE_GRUVBOX"])
         run("noctalia", "msg", "color-scheme-set", "custom", GRUVBOX_PALETTE)
         ghostty.unlink(missing_ok=True)
+        # Emptied, not removed: the vaults' snippet symlink points here.
+        obsidian.write_text("")
         label = "gruvbox"
     run("hyprctl", "--batch", hyprland_batch(c))
     run("bash", os.environ["THEME_MODE_GHOSTTY_RELOAD"])
+    obsidian_reload()
     (STATE / "mode").write_text(mode + "\n")
     return label
 
@@ -205,7 +241,11 @@ def main():
     if mode is None:
         sys.exit(__doc__)
     if cmd == "refresh" and mode == "gruvbox":
-        return  # the build-time config already is gruvbox
+        # The build-time config already is gruvbox; just give a fresh
+        # install's Obsidian snippet symlink a file to point at.
+        STATE.mkdir(parents=True, exist_ok=True)
+        (STATE / "obsidian.css").touch()
+        return
     label = apply(mode)
     if cmd != "refresh":
         run("notify-send", "-a", "theme-mode", "Theme", label)
