@@ -219,11 +219,25 @@
       })
 
       (lib.mkIf (cfg.strategy == "art-rotate") {
+        # Persistent=true runs a missed midnight fetch the instant the laptop
+        # wakes, before wifi is back (2026-10-04: DNS failed 4s before the
+        # AP associated). network-online.target can't help: it's a system
+        # unit, invisible to the user manager, and is reached once at boot,
+        # not on resume. nm-online blocks until NetworkManager is connected;
+        # the restart covers "connected" arriving before DNS, or a museum
+        # API outage.
         systemd.user.services.art-wallpaper = {
-          Unit.Description = "Fetch a new art wallpaper";
+          Unit = {
+            Description = "Fetch a new art wallpaper";
+            StartLimitIntervalSec = 600;
+            StartLimitBurst = 5;
+          };
           Service = {
             Type = "oneshot";
+            ExecStartPre = "${pkgs.networkmanager}/bin/nm-online -q --timeout=90";
             ExecStart = "${artWallpaper}/bin/art-wallpaper next";
+            Restart = "on-failure";
+            RestartSec = 30;
           };
         };
 
