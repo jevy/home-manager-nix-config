@@ -169,7 +169,12 @@
       programs.firefox = {
         enable = true;
         configPath = ".mozilla/firefox";
-        profiles.default = { };
+        # Websites always get prefers-color-scheme: light (0 dark, 1 light,
+        # 2 follow the system). Following the system isn't enough: Noctalia
+        # runs `gsettings set ... color-scheme prefer-dark` on every start and
+        # theme change while its theme.mode is "dark" (desktop/noctalia.nix),
+        # overwriting the prefer-light set below.
+        profiles.default.settings."layout.css.prefers-color-scheme.content-override" = 1;
       };
 
       programs.spicetify = {
