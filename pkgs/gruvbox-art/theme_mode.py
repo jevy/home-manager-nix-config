@@ -38,7 +38,7 @@ def read_base16(path):
     for line in Path(path).read_text().splitlines():
         line = line.strip()
         k, _, v = line.partition(":")
-        if v and (k.startswith("base0") or k in ART_ROLES):
+        if v and (k.startswith("base0") or k in ART_ROLES or k == "highlight"):
             pal[k] = "#" + v.strip().strip("\"'").lstrip("#").lower()
     return pal
 
@@ -99,11 +99,12 @@ def ghostty_override(c):
     return "# Written by theme-mode (art). Overrides the stylix theme.\n" + "\n".join(lines) + "\n"
 
 
-def hy3_tabs(c, rgb, primary, tertiary):
-    # Same mapping as plugin.hy3.tabs.colors in modules/desktop/hyprland.nix.
+def hy3_tabs(c, rgb, primary, tertiary, focus):
+    # Same mapping as plugin.hy3.tabs.colors in modules/desktop/hyprland.nix,
+    # except the borders that mark focus, which take gruvbox-art's highlight.
     slots = {
-        "active": (primary, primary, "base00"),
-        "focused": ("base02", primary, "base05"),
+        "active": (primary, focus, "base00"),
+        "focused": ("base02", focus, "base05"),
         "inactive": ("base01", "base02", "base04"),
         "active_alt_monitor": ("base02", "base03", "base05"),
         "urgent": ("base08", "base08", "base00"),
@@ -119,19 +120,22 @@ def hy3_tabs(c, rgb, primary, tertiary):
 def hyprland_batch(c):
     rgb = lambda s: f"rgb({c[s][1:]})"  # noqa: E731
     primary, _, tertiary = roles(c)
+    # Focus marks: gruvbox-art's vivid highlight when it wrote one (not for
+    # gruvbox mode or a grey painting, where primary already stands apart).
+    focus = "highlight" if "highlight" in c else primary
     settings = {
         "decoration:shadow:color": f"rgba({c['base00'][1:]}99)",
-        "general:col.active_border": rgb(primary),
+        "general:col.active_border": rgb(focus),
         "general:col.inactive_border": rgb("base03"),
         "group:col.border_inactive": rgb("base03"),
-        "group:col.border_active": rgb(primary),
+        "group:col.border_active": rgb(focus),
         "group:col.border_locked_active": rgb(tertiary),
         "group:groupbar:text_color": rgb("base05"),
-        "group:groupbar:col.active": rgb(primary),
+        "group:groupbar:col.active": rgb(focus),
         "group:groupbar:col.inactive": rgb("base03"),
         "misc:background_color": rgb("base00"),
     }
-    settings |= hy3_tabs(c, rgb, primary, tertiary)
+    settings |= hy3_tabs(c, rgb, primary, tertiary, focus)
     return ";".join(f"keyword {k} {v}" for k, v in settings.items())
 
 

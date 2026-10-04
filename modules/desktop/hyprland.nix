@@ -558,7 +558,8 @@ MONEOF
 
                   # Stylix has no hy3 target, so without these the tabs keep
                   # hy3's blue/grey defaults. Same mapping as theme-mode's art
-                  # mode (pkgs/gruvbox-art/theme_mode.py, hy3_tabs).
+                  # mode (pkgs/gruvbox-art/theme_mode.py, hy3_tabs), except art
+                  # mode's active/focused borders use its vivid highlight.
                   colors =
                     let
                       c = config.lib.stylix.colors;

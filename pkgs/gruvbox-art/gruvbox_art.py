@@ -286,6 +286,26 @@ def ui_roles(base, tinted, rank):
     return out
 
 
+# Thin focus marks (active window border) at this lightness and chroma.
+# Gamut mapping lowers chroma for hues that can't reach it.
+HIGHLIGHT_L, HIGHLIGHT_C = 0.80, 0.14
+
+
+def highlight(tinted, rank):
+    """The painting's main hue, vivid, for the active window border.
+
+    primary is right for big surfaces but too close to the greys for a 4px
+    line: the greys take the painting's shadow hue, which for a brown painting
+    is primary's hue too (2026-10-04: #b89e7d on #797069, 13 degrees and
+    1.9:1 apart; gruvbox's own teal border is 120 degrees from its greys).
+    A thin line can carry full chroma without the glare a surface would.
+    """
+    if not rank:
+        return {}
+    h = hex_to_lch(tinted[rank[0]])[2]
+    return {"highlight": lch_to_hex(HIGHLIGHT_L, HIGHLIGHT_C, h)}
+
+
 def to_yaml(pal, name, roles=None):
     lines = ['system: "base16"', f'name: "{name}"', 'author: "gruvbox-art"', 'variant: "dark"']
     # Extra top-level keys; base16 tools read only `palette`.
@@ -348,7 +368,9 @@ def main():
     base = read_base16(a.base)
     art = analyse(a.image)
     tinted = tint(base, art, max(0.0, min(1.0, a.strength)))
-    sys.stdout.write(to_yaml(tinted, a.name, ui_roles(base, tinted, accent_rank(base, art))))
+    rank = accent_rank(base, art)
+    roles = ui_roles(base, tinted, rank) | highlight(tinted, rank)
+    sys.stdout.write(to_yaml(tinted, a.name, roles))
     if a.preview:
         preview(a.image, base, tinted, a.preview)
 
