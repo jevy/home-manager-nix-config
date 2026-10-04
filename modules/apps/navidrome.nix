@@ -4,9 +4,8 @@
 #   supersonic  GUI (Fyne), Ctrl+[1-7] nav — log in via its own UI on first run
 #   feishin     GUI (Electron), mpv backend — log in via its own UI on first run
 #
-# Platform split: ferrosonic runs everywhere; ratune/supersonic are Linux-only
-# here (untested on darwin) and feishin is added on darwin, where a GUI client
-# is the natural pairing for the TUI. See pkgs/ferrosonic.nix for what degrades
+# Platform split: ferrosonic and feishin run everywhere; ratune/supersonic are
+# Linux-only here (untested on darwin). See pkgs/ferrosonic.nix for what degrades
 # on macOS (MPRIS media keys, PipeWire rate switching, cava visualizer).
 #
 # The TUIs read server URL + username + password from a TOML config. The
@@ -28,7 +27,7 @@ in
       ...
     }:
     let
-      inherit (pkgs.stdenv.hostPlatform) isLinux isDarwin;
+      inherit (pkgs.stdenv.hostPlatform) isLinux;
       configHome =
         if isLinux then
           "${config.home.homeDirectory}/.config"
@@ -38,13 +37,11 @@ in
     {
       home.packages = [
         (pkgs.callPackage ../../pkgs/ferrosonic.nix { })
+        pkgs.feishin
       ]
       ++ lib.optionals isLinux [
         (pkgs.callPackage ../../pkgs/ratune.nix { })
         pkgs.supersonic
-      ]
-      ++ lib.optionals isDarwin [
-        pkgs.feishin
       ];
 
       sops.templates = {
