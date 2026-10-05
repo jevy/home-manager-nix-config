@@ -187,6 +187,8 @@ in
         # in modules/desktop/monitorcontrol.nix does not apply. Its in-app
         # updater cannot write to the store — update by bumping nixpkgs.
         obsidian
+        # libreoffice-bin wraps the official dmg; the source build is Linux-only.
+        libreoffice-bin
       ];
 
       # useGlobalPkgs is intentionally left false: stylix's home-manager module
