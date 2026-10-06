@@ -67,6 +67,10 @@
           # cluster repo at secrets/homepage/secret.sops.yaml for the dashboard
           # widget — rotating it means updating both.
           paperless_api_token = { };
+
+          # Mealie (mealie.jevy.org) API token, "local claude" in the UI under
+          # Profile > API Tokens. For agents searching recipes / meal planning.
+          mealie_api_token = { };
         };
       };
     };
