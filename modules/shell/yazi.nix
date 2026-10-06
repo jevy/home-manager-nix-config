@@ -49,12 +49,33 @@ let
 
         inherit plugins;
 
+        # Port of ranger's `setlocal path=~/Downloads sort mtime`: newest first,
+        # folders mixed in with files (no dirs-first), inside ~/Downloads; back
+        # to the global sort on the way out. Only resets when leaving
+        # Downloads, so a manual `,` sort elsewhere sticks.
+        initLua = ''
+          local downloads = os.getenv("HOME") .. "/Downloads"
+          local in_downloads = false
+          ps.sub("cd", function()
+            local here = tostring(cx.active.current.cwd) == downloads
+            if here and not in_downloads then
+              ya.emit("sort", { "mtime", reverse = true, dir_first = false })
+            elseif in_downloads and not here then
+              ya.emit("sort", { "natural", reverse = false, dir_first = true })
+            end
+            in_downloads = here
+          end)
+        '';
+
         settings = {
+          # Ranger's defaults: natural order, case-insensitive, dirs first.
+          # ~/Downloads gets ranger's `setlocal sort mtime` via initLua below.
           mgr = {
             show_hidden = false;
-            sort_by = "mtime";
-            sort_dir_first = false;
-            sort_reverse = true;
+            sort_by = "natural";
+            sort_sensitive = false;
+            sort_dir_first = true;
+            sort_reverse = false;
           };
 
           inherit opener;
@@ -97,10 +118,8 @@ let
             { on = [ "g" "D" ]; run = "cd ~/Documents"; desc = "Go to Documents"; }
             # Go to ~/code
             { on = [ "g" "e" ]; run = "cd ~/code"; desc = "Go to code"; }
-            # Sorting
-            { on = [ "," "m" ]; run = "sort modified --reverse"; desc = "Sort by modified"; }
-            { on = [ "," "n" ]; run = "sort alphabetical"; desc = "Sort by name"; }
-            { on = [ "," "d" ]; run = "sort dir-first --reverse"; desc = "Toggle dirs first"; }
+            # Sorting: no overrides. Yazi's built-in `,` menu (`,m`/`,M` mtime,
+            # `,n` natural, `,s` size, capital = reverse) already covers it.
           ]
           ++ extraKeys;
         };
