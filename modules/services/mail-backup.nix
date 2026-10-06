@@ -145,6 +145,16 @@ in
           done
           mkdir -p ${repoPath} ${dumpDir}
 
+          # Clear stale locks before the upstream module's `restic cat config ||
+          # restic init` existence check. A reboot mid-prune (2026-10-05) left an
+          # exclusive lock; `cat config` then failed on it, the module took that
+          # as "no repo", `init` failed with "config file already exists", and
+          # every retry repeated that until the lock was removed by hand. Plain
+          # `unlock` only removes stale locks (dead pid on this host, or >30min
+          # old), so it cannot break a live run. `|| true` covers the first run,
+          # before the repo exists.
+          ${config.services.restic.backups.truenas-mail.package}/bin/restic unlock || true
+
           NOTMUCH_CONFIG=${notmuchConfig} \
             ${pkgs.notmuch}/bin/notmuch dump \
             | ${pkgs.gzip}/bin/gzip -c > ${dumpFile}

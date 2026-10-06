@@ -124,6 +124,10 @@ in
             ${pkgs.coreutils}/bin/sleep 5
           done
           mkdir -p ${repoPath}
+
+          # Clear stale locks left by an interrupted run, before the existence
+          # check misreads a locked repo as a missing one. See mail-backup.nix.
+          ${config.services.restic.backups.truenas-documents.package}/bin/restic unlock || true
         '';
 
         # Retention. Runs after the backup, so "keep 7 daily" includes today's.
