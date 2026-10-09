@@ -480,10 +480,15 @@
       # displays, which is constant in normal use; display_moved/_resized
       # would catch a resolution change but have never been the failure here.
       resyncLabel = "org.nixos.yabai-display-resync";
+      resyncPending = "/tmp/yabai-display-resync.pending";
 
       resyncTrigger = pkgs.writeShellApplication {
         name = "yabai-display-resync-trigger";
         text = ''
+          # `wake` only acts on a resync that was deferred while asleep.
+          if [ "''${1:-}" = wake ] && [ ! -e ${resyncPending} ]; then
+            exit 0
+          fi
           # kickstart WITHOUT -k: a resync already running is left alone,
           # which debounces the burst of signals a dock emits.
           exec /bin/launchctl kickstart "gui/$(id -u)/${resyncLabel}"
@@ -515,6 +520,22 @@
           # same mess.
           sleep 4
 
+          # NEVER RESTART INTO SLEEP. Unplugging with the lid shut fires
+          # display_removed and then clamshell-sleeps the machine ~5s later —
+          # right on top of the restart. Measured 2026-10-08 17:29 and
+          # 2026-10-09 15:38 (yabai started 15:38:12, Clamshell Sleep
+          # 15:38:13): the new process got TRUNCATED --spaces JSON and NO AX
+          # reference for ANY window, so nothing tiled or moved after wake.
+          # Defer to the system_woke signal instead.
+          if /usr/sbin/ioreg -r -k AppleClamshellState -d 1 | grep -q '"AppleClamshellCausesSleep" = Yes' \
+            && /usr/sbin/ioreg -r -k AppleClamshellState -d 1 | grep -q '"AppleClamshellState" = Yes'; then
+            touch ${resyncPending}
+            rm -f "$STAMP"
+            echo "resync: lid closed and about to sleep, deferring to wake"
+            exit 0
+          fi
+          rm -f ${resyncPending}
+
           restart_and_sweep() {
             # `|| true` because errexit must not skip the sweep below: kickstart
             # answers nonzero for a job that was already being torn down, and
@@ -533,7 +554,8 @@
               sleep 0.25
             done
             if [ -z "$SPACES" ]; then
-              echo "resync: spaces query never parsed, sweep skipped" >&2
+              touch ${resyncPending}
+              echo "resync: spaces query never parsed, sweep skipped, retrying on wake" >&2
               exit 1
             fi
 
@@ -839,6 +861,9 @@
           yabai -m signal --add label=resync_display_removed \
             event=display_removed \
             action="${resyncTrigger}/bin/yabai-display-resync-trigger"
+          yabai -m signal --add label=resync_system_woke \
+            event=system_woke \
+            action="${resyncTrigger}/bin/yabai-display-resync-trigger wake"
         '';
       };
 
