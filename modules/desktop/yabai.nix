@@ -121,10 +121,11 @@
 #     any window present it works every time. Throw a window ($modShift+U)
 #     rather than focusing an empty display.
 #   * STALE QUERY ENTRIES STILL EXIST (lowercase app name, empty title,
-#     has-ax-reference false) but are HARMLESS to this layout: an untiled
-#     window is not a leaf, so it never counts toward the slots — the fork
-#     structurally retired the COUNT-inflation bug the shell snap had to
-#     filter around.
+#     has-ax-reference false) and do not inflate the slot count: an untiled
+#     window is not a leaf — the fork structurally retired the COUNT-inflation
+#     bug the shell snap had to filter around. They are only harmless when an
+#     AX-backed sibling from the same pid exists; when it does not, yabai has
+#     MISSED a real window (see missed_apps in the dock/undock resync).
 #
 # Firefox's 500px floor is unchanged app behaviour and was not re-measured.
 #
@@ -514,26 +515,67 @@
           # same mess.
           sleep 4
 
-          # `|| true` because errexit must not skip the sweep below: kickstart
-          # answers nonzero for a job that was already being torn down, and
-          # the sweep is still the right thing to run afterwards.
-          /bin/launchctl kickstart -k "gui/$(id -u)/org.nixos.yabai" || true
+          restart_and_sweep() {
+            # `|| true` because errexit must not skip the sweep below: kickstart
+            # answers nonzero for a job that was already being torn down, and
+            # the sweep is still the right thing to run afterwards.
+            /bin/launchctl kickstart -k "gui/$(id -u)/org.nixos.yabai" || true
 
-          # The socket outlives the process by a moment, so poll a real query
-          # rather than sleeping a guessed amount.
-          for _ in $(seq 1 40); do
-            yabai -m query --displays >/dev/null 2>&1 && break
-            sleep 0.25
-          done
+            # The socket outlives the process by a moment, so poll a real query
+            # rather than sleeping a guessed amount.
+            # Polls --spaces itself, not --displays: on 2026-10-08 a fresh yabai
+            # answered --displays but returned TRUNCATED --spaces JSON, jq aborted
+            # the script under errexit, and the sweep never ran.
+            SPACES=""
+            for _ in $(seq 1 40); do
+              SPACES=$(yabai -m query --spaces 2>/dev/null | jq -er '.[].index' 2>/dev/null) && break
+              SPACES=""
+              sleep 0.25
+            done
+            if [ -z "$SPACES" ]; then
+              echo "resync: spaces query never parsed, sweep skipped" >&2
+              exit 1
+            fi
 
-          # The sweep is what fixes damage (2). Per space rather than `config
-          # layout`, which would also rewrite the global default and lose the
-          # distinction between "the default" and "what this space is now".
-          yabai -m query --spaces | jq -r '.[].index' | while read -r idx; do
-            yabai -m space "$idx" --padding abs:${toString gapOuter}:${toString gapOuter}:${toString gapOuter}:${toString gapOuter} 2>/dev/null || true
-            yabai -m space "$idx" --gap abs:${toString gapInner} 2>/dev/null || true
-            yabai -m space "$idx" --layout master_center 2>/dev/null || true
-          done
+            # The sweep is what fixes damage (2). Per space rather than `config
+            # layout`, which would also rewrite the global default and lose the
+            # distinction between "the default" and "what this space is now".
+            printf '%s\n' "$SPACES" | while read -r idx; do
+              yabai -m space "$idx" --padding abs:${toString gapOuter}:${toString gapOuter}:${toString gapOuter}:${toString gapOuter} 2>/dev/null || true
+              yabai -m space "$idx" --gap abs:${toString gapInner} 2>/dev/null || true
+              yabai -m space "$idx" --layout master_center 2>/dev/null || true
+            done
+          }
+
+          # A restart can itself cause damage (1). On 2026-10-08 the fresh
+          # process came up while macOS was still shuffling windows and never
+          # got an AX element for Slack's only window — listed, never tiled,
+          # unmovable. Entries without an AX reference are windows the
+          # WindowServer reports that yabai holds no struct for; most are
+          # harmless ghosts beside an AX-backed sibling from the same pid. The
+          # tell for a MISSED app is a pid owning such a window on a VISIBLE
+          # space with no AX-backed window at all. Visible only, because yabai
+          # does not reliably adopt windows on hidden spaces at startup, so
+          # those would demand a retry that cannot help.
+          missed_apps() {
+            VISIBLE=$(yabai -m query --spaces 2>/dev/null | jq -c '[.[] | select(."is-visible") | .index]') || return 0
+            yabai -m query --windows 2>/dev/null | jq -r --argjson vis "$VISIBLE" '
+              group_by(.pid)[]
+              | select(all(."has-ax-reference" | not))
+              | select(any(."root-window" and .layer == "normal" and (.space as $s | $vis | index($s))))
+              | .[0].app' 2>/dev/null || true
+          }
+
+          restart_and_sweep
+
+          MISSED=$(missed_apps)
+          if [ -n "$MISSED" ]; then
+            echo "resync: no AX reference for $(echo "$MISSED" | paste -sd, -), restarting once more"
+            sleep 4
+            restart_and_sweep
+            MISSED=$(missed_apps)
+            [ -z "$MISSED" ] || echo "resync: still unmanaged after retry: $(echo "$MISSED" | paste -sd, -)" >&2
+          fi
 
           echo "resync: done at $(date -Iseconds)"
         '';
