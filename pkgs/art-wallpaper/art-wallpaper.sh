@@ -43,13 +43,21 @@ next() {
   mkdir -p "$cache"
   total=$(fetch "$api?$filter&limit=1" | jq '.info.total')
 
-  # About 6 in 100 paintings are landscape and big enough, so try a few pages.
+  # About 11 in 100 paintings are landscape and big enough, so try a few pages.
+  # Of those ~450, 36% are Chinese, Japanese or Korean (handscrolls and album
+  # leaves are wide), so they kept coming up: keep 1 in 5 of them, for about
+  # 1 wallpaper in 10. That check runs after picking, not before, because
+  # search pages come in accession order and one page can hold a dozen
+  # scrolls, one of which would survive a per-item cut. Paintings already in
+  # history.jsonl are skipped.
+  seen=$(jq -sc 'map(.id)' "$cache/history.jsonl" 2>/dev/null || echo '[]')
   pick=""
-  for _ in 1 2 3 4 5; do
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
     skip=$(shuf -i "0-$((total - 100))" -n 1)
     pick=$(fetch "$api?$filter&limit=100&skip=$skip&fields=id,title,creation_date,creators,culture,images,url,description,did_you_know,technique,tombstone" \
-      | jq -c '.data[]
+      | jq -c --argjson seen "$seen" '.data[]
           | select(.images.print != null)
+          | select(.id as $id | $seen | index($id) | not)
           | (.images.print.width | tonumber) as $w
           | (.images.print.height | tonumber) as $h
           | select($w >= 2400 and $w / $h >= 1.25 and $w / $h <= 2.1)
@@ -58,6 +66,7 @@ next() {
               title,
               artist: ((.creators[0].description // .culture[0] // "Unknown artist") | sub(" \\(.*$"; "")),
               date: (.creation_date // ""),
+              culture: (.culture[0] // ""),
               url,
               image: .images.print.url,
               webImage: (.images.web.url // ""),
@@ -74,11 +83,12 @@ next() {
               technique: (.technique // ""),
               tombstone: (.tombstone // "")
             }' \
-      | shuf -n 1)
+      | shuf -n 1 \
+      | awk -v seed="$RANDOM" 'BEGIN { srand(seed) } !/"culture":"(China|Japan|Korea)/ || rand() < 0.2')
     [ -n "$pick" ] && break
   done
   if [ -z "$pick" ]; then
-    echo "art-wallpaper: no landscape painting found in 5 pages" >&2
+    echo "art-wallpaper: no landscape painting found in 10 pages" >&2
     exit 1
   fi
 
@@ -134,22 +144,34 @@ wall_colour() {
 
 # A dark painting photographed on the museum's light backdrop (an oval canvas,
 # a panel with margins) gets a bright frame around a dark wallpaper: true if
-# the centre is dark and the corner light.
+# the centre is dark and all four corners light. One corner is not enough: a
+# white paint chip in the top left of an edge-to-edge canvas (CMA 133151,
+# 2026-10) passed that test and the fill then flooded the whole painting.
 dark_on_light() {
-  local f=$1 centre corner
+  local f=$1 centre corners
   centre=$(magick "$f" -gravity center -crop 50%x50%+0+0 -colorspace Gray -format '%[fx:mean]' info:)
-  corner=$(magick "$f" -crop 2%x2%+0+0 -colorspace Gray -format '%[fx:mean]' info:)
-  awk -v m="$centre" -v c="$corner" 'BEGIN { exit !(m < 0.35 && c > 0.6) }'
+  corners=$(for g in NorthWest NorthEast SouthWest SouthEast; do
+    magick "$f" -gravity "$g" -crop 2%x2%+0+0 -colorspace Gray -format '%[fx:mean]\n' info:
+  done)
+  awk -v m="$centre" 'BEGIN { min = 1 } { if ($1 < min) min = $1 } END { exit !(m < 0.35 && min > 0.6) }' <<<"$corners"
 }
 
 # Flood the backdrop in one pass from a 1px frame in the corner colour, which
 # joins all four corners. Filling corner by corner breaks: the second fill
 # starts on the dark colour the first one laid down and spreads into the
 # painting. 40% fuzz also takes the grey shadow ring an oval canvas casts.
+# If the fill leaves a near-flat image it has eaten the painting, so the
+# original is kept.
 fill_backdrop() {
-  local f=$1 colour=$2
+  local f=$1 colour=$2 sd
   magick "$f" -bordercolor '%[pixel:p{0,0}]' -border 1 -fuzz 40% -fill "$colour" \
     -draw 'color 0,0 floodfill' -shave 1 -quality 90 "${f%.jpg}.fill.jpg"
+  sd=$(magick "${f%.jpg}.fill.jpg" -scale 400x400 -colorspace Gray -format '%[fx:standard_deviation]' info:)
+  if awk -v s="$sd" 'BEGIN { exit !(s < 0.02) }'; then
+    echo "art-wallpaper: backdrop fill flattened ${f##*/} (sd $sd), keeping the original" >&2
+    rm -f "${f%.jpg}.fill.jpg"
+    return 0
+  fi
   mv "${f%.jpg}.fill.jpg" "$f"
 }
 
