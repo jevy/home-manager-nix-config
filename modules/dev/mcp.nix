@@ -145,15 +145,15 @@
       # package needs >=3.13 and uv-downloaded interpreters are unreliable on
       # NixOS.
       #
-      # The password never touches the Nix store or sops: the server runs
-      # UNIFI_NETWORK_PASSWORD_COMMAND (shlex-split, no shell, 30s timeout,
-      # stderr discarded) itself. `--account` is load-bearing — both the
-      # personal and Covenant 1Password accounts have a vault called
-      # "Private", and without it `op` resolves the work one and fails with
-      # "isn't an item in the Private vault". `op` is the setuid wrapper from
-      # programs._1password, so the desktop app must be unlocked (or will
-      # prompt) when the server starts. Hosts without that wrapper fail at
-      # startup (exit 6), not at eval.
+      # The password comes from sops (`unifi_network_password`) via
+      # UNIFI_NETWORK_PASSWORD_FILE, which the server reads itself (trailing
+      # newline stripped). It used to be UNIFI_NETWORK_PASSWORD_COMMAND running
+      # `op read`, but that needs the 1Password desktop app running and
+      # unlocked at startup, and when it wasn't the server exited 6 and Claude
+      # Code only showed "Connection closed". The path is literal rather than
+      # `config.sops.secrets.*.path` so hosts without sops-nix still evaluate,
+      # same as the truenas wrapper; a missing file fails at startup (exit 6).
+      # The password is also in 1Password ("Unifi Claude MCP", Private vault).
       #
       # Auth is the local admin `claude-mcp` (no MFA, local access only);
       # an API key alone would limit the server to inventory reads.
@@ -264,7 +264,7 @@
           env = {
             UNIFI_NETWORK_HOST = "192.168.1.1";
             UNIFI_NETWORK_USERNAME = "claude-mcp";
-            UNIFI_NETWORK_PASSWORD_COMMAND = ''/run/wrappers/bin/op read --account my.1password.com "op://Private/Unifi Claude MCP/password"'';
+            UNIFI_NETWORK_PASSWORD_FILE = "${config.home.homeDirectory}/.config/sops-nix/secrets/unifi_network_password";
             UNIFI_NETWORK_VERIFY_SSL = "false";
             UNIFI_NETWORK_TOOL_PERMISSION_MODE = "confirm";
           };

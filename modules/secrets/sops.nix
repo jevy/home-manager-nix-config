@@ -71,6 +71,10 @@
           # Mealie (mealie.jevy.org) API token, "local claude" in the UI under
           # Profile > API Tokens. For agents searching recipes / meal planning.
           mealie_api_token = { };
+
+          # UniFi local admin `claude-mcp` on the UDM Pro, for the unifi-network
+          # MCP server. Also in 1Password ("Unifi Claude MCP", Private vault).
+          unifi_network_password = { };
         };
       };
     };
