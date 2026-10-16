@@ -38,7 +38,6 @@
         superfile
         lazygit
         jq
-        numr
         doggo
         tre-command
         aichat
@@ -58,7 +57,8 @@
         uv # needed for linkedin-mcp profile creation
         google-cloud-sdk
         (pkgs.callPackage ../../pkgs/linecast.nix { })
-      ];
+      ]
+      ++ lib.optional (lib.meta.availableOn pkgs.stdenv.hostPlatform numr) numr;
 
       programs.bat.enable = true;
 
