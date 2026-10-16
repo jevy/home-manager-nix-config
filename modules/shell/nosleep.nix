@@ -13,10 +13,36 @@
 #   nosleep 90        # bare number = minutes
 #   nosleep status    # show whether active + time remaining
 #   nosleep off       # cancel now, re-enable suspend
+#
+# Expiry re-arms hypridle. hypridle runs each listener's on-timeout once
+# per idle stretch: if its 600s `systemctl suspend` lands while nosleep
+# blocks it, the call fails and hypridle won't try again until input
+# resets the idle clock. Walk away with nosleep active and the machine
+# stays awake after expiry until the battery dies (happened 2026-10-10:
+# suspend refused at 21:18, nosleep expired 21:21, critical-battery
+# poweroff at 02:41). So when the unit stops by timeout, restart hypridle
+# to restart its timers; still idle -> suspend 600s later. `nosleep off`
+# (SERVICE_RESULT=success) skips this: you're at the keyboard.
 { ... }:
 {
   flake.modules.homeManager.nosleep =
     { pkgs, ... }:
+    let
+      # ExecStopPost of the transient unit. Runs under the user manager, whose
+      # environment has PATH (hyprctl) and HYPRLAND_INSTANCE_SIGNATURE.
+      onStop = pkgs.writeShellScript "nosleep-on-stop" ''
+        ${pkgs.coreutils}/bin/rm -f "$1"
+        [ "''${SERVICE_RESULT:-}" = timeout ] || exit 0
+        # try-restart: no-op if hypridle isn't running. --no-block: don't wait
+        # on another unit's job from inside this unit's stop.
+        ${pkgs.systemd}/bin/systemctl --user --no-block try-restart hypridle.service
+        # The fresh hypridle has no "idled" state for the dpms listener, so its
+        # on-resume won't fire and a key press wouldn't wake a blanked screen
+        # (Hyprland's *_enables_dpms are off). Turn it on now; the new
+        # instance blanks it again 180s later.
+        hyprctl dispatch dpms on >/dev/null 2>&1 || true
+      '';
+    in
     {
       home.packages = [
         (pkgs.writeShellApplication {
@@ -115,7 +141,7 @@
               --unit="$UNIT" \
               --description="nosleep: suspend blocked until $(date -d "@$end" '+%H:%M')" \
               --property=RuntimeMaxSec="$sec" \
-              --property=ExecStopPost="${pkgs.coreutils}/bin/rm -f $DEADLINE_FILE" \
+              --property=ExecStopPost="${onStop} $DEADLINE_FILE" \
               systemd-inhibit \
                 --what=sleep:handle-lid-switch \
                 --why=nosleep \
