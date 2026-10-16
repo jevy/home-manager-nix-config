@@ -31,7 +31,7 @@
       # undercounts by 147.
       #
       # Use as `query:primary` in notmuch and neomutt.
-      programs.notmuch.extraConfig.query.primary =
+      programs.notmuch.settings.query.primary =
         "tag:inbox and not tag:promotions and not tag:social and not tag:forums";
 
       # Personal macros (module provides Gmail + goobook defaults)

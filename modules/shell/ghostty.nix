@@ -11,9 +11,9 @@
         # wrong (verified via compare API 2026-07-27, c920a88 is an ancestor of
         # v1.3.1). If ripdrag→ghostty drops still fail, it's a different bug;
         # Ctrl-drag (forces copy) remains the fallback.
-        package = if pkgs.stdenv.isDarwin then pkgs.ghostty-bin else pkgs.ghostty;
+        package = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.ghostty-bin else pkgs.ghostty;
         enableZshIntegration = true;
-        systemd.enable = pkgs.stdenv.isLinux;
+        systemd.enable = pkgs.stdenv.hostPlatform.isLinux;
         installVimSyntax = true;
         settings = {
           # Draw window decorations from ghostty's own (stylix) theme instead of
@@ -59,7 +59,7 @@
               # would emit), which readline binds to backward-kill-word.
               "ctrl+backspace=text:\\x1b\\x7f"
             ]
-            ++ (lib.optionals pkgs.stdenv.isDarwin [
+            ++ (lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
               "super+a>c=new_tab"
               "super+a>ctrl+c=new_tab"
               "super+h=goto_split:left"
@@ -76,7 +76,7 @@
               "super+a>ctrl+p=previous_tab"
             ]);
         }
-        // lib.optionalAttrs pkgs.stdenv.isDarwin {
+        // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
           # Make Option emit Meta so Neovim's <A-hjkl> window-nav works on macOS.
           # Tradeoff: Option no longer types special glyphs (é, etc.) in the
           # terminal. Drop this if you'd rather keep Option-as-compose on the Mac.

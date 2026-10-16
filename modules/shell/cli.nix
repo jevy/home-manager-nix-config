@@ -85,7 +85,7 @@
         # works on the Mac too — NixOS hosts rebuild the whole system; the Mac
         # runs nix-darwin, so switch its darwinConfiguration by name.
         rebuildhm =
-          if pkgs.stdenv.isDarwin then
+          if pkgs.stdenv.hostPlatform.isDarwin then
             "cd ~/.config/nixpkgs && sudo darwin-rebuild switch --flake \".#mac-work\""
           else
             "cd ~/.config/nixpkgs && sudo nixos-rebuild switch --flake \".#$(hostname)\"";

@@ -32,6 +32,12 @@ let
         };
       };
     };
+
+  # Stylix still sets programs.rofi.font, renamed to settings.font in
+  # home-manager. We don't use rofi. TODO: drop once stylix migrates.
+  stylixHmConfig = {
+    stylix.targets.rofi.enable = false;
+  };
 in
 {
   # NixOS stylix
@@ -61,6 +67,8 @@ in
       # every nixpkgs bump (stylix#2318). The home-manager module still themes
       # gtksourceview at runtime via ~/.local/share, so nothing is lost.
       stylix.targets.gtksourceview.enable = false;
+
+      home-manager.sharedModules = [ stylixHmConfig ];
     };
 
   # Home-manager stylix (for macOS standalone)
@@ -70,6 +78,7 @@ in
       imports = [
         inputs.stylix.homeModules.stylix
         stylixConfig
+        stylixHmConfig
       ];
     };
 }
