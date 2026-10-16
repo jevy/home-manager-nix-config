@@ -128,9 +128,17 @@ in
         # mkdir comes after the mount is confirmed. Doing it first, as this used
         # to, wrote into (or was denied by) the root-owned autofs stub directory
         # and buried the real error.
+        #
+        # The loop asks for an *NFS* mount, not just any mount. The autofs stub
+        # is itself a mount, so `mountpoint -q` (what this used to call) is true
+        # the instant the automount is armed, NFS or not. The wait loop was
+        # therefore skipped on every healthy run, and on 2026-10-12 the
+        # mkdir/unlock/init that followed fired 5 mount attempts in 2s at a
+        # network that was not up yet, which killed the automount (see the
+        # start-limit note on the mount unit above).
         backupPrepareCommand = ''
           tries=0
-          until ${pkgs.util-linux}/bin/mountpoint -q ${mountPoint}; do
+          until ${pkgs.util-linux}/bin/findmnt -n -t nfs,nfs4 --mountpoint ${mountPoint} >/dev/null; do
             ls ${mountPoint} >/dev/null 2>&1 || true
             tries=$((tries + 1))
             if [ "$tries" -ge 24 ]; then

@@ -126,7 +126,8 @@ in
         # Wait for the automount, then dump the tags, then let restic run. Same
         # polling approach as laptop-backup.nix and for the same reason: the
         # Persistent=true catch-up fires the instant the laptop resumes, before
-        # the network is up.
+        # the network is up. The check is findmnt for an NFS mount specifically:
+        # `mountpoint -q` is fooled by the autofs stub (see laptop-backup.nix).
         #
         # The dump runs AFTER the mount is confirmed -- no point spending 11s on
         # it if there is nowhere to put the result -- and the wrapper script runs
@@ -134,7 +135,7 @@ in
         # retry below rather than quietly backing up a stale tags.gz.
         backupPrepareCommand = ''
           tries=0
-          until ${pkgs.util-linux}/bin/mountpoint -q ${mountPoint}; do
+          until ${pkgs.util-linux}/bin/findmnt -n -t nfs,nfs4 --mountpoint ${mountPoint} >/dev/null; do
             ls ${mountPoint} >/dev/null 2>&1 || true
             tries=$((tries + 1))
             if [ "$tries" -ge 24 ]; then
@@ -231,7 +232,7 @@ in
           ];
           ExecStartPre = pkgs.writeShellScript "restic-check-mail-wait-mount" ''
             tries=0
-            until ${pkgs.util-linux}/bin/mountpoint -q ${mountPoint}; do
+            until ${pkgs.util-linux}/bin/findmnt -n -t nfs,nfs4 --mountpoint ${mountPoint} >/dev/null; do
               ls ${mountPoint} >/dev/null 2>&1 || true
               tries=$((tries + 1))
               if [ "$tries" -ge 24 ]; then
