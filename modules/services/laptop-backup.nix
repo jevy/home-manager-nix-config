@@ -72,6 +72,22 @@ in
         "noauto"
       ];
     };
+
+    # No start limit on the mount. Every access to the automount stub while
+    # the network is down is a fresh mount attempt, and systemd's default
+    # (5 starts in 10s) is easy to trip: on 2026-10-12 a resume with no Wi-Fi
+    # yet produced 5 failed attempts in 2s from the two backup services. The
+    # mount hit start-limit-hit, the automount failed with
+    # mount-start-limit-hit, and a failed automount never re-arms: nothing
+    # mounted again until a manual `reset-failed` four days later. Each failed
+    # attempt is cheap (mount-timeout=10s, soft), so unlimited retries are safe.
+    systemd.units."mnt-truenas\\x2dbackups.mount" = {
+      overrideStrategy = "asDropin";
+      text = ''
+        [Unit]
+        StartLimitIntervalSec=0
+      '';
+    };
   };
 
   # User half: the backup itself.
