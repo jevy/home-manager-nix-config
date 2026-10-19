@@ -45,7 +45,7 @@ in
 
         # Installs the BlackHole 2ch HAL plug-in into /Library (root-owned);
         # its home-manager half below runs the bridge that feeds it.
-        darwin.monoMic
+        # darwin.monoMic  # off for now, never used; re-enable with homeManager.monoMic below
 
         # Tiling, directional focus and workspaces. Replaced
         # homeManager.rectangle, which could only place the focused window,
@@ -258,7 +258,7 @@ in
               # Desktop (Mac-specific)
               homeManager.desktopMac
               homeManager.altTab
-              homeManager.monoMic
+              # homeManager.monoMic
               homeManager.meetingbarWatchdog
               homeManager.macFonts
               homeManager.stylix
