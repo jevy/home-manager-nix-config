@@ -30,7 +30,8 @@
         hugo
         gcalcli
         qFlipper
-        zotero
+        # PINNED 2026-10-24: zotero 10.0.4 fails to build; see nixpkgs-zotero in flake.nix.
+        inputs.nixpkgs-zotero.legacyPackages.${pkgs.stdenv.hostPlatform.system}.zotero
         openscad
         cc2538-bsl
         mesa-demos

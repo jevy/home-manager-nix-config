@@ -835,6 +835,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-zotero": {
+      "locked": {
+        "lastModified": 1790463110,
+        "narHash": "sha256-hKlVl12B1dF0Q5vd9dY3lIJM5mFGWYSlXwSLAqHZ1+s=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "e158d9ed9b51c98974c5e66e1ba1c9e0255fecaa",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "e158d9ed9b51c98974c5e66e1ba1c9e0255fecaa",
+        "type": "github"
+      }
+    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1731676054,
@@ -1076,6 +1092,7 @@
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-devenv": "nixpkgs-devenv",
         "nixpkgs-p14s-clean": "nixpkgs-p14s-clean",
+        "nixpkgs-zotero": "nixpkgs-zotero",
         "nixvim": "nixvim",
         "pi-mono": "pi-mono",
         "qmd": "qmd",

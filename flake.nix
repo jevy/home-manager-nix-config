@@ -32,6 +32,14 @@
     # Cost: the P14s kernel stops getting security updates until this is dropped.
     # TODO: drop this input when the tracked issues in lenovo-p14s.nix close.
     nixpkgs-p14s-clean.url = "github:NixOS/nixpkgs/d2f67949798825fe853f7c5d0492b8bf016d3f88";
+    # zotero on lenovo-p14s. nixos-unstable 55bfb4d moved zotero to 10.0.4, built
+    # against firefox-esr 153.5.0esr; its build script aborts patching
+    # ActorManagerParent.sys.mjs ("AboutTranslations ... not found"), so Hydra
+    # has no binary and every rebuild compiles zotero from source, then fails.
+    # This is the nixpkgs from before the 2026-10-16 bump (zotero 10.0.2).
+    # Drop this input (and the override in modules/apps/linux-desktop.nix) once
+    # zotero from `nixpkgs` builds again.
+    nixpkgs-zotero.url = "github:NixOS/nixpkgs/e158d9ed9b51c98974c5e66e1ba1c9e0255fecaa";
     home-manager.url = "github:nix-community/home-manager/master";
 
     # macOS system management (mac-work host). Runs with nix.enable = false —
