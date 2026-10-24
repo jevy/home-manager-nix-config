@@ -252,6 +252,16 @@ MONEOF
                 sleep 1
               done
               systemctl --user try-restart hyprpaper.service 2>/dev/null || true
+              # Hyprland only destroys an empty workspace when focus leaves it,
+              # so the empty ones migrated off the unplugged output linger in
+              # the bar. Touch each (numbered only, skips name:share) and return.
+              JQ="${pkgs.jq}/bin/jq"
+              CUR=$(hyprctl activeworkspace -j | $JQ .id)
+              for ws in $(hyprctl workspaces -j | $JQ -r --argjson cur "$CUR" \
+                  '.[] | select(.windows == 0 and .id != $cur and (.name | test("^[0-9]+$"))) | .id'); do
+                hyprctl dispatch workspace "$ws"
+              done
+              hyprctl dispatch workspace "$CUR"
             '';
             scaleToggle = pkgs.writeShellScript "scale-toggle" ''
               JQ="${pkgs.jq}/bin/jq"
