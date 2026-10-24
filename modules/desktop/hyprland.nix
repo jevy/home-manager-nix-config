@@ -118,9 +118,16 @@
             # renders byte-identical (empty string, no extra newline).
             brightnessOsd = value: lib.optionalString noctalia " && ${noctaliaMsg} brightness-osd ${value}";
 
+            # monocle shows one window at a time, so geometric movefocus has
+            # no neighbour to find there; cyclenext walks the stack instead,
+            # like the mac's stack layout (l/u = previous, r/d = next).
             layoutAware =
               dispatcher: direction:
-              ''exec, sh -c 'cur=$(hyprctl -j getoption general:layout | ${pkgs.jq}/bin/jq -r .str); if [ "$cur" = "hy3" ]; then hyprctl dispatch hy3:${dispatcher} ${direction}; else hyprctl dispatch ${dispatcher} ${direction}; fi' '';
+              let
+                cycle = if direction == "l" || direction == "u" then "cyclenext prev" else "cyclenext";
+                monocleBranch = lib.optionalString (dispatcher == "movefocus") ''elif [ "$cur" = "monocle" ]; then hyprctl dispatch ${cycle}; '';
+              in
+              ''exec, sh -c 'cur=$(hyprctl -j getoption general:layout | ${pkgs.jq}/bin/jq -r .str); if [ "$cur" = "hy3" ]; then hyprctl dispatch hy3:${dispatcher} ${direction}; ${monocleBranch}else hyprctl dispatch ${dispatcher} ${direction}; fi' '';
 
             brightnessAdjust = pkgs.writeShellScript "brightness-adjust" ''
               CHANGE=$1
@@ -732,16 +739,16 @@ MONEOF
               # Launch programs
               "$mod, Return, exec, ghostty"
               "$mod SHIFT, Return, hy3:makegroup, v"
-              "$mod, W, hy3:makegroup, tab"
-              "$mod, E, hy3:changegroup, tab"
-              "$mod SHIFT, W, hy3:changegroup, untab"
+              # hy3 tab groups moved off W (now a layout key, below) onto E.
+              "$mod, E, hy3:changegroup, toggletab"
+              "$mod SHIFT, E, hy3:makegroup, tab"
               (if noctalia then "$mod, R, exec, ${noctaliaMsg} panel-toggle launcher" else "$mod, R, exec, rofi -modes run -show run")
               (if noctalia then "$mod, C, exec, ${noctaliaMsg} panel-toggle launcher '/calc '" else "$mod, C, exec, rofi -modes calc -show calc")
               "$mod, B, exec, firefox"
               "$mod, A, exec, firefox https://claude.ai"
               "$mod, T, exec, ghostty -e ${pkgs.ranger}/bin/ranger ~/Downloads"
               "$mod, G, exec, ghostty -e yazi ~/Downloads"
-              "$mod, I, exec, ${pkgs.blueman}/bin/blueman-manager"
+              "$mod SHIFT, I, exec, ${pkgs.blueman}/bin/blueman-manager"
               (if noctalia then "$mod, P, exec, ${noctaliaMsg} session lock" else "$mod, P, exec, ${pkgs.hyprlock}/bin/hyprlock")
               "$mod, M, exec, ${pkgs.wl-kbptr}/bin/wl-kbptr -o modes=floating,click -o mode_floating.source=detect"
 
@@ -751,7 +758,15 @@ MONEOF
               "$mod, L, ${layoutAware "movefocus" "r"}"
               "$mod, K, ${layoutAware "movefocus" "u"}"
               "$mod, J, ${layoutAware "movefocus" "d"}"
-              "$mod, Y, exec, sh -c 'cur=$(hyprctl -j getoption general:layout | ${pkgs.jq}/bin/jq -r .str); [ \"$cur\" = \"hy3\" ] && hyprctl keyword general:layout master || hyprctl keyword general:layout hy3'"
+              # Layout keys, matching modules/desktop/yabai.nix on the mac:
+              # W = stack (monocle here), I = centred master (master with
+              # orientation = center), SHIFT W = plain tiling (hy3, standing in
+              # for bsp). Y toggles master <-> monocle like yabai's
+              # master_center <-> stack; from hy3 it lands on master.
+              "$mod, W, exec, hyprctl keyword general:layout monocle"
+              "$mod, I, exec, hyprctl keyword general:layout master"
+              "$mod SHIFT, W, exec, hyprctl keyword general:layout hy3"
+              "$mod, Y, exec, sh -c 'cur=$(hyprctl -j getoption general:layout | ${pkgs.jq}/bin/jq -r .str); [ \"$cur\" = \"master\" ] && hyprctl keyword general:layout monocle || hyprctl keyword general:layout master'"
               "$mod, D, exec, ${myMenu}/bin/my-menu"
               "$mod SHIFT, F, fullscreen"
               "$mod SHIFT, L, ${layoutAware "movewindow" "r"}"

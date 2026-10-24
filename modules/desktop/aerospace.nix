@@ -667,7 +667,7 @@
         # --- Layout --------------------------------------------------------
         # hyprland's $mod Y toggles hy3↔master; this toggles tiles↔accordion,
         # the same "switch the whole layout" gesture. Accordion is also the
-        # nearest thing to an hy3 tab group ($mod W) — it stacks siblings and
+        # nearest thing to an hy3 tab group ($mod E) — it stacks siblings and
         # shows a sliver of each, but there is no tab bar and no
         # hy3:focustab, so $mod O/U have no equivalent and are unbound.
         "${mod}-y" = "layout tiles accordion";
