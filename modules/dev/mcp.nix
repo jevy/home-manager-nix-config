@@ -123,7 +123,21 @@
         '';
       };
 
-      # Home Assistant MCP server wrapper (SSE-to-stdio proxy, reads token from sops)
+      # Home Assistant MCP: ha-mcp (homeassistant-ai/ha-mcp), installed in HA
+      # as the HACS "HA-MCP Custom Component", not HA's built-in /api/mcp. The
+      # built-in one only exposes Assist intents (turn on/off, set light); it
+      # cannot create automations, call arbitrary services or read traces.
+      #
+      # The component serves MCP on an HA webhook in `ha_auth` mode: it checks
+      # the bearer against HA core, so the existing sops token works unchanged.
+      # The webhook ID is therefore NOT the credential and is fine in git. It
+      # comes from Settings → Devices & services → HA-MCP Server → Configure,
+      # and changes if that config entry is ever re-created.
+      #
+      # Its direct-access port (:9584/private_<path>) has no bearer check, so
+      # the component's bind host is set to 127.0.0.1 in that same Configure
+      # screen. The webhook forwards over loopback and is unaffected.
+      homeAssistantMcpWebhookId = "mcp_7896956d444e6fece97391a01910a3a0";
       homeAssistantMcpWrapper = pkgs.writeShellApplication {
         name = "run-homeassistant-mcp";
         runtimeInputs = [ pkgs.nodejs ];
@@ -132,7 +146,7 @@
           if [ -f "$SOPS_SECRET_PATH/homeassistant_token" ]; then
             HA_TOKEN=$(cat "$SOPS_SECRET_PATH/homeassistant_token")
           fi
-          exec npx -y mcp-remote "https://homeassistant.jevy.org/api/mcp" \
+          exec npx -y mcp-remote "https://homeassistant.jevy.org/api/webhook/${homeAssistantMcpWebhookId}" \
             --header "Authorization: Bearer $HA_TOKEN"
         '';
       };
