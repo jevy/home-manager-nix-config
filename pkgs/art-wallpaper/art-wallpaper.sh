@@ -44,13 +44,10 @@ next() {
   total=$(fetch "$api?$filter&limit=1" | jq '.info.total')
 
   # About 11 in 100 paintings are landscape and big enough, so try a few pages.
-  # Of those ~450, 36% are Chinese, Japanese or Korean (handscrolls and album
-  # leaves are wide), so they kept coming up: keep 1 in 5 of them, for about
-  # 1 wallpaper in 10. That check runs after picking, not before, because
-  # search pages come in accession order and one page can hold a dozen
-  # scrolls, one of which would survive a per-item cut. Paintings already in
-  # history.jsonl are skipped.
-  seen=$(jq -sc 'map(.id)' "$cache/history.jsonl" 2>/dev/null || echo '[]')
+  # Of those ~436, 60% are East or South Asian (handscrolls, album leaves and
+  # Indian miniatures are wide), so they kept coming up; they're dropped, which
+  # leaves ~170. Paintings already in history.jsonl are skipped.
+  seen=$(jq -sc 'map(.id)' "$cache/history.jsonl" 2>/dev/null) || seen='[]'
   pick=""
   for _ in 1 2 3 4 5 6 7 8 9 10; do
     skip=$(shuf -i "0-$((total - 100))" -n 1)
@@ -58,8 +55,10 @@ next() {
       | jq -c --argjson seen "$seen" '.data[]
           | select(.images.print != null)
           | select(.id as $id | $seen | index($id) | not)
-          | (.images.print.width | tonumber) as $w
-          | (.images.print.height | tonumber) as $h
+          | select((.culture[0] // "") | test("\\b(China|Japan|Korea|India|Mughal|Deccan|Kashmir|Tibet|Nepal|Bhutan|Pakistan|Bangladesh|Sri Lanka|Burma|Myanmar|Thailand|Cambodia|Vietnam|Indonesia|Mongolia)\\b") | not)
+          # One record (2026-10) has an empty width; tonumber on it killed the run.
+          | (.images.print.width | tonumber? // 0) as $w
+          | (.images.print.height | tonumber? // 1) as $h
           | select($w >= 2400 and $w / $h >= 1.25 and $w / $h <= 2.1)
           | {
               id,
@@ -83,8 +82,7 @@ next() {
               technique: (.technique // ""),
               tombstone: (.tombstone // "")
             }' \
-      | shuf -n 1 \
-      | awk -v seed="$RANDOM" 'BEGIN { srand(seed) } !/"culture":"(China|Japan|Korea)/ || rand() < 0.2')
+      | shuf -n 1)
     [ -n "$pick" ] && break
   done
   if [ -z "$pick" ]; then
