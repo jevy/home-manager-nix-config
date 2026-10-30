@@ -903,6 +903,10 @@
       #   defaults write com.apple.spaces spans-displays -bool true
       system.defaults.spaces.spans-displays = false;
 
+      # Was found OFF (set by hand, not by nix): Dock clicks and link opens
+      # activated the app but stayed on the current Space.
+      system.defaults.NSGlobalDomain.AppleSpacesSwitchOnActivate = true;
+
       # yabai has no hotkeys of its own, so skhd is not optional here.
       services.skhd = {
         enable = true;
