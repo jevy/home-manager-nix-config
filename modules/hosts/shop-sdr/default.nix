@@ -61,7 +61,10 @@
 # ── Services (modules/services/ham-radio.nix) ────────────────────────
 #
 #   - sdrplayApi      system unit, always-on, owns the RSPdx over USB
-#   - rigctld         system unit, always-on, /dev/ic7300, hamlib on :4532
+#   - wfview          system unit, runs while the IC-7300 is powered on: owns
+#                     /dev/ic7300, rigctld emulation on :4532, server on UDP 50001-3
+#   - wsjtx-wspr      system unit, starts with wfview: WSPR beacon, band hopping,
+#                     1 W. Stop it before SSB or interactive FT8 (see wsjtx-wspr.nix)
 #   - sdrpp-server    user unit, manual start (RSPdx single-tuner)
 #   - sdrangel-server user unit, manual start (RSPdx single-tuner)
 #
@@ -99,7 +102,8 @@
 #
 # ── Remote access ────────────────────────────────────────────────────
 #
-#   rigctld (CAT):       hamlib NET rigctl model 2 → shop-sdr:4532
+#   rigctl (CAT):        hamlib NET rigctl model 2 → shop-sdr:4532 (wfview)
+#   wfview (remote SSB): wfview client on laptop → shop-sdr, user jevin / pw shop
 #   SparkSDR WebSocket:  ws://shop-sdr:4649
 #   SDR++ IQ server:     shop-sdr:5259  (sdrpp client on laptop)
 #   SDRangel web UI:     http://shop-sdr:8091/
@@ -133,8 +137,14 @@ in
         # XFCE auto-started at boot + xrdp on :3389 — RDP into shop-sdr
         nixos.remoteDesktop
 
-        # WaveLogGate — push CAT data from rigctld to Wavelog
+        # wfview — owns the IC-7300: rigctld emulation :4532 + remote server
+        nixos.wfview
+
+        # WaveLogGate — push CAT data from wfview's :4532 to Wavelog
         nixos.wlgate
+
+        # WSPR beacon — headless WSJT-X, band hopping, 1 W, starts with wfview
+        nixos.wsjtxWspr
 
         # GridTracker — live WSJT-X decode map
         nixos.gridtracker

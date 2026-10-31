@@ -1,6 +1,7 @@
-# Ham radio services: SDRplay API, hamlib/rigctld, WSJT-X, SparkSDR
-# rigctld owns /dev/ic7300 and exposes hamlib protocol on TCP :4532
-# Remote clients (flrig, grig) connect via hamlib NET rigctl (model 2)
+# Ham radio services: SDRplay API, WSJT-X, SparkSDR, SDR servers
+# The IC-7300 itself is owned by wfview (modules/services/wfview.nix), which
+# serves hamlib's rigctld protocol on TCP :4532 for WSJT-X, wlgate and
+# remote rigctl/flrig/grig clients (hamlib NET rigctl, model 2).
 { inputs, ... }:
 {
   flake.modules.nixos.hamRadio =
@@ -32,7 +33,7 @@
       # sdrangel-server are headless user units (below) for ad-hoc remote
       # tuning. Quit SparkSDR before starting either server unit.
       environment.systemPackages = with pkgs; [
-        hamlib_4              # rigctld, rigctl
+        hamlib_4              # rigctl CLI (talks to wfview's rigctld emulation)
         wsjtx                 # WSJT-X for WSPR/FT8
         js8call               # JS8Call — keyboard chat over FT8-like protocol
         fldigi                # Olivia, PSK31, MFSK, RTTY, Hellschreiber, etc.
@@ -50,22 +51,8 @@
         qpwgraph              # PipeWire graph patchbay (visual JACK-style routing)
       ];
 
-      # ── rigctld — IC-7300 rig control daemon ─────────────────────────
-      # Owns /dev/ic7300, exposes hamlib protocol on TCP :4532
-      # Supports multiple simultaneous clients (WSJT-X, remote grig/flrig)
-      systemd.services.rigctld = {
-        description = "Hamlib rigctld for IC-7300";
-        after = [ "dev-ic7300.device" ];
-        bindsTo = [ "dev-ic7300.device" ];
-        wantedBy = [ "multi-user.target" ];
-        serviceConfig = {
-          ExecStart = "${pkgs.hamlib_4}/bin/rigctld --model=3073 --rig-file=/dev/ic7300 --serial-speed=115200 --port=4532 --set-conf=rts_state=OFF --set-conf=dtr_state=OFF";
-          Restart = "on-failure";
-          RestartSec = 5;
-          User = "jevin";
-          Group = "dialout";
-        };
-      };
+      # (rigctld used to live here; wfview.nix now owns /dev/ic7300 and
+      # emulates rigctld on :4532. hamlib_4 stays above for the rigctl CLI.)
 
       # ── PipeWire network audio ──────────────────────────────────────
       # Expose IC-7300 USB audio over the network for remote monitoring
@@ -123,7 +110,6 @@
 
       # ── Firewall ─────────────────────────────────────────────────────
       networking.firewall.allowedTCPPorts = [
-        4532  # rigctld (hamlib protocol)
         4649  # SparkSDR WebSocket
         5259  # SDR++ IQ server
         8091  # SDRangel web UI / REST API

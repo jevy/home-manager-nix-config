@@ -60,6 +60,21 @@
       soapysdr-with-plugins = prev.soapysdr.override {
         extraPackages = [ prev.soapysdrplay ];
       };
+
+      # SDRplay pulled the 3.15.1 Linux installer from sdrplay.com (404 as of
+      # 2026-10-31), so any closure needing sdrplay fails to build unless the
+      # .run is already in a local store. 3.15.2 is still hosted with the same
+      # 3.15 soname, but its archive names the arch dir `amd64` where 3.15.1
+      # (and nixpkgs' linux.nix, via qemuArch) used `x86_64`.
+      # TODO: drop once nixpkgs bumps sdrplay past 3.15.1.
+      sdrplay = prev.sdrplay.overrideAttrs (old: {
+        version = "3.15.2";
+        src = prev.fetchurl {
+          url = "https://www.sdrplay.com/software/SDRplay_RSP_API-Linux-3.15.2.run";
+          hash = "sha256-OpfKdkJju+dvsPIiDmQIlCNX6IZMGeFAim1ph684L+M=";
+        };
+        installPhase = builtins.replaceStrings [ "x86_64/" ] [ "amd64/" ] old.installPhase;
+      });
     };
 
     # masterpdfeditor 5.9.98's tarball was removed from code-industry.net

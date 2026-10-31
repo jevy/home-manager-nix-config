@@ -1,4 +1,5 @@
-# WaveLogGate: pushes CAT data (freq, mode, power) from rigctld to Wavelog,
+# WaveLogGate: pushes CAT data (freq, mode, power) from wfview's rigctld
+# emulation (:4532, see wfview.nix) to Wavelog,
 # and receives WSJT-X N1MM ADIF broadcasts on :2333 for automatic QSO logging.
 #
 # Architecture notes (v2.0.8):
@@ -117,11 +118,14 @@
       environment.systemPackages = [ waveloggate ];
 
       systemd.services.wlgate = {
-        description = "WaveLogGate — rigctld to Wavelog bridge";
-        after = [ "network-online.target" "rigctld.service" ];
+        description = "WaveLogGate — rig CAT (wfview :4532) to Wavelog bridge";
+        after = [ "network-online.target" "wfview.service" ];
         wants = [ "network-online.target" ];
-        requires = [ "rigctld.service" ];
-        wantedBy = [ "multi-user.target" ];
+        requires = [ "wfview.service" ];
+        # Started by wfview (which follows the radio's power, see
+        # wfview.nix), not at boot: without the radio there's nothing to
+        # report and no WSJT-X QSOs to forward.
+        wantedBy = [ "wfview.service" ];
 
         serviceConfig = {
           ExecStart = wlgateWrapper;
@@ -149,7 +153,9 @@
         description = "Restart WaveLogGate";
         serviceConfig = {
           Type = "oneshot";
-          ExecStart = "/run/current-system/sw/bin/systemctl restart wlgate.service";
+          # try-restart: no-op while the radio (and so wlgate) is off, instead
+          # of failing the unit every morning on wlgate's wfview dependency.
+          ExecStart = "/run/current-system/sw/bin/systemctl try-restart wlgate.service";
         };
       };
 

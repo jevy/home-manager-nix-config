@@ -84,6 +84,7 @@
         # Ham radio rig control
         flrig
         hamlib_4
+        wfview      # remote IC-7300 (SSB, waterfall) via shop-sdr's wfview server
         tigervnc
         remmina
         xauth
@@ -272,9 +273,15 @@
         screen-record-with-audio = "${pkgs.wl-screenrec}/bin/wl-screenrec --audio -g \"$(${pkgs.slurp}/bin/slurp)\" --filename=$HOME/Screenshots/latest-recording.mp4";
 
         # Ham radio — IC-7300 remote control via shop-sdr
-        ic7300 = "ssh shop-sdr 'sudo systemctl stop wsjtx-wspr 2>/dev/null; sudo rm -rf /tmp/WSJT-X /tmp/WSJT-X.lock /tmp/qipc_sharedmemory_* /tmp/qipc_systemsem_*; sudo ipcrm --all=shm 2>/dev/null; mkdir -p /tmp/WSJT-X'; ssh -YC shop-sdr 'QT_SCALE_FACTOR=2 QT_XCB_GL_INTEGRATION=none wsjtx'";
-        ic7300-headless = "ssh shop-sdr sudo systemctl start wsjtx-wspr";
-        ic7300-vnc = "vncviewer -FullScreen shop-sdr:5942";
+        ic7300 = "ssh shop-sdr 'sudo systemctl stop wsjtx-wspr; sudo rm -rf /tmp/WSJT-X /tmp/WSJT-X.lock /tmp/qipc_sharedmemory_* /tmp/qipc_systemsem_*; sudo ipcrm --all=shm 2>/dev/null; mkdir -p /tmp/WSJT-X'; ssh -YC shop-sdr 'QT_SCALE_FACTOR=2 QT_XCB_GL_INTEGRATION=none wsjtx'";
+        # First run: Settings > Radio Access > Network: host shop-sdr, jevin / shop.
+        # Also tick "Manual Radio CI-V Address" = 94 + "Use CI-V address as Model":
+        # on auto-detect the client never gets rigCaps over the server and stays
+        # greyed out ("NONE"), reconnecting every 60 s.
+        # Each of these stops the WSPR beacon first: it holds the 7300's audio
+        # and PTT. ic7300-wspr hands the radio back to the beacon.
+        ic7300-ssb = "ssh shop-sdr sudo systemctl stop wsjtx-wspr; setsid -f wfview";
+        ic7300-wspr = "ssh shop-sdr sudo systemctl start wsjtx-wspr";
         ic7300-rigctl = "rigctl -m 2 -r shop-sdr:4532";
         pomodoro = "termdown 25m -s -b && ${pkgs.libnotify}/bin/notify-send 'Pomodoro complete. Take a break!'";
         sb = ''cd "${config.secondBrain.basePath}"'';
