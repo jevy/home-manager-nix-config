@@ -18,6 +18,11 @@
 # turns it on 30 s after startup when WSJTX_WSPR_AUTO_TX is set and the mode
 # is WSPR; without the variable WSJT-X behaves as stock.
 #
+# Station performance notes live in Obsidian (Second Brain vault), not here:
+#   "Amateur Radio" (hub) → "RFI LLM Analysis from WSPR" (May 2026 baseline:
+#   per-band TX/RX, reciprocity, antenna pattern) and "2026-10-31 - WSPR
+#   Signal Collapse" (night-time RX drop, timeline, wspr.live queries).
+#
 # Audio goes straight to ALSA (Qt5 multimedia), so while the beacon holds the
 # codec the wfview server can't open it — another reason to stop the beacon
 # before SSB.
@@ -138,9 +143,15 @@
           Group = "users";
           SupplementaryGroups = [ "audio" ];
           ExecStartPre = prestart;
-          # Fixed display :99 so the window can be screenshotted for debugging:
-          #   ssh shop-sdr 'xwd -root -display :99 | convert xwd:- /tmp/wspr.png'
-          ExecStart = "${pkgs.xvfb-run}/bin/xvfb-run -n 99 -s '-screen 0 1600x1000x24' ${wsjtxAutoTx}/bin/wsjtx --rig-name=WSPR";
+          # Release PTT whenever the beacon stops. Stopping it mid-TX
+          # (2026-11-01 10:34) killed WSJT-X before it unkeyed and wfview left
+          # the 7300 keyed for ~2 min, even across a band hop. `-` so a radio
+          # that's already off doesn't fail the stop.
+          ExecStopPost = "-${pkgs.hamlib_4}/bin/rigctl -m 2 -r 127.0.0.1:4532 T 0";
+          # Fixed display :98 (see wfview.nix for the display map) so the
+          # window can be screenshotted for debugging:
+          #   ssh shop-sdr 'xwd -root -display :98 | magick xwd:- /tmp/wspr.png'
+          ExecStart = "${pkgs.xvfb-run}/bin/xvfb-run -n 98 -s '-screen 0 1600x1000x24' ${wsjtxAutoTx}/bin/wsjtx --rig-name=WSPR";
           Restart = "on-failure";
           RestartSec = 30;
         };

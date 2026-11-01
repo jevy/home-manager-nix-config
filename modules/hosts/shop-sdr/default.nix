@@ -73,6 +73,12 @@
 #     arecord -l               # IC-7300 USB audio codec should appear
 #     systemctl status sdrplayApi
 #
+# ── Notes ─────────────────────────────────────────────────────────────
+#
+#   Station/antenna analysis and incident logs are in Obsidian (Second Brain
+#   vault): "Amateur Radio" hub → "RFI LLM Analysis from WSPR",
+#   "2026-10-31 - WSPR Signal Collapse". Data source: wspr.live.
+#
 # ── Operating SparkSDR ──────────────────────────────────────────────
 #
 #   SparkSDR is interactive-only — launched from the RDP session and

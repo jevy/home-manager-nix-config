@@ -282,6 +282,12 @@
         # and PTT. ic7300-wspr hands the radio back to the beacon.
         ic7300-ssb = "ssh shop-sdr sudo systemctl stop wsjtx-wspr; setsid -f wfview";
         ic7300-wspr = "ssh shop-sdr sudo systemctl start wsjtx-wspr";
+        # JS8Call on shop-sdr over X forwarding; its settings (VA3JEV, Hamlib
+        # NET rigctl localhost:4532 = wfview, PTT CAT, PCM2901 audio,
+        # PSKReporter on) live in shop-sdr:~/.config/JS8Call.ini. Pauses the
+        # beacon while it runs and hands the radio back when you quit.
+        # 40m JS8 is 7.078 USB; who heard you: pskreporter.info, mode JS8.
+        ic7300-js8 = "ssh shop-sdr sudo systemctl stop wsjtx-wspr; ssh -YC shop-sdr 'QT_SCALE_FACTOR=2 QT_XCB_GL_INTEGRATION=none js8call'; ssh shop-sdr sudo systemctl start wsjtx-wspr";
         ic7300-rigctl = "rigctl -m 2 -r shop-sdr:4532";
         pomodoro = "termdown 25m -s -b && ${pkgs.libnotify}/bin/notify-send 'Pomodoro complete. Take a break!'";
         sb = ''cd "${config.secondBrain.basePath}"'';

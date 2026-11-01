@@ -86,7 +86,11 @@
           StateDirectory = "wfview";
           LogsDirectory = "wfview";
           ExecStartPre = "${pkgs.coreutils}/bin/install -m 0644 ${wfviewConf} /var/lib/wfview/wfview.conf";
-          ExecStart = "${pkgs.xvfb-run}/bin/xvfb-run -a ${pkgs.wfview}/bin/wfview -s /var/lib/wfview/wfview.conf -l /var/log/wfview/wfview.log";
+          # Fixed display, one per headless app: wfview :97, wsjtx-wspr :98,
+          # wlgate :99 (its wrapper hardcodes xvfb-run's default). With `-a`
+          # wfview grabbed :99 first, wlgate's and the beacon's Xvfb then
+          # failed to start and all three shared one 640x480 screen.
+          ExecStart = "${pkgs.xvfb-run}/bin/xvfb-run -n 97 -s '-screen 0 1600x1000x24' ${pkgs.wfview}/bin/wfview -s /var/lib/wfview/wfview.conf -l /var/log/wfview/wfview.log";
           Restart = "on-failure";
           RestartSec = 5;
         };
