@@ -23,7 +23,22 @@
             -e 's/^SoundOutName=.*/SoundOutName=ic7300-tx/' \
             -e 's/^CATNetworkPort=.*/CATNetworkPort=localhost:4532/' "$ini"
         fi
+        # A WSJT-X that died uncleanly (X forwarding dropped) leaves its jt9
+        # decoder running, attached to the "WSJT-X" shared memory, and the
+        # next start fails with "Unable to create shared memory segment"
+        # (2026-11-01). Only the interactive instance's jt9 (-s WSJT-X); the
+        # beacon's is "-s WSJT-X - WSPR". Then drop segments nothing holds.
+        ${pkgs.procps}/bin/pkill -f -- '/jt9 -s WSJT-X -w' && sleep 1
+        ${pkgs.util-linux}/bin/ipcs -m | ${pkgs.gawk}/bin/awk -v u="$USER" '$3==u && $6==0 {print $2}' \
+          | while read -r id; do ${pkgs.util-linux}/bin/ipcrm -m "$id"; done
         rm -rf /tmp/WSJT-X.lock /tmp/qipc_sharedmemory_*WSJT* /tmp/qipc_systemsem_*WSJT* 2>/dev/null
+        # FT8 power. The beacon leaves the rig at 1 W and WSJT-X never sets
+        # power. Done here, in receive (the alias has just stopped the beacon,
+        # whose ExecStopPost unkeys): wfview ignores level changes while
+        # transmitting, so changing it mid-Tune does nothing (2026-11-01).
+        # Override per run: FT8_POWER=0.10 wsjtx-ic7300 (0..1 of 100 W).
+        ${pkgs.hamlib_4}/bin/rigctl -m 2 -r 127.0.0.1:4532 L RFPOWER "''${FT8_POWER:-0.25}" \
+          || echo "warning: could not set FT8 power via wfview :4532" >&2
         export QT_SCALE_FACTOR=''${QT_SCALE_FACTOR:-2} QT_XCB_GL_INTEGRATION=none
         exec ${pkgs.wsjtx}/bin/wsjtx "$@"
       '';
