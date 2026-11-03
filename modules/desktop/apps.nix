@@ -84,6 +84,23 @@
         # Ham radio rig control
         flrig
         hamlib_4
+        # Live IC-7300 meters from shop-sdr's wfview (:4532), for watching
+        # WSJT-X Tune / TX without the wfview client (which fights WSJT-X
+        # over the dial frequency). Ctrl-C to stop. Levels are hamlib's 0..1
+        # scale: Po and Set ×100 ≈ watts; ALC keep near 0 (any reading means
+        # overdriven, lower WSJT-X's Pwr slider); SWR is the ratio.
+        (writeShellScriptBin "ic7300-meter" ''
+          while :; do
+            mapfile -t v < <(${hamlib_4}/bin/rigctl -m 2 -r shop-sdr:4532 \
+              t l RFPOWER l RFPOWER_METER l ALC l SWR l STRENGTH 2>/dev/null)
+            [ "''${#v[@]}" -ge 6 ] || { printf '\r%-70s' "no answer from shop-sdr:4532"; sleep 2; continue; }
+            if [ "''${v[0]}" = 1 ]; then st="TX"; else st="rx"; fi
+            LC_ALL=C printf '\r%s  set %3.0f W  Po %3.0f W  ALC %4.2f  SWR %4.2f  S %+3d dB   ' \
+              "$st" "$(echo "''${v[1]}*100" | ${bc}/bin/bc -l)" "$(echo "''${v[2]}*100" | ${bc}/bin/bc -l)" \
+              "''${v[3]}" "''${v[4]}" "''${v[5]}"
+            sleep 0.5
+          done
+        '')
         wfview      # remote IC-7300 (SSB, waterfall) via shop-sdr's wfview server
         tigervnc
         remmina
@@ -289,6 +306,12 @@
         # 40m JS8 is 7.078 USB; who heard you: pskreporter.info, mode JS8.
         ic7300-js8 = "ssh shop-sdr sudo systemctl stop wsjtx-wspr; ssh -YC shop-sdr 'QT_SCALE_FACTOR=2 QT_XCB_GL_INTEGRATION=none js8call'; ssh shop-sdr sudo systemctl start wsjtx-wspr";
         ic7300-rigctl = "rigctl -m 2 -r shop-sdr:4532";
+        # Live map of what WSJT-X decodes: GridTracker on shop-sdr, over X
+        # forwarding. Run alongside `ic7300`; it takes WSJT-X's UDP 2237.
+        # The UPower and "WebGL1 blocklisted" errors it prints are harmless
+        # (no battery service, no GPU over X forwarding). Who heard *you* is
+        # pskreporter.info/pskmap.html?callsign=VA3JEV instead.
+        ic7300-map = "ssh -YC shop-sdr gridtracker 2>/dev/null";
         # Listen only: plays shop-sdr's ic7300-rx (radio RX audio) here over
         # pulse TCP :4713. No TX and no need to stop the beacon (you will hear
         # WSPR/FT8 tones). Ctrl-C to stop.
