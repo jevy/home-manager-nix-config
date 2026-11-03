@@ -21,11 +21,26 @@
       # Verify with `qmd doctor` — it should report "GPU vulkan; offloading
       # enabled". Note `qmd status` no longer shows the Device block as of
       # 2.6.x; that moved to `qmd doctor`.
+      #
+      # The loader AND the GPU driver must come from qmd's own nixpkgs, not
+      # ours. qmd does not follow our nixpkgs (see flake.nix), so bun runs on
+      # qmd's older glibc, and the wrapper pins that glibc in LD_LIBRARY_PATH.
+      # The system radeon ICD (/run/opengl-driver) is built against our newer
+      # glibc, so dlopen fails on missing GLIBC_2.4x symbols and node-llama-cpp
+      # silently drops to CPU. That regressed GPU from 2026-01 until 2026-11
+      # (measured: `qmd query` 55.8s CPU vs 2.9s GPU). VK_DRIVER_FILES points
+      # the loader at a radeon ICD that matches qmd's glibc.
+      #
+      # `uname` gets the same treatment: the wrapper's Darwin check would
+      # otherwise hit the system uname and print a GLIBC_2.4x error every run.
+      qmdPkgs = inputs.qmd.inputs.nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system};
       qmd = inputs.qmd.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
         postFixup = (old.postFixup or "") + lib.optionalString pkgs.stdenv.hostPlatform.isLinux ''
           substituteInPlace $out/bin/qmd \
             --replace-fail "export LD_LIBRARY_PATH='" \
-                           "export LD_LIBRARY_PATH='${lib.makeLibraryPath [ pkgs.vulkan-loader ]}:"
+                           "export VK_DRIVER_FILES='${qmdPkgs.mesa}/share/vulkan/icd.d/radeon_icd.x86_64.json'
+          export LD_LIBRARY_PATH='${lib.makeLibraryPath [ qmdPkgs.vulkan-loader ]}:" \
+            --replace-fail '"$(uname -s)"' '"$(${qmdPkgs.coreutils}/bin/uname -s)"'
         '';
       });
     in
