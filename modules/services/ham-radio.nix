@@ -8,6 +8,25 @@
     { pkgs, lib, config, ... }:
     let
       sparksdr = pkgs.callPackage ../../pkgs/sparksdr.nix { };
+
+      # Interactive (FT8) WSJT-X for the laptop's `ic7300` alias. Pins the
+      # audio devices in ~/.config/WSJT-X.ini to the ic7300-rx/-tx virtual
+      # devices (see "IC-7300 audio" below) and CAT to wfview's :4532 before
+      # launching, and clears stale shared memory a killed WSJT-X leaves
+      # behind. The beacon itself is stopped/started by the alias, which has
+      # sudo over ssh.
+      wsjtxIc7300 = pkgs.writeShellScriptBin "wsjtx-ic7300" ''
+        ini="$HOME/.config/WSJT-X.ini"
+        if [ -f "$ini" ]; then
+          ${pkgs.gnused}/bin/sed -i \
+            -e 's/^SoundInName=.*/SoundInName=ic7300-rx/' \
+            -e 's/^SoundOutName=.*/SoundOutName=ic7300-tx/' \
+            -e 's/^CATNetworkPort=.*/CATNetworkPort=localhost:4532/' "$ini"
+        fi
+        rm -rf /tmp/WSJT-X.lock /tmp/qipc_sharedmemory_*WSJT* /tmp/qipc_systemsem_*WSJT* 2>/dev/null
+        export QT_SCALE_FACTOR=''${QT_SCALE_FACTOR:-2} QT_XCB_GL_INTEGRATION=none
+        exec ${pkgs.wsjtx}/bin/wsjtx "$@"
+      '';
     in
     {
       # ── SDRplay API service ──────────────────────────────────────────
@@ -33,6 +52,7 @@
       # sdrangel-server are headless user units (below) for ad-hoc remote
       # tuning. Quit SparkSDR before starting either server unit.
       environment.systemPackages = with pkgs; [
+        wsjtxIc7300           # FT8 launcher (laptop `ic7300` alias), see let above
         hamlib_4              # rigctl CLI (talks to wfview's rigctld emulation)
         wsjtx                 # WSJT-X for WSPR/FT8
         js8call               # JS8Call — keyboard chat over FT8-like protocol
@@ -54,8 +74,87 @@
       # (rigctld used to live here; wfview.nix now owns /dev/ic7300 and
       # emulates rigctld on :4532. hamlib_4 stays above for the rigctl CLI.)
 
+      # ── IC-7300 audio through PipeWire, shared ──────────────────────
+      # Every app uses two stable virtual devices instead of the codec
+      # (PCM2901, "USB Audio CODEC") itself:
+      #
+      #   7300 RX ─ alsa_input.usb-Burr-Brown… ─▶ ic7300-rx  (source, mono)
+      #   7300 TX ◀ alsa_output.usb-Burr-Brown… ◀─ ic7300-tx (sink, mono)
+      #
+      #   ic7300-rx ─▶ WSJT-X / JS8Call decode, wfview server (laptop audio),
+      #                laptop `ic7300-listen` (pulse over TCP, below)
+      #   ic7300-tx ◀─ WSJT-X / JS8Call TX, wfview server (laptop mic)
+      #
+      # Pulse/Qt5 apps pick them by node.name (ic7300-rx/-tx), wfview by
+      # description prefix ("IC-7300 RX"/"IC-7300 TX").
+      #
+      # Why the loopbacks are not passive: they keep PipeWire holding the
+      # codec open whenever the radio is on. WSJT-X (Qt5) probes every raw
+      # ALSA device at startup ("pcm_dmix ... unable to open slave"); while
+      # the capture side was suspended that probe grabbed it, PipeWire's own
+      # open failed with EBUSY and WirePlumber dropped the input node until
+      # restarted (2026-11-01 16:27: no RX in WSJT-X, silent laptop). With
+      # PipeWire holding both directions the probe just gets EBUSY itself.
+      # dont-fallback: radio off means silence, not the built-in mic/speaker.
+      services.pipewire.extraConfig.pipewire."60-ic7300" = {
+        "context.modules" = [
+          {
+            name = "libpipewire-module-loopback";
+            args = {
+              "node.description" = "IC-7300 RX";
+              "capture.props" = {
+                "node.name" = "ic7300-rx.hw";
+                "target.object" = "alsa_input.usb-Burr-Brown_from_TI_USB_Audio_CODEC-00.analog-stereo";
+                "audio.position" = [ "FL" "FR" ];
+                "node.dont-fallback" = true;
+                "stream.dont-remix" = false;
+              };
+              "playback.props" = {
+                "node.name" = "ic7300-rx";
+                "media.class" = "Audio/Source";
+                "priority.session" = 2100;
+                "audio.position" = [ "MONO" ];
+              };
+            };
+          }
+          {
+            name = "libpipewire-module-loopback";
+            args = {
+              "node.description" = "IC-7300 TX";
+              "capture.props" = {
+                "node.name" = "ic7300-tx";
+                "media.class" = "Audio/Sink";
+                "priority.session" = 2100;
+                "audio.position" = [ "MONO" ];
+              };
+              "playback.props" = {
+                "node.name" = "ic7300-tx.hw";
+                "target.object" = "alsa_output.usb-Burr-Brown_from_TI_USB_Audio_CODEC-00.analog-stereo";
+                "audio.position" = [ "FL" "FR" ];
+                "node.dont-fallback" = true;
+              };
+            };
+          }
+        ];
+      };
+
+      # Hardware side never suspends. (The virtual devices win "default" via
+      # priority.session above, so anything left on "default" hits the radio.)
+      services.pipewire.wireplumber.extraConfig."50-ic7300" = {
+        "monitor.alsa.rules" = [
+          {
+            matches = [
+              { "node.name" = "~alsa_input.usb-Burr-Brown_from_TI_USB_Audio_CODEC*"; }
+              { "node.name" = "~alsa_output.usb-Burr-Brown_from_TI_USB_Audio_CODEC*"; }
+            ];
+            actions.update-props."session.suspend-timeout-seconds" = 0;
+          }
+        ];
+      };
+
       # ── PipeWire network audio ──────────────────────────────────────
-      # Expose IC-7300 USB audio over the network for remote monitoring
+      # Expose IC-7300 audio over the network: the laptop's `ic7300-listen`
+      # plays ic7300-rx from here (listen only, no TX, beacon keeps running).
       services.pipewire.extraConfig.pipewire-pulse."30-network" = {
         "pulse.cmd" = [
           { cmd = "load-module"; args = "module-native-protocol-tcp auth-anonymous=1"; }
@@ -111,6 +210,7 @@
       # ── Firewall ─────────────────────────────────────────────────────
       networking.firewall.allowedTCPPorts = [
         4649  # SparkSDR WebSocket
+        4713  # pulse TCP (laptop `ic7300-listen`)
         5259  # SDR++ IQ server
         8091  # SDRangel web UI / REST API
       ];

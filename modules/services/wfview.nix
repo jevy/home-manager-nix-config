@@ -15,14 +15,13 @@
 #   - wfview writes [Server] GUID back into its config on load, so the
 #     Nix-generated file is copied into StateDirectory on every start
 #     rather than symlinked read-only from the store.
-#   - Audio devices are matched by prefix of the PipeWire node description.
-#     The 7300's codec shows up as "PCM2901 Audio Codec Analog Stereo"
-#     (`pw-cli ls Node`), not "USB Audio CODEC".
+#   - Audio devices are matched by prefix of the PipeWire node description,
+#     here the "IC-7300 RX"/"IC-7300 TX" virtual devices from ham-radio.nix.
 #   - The server needs a user entry to accept a client at all. The
 #     password is a throwaway on purpose (home network, single operator).
 #
-# WSJT-X still talks to the 7300's USB audio codec directly through
-# PipeWire; wfview only carries audio for the remote (laptop) client.
+# WSJT-X uses the same virtual devices; wfview only carries audio for the
+# remote (laptop) client.
 # Don't run WSJT-X TX and remote SSB at the same time.
 { inputs, ... }:
 {
@@ -54,8 +53,8 @@
           ServerControlPort = 50001;
           ServerCivPort = 50002;
           ServerAudioPort = 50003;
-          ServerAudioInput = "PCM2901 Audio Codec";
-          ServerAudioOutput = "PCM2901 Audio Codec";
+          ServerAudioInput = "IC-7300 RX"; # ham-radio.nix virtual devices
+          ServerAudioOutput = "IC-7300 TX";
           "Users\\size" = 1;
           "Users\\1\\Username" = "jevin";
           "Users\\1\\Password" = "shop";

@@ -273,7 +273,7 @@
         screen-record-with-audio = "${pkgs.wl-screenrec}/bin/wl-screenrec --audio -g \"$(${pkgs.slurp}/bin/slurp)\" --filename=$HOME/Screenshots/latest-recording.mp4";
 
         # Ham radio — IC-7300 remote control via shop-sdr
-        ic7300 = "ssh shop-sdr 'sudo systemctl stop wsjtx-wspr; sudo rm -rf /tmp/WSJT-X /tmp/WSJT-X.lock /tmp/qipc_sharedmemory_* /tmp/qipc_systemsem_*; sudo ipcrm --all=shm 2>/dev/null; mkdir -p /tmp/WSJT-X'; ssh -YC shop-sdr 'QT_SCALE_FACTOR=2 QT_XCB_GL_INTEGRATION=none wsjtx'";
+        ic7300 = "ssh shop-sdr sudo systemctl stop wsjtx-wspr; ssh -YC shop-sdr wsjtx-ic7300; ssh shop-sdr sudo systemctl start wsjtx-wspr";
         # First run: Settings > Radio Access > Network: host shop-sdr, jevin / shop.
         # Also tick "Manual Radio CI-V Address" = 94 + "Use CI-V address as Model":
         # on auto-detect the client never gets rigCaps over the server and stays
@@ -289,6 +289,10 @@
         # 40m JS8 is 7.078 USB; who heard you: pskreporter.info, mode JS8.
         ic7300-js8 = "ssh shop-sdr sudo systemctl stop wsjtx-wspr; ssh -YC shop-sdr 'QT_SCALE_FACTOR=2 QT_XCB_GL_INTEGRATION=none js8call'; ssh shop-sdr sudo systemctl start wsjtx-wspr";
         ic7300-rigctl = "rigctl -m 2 -r shop-sdr:4532";
+        # Listen only: plays shop-sdr's ic7300-rx (radio RX audio) here over
+        # pulse TCP :4713. No TX and no need to stop the beacon (you will hear
+        # WSPR/FT8 tones). Ctrl-C to stop.
+        ic7300-listen = "parec --server=shop-sdr -d ic7300-rx --format=s16le --rate=12000 --channels=1 --latency-msec=200 | pacat --format=s16le --rate=12000 --channels=1";
         pomodoro = "termdown 25m -s -b && ${pkgs.libnotify}/bin/notify-send 'Pomodoro complete. Take a break!'";
         sb = ''cd "${config.secondBrain.basePath}"'';
         s = "kitty +kitten ssh";

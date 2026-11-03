@@ -4,7 +4,7 @@
 # file (`--rig-name=WSPR` → ~/.config/WSJT-X - WSPR.ini), so the interactive
 # FT8 WSJT-X config in ~/.config/WSJT-X.ini is untouched.
 #
-#   IC-7300 ─ wfview :4532 (CAT + PTT) ─ WSJT-X ─ sysdefault:CARD=IC7300 (audio)
+#   IC-7300 ─ wfview :4532 (CAT + PTT) ─ WSJT-X ─ ic7300-rx/-tx (PipeWire audio)
 #
 # Starts whenever wfview does (i.e. when the radio is switched on) and stops
 # with it. To use the radio for anything else (SSB through wfview, FT8 in the
@@ -23,9 +23,9 @@
 #   per-band TX/RX, reciprocity, antenna pattern) and "2026-10-31 - WSPR
 #   Signal Collapse" (night-time RX drop, timeline, wspr.live queries).
 #
-# Audio goes straight to ALSA (Qt5 multimedia), so while the beacon holds the
-# codec the wfview server can't open it — another reason to stop the beacon
-# before SSB.
+# Audio goes through the ic7300-rx/-tx PipeWire devices, shared with wfview/JS8Call
+# (see "IC-7300 audio" in ham-radio.nix). Sharing audio isn't sharing
+# the transmitter though: still stop the beacon before SSB/FT8/JS8.
 { inputs, ... }:
 {
   flake.modules.nixos.wsjtxWspr =
@@ -77,8 +77,8 @@
         SplitMode=@Variant(\0\0\0\x7f\0\0\0\x1eTransceiverFactory::SplitMode\0\0\0\0\x10split_mode_none\0)
         Region=@Variant(\0\0\0\x7f\0\0\0\x14IARURegions::Region\0\0\0\0\x4\x41LL\0)
         Polling=1
-        SoundInName="sysdefault:CARD=IC7300"
-        SoundOutName="sysdefault:CARD=IC7300"
+        SoundInName=ic7300-rx
+        SoundOutName=ic7300-tx
         AudioInputChannel=Mono
         AudioOutputChannel=Mono
         PSKReporter=false
