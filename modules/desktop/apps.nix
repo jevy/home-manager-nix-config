@@ -84,6 +84,10 @@
         # Ham radio rig control
         flrig
         hamlib_4
+        # AnyTone AT-D878UV codeplugs: qdmr GUI + dmrconf CLI (YAML read/write
+        # over /dev/ttyACM0; dialout group is enough, no udev rule needed).
+        # Codeplug + backups live in ~/radio/anytone-868 (git).
+        qdmr
         # Live IC-7300 meters from shop-sdr's wfview (:4532), for watching
         # WSJT-X Tune / TX without the wfview client (which fights WSJT-X
         # over the dial frequency). Ctrl-C to stop. Levels are hamlib's 0..1
