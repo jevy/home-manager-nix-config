@@ -14,11 +14,14 @@
 # --auto-enable-gps (there is no YAML field for it), so a bare
 # `dmrconf write` turns GPS OFF and the APRS beacon silently stops.
 # `d878 write` always passes it.
+#
+# `d878 fm` sets the FM broadcast radio (VFO mode + station list from
+# fm-stations.txt), which dmrconf can't encode at all. See fm.py.
 writeShellApplication {
   name = "d878";
   runtimeInputs = [
     qdmr
-    python3
+    (python3.withPackages (ps: [ ps.pyserial ]))
     usbutils
     coreutils
     gnugrep
@@ -35,6 +38,9 @@ writeShellApplication {
     d878 read [f]  read the radio to f (default backup-YYYY-MM-DD-HHMM.yaml)
     d878 verify    build.py -> offline verify only, radio untouched
     d878 db        load the RadioID callsign database (callsigns on screen)
+    d878 fm        show FM broadcast settings + stations (read-only)
+    d878 fm write  VFO mode + stations from fm-stations.txt (backs up first)
+    d878 fm restore <fm-backup-*.json>
     dir: $dir (override with D878_DIR)
     EOF
     }
@@ -74,6 +80,18 @@ writeShellApplication {
       db)
         need_radio
         dmrconf write-db --radio=$radio -i "$(grep -oP 'number: \K\d+' new-codeplug.yaml | head -1)"
+        ;;
+      fm)
+        need_radio
+        case "''${2:-show}" in
+          show) python3 ${./fm.py} show ;;
+          write)
+            python3 ${./fm.py} write fm-stations.txt .
+            git add -A && git commit -qm "d878 fm write $(date +%F\ %H:%M)" || true
+            ;;
+          restore) python3 ${./fm.py} restore "$3" ;;
+          *) usage ;;
+        esac
         ;;
       *) usage ;;
     esac

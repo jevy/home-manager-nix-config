@@ -90,8 +90,8 @@
         qdmr
         # `d878 write` - ALWAYS write through this, never bare `dmrconf write`:
         # it passes --auto-enable-gps, without which a write turns GPS off and
-        # the APRS beacon stops. See pkgs/d878.nix.
-        (callPackage ../../pkgs/d878.nix { })
+        # the APRS beacon stops. See pkgs/d878.
+        (callPackage ../../pkgs/d878 { })
         # Live IC-7300 meters from shop-sdr's wfview (:4532), for watching
         # WSJT-X Tune / TX without the wfview client (which fights WSJT-X
         # over the dial frequency). Ctrl-C to stop. Levels are hamlib's 0..1
