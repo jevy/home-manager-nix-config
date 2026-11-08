@@ -86,7 +86,8 @@
         hamlib_4
         # AnyTone AT-D878UV codeplugs: qdmr GUI + dmrconf CLI (YAML read/write
         # over /dev/ttyACM0; dialout group is enough, no udev rule needed).
-        # Codeplug + backups live in ~/radio/anytone-868 (git).
+        # Codeplug + backups live in ~/radio/anytone-868 (git); how-to and
+        # rules in ~/radio/anytone-868/README.md.
         qdmr
         # `d878 write` - ALWAYS write through this, never bare `dmrconf write`:
         # it passes --auto-enable-gps, without which a write turns GPS off and

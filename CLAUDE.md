@@ -139,6 +139,11 @@ let inherit (config.flake.modules) nixos homeManager; in
 
 Package derivations live in `pkgs/`. Reference from modules via relative path: `pkgs.callPackage ../../pkgs/foo.nix {}`.
 
+`pkgs/d878` programs the AnyTone AT-D878UV handheld (installed from
+`modules/desktop/apps.nix`). Its codeplug, backups and usage notes live outside
+this repo in `~/radio/anytone-868` (own git; read its `README.md` first). Never
+run a bare `dmrconf write` against that radio: use `d878 write`.
+
 ### Secrets
 
 Managed by sops-nix (`modules/secrets/sops.nix`). Secrets in `secrets.yaml`, age key at `~/.config/sops/age/keys.txt`.

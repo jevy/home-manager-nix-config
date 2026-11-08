@@ -17,6 +17,9 @@
 #
 # `d878 fm` sets the FM broadcast radio (VFO mode + station list from
 # fm-stations.txt), which dmrconf can't encode at all. See fm.py.
+#
+# Usage notes, key layout and the rules learned so far (GPS flag, never
+# write partial flash blocks, readback quirks): ~/radio/anytone-868/README.md
 writeShellApplication {
   name = "d878";
   runtimeInputs = [
