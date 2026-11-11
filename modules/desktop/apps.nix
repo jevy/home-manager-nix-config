@@ -1,5 +1,5 @@
 # Desktop applications (Linux)
-{ ... }:
+{ inputs, ... }:
 {
   flake.modules.homeManager.desktopApps =
     { config, pkgs, ... }:
@@ -136,6 +136,11 @@
           nativeBuildInputs = [ makeWrapper ];
           postBuild = "wrapProgram $out/bin/blender --set HSA_OVERRIDE_GFX_VERSION 11.5.0";
         })
+
+        # Parametric 3D CAD (flake input; wrapper sets LD_LIBRARY_PATH for
+        # Wayland/EGL/dbus, drivers come from /run/opengl-driver).
+        # Disabled: no binary cache, the from-source Rust build takes too long.
+        # inputs.solidcraft.packages.${pkgs.stdenv.hostPlatform.system}.default
       ];
 
       services.wlsunset = {

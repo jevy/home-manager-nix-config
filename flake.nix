@@ -162,6 +162,15 @@
       url = "github:typestreamio/typestream/v0.3.6";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # solidcraft: Rust-native parametric 3D CAD app. Not in nixpkgs. Its
+    # package is a plain buildRustPackage off Cargo.lock (no FOD hash that a
+    # different nixpkgs could break), so it follows ours. No binary cache:
+    # the first build compiles it from source. Installed in
+    # modules/desktop/apps.nix.
+    solidcraft = {
+      url = "github:tangency-labs/solidcraft";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     pi-mono.url = "github:lukasl-dev/pi-mono.nix";
     # See x86_64-darwin note at the top of `inputs`
     pi-mono.inputs.bun2nix.inputs.systems.follows = "nix-systems-triplet";

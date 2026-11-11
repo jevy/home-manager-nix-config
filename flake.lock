@@ -1096,6 +1096,7 @@
         "nixvim": "nixvim",
         "pi-mono": "pi-mono",
         "qmd": "qmd",
+        "solidcraft": "solidcraft",
         "sops-nix": "sops-nix",
         "spicetify-nix": "spicetify-nix",
         "stylix": "stylix",
@@ -1140,6 +1141,26 @@
       "original": {
         "owner": "oxalica",
         "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "solidcraft": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1794351770,
+        "narHash": "sha256-RaTIqGRJ2O0He6IKhBLtTTE+3RNYSqsc0iEgdBBuiFk=",
+        "owner": "tangency-labs",
+        "repo": "solidcraft",
+        "rev": "75a74aeee921221be288a7fec703fd5473b08088",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tangency-labs",
+        "repo": "solidcraft",
         "type": "github"
       }
     },
