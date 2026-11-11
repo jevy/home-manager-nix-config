@@ -125,6 +125,17 @@
         remmina
         xauth
         gridtracker
+
+        # Blender with AMD GPU (HIP) for house renders (~/code/personal/appleford-render).
+        # Plain `blender` has no HIP. The P14s Radeon 860M is gfx1152, which the
+        # ROCm build has no kernels for; gfx1150's run on it (11.5.1 = INVALID_ISA).
+        # The override is P14s-specific: drop it on hosts with a supported GPU.
+        (symlinkJoin {
+          name = "blender-hip";
+          paths = [ pkgsRocm.blender ];
+          nativeBuildInputs = [ makeWrapper ];
+          postBuild = "wrapProgram $out/bin/blender --set HSA_OVERRIDE_GFX_VERSION 11.5.0";
+        })
       ];
 
       services.wlsunset = {
