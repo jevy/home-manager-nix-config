@@ -199,6 +199,7 @@ in
         ];
         image = [
           { run = ''imv %s''; orphan = true; desc = "imv"; }
+          { run = ''swayimg %s''; orphan = true; desc = "swayimg"; }
           { run = ''markup %s''; orphan = true; desc = "Mark up (swappy)"; }
           { run = ''gimp %s''; orphan = true; desc = "GIMP"; }
         ];

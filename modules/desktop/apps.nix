@@ -33,6 +33,7 @@
               'imv_viewport_rotate_by(imv->view, e->data.gesture_pinch.rotation);' ""
           '';
         }))
+        swayimg
         playerctl
         doctl
         pdfarranger
@@ -166,12 +167,12 @@
         "x-scheme-handler/http" = [ "firefox.desktop" ];
         "x-scheme-handler/https" = [ "firefox.desktop" ];
         "text/html" = [ "firefox.desktop" ];
-        "image/png" = [ "imv.desktop" ];
-        "image/jpeg" = [ "imv.desktop" ];
-        "image/gif" = [ "imv.desktop" ];
-        "image/webp" = [ "imv.desktop" ];
-        "image/bmp" = [ "imv.desktop" ];
-        "image/svg+xml" = [ "imv.desktop" ];
+        "image/png" = [ "swayimg.desktop" ];
+        "image/jpeg" = [ "swayimg.desktop" ];
+        "image/gif" = [ "swayimg.desktop" ];
+        "image/webp" = [ "swayimg.desktop" ];
+        "image/bmp" = [ "swayimg.desktop" ];
+        "image/svg+xml" = [ "swayimg.desktop" ];
         "text/plain" = [ "neovide.desktop" ];
         "application/toml" = [ "neovide.desktop" ];
         "application/json" = [ "neovide.desktop" ];
