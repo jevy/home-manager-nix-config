@@ -23,7 +23,16 @@
         # khal
         evince
         xournalpp
-        imv
+        # imv 5 rotates the image on touchpad pinch: the pinch handler applies
+        # the gesture's twist angle unconditionally (src/imv.c, no config
+        # option or binding). Drop that call so pinch only zooms and pans.
+        # --replace-fail breaks the build if upstream moves it; re-check then.
+        (imv.overrideAttrs (old: {
+          postPatch = (old.postPatch or "") + ''
+            substituteInPlace src/imv.c --replace-fail \
+              'imv_viewport_rotate_by(imv->view, e->data.gesture_pinch.rotation);' ""
+          '';
+        }))
         playerctl
         doctl
         pdfarranger
