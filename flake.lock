@@ -1393,11 +1393,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790508717,
-        "narHash": "sha256-L0He66K09N95yWMP/mIK3KXwlDOJkU63VAUtTssLhx8=",
+        "lastModified": 1794399255,
+        "narHash": "sha256-J90W8sClD2OE/pNzXIk1sycsmgeW48yPAAmwvB56Qhg=",
         "ref": "refs/heads/main",
-        "rev": "625838712ca32b50ba5358660de4d4490670a26b",
-        "revCount": 9,
+        "rev": "84db49da1ddc6112a61fce64cf2137c260762e3a",
+        "revCount": 11,
         "type": "git",
         "url": "ssh://git@github.com/jevy/task-snapshot"
       },
