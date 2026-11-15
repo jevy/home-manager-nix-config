@@ -310,6 +310,15 @@
         sure = {
           url = "https://sure.jevy.org/mcp";
         };
+        # Descript (video editing / Underlord). Remote streamable HTTP with
+        # OAuth, same shape as sure: an unauthenticated POST returns 401 +
+        # `resource_metadata` pointing at auth.descript.com, so the client
+        # runs the browser sign-in on first connect and no token lives in
+        # sops. It binds to whichever Descript Drive is logged in at that
+        # moment. Imports and Underlord edits spend media minutes / AI credits.
+        descript = {
+          url = "https://api.descript.com/v2/mcp";
+        };
       };
     in
     {
