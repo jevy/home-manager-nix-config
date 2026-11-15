@@ -168,7 +168,7 @@
     # the first build compiles it from source. Installed in
     # modules/desktop/apps.nix. Pinned to a release tag: bump the tag to upgrade.
     solidcraft = {
-      url = "github:tangency-labs/solidcraft/v0.40.1";
+      url = "github:tangency-labs/solidcraft/v0.42.0";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     pi-mono.url = "github:lukasl-dev/pi-mono.nix";
