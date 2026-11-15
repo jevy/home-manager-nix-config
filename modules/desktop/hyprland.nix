@@ -88,6 +88,11 @@
       # share-desktop toggle to preview the headless screenshare output.
       home.packages = [ pkgs.wl-mirror ];
 
+      # Only for define-menu (pkgs/define.nix, $mod+D -> d). Enabled so stylix
+      # writes ~/.config/fuzzel/fuzzel.ini; without it fuzzel uses its own
+      # default colours. Art mode: theme-mode writes an override on top.
+      programs.fuzzel.enable = true;
+
       # Ensure the runtime monitor override file exists before Hyprland starts.
       # Hyprland `source=`s it, and errors out loudly if the glob matches nothing
       # (e.g. after a reboot that clears /tmp, or on a fresh install).

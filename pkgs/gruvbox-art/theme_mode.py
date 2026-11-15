@@ -5,7 +5,8 @@ current painting, without a rebuild.
 
 Reaches only what can recolour live: Noctalia (custom palette), Hyprland
 borders (hyprctl keyword), ghostty (an optional config-file override plus a
-reload) and Obsidian (a CSS snippet the vaults symlink to, empty in gruvbox
+reload), fuzzel (an optional override that define-menu passes as --config;
+fuzzel starts fresh each launch, so no reload) and Obsidian (a CSS snippet the vaults symlink to, empty in gruvbox
 mode, plus a snippet reload through obsidian-cli). Everything else stays
 stylix's build-time gruvbox. Colour mappings copy stylix's own targets, so
 gruvbox mode matches a fresh login.
@@ -102,6 +103,25 @@ def ghostty_override(c):
     return "# Written by theme-mode (art). Overrides the stylix theme.\n" + "\n".join(lines) + "\n"
 
 
+def fuzzel_override(c):
+    # Includes stylix's config for font and layout, then overrides colours with
+    # the same slots stylix's fuzzel target uses (e6 = stylix opacity.popups
+    # 0.9). A missing include is fatal to fuzzel, hence a whole file that
+    # define-menu opts into only when it exists, not an include in the base.
+    base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "fuzzel/fuzzel.ini"
+    slots = {
+        "background": ("base00", "e6"), "text": ("base05", "ff"),
+        "placeholder": ("base03", "ff"), "prompt": ("base05", "ff"),
+        "input": ("base05", "ff"), "match": ("base0A", "ff"),
+        "selection": ("base02", "ff"), "selection-text": ("base05", "ff"),
+        "selection-match": ("base0A", "ff"), "counter": ("base06", "ff"),
+        "border": ("base0D", "ff"),
+    }
+    lines = [f"{k}={c[s].lstrip('#')}{a}" for k, (s, a) in slots.items()]
+    return ("# Written by theme-mode (art). Overrides the stylix theme.\n"
+            f"[main]\ninclude={base}\n[colors]\n" + "\n".join(lines) + "\n")
+
+
 def obsidian_snippet(c):
     # body.theme-* outranks the stylix snippet's bare .theme-light/.theme-dark
     # whichever loads first, and covers either polarity it was built with.
@@ -194,6 +214,7 @@ def art_colours():
 def apply(mode):
     STATE.mkdir(parents=True, exist_ok=True)
     ghostty = STATE / "ghostty"
+    fuzzel = STATE / "fuzzel.ini"
     obsidian = STATE / "obsidian.css"
     if mode == "art":
         c, title = art_colours()
@@ -204,12 +225,14 @@ def apply(mode):
         tmp.replace(PALETTES / f"{ART_PALETTE}.json")
         run("noctalia", "msg", "color-scheme-set", "custom", ART_PALETTE)
         ghostty.write_text(ghostty_override(c))
+        fuzzel.write_text(fuzzel_override(c))
         obsidian.write_text(obsidian_snippet(c))
         label = f"art · {title}"
     else:
         c = read_base16(os.environ["THEME_MODE_GRUVBOX"])
         run("noctalia", "msg", "color-scheme-set", "custom", GRUVBOX_PALETTE)
         ghostty.unlink(missing_ok=True)
+        fuzzel.unlink(missing_ok=True)
         # Emptied, not removed: the vaults' snippet symlink points here.
         obsidian.write_text("")
         label = "gruvbox"

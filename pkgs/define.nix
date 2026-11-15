@@ -81,6 +81,13 @@ let
       libnotify
     ];
     text = ''
+      # theme-mode (pkgs/gruvbox-art) writes this in art mode only; it
+      # includes the stylix fuzzel.ini and overrides the colours.
+      art="''${XDG_STATE_HOME:-$HOME/.local/state}/theme-mode/fuzzel.ini"
+      cfg=()
+      [ -f "$art" ] && cfg=(--config "$art")
+      fuzzel() { command fuzzel "''${cfg[@]}" "$@"; }
+
       # --prompt-only: a bare text prompt, prints what was typed.
       word=$(fuzzel --dmenu --prompt-only "define: " || true)
       [ -z "$word" ] && exit 0

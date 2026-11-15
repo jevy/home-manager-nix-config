@@ -14,7 +14,7 @@
 # Theme mode (art strategies + Noctalia): Meta+D → c, or `theme-mode toggle`,
 # switches the live desktop between stylix's gruvbox and gruvbox tinted by the
 # painting on screen (pkgs/gruvbox-art, strength 0.6). No rebuild: it reaches
-# only Noctalia, Hyprland borders, ghostty and any Obsidian vaults that
+# only Noctalia, Hyprland borders, ghostty, fuzzel (define-menu) and any Obsidian vaults that
 # stylix.targets.obsidian themes (none now). GTK is light Adwaita on
 # purpose (desktop/apps.nix) and Qt/Kvantum and nvim keep build-time gruvbox.
 # `noctalia msg color-scheme-set` persists a [theme] table into Noctalia's
