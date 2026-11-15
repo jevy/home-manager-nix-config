@@ -59,6 +59,8 @@
         (pkgs.callPackage ../../pkgs/linecast.nix { })
         dix
         (pkgs.callPackage ../../pkgs/nixdiff.nix { })
+        # define / spell commands; define-menu popup lives in hyprland.nix
+        (pkgs.callPackage ../../pkgs/define.nix { })
       ]
       ++ lib.optional (lib.meta.availableOn pkgs.stdenv.hostPlatform numr) numr;
 

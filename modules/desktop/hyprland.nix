@@ -317,6 +317,8 @@ MONEOF
                 { key = "t"; desc = "Files (Ranger)"; cmd = "ghostty -e ${pkgs.ranger}/bin/ranger ~/Downloads"; }
                 { key = "g"; desc = "Files (Yazi)"; cmd = "ghostty -e yazi ~/Downloads"; }
                 { key = "a"; desc = "Claude"; cmd = "firefox https://claude.ai"; }
+                # Type a word: spell-check, definition, correct spelling copied.
+                { key = "d"; desc = "Define / Spell"; cmd = "${pkgs.callPackage ../../pkgs/define.nix { withMenu = true; }}/bin/define-menu"; }
               ]
               # New random painting (desktop/wallpaper.nix, art-rotate only).
               ++ lib.optional ((osConfig.wallpaper.strategy or "static") == "art-rotate") {
