@@ -81,7 +81,13 @@ let
           inherit opener;
 
           open.rules = [
-            { url = "*.{toml,yaml,yml,json,nix,conf,cfg,ini,sh,bash,zsh,lua,py,rb,rs,go,js,ts,tsx,jsx,md,txt,log,env,css,html,xml,svg,sql,graphql,proto,tf,hcl,Makefile,Dockerfile}"; use = "text"; }
+            # Before the text rules: .csv is text/csv, so `text/*` would
+            # otherwise send it to neovide.
+            { url = "*.{csv,tsv}"; use = "csv"; }
+            # Same for HTML: text/html would hit `text/*`. `browser` opens it in
+            # the desktop's default (xdg-open / `open`); editors stay on `O`.
+            { url = "*.{html,htm}"; use = "browser"; }
+            { url = "*.{toml,yaml,yml,json,nix,conf,cfg,ini,sh,bash,zsh,lua,py,rb,rs,go,js,ts,tsx,jsx,md,txt,log,env,css,xml,svg,sql,graphql,proto,tf,hcl,Makefile,Dockerfile}"; use = "text"; }
             { mime = "application/pdf"; use = "pdf"; }
             { mime = "image/*"; use = "image"; }
             { mime = "video/*"; use = "video"; }
@@ -182,6 +188,7 @@ in
       packages = with pkgs; [
         ripdrag
         p7zip
+        visidata
         markup
         copyPathsBackticked
       ];
@@ -218,6 +225,20 @@ in
           { run = ''vlc %s''; orphan = true; desc = "VLC"; }
           { run = ''firefox %s''; orphan = true; desc = "Firefox"; }
         ];
+        # VisiData edits (sort, filter, pivot, `^S` saves); csvlens only views.
+        # csvlens comes from cliBase.
+        csv = [
+          { run = ''libreoffice --calc %s''; orphan = true; desc = "LibreOffice Calc"; }
+          { run = ''vd %s''; block = true; desc = "VisiData"; }
+          { run = ''csvlens %s''; block = true; desc = "csvlens"; }
+        ];
+        # xdg-open resolves text/html via xdg.mimeApps (firefox.desktop, set
+        # in modules/desktop/apps.nix), so changing the browser there is enough.
+        browser = [
+          { run = ''xdg-open %s''; orphan = true; desc = "Default browser"; }
+          { run = ''setsid -f neovide %s''; orphan = true; desc = "Neovide"; }
+          { run = ''$EDITOR %s''; block = true; desc = "Editor"; }
+        ];
         text = [
           { run = ''setsid -f neovide %s''; orphan = true; desc = "Neovide"; }
           { run = ''$EDITOR %s''; block = true; desc = "Editor"; }
@@ -253,7 +274,10 @@ in
       # p7zip backs both the compress plugin and `ya pub extract`; yazi shells
       # out to `7z`, and macOS ships no archiver on PATH (Archive Utility is
       # GUI-only), so without this both `ec` and `ex` fail silently.
-      packages = with pkgs; [ p7zip ];
+      packages = with pkgs; [
+        p7zip
+        visidata
+      ];
 
       plugins = { compress = compressPlugin; };
 
@@ -272,6 +296,17 @@ in
         video = [
           { run = ''open %s''; orphan = true; desc = "Default app"; }
           { run = ''open -a QuickTime\ Player %s''; orphan = true; desc = "QuickTime"; }
+        ];
+        # libreoffice-bin (mac-work host) installs as LibreOffice.app.
+        csv = [
+          { run = ''open -a LibreOffice %s''; orphan = true; desc = "LibreOffice Calc"; }
+          { run = ''vd %s''; block = true; desc = "VisiData"; }
+          { run = ''csvlens %s''; block = true; desc = "csvlens"; }
+        ];
+        browser = [
+          { run = ''open %s''; orphan = true; desc = "Default browser"; }
+          { run = ''neovide %s''; orphan = true; desc = "Neovide"; }
+          { run = ''$EDITOR %s''; block = true; desc = "Editor"; }
         ];
         text = [
           { run = ''neovide %s''; orphan = true; desc = "Neovide"; }
