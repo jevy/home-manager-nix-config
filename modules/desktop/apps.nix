@@ -139,8 +139,8 @@
 
         # Parametric 3D CAD (flake input; wrapper sets LD_LIBRARY_PATH for
         # Wayland/EGL/dbus, drivers come from /run/opengl-driver).
-        # Disabled: no binary cache, the from-source Rust build takes too long.
-        # inputs.solidcraft.packages.${pkgs.stdenv.hostPlatform.system}.default
+        # No binary cache: the first build compiles it from source.
+        inputs.solidcraft.packages.${pkgs.stdenv.hostPlatform.system}.default
       ];
 
       services.wlsunset = {

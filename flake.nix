@@ -166,9 +166,9 @@
     # package is a plain buildRustPackage off Cargo.lock (no FOD hash that a
     # different nixpkgs could break), so it follows ours. No binary cache:
     # the first build compiles it from source. Installed in
-    # modules/desktop/apps.nix.
+    # modules/desktop/apps.nix. Pinned to a release tag: bump the tag to upgrade.
     solidcraft = {
-      url = "github:tangency-labs/solidcraft";
+      url = "github:tangency-labs/solidcraft/v0.40.1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     pi-mono.url = "github:lukasl-dev/pi-mono.nix";
