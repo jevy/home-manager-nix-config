@@ -158,9 +158,12 @@
             # ceiling, threw MEMORY_LIMIT_EXCEEDED on every background merge and
             # restart-looped ~90 times, which silently dropped the trace stream
             # the collector was writing. Verify headroom with `docker stats`.
+            # A covenant-web `wt-container` (client + admin + inngest under
+            # turbopack) peaks past the ~5GiB 8GiB left beside SigNoz and is
+            # OOM-killed on its first compile; 14 fits one beside SigNoz.
             cpu = 6;
             disk = 100;
-            memory = 8;
+            memory = 14;
             arch = "aarch64";
             runtime = "docker";
             modelRunner = "docker";
