@@ -515,10 +515,29 @@
           fi
           printf '%s' "$NOW" > "$STAMP"
 
-          # macOS is still moving windows between displays for a second or two
-          # after the signal; restarting inside that window just captures the
-          # same mess.
-          sleep 4
+          # macOS keeps moving windows between displays after the signal, and
+          # restarting inside that window captures the same mess. A fixed
+          # `sleep 4` was too short: 68 of 69 resyncs from 2026-10-23 to
+          # 2026-11-17 still had windows without AX references after the retry.
+          # Wait until window frames hold still for 3s (min 4s, cap 20s).
+          settle() {
+            local prev="" cur stable=0
+            for i in $(seq 1 20); do
+              sleep 1
+              cur=$(yabai -m query --windows 2>/dev/null \
+                | jq -c '[.[] | {id, display, frame}] | sort_by(.id)' 2>/dev/null || true)
+              if [ -n "$cur" ] && [ "$cur" = "$prev" ]; then
+                stable=$(( stable + 1 ))
+              else
+                stable=0
+              fi
+              prev=$cur
+              if [ "$i" -ge 4 ] && [ "$stable" -ge 3 ]; then
+                return 0
+              fi
+            done
+          }
+          settle
 
           # NEVER RESTART INTO SLEEP. Unplugging with the lid shut fires
           # display_removed and then clamshell-sleeps the machine ~5s later —
@@ -562,7 +581,15 @@
             # The sweep is what fixes damage (2). Per space rather than `config
             # layout`, which would also rewrite the global default and lose the
             # distinction between "the default" and "what this space is now".
-            printf '%s\n' "$SPACES" | while read -r idx; do
+            sweep "$SPACES"
+            # Once is not enough: on 2026-11-17 a sweep ran 9s after restart
+            # and spaces 1 and 2 were back in stack anyway.
+            sleep 10
+            sweep "$SPACES"
+          }
+
+          sweep() {
+            printf '%s\n' "$1" | while read -r idx; do
               yabai -m space "$idx" --padding abs:${toString gapOuter}:${toString gapOuter}:${toString gapOuter}:${toString gapOuter} 2>/dev/null || true
               yabai -m space "$idx" --gap abs:${toString gapInner} 2>/dev/null || true
               yabai -m space "$idx" --layout master_center 2>/dev/null || true
@@ -593,7 +620,7 @@
           MISSED=$(missed_apps)
           if [ -n "$MISSED" ]; then
             echo "resync: no AX reference for $(echo "$MISSED" | paste -sd, -), restarting once more"
-            sleep 4
+            sleep 12
             restart_and_sweep
             MISSED=$(missed_apps)
             [ -z "$MISSED" ] || echo "resync: still unmanaged after retry: $(echo "$MISSED" | paste -sd, -)" >&2
