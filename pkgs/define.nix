@@ -1,7 +1,7 @@
 # define / spell: offline dictionary and spell checker for the terminal.
 #
 #   define <word>   WordNet definitions (local database, no network)
-#   spell <word>    `ok` if spelled right, else aspell's suggestions
+#   spell <word>    `ok` if spelled right, else aspell's suggestions (Linux only)
 #
 # The old-school `dict` needs a dictd server (or dict.org over the network);
 # WordNet ships its database locally. Multi-word entries work: WordNet joins
@@ -13,6 +13,7 @@
 # clipboard either way, so it doubles as "how do I spell this".
 {
   lib,
+  stdenv,
   symlinkJoin,
   writeShellApplication,
   wordnet,
@@ -118,7 +119,7 @@ symlinkJoin {
   name = "define";
   paths = [
     define
-    spell
   ]
+  ++ lib.optional stdenv.hostPlatform.isLinux spell
   ++ lib.optional withMenu defineMenu;
 }
