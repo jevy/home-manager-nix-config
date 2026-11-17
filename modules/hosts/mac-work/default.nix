@@ -260,6 +260,7 @@ in
               homeManager.altTab
               # homeManager.monoMic
               homeManager.meetingbarWatchdog
+              homeManager.monitorcontrol
               homeManager.macFonts
               homeManager.stylix
 

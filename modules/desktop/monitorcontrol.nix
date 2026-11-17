@@ -95,14 +95,15 @@
 # therefore the Accessibility grant) intact, which is the entire reason for
 # choosing the cask over the nixpkgs build.
 #
-# AFTER THE FIRST REBUILD, two things are needed by hand and neither is
-# declarable from Nix:
-#   1. Grant Accessibility on first launch (System Settings → Privacy &
-#      Security → Accessibility). Without it MonitorControl runs but cannot
-#      capture the brightness keys.
-#   2. Turn on "Start at login" in its own preferences — that writes an
-#      SMAppService registration, same limitation recorded in
-#      modules/apps/meetingbar.nix.
+# AFTER THE FIRST REBUILD, grant Accessibility on first launch (System
+# Settings → Privacy & Security → Accessibility). Without it MonitorControl runs
+# but cannot capture the brightness keys. Not declarable from Nix.
+#
+# STARTUP IS homeManager.monitorcontrol's LaunchAgent, NOT the app's own "Start
+# at login" — leave that OFF. The app's login helper only fires at login, so a
+# crash (4.4.0 hit a CoreFoundation SIGTRAP on 2026-11-13) left it dead until
+# the next reboot. The agent runs the binary directly rather than via `open`,
+# which exits 0 immediately and would leave launchd nothing to watch.
 #
 # AND CHECK THE MONITOR'S OWN OSD FIRST. Dell hides DDC/CI under
 # Menu → Others → DDC/CI and some models ship with it OFF. With it off, no
@@ -121,6 +122,18 @@
       onActivation.cleanup = "none";
 
       casks = [ "monitorcontrol" ];
+    };
+  };
+
+  flake.modules.homeManager.monitorcontrol = { ... }: {
+    launchd.agents.monitorcontrol = {
+      enable = true;
+      config = {
+        ProgramArguments = [ "/Applications/MonitorControl.app/Contents/MacOS/MonitorControl" ];
+        RunAtLoad = true;
+        KeepAlive.SuccessfulExit = false;
+        ProcessType = "Interactive";
+      };
     };
   };
 }
