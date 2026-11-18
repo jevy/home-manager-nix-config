@@ -229,6 +229,7 @@ in
               homeManager.hunk
               homeManager.herdr
               homeManager.tuicr
+              homeManager.clipboardCopy
               homeManager.flowgraph
               homeManager.claudeCode
               homeManager.opencodeMac

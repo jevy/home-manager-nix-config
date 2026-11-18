@@ -85,6 +85,7 @@ in
             homeManager.hunk
             homeManager.herdr
             homeManager.tuicr
+            homeManager.clipboardCopy
             homeManager.hyprland
             homeManager.kanata
             homeManager.mutt
