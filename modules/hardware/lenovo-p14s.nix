@@ -187,6 +187,52 @@
       #       https://community.frame.work/t/issues-with-mediatek-mt7925-rz717-wi-fi-card/75815 (MT7925: WPA3 unstable, WPA2 solid)
       #       https://sageaxe.com/troubleshoot/wpa3-transition-issues                       (WPA3 transition-mode fixes: disable PMF / force WPA2)
 
+      # ── MT7925 on home wifi (JnA-24): AP kicks for "Excessive Retries" on 6 GHz ──
+      # NOT a crash: repeated drops during calls. 2026-11-18, kernel 7.2.2, with
+      # every mitigation above already live (disable_aspm=1, regdom CA, NM
+      # powersave off). After resume, wpa_supplicant kept roaming off a strong
+      # 5 GHz link (Sunroom U6 In-Wall, -43 dBm) onto 6 GHz (160 MHz wide on both
+      # UniFi APs), and the APs dropped the laptop for not ACKing:
+      #   wlp194s0: deauthenticated from 58:d6:1f:a8:9a:39 (Reason: 34=DISASSOC_LOW_ACK)
+      #   SME: Trying to authenticate with 58:d6:1f:41:1c:4c ... authentication timed out
+      # UniFi logged it as "Excessive Retries" at -54 to -58 dBm (good signal), on 3
+      # radios across 2 APs and 2 firmware lines, and ONLY for this client. No
+      # other device was kicked in the window, and WAN had 0% loss. So it is the
+      # card, not the network. The APs already kick it 1-10x/day.
+      #
+      # FIX (imperative, per-connection, same reason as JevyPixel above: the
+      # profile carries the PSK): lock JnA-24 to 5 GHz so it cannot roam to 6 GHz.
+      #     nmcli connection modify JnA-24 802-11-wireless.band a
+      #     (revert with `… band ""`)   Applied 2026-11-18.
+      # Retry 6 GHz only after the open 7.1+/7.2 mt7925 MLO/6 GHz stall is fixed
+      # upstream, and first drop the APs' 6 GHz width from 160 to 80 MHz.
+      #
+      # CONSEQUENCE: this machine does NOT get 6 GHz (Wi-Fi 6E/7) speeds at home,
+      # on purpose. Expect 5 GHz at 40 MHz width (~250 Mbit/s measured
+      # 2026-11-18), not the 160 MHz 6 GHz rates the card and APs advertise. If
+      # wifi looks "slow", that is this lock, not a fault. To check where it is:
+      #   - laptop:  nmcli -g 802-11-wireless.band connection show JnA-24   # "a" = locked to 5 GHz
+      #              nmcli -f IN-USE,BSSID,FREQ,SIGNAL dev wifi list | grep '\*'
+      #   - UniFi:   the client 08:f9:7e:16:d9:1b (lenovo-p14s) shows which AP and
+      #              radio it is on, its signal, TX retries, and "Excessive
+      #              Retries" kicks. Count those kicks (Loki/UniFi events) before
+      #              and after any change to know whether 6 GHz is safe again.
+      #   - UniFi:   per-AP 6 GHz channel width (Sunroom, Master Bedroom) and
+      #              whether MLO is on for JnA-24; both matter for the retry.
+      #
+      # WIRED: the Dell U4924DW's RJ45 (Realtek RTL8156, 0bda:8156, r8152,
+      # shows up as enp198s0f4u1u1, NOT enx…) is the preferred link at the desk:
+      # ~1 ms to the gateway vs ~4 ms on wifi, 323 vs 256 Mbit/s. It only reaches
+      # this laptop if the monitor OSD's Ethernet Switch points at the USB-C
+      # (DisplayPort-icon) upstream. Set Ethernet Switch Mode to "Tie to KVM";
+      # "Prompt when KVM switches" left it on the other upstream for months.
+      # Changing that setting makes the NIC flap (7x in 5 min on 2026-11-18),
+      # and NM moves the default route to each half-up link, so don't touch it
+      # mid-call. Wifi stays up as the fallback (metric 600 vs 100).
+      # Refs: https://lists.infradead.org/pipermail/linux-mediatek/2026-August/112110.html (MT7925 6 GHz MLO stall, 7.1+, open)
+      #       https://github.com/pop-os/pop/issues/3995                                   (T14 Gen 6 AMD: 4-way handshake failures, open)
+      #       https://bugzilla.kernel.org/show_bug.cgi?id=219429                          (MT7925 disconnects vs Windows, open)
+
       # AMD GPU and OLED/touch support
       boot.kernelModules = [ "i2c-dev" ];
 
