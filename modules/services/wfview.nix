@@ -92,6 +92,12 @@
           ExecStart = "${pkgs.xvfb-run}/bin/xvfb-run -n 97 -s '-screen 0 1600x1000x24' ${pkgs.wfview}/bin/wfview -s /var/lib/wfview/wfview.conf -l /var/log/wfview/wfview.log";
           Restart = "on-failure";
           RestartSec = 5;
+          # wfview leaks ~3 GB/day (6.8G peak on this 8 GB, swapless box).
+          # Uncapped, it starved the page cache for 10-20 h before the global
+          # OOM killer fired, and the WSPR beacon stalled the whole time
+          # (6 outages, Nov 4-19). Capped, the cgroup OOM kills it promptly
+          # and Restart brings wfview + wsjtx-wspr back in under a minute.
+          MemoryMax = "2500M";
         };
       };
 
