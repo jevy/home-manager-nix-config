@@ -53,50 +53,8 @@ let
         }
       ];
     };
-    # Local models via llama-swap on 127.0.0.1:9292
-    # (modules/services/llama-swap.nix, homeManager.llamaSwapLinux).
-    #
-    # ADDITIVE, NOT A REPLACEMENT. The cloud providers stay the default: these
-    # run at ~9 tok/s measured, which is fine for conversation and slow for an
-    # agent loop. They are here for the two things a cloud model cannot do —
-    # work with no network, and discuss personal material that should not leave
-    # the laptop. Reach for them deliberately via pi's model picker.
-    #
-    # IDs must match the model keys in llama-swap's settings.models, and
-    # contextWindow must mirror each entry's `-c` flag there. Do not raise one
-    # without the other: pi will pack a prompt llama-server then refuses.
-    providers.local = {
-      name = "llama-swap (local)";
-      baseUrl = "http://127.0.0.1:9292/v1";
-      api = "openai-completions";
-      apiKey = "no-key";
-      compat.supportsDeveloperRole = false;
-      models = [
-        # Qwen's agent-tuned MoE. Measured 9.40 tok/s on the Radeon 860M.
-        # The one to pick when a tool loop has to run offline.
-        {
-          id = "agentworld-35b-a3b";
-          name = "AgentWorld 35B-A3B (local, agent)";
-          reasoning = true;
-          input = [ "text" ];
-          contextWindow = 32768;
-          maxTokens = 32768;
-          cost = { input = 0; output = 0; cacheRead = 0; cacheWrite = 0; };
-        }
-        # Abliterated Gemma-4 26B-A4B. Measured 9.24 tok/s. Here for personal
-        # material, not code: stock Gemma scores 1.8/10 on willingness and
-        # deflects; this scores 8.2 without losing measurable intelligence.
-        {
-          id = "goetia-26b-a4b";
-          name = "Goetia 26B-A4B (local, private)";
-          reasoning = false;
-          input = [ "text" ];
-          contextWindow = 32768;
-          maxTokens = 32768;
-          cost = { input = 0; output = 0; cacheRead = 0; cacheWrite = 0; };
-        }
-      ];
-    };
+    # No `providers.local` here: the P14s llama-swap is parked (see
+    # modules/hosts/lenovo-p14s/default.nix). Re-add one alongside it.
     providers.deepseek = {
       models = [
         {
@@ -180,40 +138,36 @@ let
     };
   };
 
-  # pi-lens toolchain: LSP servers, formatters and linters on PATH for
-  # pi-lens auto-discovery. nixvim bundles its own copies inside the neovim
-  # wrapper; the Nix store deduplicates, so this costs no extra disk.
-  piLensTools = pkgs: with pkgs; [
-    # LSP servers
-    nixd
-    pyright
-    gopls
-    typescript-language-server
-    typescript
-    bash-language-server
-    yaml-language-server
-    vscode-langservers-extracted # JSON, CSS, HTML, ESLint
-    dockerfile-language-server
-
-    # Formatters
-    nixfmt
-    shfmt
-    ruff
-    prettier
-    taplo
-
-    # Linters & analysis
-    shellcheck
-    hadolint
-    markdownlint-cli2
-    golangci-lint
-  ];
-
   piRules = ''
     # Shell Commands
     - Use `fd` instead of `find` — `find` commands with `-exec`, `\;`, or `\|` can be problematic. `fd` is already installed.
     - Avoid ANSI-C quoting (`$'...\n...'`) in shell commands.
   '';
+
+  # Kept deliberately small: pi is an occasional tool here, not the daily
+  # driver. Dropped 2026-11: pi-lens (plus the ~18 LSP/linter packages it
+  # needed on PATH), pi-readseek, pi-plan, pi-finder-subagent, and
+  # pi-mcp-extension (a second MCP client fighting pi-mcp-adapter for /mcp).
+  #
+  # These are npm installs pi performs at startup into ~/.pi/agent/npm, not
+  # Nix builds, so versions float. `pi update --extensions` bumps them.
+  piSettings = defaultModel: extraPackages: builtins.toJSON {
+    inherit defaultModel;
+    packages = extraPackages ++ [
+      "npm:pi-secret-guard"
+      # Footer with context/token usage.
+      "npm:pi-powerline-footer"
+      # MCP client. Reads ~/.config/mcp/mcp.json (and ~/.mcp.json), written by
+      # ./mcp.nix from the same `programs.mcp.servers` Claude Code gets.
+      # ./mcp.nix's `disabled` re-emit exists for this adapter's parser.
+      "npm:pi-mcp-adapter"
+    ];
+    # pi >= 1.3 ships a built-in MCP client. pi-mcp-adapter turns it off by
+    # writing this entry into settings.json on first start, but this file is a
+    # read-only store symlink, so the write fails (EROFS) and it warns on every
+    # launch. Declaring the entry here makes the adapter's check a no-op.
+    extensions = [ "-builtin:mcp" ];
+  };
 in
 {
   flake.modules.nixos.pi =
@@ -231,7 +185,6 @@ in
         environment = {
           # Redirect npm global prefix to writable dir (Nix store is read-only)
           NPM_CONFIG_PREFIX.value = "/home/jevin/.npm-global";
-          PI_FINDER_MODELS.value = "deepseek/deepseek-v4-flash:medium";
           # Blank out API keys to prevent pi auto-discovering unwanted providers
           ANTHROPIC_API_KEY.value = "";
           OPENAI_API_KEY.value = "";
@@ -242,35 +195,41 @@ in
       };
     };
 
-  # Home-manager: pi-lens toolchain
+  # Home-manager: pi config files
   flake.modules.homeManager.pi =
-    { config, pkgs, ... }:
+    { config, lib, ... }:
     {
-      home.packages = piLensTools pkgs;
-
       # Curated model list — only cheap models, no auto/Opus
       home.file.".pi/agent/models.json".text = piModelsJson;
 
-      # Declarative pi packages (installed on startup)
-      home.file.".pi/agent/settings.json".text = builtins.toJSON {
-        defaultModel = "deepseek-v4-pro";
-        packages = [
-          "npm:pi-lens"
-          "npm:pi-secret-guard"
-          "npm:pi-finder-subagent"
-          # LINE:HASH-anchored reads/edits — cheap models fumble line-number
-          # edits; content-hash anchors don't go stale between read and edit.
-          "npm:pi-readseek"
-          # Read-only plan mode; plan first, then execute in a fresh session.
-          "npm:@zhushanwen/pi-plan"
-          # Footer with context/token usage.
-          "npm:pi-powerline-footer"
-          # MCP client — reads ~/.pi/agent/mcp.json, written by
-          # ./mcp.nix from the same `programs.mcp.servers` Claude Code gets.
-          "npm:pi-mcp-extension"
-          "npm:pi-mcp-adapter"
-        ];
-      };
+      home.file.".pi/agent/settings.json".text = piSettings "deepseek-v4-pro" [
+        # web_search + fetch_content (page → markdown). Linux only: it spends
+        # the personal Brave key, which mac-work must not touch.
+        "npm:pi-web-access"
+      ];
+
+      # pi-web-access config. Brave as the default provider: left on `auto` it
+      # tries keyless Exa first.
+      #
+      # Path: with XDG_CONFIG_HOME set (always, here) the package reads
+      # $XDG_CONFIG_HOME/pi/web-search.json and never ~/.pi/agent/, despite its
+      # README (utils.ts getWebSearchConfigDir). Its cache lives there too. The key is read from the sops secret on each
+      # request via the `!command` source, so it never lands in this file.
+      #
+      # Copied, not symlinked: its /curator command saves settings back into
+      # this file, and a store symlink would fail that write (the same EROFS
+      # settings.json hit). Rewritten on every switch, so a /curator change
+      # lasts until the next rebuild.
+      home.activation.piWebSearch =
+        let
+          json = builtins.toFile "pi-web-search.json" (builtins.toJSON {
+            provider = "brave";
+            braveApiKey = "!/run/current-system/sw/bin/cat ${config.xdg.configHome}/sops-nix/secrets/brave_api_key";
+          });
+        in
+        lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          run install -D -m 600 ${json} "${config.xdg.configHome}/pi/web-search.json"
+        '';
 
       # Skills are opt-in per project. No global skills loaded by default.
       # To add skills to a project, symlink individual files:
@@ -283,10 +242,10 @@ in
   #
   # The Linux half above splits pi across two modules: `nixos.pi` installs the
   # agent (via pi-mono's NixOS module) and `homeManager.pi` supplies the
-  # toolchain and config. nix-darwin has no equivalent, so this one module does
-  # both, using pi-mono's home-manager module instead — same
-  # `programs.pi.coding-agent` option surface, and the aarch64-darwin package
-  # exists upstream (0.84.1, builds locally: not in cache.nixos.org).
+  # config. nix-darwin has no equivalent, so this one module does both, using
+  # pi-mono's home-manager module instead — same `programs.pi.coding-agent`
+  # option surface. The aarch64-darwin package builds locally (not in
+  # cache.nixos.org).
   #
   # LOCAL-ONLY ON PURPOSE. See piModelsJsonMac above — this machine's zsh config
   # deliberately unsets personal API keys, so pi here talks to llama-swap and
@@ -298,7 +257,7 @@ in
     {
       imports = [ inputs.pi-mono.homeManagerModules.default ];
 
-      home.packages = piLensTools pkgs ++ [ pkgs.nodejs ];
+      home.packages = [ pkgs.nodejs ];
 
       programs.pi.coding-agent = {
         enable = true;
@@ -324,24 +283,6 @@ in
       # Defaults to the MoE, not the dense 27B: at 668 vs 111 tok/s prefill it
       # is the only one of the two that stays pleasant in an agent loop. Switch
       # per session with pi's model picker when a question earns the wait.
-      #
-      # PI_FINDER_MODELS is deliberately unset (the Linux half pins it to a
-      # DeepSeek model that does not exist here); pi-finder-subagent falls back
-      # to the default model, which is already the fast one.
-      home.file.".pi/agent/settings.json".text = builtins.toJSON {
-        defaultModel = "qwen3.6-35b-a3b";
-        packages = [
-          "npm:pi-lens"
-          "npm:pi-secret-guard"
-          # Same trio as the Linux block: hash-anchored edits matter even more
-          # for the local Qwen models, plan mode and the footer are model-free.
-          "npm:pi-readseek"
-          "npm:@zhushanwen/pi-plan"
-          "npm:pi-powerline-footer"
-          # MCP client — reads ~/.pi/agent/mcp.json, written by
-          # ./mcp.nix from the same `programs.mcp.servers` Claude Code gets.
-          "npm:pi-mcp-extension"
-        ];
-      };
+      home.file.".pi/agent/settings.json".text = piSettings "qwen3.6-35b-a3b" [ ];
     };
 }
