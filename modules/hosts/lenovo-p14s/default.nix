@@ -35,6 +35,10 @@ in
         # NFS automount of the paperless-ngx consume share (the sync itself is
         # homeManager.paperlessSync below)
         nixos.paperlessSync
+
+        # WireGuard split tunnel to the homelab, manual start only
+        # (sudo systemctl start wg-quick-wg-home)
+        nixos.wireguardHome
       ];
 
       networking.hostName = "lenovo-p14s";
