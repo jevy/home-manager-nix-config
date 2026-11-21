@@ -269,6 +269,20 @@
         hermes = {
           command = "${hermesMcpWrapper}/bin/run-hermes-mcp";
         };
+        # SolidCraft parametric CAD (flake input, also installed in
+        # modules/desktop/apps.nix). With no mode flag it drives the running
+        # app when its control channel is on (so you can watch), else runs a
+        # headless session. File access is limited to its own scratch and
+        # recovery folders plus --allow-path; a folder that doesn't exist is
+        # skipped with a warning, so `mkdir ~/cad` before first use.
+        solidcraft = {
+          command = "${inputs.solidcraft.packages.${pkgs.stdenv.hostPlatform.system}.default}/bin/solidcraft-cli";
+          args = [
+            "mcp"
+            "--allow-path"
+            "${config.home.homeDirectory}/cad"
+          ];
+        };
         # Writes are allowed (upstream default gates) but `confirm` makes every
         # mutation a two-step preview-then-apply. VERIFY_SSL is off because
         # the UDM Pro serves a self-signed cert on 192.168.1.1: still
